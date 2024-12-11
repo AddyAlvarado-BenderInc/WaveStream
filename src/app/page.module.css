@@ -9,7 +9,6 @@
   --button-critical: #ff2a00;
 
   display: grid;
-  grid-template-rows: 20px 1fr 20px;
   align-items: center;
   justify-items: center;
   min-height: 100svh;
@@ -150,6 +149,13 @@ a.secondary {
   .logo {
     filter: invert();
   }
+}
+
+.managerList {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  column-gap: 20px;
 }
 
 .form {

@@ -117,6 +117,17 @@ export default function Home() {
     <div className={styles.page}>
       <h1>Product Managers</h1>
       <p>Total Managers: {productManagers.length}</p>
+      <div className={styles.managerList}>
+        {productManagers.map((manager) => (
+          <ProductTemplate
+            key={manager._id}
+            manager={manager as Required<ProductManager>}
+            onClick={handleManagerClick}
+            onDelete={handleDeleteProductManager}
+            onToggleActive={handleToggleActive}
+          />
+        ))}
+      </div>
       <form className={styles.form} onSubmit={handleAddProductManager}>
         <input
           className={styles.input}
@@ -139,17 +150,6 @@ export default function Home() {
         </select>
         <button className={styles.button} type="submit">Add manager</button>
       </form>
-      <div className={styles.managerList}>
-        {productManagers.map((manager) => (
-          <ProductTemplate
-            key={manager._id}
-            manager={manager as Required<ProductManager>}
-            onClick={handleManagerClick}
-            onDelete={handleDeleteProductManager}
-            onToggleActive={handleToggleActive}
-          />
-        ))}
-      </div>
     </div>
   );
 }
