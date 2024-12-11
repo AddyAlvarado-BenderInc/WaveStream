@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 const ProductManagerSchema = new mongoose.Schema({
     name: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
+    productType: { type: String, required: true}
 });
 
 const ProductManager =
