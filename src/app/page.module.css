@@ -17,6 +17,22 @@
   font-family: var(--font-geist-sans);
 }
 
+.page header {
+  align-items: baseline;
+  display: flex;
+}
+
+.page header h4 {
+  font-weight: 200;
+  display: flex;
+  align-items: center;
+  margin: 0 10px;
+}
+
+.page header h4 img {
+  margin-left: 5px;
+}
+
 @media (prefers-color-scheme: dark) {
   .page {
     --gray-rgb: 255, 255, 255;

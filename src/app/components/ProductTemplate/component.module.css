@@ -22,6 +22,8 @@
   }
   
   .managerInfo {
+    display: flex;
+    justify-content: space-between;
     border-top: 1px solid #fff;
     padding-top: 10px;
   }
@@ -72,4 +74,9 @@
 
   .productType {
     font-weight: 600;
+  }
+
+  .icon {
+    border-radius: 12px;
+    margin-right: 5px;
   }

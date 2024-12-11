@@ -115,19 +115,11 @@ export default function Home() {
 
   return (
     <div className={styles.page}>
-      <h1>Product Managers</h1>
+      <header>
+        <h1>Product Manager</h1>
+        <h4>powered by <img src="/bender_logo_white.svg" alt="Bender Logo" width={100} height={100} /></h4>
+      </header>
       <p>Total Managers: {productManagers.length}</p>
-      <div className={styles.managerList}>
-        {productManagers.map((manager) => (
-          <ProductTemplate
-            key={manager._id}
-            manager={manager as Required<ProductManager>}
-            onClick={handleManagerClick}
-            onDelete={handleDeleteProductManager}
-            onToggleActive={handleToggleActive}
-          />
-        ))}
-      </div>
       <form className={styles.form} onSubmit={handleAddProductManager}>
         <input
           className={styles.input}
@@ -150,6 +142,17 @@ export default function Home() {
         </select>
         <button className={styles.button} type="submit">Add manager</button>
       </form>
+      <div className={styles.managerList}>
+        {productManagers.map((manager) => (
+          <ProductTemplate
+            key={manager._id}
+            manager={manager as Required<ProductManager>}
+            onClick={handleManagerClick}
+            onDelete={handleDeleteProductManager}
+            onToggleActive={handleToggleActive}
+          />
+        ))}
+      </div>
     </div>
   );
 }
