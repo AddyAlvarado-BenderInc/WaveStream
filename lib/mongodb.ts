@@ -19,15 +19,28 @@ if (!cached) {
 
 async function connectToDatabase(): Promise<typeof mongoose> {
     if (cached.conn) {
+        console.log('Using cached database connection');
         return cached.conn;
     }
 
     if (!cached.promise) {
-        cached.promise = mongoose.connect(MONGO_URI).then((m) => m);
+        console.log('Connecting to MongoDB...');
+        cached.promise = mongoose.connect(MONGO_URI).then((m) => {
+            console.log('Successfully connected to MongoDB');
+            return m;
+        }).catch((error) => {
+            console.error('Failed to connect to MongoDB:', error.message);
+            throw error;
+        });
     }
 
-    cached.conn = await cached.promise;
-    return cached.conn;
+    try {
+        cached.conn = await cached.promise;
+        return cached.conn;
+    } catch (error) {
+        console.error('Error during database connection:', error);
+        throw error;
+    }
 }
 
 export default connectToDatabase;

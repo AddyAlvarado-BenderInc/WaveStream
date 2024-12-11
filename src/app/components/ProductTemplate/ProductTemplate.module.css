@@ -1,0 +1,20 @@
+.productTemplate {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .productTemplate:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .productTemplate h3 {
+    margin: 0 0 10px 0;
+  }
+  
+  .productTemplate p {
+    margin: 5px 0;
+  }
