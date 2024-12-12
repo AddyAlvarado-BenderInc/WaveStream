@@ -17,9 +17,9 @@ export default function Home() {
   const [newManagerName, setNewManagerName] = useState("");
   const [newManagerType, setNewManagerType] = useState("");
 
-  const handleDeleteProductManager = async (managerId: string) => {
+  const handleDeleteProductManager = async (managerId: string, productType: string) => {
     try {
-      const response = await fetch(`/api/productManager/${managerId}`, {
+      const response = await fetch(`/api/productManager/${productType}/${managerId}`, {
         method: "DELETE",
       });
       if (!response.ok) {
@@ -99,8 +99,10 @@ export default function Home() {
     });
       setNewManagerName("");
       console.log("New manager name:", newManagerName);
+
       setNewManagerType("");
       console.log("New manager type:", newManagerType);
+
     } catch (error: any) {
       console.error(error.message);
       alert(error.message);

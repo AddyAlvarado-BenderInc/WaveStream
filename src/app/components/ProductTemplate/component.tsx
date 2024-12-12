@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import style from './component.module.css';
 
 interface ProductManager {
@@ -15,15 +16,17 @@ interface ProductManager {
 interface ProductTemplateProps {
   manager: ProductManager;
   onClick: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, productType: string) => void;
   onToggleActive: (id: string, isActive: boolean) => void;
 }
 
 const iconDefault = 'https://via.placeholder.com/200x300/png';
 
-const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onClick, onDelete, onToggleActive }) => {
+const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, onToggleActive }) => {
+  const router = useRouter();
   return (
-    <div className={style.productTemplate} onClick={() => onClick(manager._id)}>
+    <div className={style.productTemplate} 
+      onClick={() => router.push(`/${manager.productType}/${manager._id}`)}>
       <h3 className={style.managerAccess}>{manager.name}</h3>
       <div className={style.managerInfo}>
         <div className={style.divider}>
@@ -42,10 +45,10 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onClick, onD
           <p>Created: {new Date(manager.createdAt).toLocaleDateString()}</p>
         </div>
         <div className={style.divider}>
-            <img className={style.icon}
-            src={ manager.iconPreview || iconDefault } 
-            alt={ manager.iconPreview ? `Product Icon: ${manager.iconPreview}` : "No icon available" } 
-            /> {/* TODO: Replace with actual icon */}
+          <img className={style.icon}
+            src={manager.iconPreview || iconDefault}
+            alt={manager.iconPreview ? `Product Icon: ${manager.iconPreview}` : "No icon available"}
+          /> {/* TODO: Replace with actual icon */}
         </div>
       </div>
       <div className={style.status}>
@@ -53,7 +56,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onClick, onD
           className={style.button}
           onClick={(e) => {
             e.stopPropagation();
-            onDelete(manager._id);
+            onDelete(manager._id, manager.productType);
           }}
         >
           Delete
