@@ -11,6 +11,7 @@ interface ProductManager {
   intentRange?: string;
   selectorMode?: string;
   iconPreview?: string;
+  closestLinkedItem?: string;
 }
 
 interface ProductTemplateProps {
@@ -40,8 +41,9 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
           <p>
             Type: <span className={style.productType}>{manager.productType}</span>
           </p>
-          <p>Intent range: {manager.intentRange}</p>
-          <p>Selector mode: {manager.selectorMode}</p>
+          <p>Intent range: {manager.intentRange ? manager.intentRange : "N/A"}</p>
+          <p>Selector mode: {manager.selectorMode ? manager.selectorMode : "N/A"}</p>
+          <p>Closest linked item: {manager.closestLinkedItem ? manager.closestLinkedItem : "N/A"}</p>
           <p>Created: {new Date(manager.createdAt).toLocaleDateString()}</p>
         </div>
         <div className={style.divider}>

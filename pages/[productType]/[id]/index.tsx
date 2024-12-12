@@ -4,6 +4,8 @@ import { ProductManager } from '../../../types/productManager';
 import AdHocTemplate from '../../../src/app/components/ProductType/AdHocTemplate/component';
 import ProductMatrixTemplate from '../../../src/app/components/ProductType/ProductMatrixTemplate/component';
 import StaticTemplate from '../../../src/app/components/ProductType/StaticTemplate/component';
+import style from './index.module.css';
+import "../../../src/app/globals.css";
 
 export default function ProductTypePage() {
     const router = useRouter();
@@ -46,12 +48,17 @@ export default function ProductTypePage() {
     };
 
     return (
-        <div>
-            <h1>{productManager.name}</h1>
-            <p>ID: {productManager._id}</p>
-            <p>Type: {productManager.productType}</p>
-            <p>Created: {new Date(productManager.createdAt).toLocaleDateString()}</p>
-            {renderProductType()}
+        <div className={style.page}>
+            <header>
+                <h1>{productManager.name}</h1>
+                <p>{productManager._id}</p>
+                <p>{productManager.productType}</p>
+                <p>{new Date(productManager.createdAt).toLocaleDateString()}</p>
+                <button onClick={() => router.back()}>Back</button>
+            </header>
+            <div className={style.content}>
+                {renderProductType()}
+            </div>
         </div>
     );
 }

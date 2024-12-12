@@ -1,0 +1,105 @@
+.page {
+    --gray-rgb: 0, 0, 0;
+    --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
+    --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
+  
+    --button-primary-hover: #383838;
+    --button-secondary-hover: #f2f2f2;
+    
+    --button-critical: #ff2a00;
+  
+    padding: 40px;
+    font-family: var(--font-geist-sans);
+    margin: auto;
+    align-items: center;
+    display: grid;
+  }
+  
+  .page header {
+    text-transform: uppercase;
+    justify-content: space-around;
+    align-items: baseline;
+    border-bottom: 1px solid #fff;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: flex;
+  }
+  
+  .page header p {
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+
+  .page header button {
+    background: inherit;
+    color: #fff;
+    border: 1px solid #fff;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 10pt;
+    font-weight: 200;
+    cursor: pointer;
+    transition: 0.1s ease-out;
+  }
+
+  .page header button:hover {
+    background: #fff;
+    color: #000;
+    border-color: transparent;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .page {
+      --gray-rgb: 255, 255, 255;
+      --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+      --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+  
+      --button-primary-hover: #ccc;
+      --button-secondary-hover: #1a1a1a;
+    }
+  }
+  
+  @media (prefers-color-scheme: light) {
+    .page {
+      --gray-rgb: 255, 255, 255;
+      --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+      --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+  
+      --button-primary-hover: #1a1a1a;
+      --button-secondary-hover:#ccc;
+    }
+  }
+  
+  a.primary {
+    background: var(--foreground);
+    color: var(--background);
+    gap: 8px;
+  }
+  
+  a.secondary {
+    border-color: var(--gray-alpha-200);
+    min-width: 180px;
+  }
+  
+  @media (hover: hover) and (pointer: fine) {
+    a.primary:hover {
+      background: var(--button-primary-hover);
+      border-color: transparent;
+    }
+  
+    a.secondary:hover {
+      background: var(--button-secondary-hover);
+      border-color: transparent;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .page {
+      padding: 32px;
+      padding-bottom: 80px;
+    }
+
+    a.secondary {
+      min-width: auto;
+    }
+  }
