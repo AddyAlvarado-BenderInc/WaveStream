@@ -38,16 +38,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
 
             case 'PATCH': {
-                const { isActive } = req.body;
+                const query = productType ? { _id: id, productType } : { _id: id };
+                const allowedFields = [
+                    'displayAs',
+                    'productId',
+                    'intentRange',
+                    'selectorMode',
+                    'itemTemplate',
+                    'descriptionFooter',
+                    'initialProductLink',
+                    'buyNowButtonText',
+                ];
 
-                if (typeof isActive !== 'boolean') {
-                    return res.status(400).json({ error: 'Invalid isActive value' });
+                const updatedData = Object.keys(req.body)
+                    .filter((key) => allowedFields.includes(key))
+                    .reduce((obj, key) => {
+                        obj[key] = req.body[key];
+                        return obj;
+                    }, {} as Record<string, any>);
+
+                if (!Object.keys(updatedData).length) {
+                    return res.status(400).json({ error: 'No valid fields provided for update' });
                 }
 
-                const query = productType ? { _id: id, productType } : { _id: id };
                 const updatedManager = await ProductManager.findOneAndUpdate(
                     query,
-                    { isActive },
+                    { $set: updatedData },
                     { new: true }
                 );
 
@@ -55,12 +71,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
 
+                console.log('Updated Document:', updatedManager);
                 res.status(200).json(updatedManager);
                 break;
             }
 
+            case 'POST': {
+                const query = productType ? { _id: id, productType } : { _id: id };
+                const newData = req.body;
+
+                const result = await ProductManager.findOneAndUpdate(
+                    query,
+                    newData,
+                    { upsert: true, new: true }
+                );
+
+                res.status(200).json(result);
+                break;
+            }
+
             default:
-                res.setHeader('Allow', ['GET', 'DELETE', 'PATCH']);
+                res.setHeader('Allow', ['GET', 'DELETE', 'PATCH', 'POST']);
                 res.status(405).json({ error: `Method ${req.method} Not Allowed` });
         }
     } catch (error) {

@@ -1,31 +1,26 @@
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { GetServerSideProps } from 'next';
 import { ProductManager } from '../../../types/productManager';
-import AdHocTemplate from '../../../src/app/components/ProductType/AdHocTemplate/component';
+import { Provider } from 'react-redux';
+import { store } from '../../../src/app/store/store';
 import ProductMatrixTemplate from '../../../src/app/components/ProductType/ProductMatrixTemplate/component';
 import StaticTemplate from '../../../src/app/components/ProductType/StaticTemplate/component';
 import style from './index.module.css';
 import "../../../src/app/globals.css";
+import dynamic from 'next/dynamic';
 
-export default function ProductTypePage() {
-    const router = useRouter();
-    const { productType, id } = router.query;
+const AdHocTemplate = dynamic<{ productManager: ProductManager }>(
+    () => import('../../../src/app/components/ProductType/AdHocTemplate/component'),
+    { ssr: false }
+);
 
-    const [productManager, setProductManager] = useState<ProductManager | null>(null);
-    const [error, setError] = useState<string | null>(null);
+interface ProductTypePageProps {
+    productManager: ProductManager | null;
+    error: string | null;
+}
 
-    useEffect(() => {
-        if (productType && id) {
-            fetch(`/api/productManager/${productType}/${id}`)
-                .then((res) => {
-                    if (!res.ok) throw new Error('Failed to fetch product manager');
-                    return res.json();
-                })
-                .then((data) => setProductManager(data))
-                .catch((err) => setError(err.message));
-        }
-    }, [productType, id]);
+const baseUrl = process.env.API_BASE_URL || 'http://localhost:3000';
 
+export default function ProductTypePage({ productManager, error }: ProductTypePageProps) {
     if (error) {
         return <div>Error: {error}</div>;
     }
@@ -54,11 +49,37 @@ export default function ProductTypePage() {
                 <p>{productManager._id}</p>
                 <p>{productManager.productType}</p>
                 <p>{new Date(productManager.createdAt).toLocaleDateString()}</p>
-                <button onClick={() => router.back()}>Back</button>
+                <button onClick={() => window.history.back()}>Back</button>
             </header>
-            <div className={style.content}>
-                {renderProductType()}
-            </div>
+            <Provider store={store}>
+                <div className={style.content}>{renderProductType()}</div>
+            </Provider>
         </div>
     );
 }
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const { productType, id } = context.params || {};
+
+    if (!productType || !id) {
+        return {
+            props: {
+                productManager: null,
+                error: 'Invalid parameters.',
+            },
+        };
+    }
+
+    try {
+        const res = await fetch(
+            `${baseUrl}/api/productManager/${productType}/${id}`
+        );
+        if (!res.ok) {
+            throw new Error('Failed to fetch product manager');
+        }
+        const productManager: ProductManager = await res.json();
+        return { props: { productManager, error: null } };
+    } catch (error: any) {
+        return { props: { productManager: null, error: error.message } };
+    }
+};

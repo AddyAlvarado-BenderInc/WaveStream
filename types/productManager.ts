@@ -4,4 +4,12 @@ export interface ProductManager {
     productType: string;
     createdAt: string;
     isActive?: boolean;
+    displayAs: string;
+    productId: string;
+    intentRange: number;
+    selectorMode: string;
+    itemTemplate: string;
+    descriptionFooter: string;
+    initialProductLink: string;
+    buyNowButtonText: string;
 }
