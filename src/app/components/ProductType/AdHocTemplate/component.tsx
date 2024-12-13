@@ -39,6 +39,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     
             const updatedData = { ...productManager, ...formData };
     
+            console.log('FormData:', formData);
             console.log('Sending PATCH data:', updatedData);
     
             const response = await fetch(`/api/productManager/${productType}/${_id}`, {
@@ -51,6 +52,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     
             if (response.ok) {
                 const updatedProduct = await response.json();
+                console.log('Updated Product:', updatedProduct);
                 dispatch(updateProductManager(updatedProduct));
                 alert('Product saved successfully!');
             } else {
@@ -69,6 +71,8 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 const response = await fetch(`/api/productManager/${productManager.productType}/${productManager._id}`);
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Fetched ProductManager Data:', data);
+    
                     setFormData({
                         displayAs: data.displayAs || '',
                         productId: data.productId || '',
@@ -79,6 +83,8 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialProductLink: data.initialProductLink || '',
                         buyNowButtonText: data.buyNowButtonText || '',
                     });
+    
+                    console.log('Hydrated formData:', formData);
                 } else {
                     console.error('Failed to fetch product manager data');
                 }
@@ -86,12 +92,10 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 console.error('Error fetching product manager:', error);
             }
         };
-
-        if (productManager) {
-            fetchProductManager();
-        }
+    
+        fetchProductManager();
     }, [productManager]);
-
+    
     return (
         <div className={styles.container}>
             <h2>Product Information</h2>

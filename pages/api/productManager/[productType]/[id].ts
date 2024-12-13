@@ -15,12 +15,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         switch (req.method) {
             case 'GET': {
                 const query = productType ? { _id: id, productType } : { _id: id };
-                const productManager = await ProductManager.findOne(query);
-
+                const productManager = await ProductManager.findOne(query).lean();
+            
                 if (!productManager) {
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
-
+            
+                console.log('Fetched ProductManager:', productManager); 
                 res.status(200).json(productManager);
                 break;
             }
@@ -49,32 +50,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'initialProductLink',
                     'buyNowButtonText',
                 ];
-
+            
                 const updatedData = Object.keys(req.body)
                     .filter((key) => allowedFields.includes(key))
                     .reduce((obj, key) => {
                         obj[key] = req.body[key];
                         return obj;
                     }, {} as Record<string, any>);
-
+            
+                console.log('Incoming req.body:', req.body);
+                console.log('Filtered updatedData:', updatedData);
+            
                 if (!Object.keys(updatedData).length) {
                     return res.status(400).json({ error: 'No valid fields provided for update' });
                 }
-
+            
                 const updatedManager = await ProductManager.findOneAndUpdate(
                     query,
                     { $set: updatedData },
                     { new: true }
                 );
-
+            
                 if (!updatedManager) {
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
-
-                console.log('Updated Document:', updatedManager);
+            
+                console.log('Updated Document in DB:', updatedManager);
                 res.status(200).json(updatedManager);
                 break;
-            }
+            }                      
 
             case 'POST': {
                 const query = productType ? { _id: id, productType } : { _id: id };
