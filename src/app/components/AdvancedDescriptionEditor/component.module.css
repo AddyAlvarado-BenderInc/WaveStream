@@ -1,0 +1,61 @@
+.container {
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: inherit;
+    font-size: 10pt;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.tabs button {
+    padding: 5px 20px;
+    cursor: pointer;
+    border: 1px solid #fff;
+    background-color: inherit;
+    border-radius: 5px;
+    transition: 0.3s ease-out;
+}
+
+.tabs button:hover {
+    background-color: #fff;
+    color: #000;
+}
+
+.tabs .activeTab {
+    background-color: #fff;
+    color: #000;
+}
+
+.editor {
+    margin-bottom: 10px;
+}
+
+.textarea {
+    width: 100%;
+    height: 200px;
+    resize: both;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    font-family: monospace;
+}
+
+.combineButton {
+    padding: 5px 20px;
+    background-color: inherit;
+    color: invert;
+    border: 1px solid invert;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.combineButton:hover {
+    background-color: #fff;
+    color: #000;
+}

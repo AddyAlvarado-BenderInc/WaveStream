@@ -14,6 +14,11 @@ const ProductManagerSchema = new mongoose.Schema({
   descriptionFooter: { type: String, default: '' },
   initialProductLink: { type: String, default: '' },
   buyNowButtonText: { type: String, default: '' },
+  description: { type: String, default: '' },
+  section: { type: String, default: '' },
+  initialHTML: { type: String, default: '' },
+  initialCSS: { type: String, default: '' },
+  initialJS: { type: String, default: '' },
 });
 
 export default mongoose.models.ProductManager || mongoose.model('ProductManager', ProductManagerSchema);

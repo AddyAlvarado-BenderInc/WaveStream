@@ -12,4 +12,9 @@ export interface ProductManager {
     descriptionFooter: string;
     initialProductLink: string;
     buyNowButtonText: string;
+    description: string;
+    section: string;
+    initialHTML: string;
+    initialCSS: string;
+    initialJS: string;
 }

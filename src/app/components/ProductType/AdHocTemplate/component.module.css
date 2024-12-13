@@ -36,7 +36,32 @@
     max-width: 300px;
 }
 
-.table td input[type="text"] {
+.table td input[type="text"],
+.table td select[name="selectorMode"] {
     width: 100%;
     padding: 4px;
+    background-color: inherit;
+    border: 0.5px solid #fff;
+    border-radius: 4px;
+}
+
+.table td input[name="intentRange"] {
+    padding: 4px;
+    background-color: inherit;
+    border: 0.5px solid #fff;
+    border-radius: 4px;
+}
+
+.saveButton {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 1px solid #fff;
+    background-color: inherit;
+    border-radius: 5px;
+    transition: 0.3s ease-out;
+}
+
+.saveButton:hover {
+    background-color: #fff;
+    color: #000;
 }

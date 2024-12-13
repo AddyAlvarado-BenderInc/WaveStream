@@ -1,0 +1,77 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: inherit;
+    width: 300px;
+    margin-bottom: 10px;
+}
+
+.productIcon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.uploadLabel {
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    color: inverted;
+    text-align: center;
+    transition: 0.3s ease-out;
+    border-radius: 6px;
+}
+
+.uploadLabel::after {
+    margin-left: 5px;
+    content: '🔗';
+    font-size: 10pt;
+}
+
+.uploadLabel:hover {
+    background-color: #fff;
+    color: #000;
+}
+
+.fileInput {
+    display: none;
+}
+
+.uploadButton {
+    background-color: #000;
+    color: white;
+    padding: 8px 16px;
+    border: 0.25px solid invert;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.uploadButton:hover {
+    background-color: #fff;
+    color: #000;
+}
+
+.icon {
+    font-size: 2rem;
+}
+
+.previewContainer {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.previewImage {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}

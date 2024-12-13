@@ -6,6 +6,7 @@ import { updateProductManager } from "../../../store/productManagerSlice";
 import { ProductManager } from '../../../../../types/productManager';
 import styles from './component.module.css';
 import AdvancedDescription from '../../AdvancedDescriptionEditor/component';
+import ProductIconManager from '../../ProductIconManager/component';
 import { AppDispatch } from '@/app/store/store';
 
 interface AdHocTemplateProps {
@@ -23,6 +24,11 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         descriptionFooter: productManager.descriptionFooter || '',
         initialProductLink: productManager.initialProductLink || '',
         buyNowButtonText: productManager.buyNowButtonText || '',
+        description: productManager.description || '',
+        section: productManager.section || '',
+        initialHTML: productManager.initialHTML || '',
+        initialCSS: productManager.initialCSS || '',
+        initialJS: productManager.initialJS || '',
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -82,6 +88,11 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         descriptionFooter: data.descriptionFooter || '',
                         initialProductLink: data.initialProductLink || '',
                         buyNowButtonText: data.buyNowButtonText || '',
+                        description: data.description || '',
+                        section: data.section || '',
+                        initialHTML: data.initialHTML || '',
+                        initialCSS: data.initialCSS || '',
+                        initialJS: data.initialJS || '',
                     });
 
                     console.log('Hydrated formData:', formData);
@@ -95,6 +106,14 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
         fetchProductManager();
     }, [productManager]);
+
+    const handleCombinedHTML = (htmlString: string) => {
+        console.log('Generated HTML string:', htmlString);
+    };
+
+    const handleFileUpload = (file: File) => {
+        console.log('File uploaded:', file);
+    };
 
     return (
         <div className={styles.container}>
@@ -201,16 +220,15 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
             </table>
             <div className={styles.footerSettings}>
                 <div className={styles.briefDescription}>
-                    <AdvancedDescription description=" " section="Brief"/>
+                    <AdvancedDescription description={formData.description} section="Brief" initialCSS={formData.initialCSS} initialHTML={formData.initialHTML} initialJS={formData.initialJS} onCombine={handleCombinedHTML} />
                 </div>
-                <form className={styles.productIcon}>
-                    <input type="file" />
-                    <input type="submit" value="Upload" />
-                </form>
-                <button className={styles.saveButton} onClick={handleSave}>
-                    Save
-                </button>
+                <div className={styles.productIcon}>
+                    <ProductIconManager icon="fas fa-shopping-cart" label="Product Icon" onUpload={handleFileUpload}/>
+                </div>
             </div>
+            <button className={styles.saveButton} onClick={handleSave}>
+                Save
+            </button>
         </div>
     );
 };

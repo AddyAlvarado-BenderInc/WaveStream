@@ -49,6 +49,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'descriptionFooter',
                     'initialProductLink',
                     'buyNowButtonText',
+                    'description',
+                    'section',
+                    'initialHTML',
+                    'initialCSS',
+                    'initialJS',
                 ];
             
                 const updatedData = Object.keys(req.body)
