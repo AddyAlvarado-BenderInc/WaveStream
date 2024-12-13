@@ -2,6 +2,7 @@ import React from "react";
 
 interface AdvancedDescriptionProps {
     description: string;
+    section: string;
 }
 
 const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({ description }) => {

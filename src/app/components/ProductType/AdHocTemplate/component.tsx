@@ -36,12 +36,12 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     const handleSave = async () => {
         try {
             const { productType, _id } = productManager;
-    
+
             const updatedData = { ...productManager, ...formData };
-    
+
             console.log('FormData:', formData);
             console.log('Sending PATCH data:', updatedData);
-    
+
             const response = await fetch(`/api/productManager/${productType}/${_id}`, {
                 method: 'PATCH',
                 headers: {
@@ -49,7 +49,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 },
                 body: JSON.stringify(updatedData),
             });
-    
+
             if (response.ok) {
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
@@ -64,7 +64,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
             alert('Failed to save the product. Please try again.');
         }
     };
-    
+
     useEffect(() => {
         const fetchProductManager = async () => {
             try {
@@ -72,7 +72,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Fetched ProductManager Data:', data);
-    
+
                     setFormData({
                         displayAs: data.displayAs || '',
                         productId: data.productId || '',
@@ -83,7 +83,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialProductLink: data.initialProductLink || '',
                         buyNowButtonText: data.buyNowButtonText || '',
                     });
-    
+
                     console.log('Hydrated formData:', formData);
                 } else {
                     console.error('Failed to fetch product manager data');
@@ -92,23 +92,23 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 console.error('Error fetching product manager:', error);
             }
         };
-    
+
         fetchProductManager();
     }, [productManager]);
-    
+
     return (
         <div className={styles.container}>
             <h2>Product Information</h2>
             <table className={styles.table}>
                 <tbody>
                     <tr>
-                        <td>Product Name:</td>
+                        <td>Product Name</td>
                         <td>
                             <input type="text" value={productManager.name} readOnly />
                         </td>
                     </tr>
                     <tr>
-                        <td>Display As:</td>
+                        <td>Display As</td>
                         <td>
                             <input
                                 type="text"
@@ -119,7 +119,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         </td>
                     </tr>
                     <tr>
-                        <td>Product Id:</td>
+                        <td>Product Id</td>
                         <td>
                             <input
                                 type="text"
@@ -130,7 +130,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         </td>
                     </tr>
                     <tr>
-                        <td>Intent Range:</td>
+                        <td>Intent Range</td>
                         <td>
                             <input
                                 type="number"
@@ -141,7 +141,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         </td>
                     </tr>
                     <tr>
-                        <td>Selector Mode:</td>
+                        <td>Selector Mode</td>
                         <td>
                             <select
                                 name="selectorMode"
@@ -154,7 +154,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         </td>
                     </tr>
                     <tr>
-                        <td>Item Template:</td>
+                        <td>Item Template</td>
                         <td>
                             <input
                                 type="text"
@@ -165,7 +165,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         </td>
                     </tr>
                     <tr>
-                        <td>Description Footer:</td>
+                        <td>Description Footer</td>
                         <td>
                             <input
                                 type="text"
@@ -176,7 +176,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         </td>
                     </tr>
                     <tr>
-                        <td>Initial Product Link:</td>
+                        <td>Initial Product Link</td>
                         <td>
                             <input
                                 type="text"
@@ -187,7 +187,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         </td>
                     </tr>
                     <tr>
-                        <td>Buy Now Button Text:</td>
+                        <td>Buy Now Button Text</td>
                         <td>
                             <input
                                 type="text"
@@ -199,16 +199,18 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                     </tr>
                 </tbody>
             </table>
-            <div className={styles.briefDescription}>
-                <AdvancedDescription description=" " />
+            <div className={styles.footerSettings}>
+                <div className={styles.briefDescription}>
+                    <AdvancedDescription description=" " section="Brief"/>
+                </div>
+                <form className={styles.productIcon}>
+                    <input type="file" />
+                    <input type="submit" value="Upload" />
+                </form>
+                <button className={styles.saveButton} onClick={handleSave}>
+                    Save
+                </button>
             </div>
-            <form className={styles.productIcon}>
-                <input type="file" />
-                <input type="submit" value="Upload" />
-            </form>
-            <button className={styles.saveButton} onClick={handleSave}>
-                Save
-            </button>
         </div>
     );
 };

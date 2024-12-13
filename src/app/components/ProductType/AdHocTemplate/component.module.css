@@ -1,5 +1,42 @@
 .container {
-    margin-top: 20px;
     margin: auto;
+    max-width: 300px;
     width: 100%;
+}
+
+.container td {
+    padding: 2px;
+    font-size: 10pt;
+    font-weight: 400;
+}
+
+.container td:nth-child(-n + 2) {
+    text-align: left;
+    padding-right: 10px;
+}
+
+.container td:nth-child(-n + 1) {
+    text-align: right;
+}
+
+.container .table {
+    margin: auto;
+}
+
+.container h2 {
+    text-align: center;
+}
+
+.footerSettings {
+    text-align: center;
+}
+
+.table tr td {
+    width: 100%;
+    max-width: 300px;
+}
+
+.table td input[type="text"] {
+    width: 100%;
+    padding: 4px;
 }

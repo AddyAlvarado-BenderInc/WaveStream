@@ -1,47 +1,30 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../lib/mongodb';
-import mongoose from 'mongoose';
+import Counter from '../../models/Counter';
+import ProductManager from '../../models/ProductManager';
 
-const CounterSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    sequenceValue: { type: Number, required: true },
-});
-
-const Counter = mongoose.models.Counter || mongoose.model('Counter', CounterSchema);
-
-const ProductManagerSchema = new mongoose.Schema({
-    _id: { type: String, required: true },
-    name: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
-    productType: { type: String, required: true },
-    isActive: { type: Boolean, default: true },
-});
-
-const ProductManager =
-    mongoose.models.ProductManager || mongoose.model('ProductManager', ProductManagerSchema);
-
-    async function getNextSequence(name: string) {
-        const totalCount = await ProductManager.countDocuments();
-        if (totalCount === 0) {
-            await Counter.findOneAndUpdate(
-                { name },
-                { $set: { sequenceValue: 0 } },
-                { upsert: true }
-            );
-        }
-    
-        const result = await Counter.findOneAndUpdate(
+async function getNextSequence(name: string) {
+    const totalCount = await ProductManager.countDocuments();
+    if (totalCount === 0) {
+        await Counter.findOneAndUpdate(
             { name },
-            { $inc: { sequenceValue: 1 } },
-            { new: true, upsert: true }
+            { $set: { sequenceValue: 0 } },
+            { upsert: true }
         );
-    
-        if (!result || result.sequenceValue == null) {
-            throw new Error('Failed to fetch or increment counter');
-        }
-        return result.sequenceValue;
     }
-    
+
+    const result = await Counter.findOneAndUpdate(
+        { name },
+        { $inc: { sequenceValue: 1 } },
+        { new: true, upsert: true }
+    );
+
+    if (!result || result.sequenceValue == null) {
+        throw new Error('Failed to fetch or increment counter');
+    }
+    return result.sequenceValue;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
         await connectToDatabase();
