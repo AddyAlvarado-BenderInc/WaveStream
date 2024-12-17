@@ -1,68 +1,43 @@
-import React, { useState, useEffect } from "react";
-import styles from './component.module.css';
+import React, { useState, useEffect, useRef } from "react";
+import styles from "./component.module.css";
 
 interface AdvancedDescriptionProps {
     description: string;
-    initialReactJS: string;
+    initialJS: string;
+    initialHTML: string;
     initialCSS: string;
-    onCombine: (reactString: string, cssString: string) => void;
     onUpdate: (field: string, value: string) => void;
 }
 
 const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     description,
-    initialReactJS,
+    initialJS,
     initialCSS,
-    onCombine,
-    onUpdate
+    initialHTML,
+    onUpdate,
 }) => {
-    const [activeTab, setActiveTab] = useState<"ReactJS" | "CSS">("ReactJS");
-    const [reactJS, setReactJS] = useState(initialReactJS);
+    const [activeTab, setActiveTab] = useState<"Javascript" | "CSS" | "HTML">("HTML");
+    const [js, setJs] = useState(initialJS);
     const [css, setCss] = useState(initialCSS);
+    const [html, setHtml] = useState(initialHTML);
 
-    useEffect(() => {
-        setReactJS(initialReactJS);
-    }, [initialReactJS]);
-    
-    useEffect(() => {
-        setCss(initialCSS);
-    }, [initialCSS]);
-    
-
-    const handleCombine = () => {
-        onCombine(reactJS, css);
-    };
-
-    return (
-        <div className={styles.container}>
-            <div className={styles.tabs}>
-                <button
-                    className={activeTab === "ReactJS" ? styles.activeTab : ""}
-                    onClick={() => setActiveTab("ReactJS")}
-                >
-                    ReactJS
-                </button>
-                <button
-                    className={activeTab === "CSS" ? styles.activeTab : ""}
-                    onClick={() => setActiveTab("CSS")}
-                >
-                    CSS
-                </button>
-            </div>
-            <div className={styles.editor}>
-                {activeTab === "ReactJS" && (
+    const renderEditor = () => {
+        switch (activeTab) {
+            case "Javascript":
+                return (
                     <textarea
                         className={styles.textarea}
-                        value={reactJS}
+                        value={js}
                         onChange={(e) => {
                             const value = e.target.value;
-                            setReactJS(value);
-                            onUpdate("reactJS", value);
+                            setJs(value);
+                            onUpdate("js", value);
                         }}
-                        placeholder="Write ReactJS code here..."
+                        placeholder="Write Javascript code here..."
                     />
-                )}
-                {activeTab === "CSS" && (
+                );
+            case "CSS":
+                return (
                     <textarea
                         className={styles.textarea}
                         value={css}
@@ -71,13 +46,50 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                             setCss(value);
                             onUpdate("css", value);
                         }}
-                        placeholder="Write CSS here..."
+                        placeholder="Write CSS code here..."
                     />
-                )}
+                );
+            case "HTML":
+                return (
+                    <textarea
+                        className={styles.textarea}
+                        value={html}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            setHtml(value);
+                            onUpdate("html", value);
+                        }}
+                        placeholder="Write HTML code here..."
+                    />
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className={styles.container}>
+            <div className={styles.tabs}>
+                <button
+                    className={activeTab === "HTML" ? styles.activeTab : ""}
+                    onClick={() => setActiveTab("HTML")}
+                >
+                    HTML
+                </button>
+                <button
+                    className={activeTab === "CSS" ? styles.activeTab : ""}
+                    onClick={() => setActiveTab("CSS")}
+                >
+                    CSS
+                </button>
+                <button
+                    className={activeTab === "Javascript" ? styles.activeTab : ""}
+                    onClick={() => setActiveTab("Javascript")}
+                >
+                    JS
+                </button>
             </div>
-            <button className={styles.combineButton} onClick={handleCombine}>
-                Combine ReactJS and CSS
-            </button>
+            <div className={styles.editor}>{renderEditor()}</div>
         </div>
     );
 };

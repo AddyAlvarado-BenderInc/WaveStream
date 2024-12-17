@@ -25,8 +25,11 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         initialProductLink: productManager.initialProductLink || '',
         buyNowButtonText: productManager.buyNowButtonText || '',
         description: productManager.description || '',
-        initialReactJS: productManager.initialReactJS || '',
+        initialJS: productManager.initialJS || '',
         initialCSS: productManager.initialCSS || '',
+        initialHTML: productManager.initialHTML || '',
+        icon: productManager.icon || '',
+        label: productManager.label || '',
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -40,16 +43,31 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     const handleAdvancedDescriptionUpdate = (field: string, value: string) => {
         const updatedField = {
             css: 'initialCSS',
-            reactJS: 'initialReactJS',
+            html: 'initialHTML',
+            js: 'initialJS',
         }[field];
-    
+
         if (updatedField) {
             setFormData((prevData) => ({
                 ...prevData,
                 [updatedField]: value,
             }));
         }
-    };    
+    };
+
+    const handleProductIconUpdate = (field: string, value: string) => {
+        const updatedField = {
+            icon: 'icon',
+            label: 'label',
+        }[field];
+
+        if (updatedField) {
+            setFormData((prevData) => ({
+                ...prevData,
+                [updatedField]: value,
+            }));
+        }
+    };
 
     const handleSave = async () => {
         try {
@@ -98,8 +116,11 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialProductLink: data.initialProductLink || '',
                         buyNowButtonText: data.buyNowButtonText || '',
                         description: data.description || '',
-                        initialReactJS: data.initialReactJS || '',
+                        initialJS: data.initialJS || '',
                         initialCSS: data.initialCSS || '',
+                        initialHTML: data.initialHTML || '',
+                        icon: data.icon || '',
+                        label: data.label || '',
                     });
                 } else {
                     console.error('Failed to fetch product manager data');
@@ -108,18 +129,18 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 console.error('Error fetching product manager:', error);
             }
         };
-    
+
         fetchProductManager();
     }, []);
-    
 
-    const handleCombinedHTML = (htmlString: string) => {
-        console.log('Generated HTML string:', htmlString);
+    const handleFileUpload = (iconData: string) => {
+        console.log("Uploaded Icon Data:", iconData);
+        setFormData((prevData) => ({
+            ...prevData,
+            icon: iconData,
+        }));
     };
 
-    const handleFileUpload = (file: File) => {
-        console.log('File uploaded:', file);
-    };
 
     return (
         <div className={styles.container}>
@@ -228,16 +249,20 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 <div className={styles.briefDescription}>
                     <AdvancedDescription
                         description={formData.description}
-                        initialReactJS={formData.initialReactJS}
+                        initialJS={formData.initialJS}
                         initialCSS={formData.initialCSS}
-                        onCombine={handleCombinedHTML}
+                        initialHTML={formData.initialHTML}
                         onUpdate={handleAdvancedDescriptionUpdate}
                     />
+                </div>
+                <ProductIconManager
+                    icon={formData.icon}
+                    label="Product Icon"
+                    onUpload={(iconData: string) => {
+                        setFormData((prev) => ({ ...prev, icon: iconData }));
+                    }}
+                />
 
-                </div>
-                <div className={styles.productIcon}>
-                    <ProductIconManager icon="fas fa-shopping-cart" label="Product Icon" onUpload={handleFileUpload} />
-                </div>
             </div>
             <button className={styles.saveButton} onClick={handleSave}>
                 Save

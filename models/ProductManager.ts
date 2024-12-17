@@ -15,8 +15,11 @@ const ProductManagerSchema = new mongoose.Schema({
   initialProductLink: { type: String, default: '' },
   buyNowButtonText: { type: String, default: '' },
   description: { type: String, default: '', description: 'Viewport for the final rendered result' },
-  initialReactJS: { type: String, default: '' },
+  initialJS: { type: String, default: '' },
+  initialHTML: { type: String, default: '' },
   initialCSS: { type: String, default: '' },
+  icon: { type: String, default: '' },
+  label: { type: String, default: '' },
 });
 
 export default mongoose.models.ProductManager || mongoose.model('ProductManager', ProductManagerSchema);

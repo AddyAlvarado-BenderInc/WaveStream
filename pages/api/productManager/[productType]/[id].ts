@@ -1,6 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../../lib/mongodb';
 import ProductManager from '../../../../models/ProductManager';
+import path from 'path';
+import fs from 'fs';
+
+export const config = {
+    api: {
+        bodyParser: false,
+    }
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { productType, id } = req.query;
@@ -50,15 +58,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'initialProductLink',
                     'buyNowButtonText',
                     'description',
-                    'section',
+                    'initialHTML',
                     'initialCSS',
-                    'initialReactJS',
+                    'initialJS',
+                    'icon',
+                    'label',
                 ];
             
                 const updatedData = Object.keys(req.body)
                     .filter((key) => allowedFields.includes(key))
                     .reduce((obj, key) => {
-                        obj[key] = req.body[key];
+                        if (key === 'icon' && typeof req.body[key] === 'string') {
+                            obj[key] = req.body[key].substring(0, 30); 
+                        } else {
+                            obj[key] = req.body[key];
+                        }
                         return obj;
                     }, {} as Record<string, any>);
             
@@ -82,7 +96,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 console.log('Updated Document in DB:', updatedManager);
                 res.status(200).json(updatedManager);
                 break;
-            }                      
+            }
+                              
 
             case 'POST': {
                 const query = productType ? { _id: id, productType } : { _id: id };

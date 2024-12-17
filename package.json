@@ -11,8 +11,10 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.0",
     "mongoose": "^8.8.4",
+    "multer": "^1.4.5-lts.1",
     "next": "15.0.4",
     "playwright": "^1.49.0",
+    "quill": "^2.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
