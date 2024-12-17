@@ -1,53 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from './component.module.css';
 
 interface AdvancedDescriptionProps {
     description: string;
-    section: string;
-    initialHTML: string;
+    initialReactJS: string;
     initialCSS: string;
-    initialJS: string;
-    onCombine: (htmlString: string) => void;
+    onCombine: (reactString: string, cssString: string) => void;
+    onUpdate: (field: string, value: string) => void;
 }
 
 const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
-    initialHTML,
+    description,
+    initialReactJS,
     initialCSS,
-    initialJS,
     onCombine,
+    onUpdate
 }) => {
-    const [activeTab, setActiveTab] = useState<"HTML" | "CSS" | "JS">("HTML");
-    const [html, setHtml] = useState(initialHTML);
+    const [activeTab, setActiveTab] = useState<"ReactJS" | "CSS">("ReactJS");
+    const [reactJS, setReactJS] = useState(initialReactJS);
     const [css, setCss] = useState(initialCSS);
-    const [js, setJs] = useState(initialJS);
 
-    const combineCode = () => {
-        const combinedHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        ${css}
-    </style>
-</head>
-<body>
-    ${html}
-    <script>
-        ${js}
-    </script>
-</body>
-</html>`;
-        onCombine(combinedHTML);
+    useEffect(() => {
+        setReactJS(initialReactJS);
+    }, [initialReactJS]);
+    
+    useEffect(() => {
+        setCss(initialCSS);
+    }, [initialCSS]);
+    
+
+    const handleCombine = () => {
+        onCombine(reactJS, css);
     };
 
     return (
         <div className={styles.container}>
             <div className={styles.tabs}>
                 <button
-                    className={activeTab === "HTML" ? styles.activeTab : ""}
-                    onClick={() => setActiveTab("HTML")}
+                    className={activeTab === "ReactJS" ? styles.activeTab : ""}
+                    onClick={() => setActiveTab("ReactJS")}
                 >
-                    HTML
+                    ReactJS
                 </button>
                 <button
                     className={activeTab === "CSS" ? styles.activeTab : ""}
@@ -55,41 +48,35 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 >
                     CSS
                 </button>
-                <button
-                    className={activeTab === "JS" ? styles.activeTab : ""}
-                    onClick={() => setActiveTab("JS")}
-                >
-                    JavaScript
-                </button>
             </div>
             <div className={styles.editor}>
-                {activeTab === "HTML" && (
+                {activeTab === "ReactJS" && (
                     <textarea
                         className={styles.textarea}
-                        value={html}
-                        onChange={(e) => setHtml(e.target.value)}
-                        placeholder="Write HTML here..."
+                        value={reactJS}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            setReactJS(value);
+                            onUpdate("reactJS", value);
+                        }}
+                        placeholder="Write ReactJS code here..."
                     />
                 )}
                 {activeTab === "CSS" && (
                     <textarea
                         className={styles.textarea}
                         value={css}
-                        onChange={(e) => setCss(e.target.value)}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            setCss(value);
+                            onUpdate("css", value);
+                        }}
                         placeholder="Write CSS here..."
                     />
                 )}
-                {activeTab === "JS" && (
-                    <textarea
-                        className={styles.textarea}
-                        value={js}
-                        onChange={(e) => setJs(e.target.value)}
-                        placeholder="Write JavaScript here..."
-                    />
-                )}
             </div>
-            <button className={styles.combineButton} onClick={combineCode}>
-                Combine & Generate HTML
+            <button className={styles.combineButton} onClick={handleCombine}>
+                Combine ReactJS and CSS
             </button>
         </div>
     );

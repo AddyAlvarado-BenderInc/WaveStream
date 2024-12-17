@@ -15,14 +15,14 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
         const file = e.target.files?.[0];
         if (file) {
             setSelectedFile(file);
-            setPreview(URL.createObjectURL(file)); // Generate preview URL
+            setPreview(URL.createObjectURL(file));
         }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedFile) {
-            onUpload(selectedFile); // Pass the file to the parent component
+            onUpload(selectedFile);
             alert("File uploaded successfully!");
         } else {
             alert("Please select a file to upload.");

@@ -25,19 +25,31 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         initialProductLink: productManager.initialProductLink || '',
         buyNowButtonText: productManager.buyNowButtonText || '',
         description: productManager.description || '',
-        section: productManager.section || '',
-        initialHTML: productManager.initialHTML || '',
+        initialReactJS: productManager.initialReactJS || '',
         initialCSS: productManager.initialCSS || '',
-        initialJS: productManager.initialJS || '',
     });
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData((prevData) => ({
             ...prevData,
             [name]: value,
         }));
     };
+
+    const handleAdvancedDescriptionUpdate = (field: string, value: string) => {
+        const updatedField = {
+            css: 'initialCSS',
+            reactJS: 'initialReactJS',
+        }[field];
+    
+        if (updatedField) {
+            setFormData((prevData) => ({
+                ...prevData,
+                [updatedField]: value,
+            }));
+        }
+    };    
 
     const handleSave = async () => {
         try {
@@ -60,7 +72,6 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
                 dispatch(updateProductManager(updatedProduct));
-                alert('Product saved successfully!');
             } else {
                 const error = await response.json();
                 alert(`Error saving product: ${error.message}`);
@@ -77,8 +88,6 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 const response = await fetch(`/api/productManager/${productManager.productType}/${productManager._id}`);
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Fetched ProductManager Data:', data);
-
                     setFormData({
                         displayAs: data.displayAs || '',
                         productId: data.productId || '',
@@ -89,13 +98,9 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialProductLink: data.initialProductLink || '',
                         buyNowButtonText: data.buyNowButtonText || '',
                         description: data.description || '',
-                        section: data.section || '',
-                        initialHTML: data.initialHTML || '',
+                        initialReactJS: data.initialReactJS || '',
                         initialCSS: data.initialCSS || '',
-                        initialJS: data.initialJS || '',
                     });
-
-                    console.log('Hydrated formData:', formData);
                 } else {
                     console.error('Failed to fetch product manager data');
                 }
@@ -103,9 +108,10 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 console.error('Error fetching product manager:', error);
             }
         };
-
+    
         fetchProductManager();
-    }, [productManager]);
+    }, []);
+    
 
     const handleCombinedHTML = (htmlString: string) => {
         console.log('Generated HTML string:', htmlString);
@@ -211,7 +217,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                             <input
                                 type="text"
                                 name="buyNowButtonText"
-                                value={formData.buyNowButtonText || 'Order Now'}
+                                value={formData.buyNowButtonText || ''}
                                 onChange={handleInputChange}
                             />
                         </td>
@@ -220,10 +226,17 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
             </table>
             <div className={styles.footerSettings}>
                 <div className={styles.briefDescription}>
-                    <AdvancedDescription description={formData.description} section="Brief" initialCSS={formData.initialCSS} initialHTML={formData.initialHTML} initialJS={formData.initialJS} onCombine={handleCombinedHTML} />
+                    <AdvancedDescription
+                        description={formData.description}
+                        initialReactJS={formData.initialReactJS}
+                        initialCSS={formData.initialCSS}
+                        onCombine={handleCombinedHTML}
+                        onUpdate={handleAdvancedDescriptionUpdate}
+                    />
+
                 </div>
                 <div className={styles.productIcon}>
-                    <ProductIconManager icon="fas fa-shopping-cart" label="Product Icon" onUpload={handleFileUpload}/>
+                    <ProductIconManager icon="fas fa-shopping-cart" label="Product Icon" onUpload={handleFileUpload} />
                 </div>
             </div>
             <button className={styles.saveButton} onClick={handleSave}>

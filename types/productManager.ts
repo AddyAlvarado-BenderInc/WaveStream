@@ -13,8 +13,6 @@ export interface ProductManager {
     initialProductLink: string;
     buyNowButtonText: string;
     description: string;
-    section: string;
-    initialHTML: string;
+    initialReactJS: string;
     initialCSS: string;
-    initialJS: string;
 }

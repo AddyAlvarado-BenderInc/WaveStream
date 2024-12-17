@@ -51,9 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'buyNowButtonText',
                     'description',
                     'section',
-                    'initialHTML',
                     'initialCSS',
-                    'initialJS',
+                    'initialReactJS',
                 ];
             
                 const updatedData = Object.keys(req.body)
