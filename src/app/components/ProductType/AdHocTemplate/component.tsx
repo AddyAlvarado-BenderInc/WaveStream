@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { updateProductManager } from "../../../store/productManagerSlice";
@@ -7,6 +5,7 @@ import { ProductManager } from '../../../../../types/productManager';
 import styles from './component.module.css';
 import AdvancedDescription from '../../AdvancedDescriptionEditor/component';
 import ProductIconManager from '../../ProductIconManager/component';
+import ProductInformationForm from '../../ProductInformation/component';
 import { AppDispatch } from '@/app/store/store';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -153,117 +152,31 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
     return (
         <div className={styles.container}>
-            <h2>Product Information</h2>
-            <table className={styles.table}>
-                <tbody>
-                    <tr>
-                        <td>Product Name</td>
-                        <td>
-                            <input type="text" value={productManager.name} readOnly />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Display As</td>
-                        <td>
-                            <input
-                                type="text"
-                                name="displayAs"
-                                value={formData.displayAs || ''}
-                                onChange={handleInputChange}
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Product Id</td>
-                        <td>
-                            <input
-                                type="text"
-                                name="productId"
-                                value={formData.productId || ''}
-                                onChange={handleInputChange}
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Intent Range</td>
-                        <td>
-                            <input
-                                type="number"
-                                name="intentRange"
-                                value={formData.intentRange || 0}
-                                onChange={handleInputChange}
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Selector Mode</td>
-                        <td>
-                            <select
-                                name="selectorMode"
-                                value={formData.selectorMode || ''}
-                                onChange={handleInputChange}
-                            >
-                                <option value="default">Default</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Item Template</td>
-                        <td>
-                            <input
-                                type="text"
-                                name="itemTemplate"
-                                value={formData.itemTemplate || ''}
-                                onChange={handleInputChange}
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Description Footer</td>
-                        <td>
-                            <input
-                                type="text"
-                                name="descriptionFooter"
-                                value={formData.descriptionFooter || ''}
-                                onChange={handleInputChange}
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Initial Product Link</td>
-                        <td>
-                            <input
-                                type="text"
-                                name="initialProductLink"
-                                value={formData.initialProductLink || ''}
-                                onChange={handleInputChange}
-                            />
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Buy Now Button Text</td>
-                        <td>
-                            <input
-                                type="text"
-                                name="buyNowButtonText"
-                                value={formData.buyNowButtonText || ''}
-                                onChange={handleInputChange}
-                            />
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <div className={styles.footerSettings}>
-                <div className={styles.briefDescription}>
-                    <AdvancedDescription
-                        description={formData.description}
-                        initialJS={formData.initialJS}
-                        initialCSS={formData.initialCSS}
-                        initialHTML={formData.initialHTML}
-                        onUpdate={handleAdvancedDescriptionUpdate}
-                    />
-                </div>
+            <div className={styles.leftContainer}>
+                <ProductInformationForm
+                    formData={formData}
+                    handleInputChange={handleInputChange}
+                    productName={productManager.name}
+                />
+                <ToastContainer />
+            </div>
+            <div className={styles.divider} />
+            <div className={styles.middleContainer}>
+                <AdvancedDescription
+                    description={formData.description}
+                    initialJS={formData.initialJS}
+                    initialCSS={formData.initialCSS}
+                    initialHTML={formData.initialHTML}
+                    onUpdate={(field, value) => {
+                        setFormData((prev) => ({
+                            ...prev,
+                            [field]: value,
+                        }));
+                    }}
+                />
+            </div>
+            <div className={styles.divider} />
+            <div className={styles.rightContainer}>
                 <ProductIconManager
                     icon={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
                     label="Product Icon"
@@ -278,11 +191,10 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         console.log("Icon uploaded:", file);
                     }}
                 />
-                <ToastContainer />
+                <button className={styles.saveButton} onClick={handleSave}>
+                    Save
+                </button>
             </div>
-            <button className={styles.saveButton} onClick={handleSave}>
-                Save
-            </button>
         </div>
     );
 };

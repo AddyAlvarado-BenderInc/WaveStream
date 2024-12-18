@@ -14,6 +14,7 @@ interface ProductManager {
   initialProductLink: string;
   descriptionFooter: string;
   label: string;
+  displayAs: string;
 }
 
 interface ProductTemplateProps {
@@ -34,9 +35,8 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
       <div className={style.managerInfo}>
         <div className={style.divider}>
           <p>ID: {manager._id}</p>
-          <p>
-            Type: <span className={style.productType}>{manager.productType}</span>
-          </p>
+          <p>Display As: {manager.displayAs}</p>
+          <p>Type: <span className={style.productType}>{manager.productType}</span></p>
           <p>Intent range: {manager.intentRange ? manager.intentRange : "N/A"}</p>
           <p>Selector mode: {manager.selectorMode ? manager.selectorMode : "N/A"}</p>
           <p>Closest linked item: {manager.initialProductLink ? manager.initialProductLink : "N/A"}</p>
