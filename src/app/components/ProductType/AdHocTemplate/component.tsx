@@ -8,6 +8,8 @@ import styles from './component.module.css';
 import AdvancedDescription from '../../AdvancedDescriptionEditor/component';
 import ProductIconManager from '../../ProductIconManager/component';
 import { AppDispatch } from '@/app/store/store';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface AdHocTemplateProps {
     productManager: ProductManager;
@@ -30,6 +32,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         initialHTML: productManager.initialHTML || '',
         icon: productManager.icon || '',
         label: productManager.label || '',
+        iconPreview: productManager.iconPreview || null,
     });
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -62,7 +65,9 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
             const formDataPayload = new FormData();
 
             Object.entries(formData).forEach(([key, value]) => {
-                if (value !== null && value !== undefined) {
+                if (key === 'icon' && value instanceof File) {
+                    formDataPayload.append(key, value);
+                } else if (value !== null && value !== undefined) {
                     formDataPayload.append(key, value.toString());
                 }
             });
@@ -81,10 +86,19 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 setFormData((prev) => ({
                     ...prev,
                     ...updatedProduct,
+                    iconPreview: updatedProduct.icon,
                 }));
 
                 dispatch(updateProductManager(updatedProduct));
-                alert("Product saved successfully!");
+                toast.success('Product saved successfully!', {
+                    position: 'bottom-center',
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
             } else {
                 const error = await response.json();
                 alert(`Error saving product: ${error.message}`);
@@ -114,6 +128,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialJS: data.initialJS || '',
                         initialCSS: data.initialCSS || '',
                         initialHTML: data.initialHTML || '',
+                        iconPreview: typeof productManager.icon === 'string' ? productManager.icon : null,
                         icon: data.icon || '',
                         label: data.label || '',
                     });
@@ -242,13 +257,17 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                     />
                 </div>
                 <ProductIconManager
-                    icon={typeof formData.icon === "string" ? formData.icon : ""}
+                    icon={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
                     label="Product Icon"
                     onUpload={(file: File) => {
+                        const previewURL = URL.createObjectURL(file);
+
                         setFormData((prev) => ({
                             ...prev,
                             icon: file,
+                            iconPreview: previewURL,
                         }));
+                        console.log("Icon uploaded:", file);
                     }}
                 />
             </div>

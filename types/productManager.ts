@@ -19,4 +19,5 @@ export interface ProductManager {
     initialCSS: string;
     icon: string | File;
     label: string;
+    iconPreview?: string;
 }

@@ -10,6 +10,13 @@ interface ProductIconManagerProps {
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload }) => {
     const [preview, setPreview] = useState<string | null>(icon || null);
 
+    useEffect(() => {
+        if (icon) {
+            setPreview(icon);
+        }
+    }, [icon]);
+    
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
