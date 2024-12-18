@@ -1,14 +1,34 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../../lib/mongodb';
 import ProductManager from '../../../../models/ProductManager';
+import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { promisify } from 'util';
 
 export const config = {
     api: {
         bodyParser: false,
-    }
+    },
+};
+
+const uploadDir = path.join(process.cwd(), 'public/uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
+
+const upload = multer({
+    storage: multer.diskStorage({
+        destination: uploadDir,
+        filename: (req, file, cb) => {
+            const ext = path.extname(file.originalname);
+            cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}${ext}`);
+        },
+    }),
+    limits: { fileSize: 5 * 1024 * 1024 }, 
+});
+
+const runMiddleware = promisify(upload.single('icon'));
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { productType, id } = req.query;
@@ -24,30 +44,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             case 'GET': {
                 const query = productType ? { _id: id, productType } : { _id: id };
                 const productManager = await ProductManager.findOne(query).lean();
-            
+
                 if (!productManager) {
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
-            
-                console.log('Fetched ProductManager:', productManager); 
+
                 res.status(200).json(productManager);
                 break;
             }
 
-            case 'DELETE': {
-                const query = productType ? { _id: id, productType } : { _id: id };
-                const deletedManager = await ProductManager.findOneAndDelete(query);
-
-                if (!deletedManager) {
-                    return res.status(404).json({ error: 'Product manager not found' });
-                }
-
-                res.status(200).json({ message: 'Product manager deleted successfully' });
-                break;
-            }
-
             case 'PATCH': {
-                const query = productType ? { _id: id, productType } : { _id: id };
+                await new Promise((resolve, reject) => {
+                    upload.fields([{ name: 'icon', maxCount: 1 }])(req as any, res as any, (err: any) => {
+                        if (err) return reject(err);
+                        resolve(null);
+                    });
+                });
+            
+                const file = (req as any).files?.icon?.[0] || null;
+            
+                const formFields = req.body ? JSON.parse(JSON.stringify(req.body)) : {};
+            
+                if (file) {
+                    const iconPath = `/uploads/${file.filename}`;
+                    formFields.icon = iconPath;
+                }
                 const allowedFields = [
                     'displayAs',
                     'productId',
@@ -65,27 +86,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'label',
                 ];
             
-                const updatedData = Object.keys(req.body)
-                    .filter((key) => allowedFields.includes(key))
-                    .reduce((obj, key) => {
-                        if (key === 'icon' && typeof req.body[key] === 'string') {
-                            obj[key] = req.body[key].substring(0, 30); 
-                        } else {
-                            obj[key] = req.body[key];
-                        }
-                        return obj;
-                    }, {} as Record<string, any>);
+                const sanitizedData = Object.keys(formFields).reduce((acc, key) => {
+                    if (allowedFields.includes(key)) {
+                        acc[key] = formFields[key];
+                    }
+                    return acc;
+                }, {} as Record<string, any>);
             
-                console.log('Incoming req.body:', req.body);
-                console.log('Filtered updatedData:', updatedData);
-            
-                if (!Object.keys(updatedData).length) {
+                if (!Object.keys(sanitizedData).length) {
                     return res.status(400).json({ error: 'No valid fields provided for update' });
                 }
             
+                const query = productType ? { _id: id, productType } : { _id: id };
+            
                 const updatedManager = await ProductManager.findOneAndUpdate(
                     query,
-                    { $set: updatedData },
+                    { $set: sanitizedData },
                     { new: true }
                 );
             
@@ -93,28 +109,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
             
-                console.log('Updated Document in DB:', updatedManager);
                 res.status(200).json(updatedManager);
                 break;
             }
-                              
-
-            case 'POST': {
+            
+            case 'DELETE': {
                 const query = productType ? { _id: id, productType } : { _id: id };
-                const newData = req.body;
+                const deletedManager = await ProductManager.findOneAndDelete(query);
 
-                const result = await ProductManager.findOneAndUpdate(
-                    query,
-                    newData,
-                    { upsert: true, new: true }
-                );
+                if (!deletedManager) {
+                    return res.status(404).json({ error: 'Product manager not found' });
+                }
 
-                res.status(200).json(result);
+                res.status(200).json({ message: 'Product manager deleted successfully' });
                 break;
             }
 
             default:
-                res.setHeader('Allow', ['GET', 'DELETE', 'PATCH', 'POST']);
+                res.setHeader('Allow', ['GET', 'PATCH', 'DELETE']);
                 res.status(405).json({ error: `Method ${req.method} Not Allowed` });
         }
     } catch (error) {

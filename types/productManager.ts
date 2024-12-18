@@ -1,6 +1,7 @@
 export interface ProductManager {
     _id: string;
     name: string;
+    managerId: string;
     productType: string;
     createdAt: string;
     isActive?: boolean;

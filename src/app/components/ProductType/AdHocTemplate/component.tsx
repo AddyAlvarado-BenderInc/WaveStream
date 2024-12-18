@@ -133,14 +133,18 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         fetchProductManager();
     }, []);
 
-    const handleFileUpload = (iconData: string) => {
-        console.log("Uploaded Icon Data:", iconData);
-        setFormData((prevData) => ({
-            ...prevData,
-            icon: iconData,
-        }));
-    };
+    const handleFileUpload = async (file: File, productType: string, id: string) => {
+        const formData = new FormData();
+        formData.append('icon', file);
 
+        const response = await fetch(`/api/productManager/${productType}/${id}`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+        console.log('Upload Result:', result);
+    };
 
     return (
         <div className={styles.container}>
@@ -258,8 +262,29 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 <ProductIconManager
                     icon={formData.icon}
                     label="Product Icon"
-                    onUpload={(iconData: string) => {
-                        setFormData((prev) => ({ ...prev, icon: iconData }));
+                    onUpload={async (file: File) => {
+                        const formData = new FormData();
+                        formData.append("icon", file);
+
+                        try {
+                            const response = await fetch(`/api/productManager/${productManager.productType}/${productManager._id}`, {
+                                method: "PATCH",
+                                body: formData,
+                            });
+
+                            if (response.ok) {
+                                const updatedData = await response.json();
+                                console.log("Updated Icon Path:", updatedData.icon);
+                                setFormData((prev) => ({ ...prev, icon: updatedData.icon }));
+                                alert("Icon uploaded and saved successfully!");
+                            } else {
+                                const error = await response.json();
+                                alert(`Failed to upload icon: ${error.message}`);
+                            }
+                        } catch (err) {
+                            console.error("Upload error:", err);
+                            alert("Error uploading file.");
+                        }
                     }}
                 />
 
