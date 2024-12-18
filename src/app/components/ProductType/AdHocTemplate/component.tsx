@@ -91,7 +91,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
                 dispatch(updateProductManager(updatedProduct));
                 toast.success('Product saved successfully!', {
-                    position: 'bottom-center',
+                    position: 'bottom-right',
                     autoClose: 5000,
                     hideProgressBar: false,
                     closeOnClick: true,
@@ -101,11 +101,19 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 });
             } else {
                 const error = await response.json();
-                alert(`Error saving product: ${error.message}`);
+                toast.error(`Error saving product: ${error.message}`, {
+                    position: 'bottom-right',
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                });
             }
         } catch (error) {
             console.error('Error saving product:', error);
-            alert('Failed to save the product. Please try again.');
+            toast.error('Failed to save the product. Please try again.');
         }
     };
 
@@ -270,6 +278,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         console.log("Icon uploaded:", file);
                     }}
                 />
+                <ToastContainer />
             </div>
             <button className={styles.saveButton} onClick={handleSave}>
                 Save

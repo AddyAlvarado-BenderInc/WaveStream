@@ -21,6 +21,51 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     const [css, setCss] = useState(initialCSS);
     const [html, setHtml] = useState(initialHTML);
 
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    const generateCombinedHTML = (): string => {
+        return `
+            <html>
+                <head>
+                    <style>${css}</style>
+                </head>
+                <body>
+                    ${html}
+                    <script>${js}<\/script>
+                </body>
+            </html>
+        `;
+    };
+
+    const updateIframe = () => {
+        const iframe = iframeRef.current;
+        if (iframe && iframe.contentDocument) {
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(generateCombinedHTML());
+            iframe.contentDocument.close();
+        }
+    };
+
+    useEffect(() => {
+        updateIframe();
+        onUpdate(description, generateCombinedHTML());
+    }, [html, css, js]);
+
+    const handleTabKey = (e: React.KeyboardEvent<HTMLTextAreaElement>, updateState: (value: string) => void) => {
+        if (e.key === "Tab") {
+            e.preventDefault();
+            const textarea = e.currentTarget;
+            const { selectionStart, selectionEnd, value } = textarea;
+
+            const newValue = value.substring(0, selectionStart) + "\t" + value.substring(selectionEnd);
+            updateState(newValue);
+
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = selectionStart + 1;
+            }, 0);
+        }
+    };
+
     const renderEditor = () => {
         switch (activeTab) {
             case "Javascript":
@@ -33,7 +78,8 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                             setJs(value);
                             onUpdate("js", value);
                         }}
-                        placeholder="Write Javascript code here..."
+                        onKeyDown={(e) => handleTabKey(e, setJs)}
+                        placeholder="Write JavaScript code here..."
                     />
                 );
             case "CSS":
@@ -46,6 +92,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                             setCss(value);
                             onUpdate("css", value);
                         }}
+                        onKeyDown={(e) => handleTabKey(e, setCss)}
                         placeholder="Write CSS code here..."
                     />
                 );
@@ -59,6 +106,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                             setHtml(value);
                             onUpdate("html", value);
                         }}
+                        onKeyDown={(e) => handleTabKey(e, setHtml)}
                         placeholder="Write HTML code here..."
                     />
                 );
@@ -90,6 +138,13 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 </button>
             </div>
             <div className={styles.editor}>{renderEditor()}</div>
+            <div className={styles.preview}>
+                <iframe
+                    ref={iframeRef}
+                    title="Live Preview"
+                    className={styles.previewFrame}
+                />
+            </div>
         </div>
     );
 };

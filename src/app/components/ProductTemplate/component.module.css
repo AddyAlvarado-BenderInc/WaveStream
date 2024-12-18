@@ -1,82 +1,88 @@
 .productTemplate {
-    position: relative;
-    width: 60vh;
-    border: 1px solid #ddd;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 5px;
-    transition: 0.1s ease-out;
-    cursor: pointer;
-    z-index: 0;
-  }
-  
-  .productTemplate h3 {
-    margin: 0 0 10px 0;
-  }
+  position: relative;
+  width: 60vh;
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 5px;
+  transition: 0.1s ease-out;
+  cursor: pointer;
+  z-index: 0;
+}
 
-  .managerAccess {
-    transition: 0.1s ease-out;
-    padding: 8px;
-    border-radius: 12px;
-    text-align: center;
-  }
-  
-  .managerInfo {
-    display: flex;
-    justify-content: space-between;
-    border-top: 1px solid #fff;
-    padding-top: 10px;
-  }
+.productTemplate h3 {
+  margin: 0 0 10px 0;
+}
 
-  .productTemplate:hover {
-    background-color: #fff;
-    color: #000;
-  }
+.managerAccess {
+  transition: 0.1s ease-out;
+  padding: 8px;
+  border-radius: 12px;
+  text-align: center;
+}
 
-  .productTemplate:hover .managerInfo {
-    border-top: 1px solid #000;
-  }
+.managerInfo {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #fff;
+  padding-top: 10px;
+}
 
-  .productTemplate:hover .button {
-    background-color: #000;
-    color: #fff;
-    border-color: #000;
-  }
-  
-  .productTemplate p {
-    margin: 5px 0;
-  }
+.productTemplate:hover {
+  background-color: #fff;
+  color: #000;
+}
 
-  .status {
-    display: flex;
-    justify-content: center;
-  }
+.productTemplate:hover .managerInfo {
+  border-top: 1px solid #000;
+}
 
-  .button {
-    background-color: inherit;
-    color: #fff;
-    border: 1px solid #fff;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    margin: 5px 15px 0 0;
-    transition: 0.1s ease-out;
-    position: relative;
-    z-index: 100;
-  }
+.productTemplate:hover .button {
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+}
 
-  .productTemplate:hover .button:hover {
-    background-color: #fff;
-    color: #000;
-    border-color: #000;
-    z-index: 110;
-  }
+.productTemplate p {
+  margin: 5px 0;
+}
 
-  .productType {
-    font-weight: 600;
-  }
+.status {
+  display: flex;
+  justify-content: center;
+}
 
-  .icon {
-    border-radius: 12px;
-    margin-right: 5px;
-  }
+.button {
+  background-color: inherit;
+  color: #fff;
+  border: 1px solid #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 5px 15px 0 0;
+  transition: 0.1s ease-out;
+  position: relative;
+  z-index: 100;
+}
+
+.productTemplate:hover .button:hover {
+  background-color: #fff;
+  color: #000;
+  border-color: #000;
+  z-index: 110;
+}
+
+.productType {
+  font-weight: 600;
+}
+
+.icon {
+  border-radius: 12px;
+  margin-right: 5px;
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  background-color: #fff;
+  background-origin: content-box;
+  display: block;
+}
