@@ -69,6 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const iconPath = `/uploads/${file.filename}`;
                     formFields.icon = iconPath;
                 }
+            
                 const allowedFields = [
                     'displayAs',
                     'productId',
@@ -87,8 +88,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 ];
             
                 const sanitizedData = Object.keys(formFields).reduce((acc, key) => {
+                    const value = formFields[key];
                     if (allowedFields.includes(key)) {
-                        acc[key] = formFields[key];
+                        acc[key] = Array.isArray(value) ? value[0] : value;
                     }
                     return acc;
                 }, {} as Record<string, any>);
@@ -111,7 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             
                 res.status(200).json(updatedManager);
                 break;
-            }
+            }            
             
             case 'DELETE': {
                 const query = productType ? { _id: id, productType } : { _id: id };

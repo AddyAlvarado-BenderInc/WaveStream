@@ -55,41 +55,36 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         }
     };
 
-    const handleProductIconUpdate = (field: string, value: string) => {
-        const updatedField = {
-            icon: 'icon',
-            label: 'label',
-        }[field];
-
-        if (updatedField) {
-            setFormData((prevData) => ({
-                ...prevData,
-                [updatedField]: value,
-            }));
-        }
-    };
-
     const handleSave = async () => {
         try {
             const { productType, _id } = productManager;
 
-            const updatedData = { ...productManager, ...formData };
+            const formDataPayload = new FormData();
 
-            console.log('FormData:', formData);
-            console.log('Sending PATCH data:', updatedData);
+            Object.entries(formData).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                    formDataPayload.append(key, value.toString());
+                }
+            });
+
+            console.log("FormData Payload before sending:", formDataPayload);
 
             const response = await fetch(`/api/productManager/${productType}/${_id}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updatedData),
+                body: formDataPayload,
             });
 
             if (response.ok) {
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
+
+                setFormData((prev) => ({
+                    ...prev,
+                    ...updatedProduct,
+                }));
+
                 dispatch(updateProductManager(updatedProduct));
+                alert("Product saved successfully!");
             } else {
                 const error = await response.json();
                 alert(`Error saving product: ${error.message}`);
@@ -132,19 +127,6 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
         fetchProductManager();
     }, []);
-
-    const handleFileUpload = async (file: File, productType: string, id: string) => {
-        const formData = new FormData();
-        formData.append('icon', file);
-
-        const response = await fetch(`/api/productManager/${productType}/${id}`, {
-            method: 'POST',
-            body: formData,
-        });
-
-        const result = await response.json();
-        console.log('Upload Result:', result);
-    };
 
     return (
         <div className={styles.container}>
@@ -260,34 +242,15 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                     />
                 </div>
                 <ProductIconManager
-                    icon={formData.icon}
+                    icon={typeof formData.icon === "string" ? formData.icon : ""}
                     label="Product Icon"
-                    onUpload={async (file: File) => {
-                        const formData = new FormData();
-                        formData.append("icon", file);
-
-                        try {
-                            const response = await fetch(`/api/productManager/${productManager.productType}/${productManager._id}`, {
-                                method: "PATCH",
-                                body: formData,
-                            });
-
-                            if (response.ok) {
-                                const updatedData = await response.json();
-                                console.log("Updated Icon Path:", updatedData.icon);
-                                setFormData((prev) => ({ ...prev, icon: updatedData.icon }));
-                                alert("Icon uploaded and saved successfully!");
-                            } else {
-                                const error = await response.json();
-                                alert(`Failed to upload icon: ${error.message}`);
-                            }
-                        } catch (err) {
-                            console.error("Upload error:", err);
-                            alert("Error uploading file.");
-                        }
+                    onUpload={(file: File) => {
+                        setFormData((prev) => ({
+                            ...prev,
+                            icon: file,
+                        }));
                     }}
                 />
-
             </div>
             <button className={styles.saveButton} onClick={handleSave}>
                 Save
