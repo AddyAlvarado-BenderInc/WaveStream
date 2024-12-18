@@ -15,6 +15,7 @@ interface ProductManager {
   descriptionFooter: string;
   label: string;
   displayAs: string;
+  runManager: boolean;
 }
 
 interface ProductTemplateProps {
@@ -71,6 +72,14 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
           }}
         >
           {manager.isActive ? 'Deactivate' : 'Activate'}
+        </button>
+        <button 
+          className={style.runButton}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          Run
         </button>
       </div>
     </div>

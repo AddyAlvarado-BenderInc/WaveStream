@@ -37,7 +37,7 @@
   border-top: 1px solid #000;
 }
 
-.productTemplate:hover .button {
+.productTemplate:hover .button, .productTemplate:hover .runButton {
   background-color: #000;
   color: #fff;
   border-color: #000;
@@ -63,6 +63,26 @@
   transition: 0.1s ease-out;
   position: relative;
   z-index: 100;
+}
+
+.runButton {
+  background-color: inherit;
+  color: #fff;
+  border: 1px solid #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin: 5px 15px 0 0;
+  transition: 0.1s ease-out;
+  position: relative;
+  z-index: 100;
+}
+
+.productTemplate:hover .runButton:hover {
+  background-color: #00d64b;
+  color: #fff;
+  border-color: #fff;
+  z-index: 110;
 }
 
 .productTemplate:hover .button:hover {
