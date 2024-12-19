@@ -11,7 +11,6 @@ export interface ProductManager {
     selectorMode: string;
     itemTemplate: string;
     descriptionFooter: string;
-    initialProductLink: string;
     buyNowButtonText: string;
     description: string;
     initialHTML: string;

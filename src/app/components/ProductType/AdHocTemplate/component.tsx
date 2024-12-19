@@ -23,7 +23,6 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         selectorMode: productManager.selectorMode || 'default',
         itemTemplate: productManager.itemTemplate || '',
         descriptionFooter: productManager.descriptionFooter || '',
-        initialProductLink: productManager.initialProductLink || '',
         buyNowButtonText: productManager.buyNowButtonText || '',
         description: productManager.description || '',
         initialJS: productManager.initialJS || '',
@@ -129,7 +128,6 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         selectorMode: data.selectorMode || 'default',
                         itemTemplate: data.itemTemplate || '',
                         descriptionFooter: data.descriptionFooter || '',
-                        initialProductLink: data.initialProductLink || '',
                         buyNowButtonText: data.buyNowButtonText || '',
                         description: data.description || '',
                         initialJS: data.initialJS || '',
@@ -152,49 +150,49 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.leftContainer}>
-                <ProductInformationForm
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    productName={productManager.name}
-                />
-                <ToastContainer />
-            </div>
-            <div className={styles.divider} />
-            <div className={styles.middleContainer}>
-                <AdvancedDescription
-                    description={formData.description}
-                    initialJS={formData.initialJS}
-                    initialCSS={formData.initialCSS}
-                    initialHTML={formData.initialHTML}
-                    onUpdate={(field, value) => {
-                        setFormData((prev) => ({
-                            ...prev,
-                            [field]: value,
-                        }));
-                    }}
-                />
-            </div>
-            <div className={styles.divider} />
-            <div className={styles.rightContainer}>
-                <ProductIconManager
-                    icon={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
-                    label="Product Icon"
-                    onUpload={(file: File) => {
-                        const previewURL = URL.createObjectURL(file);
+            <div className={styles.managerContainer}>
+                <div className={styles.leftContainer}>
+                    <ProductInformationForm
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                        productName={productManager.name}
+                    />
+                </div>
+                <div className={styles.divider} />
+                <div className={styles.middleContainer}>
+                    <AdvancedDescription
+                        description={formData.description}
+                        initialJS={formData.initialJS}
+                        initialCSS={formData.initialCSS}
+                        initialHTML={formData.initialHTML}
+                        onUpdate={handleAdvancedDescriptionUpdate}
+                    />
+                </div>
+                <div className={styles.divider} />
+                <div className={styles.rightContainer}>
+                    <ProductIconManager
+                        icon={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
+                        label="Product Icon"
+                        onUpload={(file: File) => {
+                            const previewURL = URL.createObjectURL(file);
 
-                        setFormData((prev) => ({
-                            ...prev,
-                            icon: file,
-                            iconPreview: previewURL,
-                        }));
-                        console.log("Icon uploaded:", file);
-                    }}
-                />
-                <button className={styles.saveButton} onClick={handleSave}>
-                    Save
-                </button>
+                            setFormData((prev) => ({
+                                ...prev,
+                                icon: file,
+                                iconPreview: previewURL,
+                            }));
+                            console.log("Icon uploaded:", file);
+                        }}
+                    />
+                    <button className={styles.saveButton} onClick={handleSave}>
+                        Save
+                    </button>
+                </div>
             </div>
+            <div className={styles.brickContainer}>
+                {/* Brick container */}
+            </div>
+            <ToastContainer />
         </div>
     );
 };

@@ -136,6 +136,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 >
                     JS
                 </button>
+                <button className={styles.iconButton}>▶</button>
             </div>
             <div className={styles.editor}>{renderEditor()}</div>
             <div className={styles.preview}>

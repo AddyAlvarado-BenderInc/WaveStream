@@ -1,9 +1,10 @@
-.container {
+.managerContainer {
     display: flex;
     justify-content: space-between;
     margin: auto;
     max-width: 1400px;
     width: 100%;
+    transform: scale(0.95);
 }
 
 .leftContainer {

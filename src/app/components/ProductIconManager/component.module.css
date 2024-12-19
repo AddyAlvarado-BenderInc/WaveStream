@@ -75,3 +75,23 @@
     border-radius: 8px;
     border: 1px solid #ccc;
 }
+
+.previewBox {
+    display: flex;
+    align-items: center;
+}
+
+.iconButton {
+    padding: 5px 10px;
+    cursor: pointer;
+    border: 0.8px solid #fff;
+    background-color: inherit;
+    border-radius: 5px;
+    transition: 0.3s ease-out;
+    margin-left: 10px;
+}
+
+.iconButton:hover {
+    background-color: #fff;
+    color: #000;
+}

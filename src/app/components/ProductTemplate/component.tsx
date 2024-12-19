@@ -11,7 +11,6 @@ interface ProductManager {
   intentRange?: string;
   selectorMode?: string;
   icon: string;
-  initialProductLink: string;
   descriptionFooter: string;
   label: string;
   displayAs: string;
@@ -40,7 +39,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
           <p>Type: <span className={style.productType}>{manager.productType}</span></p>
           <p>Intent range: {manager.intentRange ? manager.intentRange : "N/A"}</p>
           <p>Selector mode: {manager.selectorMode ? manager.selectorMode : "N/A"}</p>
-          <p>Closest linked item: {manager.initialProductLink ? manager.initialProductLink : "N/A"}</p>
           <p>Created: {new Date(manager.createdAt).toLocaleDateString()}</p>
           <p>Footer Description: {manager.descriptionFooter}</p>
         </div>

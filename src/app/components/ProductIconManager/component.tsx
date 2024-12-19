@@ -15,7 +15,7 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
             setPreview(icon);
         }
     }, [icon]);
-    
+
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -34,17 +34,20 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
             <label htmlFor="fileInput" className={styles.uploadLabel}>
                 <span>{label}</span>
             </label>
+                <button className={styles.iconButton}>▶</button>
             <input
                 id="fileInput"
                 type="file"
                 onChange={handleFileChange}
                 className={styles.fileInput}
             />
-            {preview && (
-                <div className={styles.previewContainer}>
-                    <img src={preview} alt="Icon Preview" className={styles.previewImage} />
-                </div>
-            )}
+            <div className={styles.previewBox}>
+                {preview && (
+                    <div className={styles.previewContainer}>
+                        <img src={preview} alt="Icon Preview" className={styles.previewImage} />
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

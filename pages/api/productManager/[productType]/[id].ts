@@ -77,7 +77,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'selectorMode',
                     'itemTemplate',
                     'descriptionFooter',
-                    'initialProductLink',
                     'buyNowButtonText',
                     'description',
                     'initialHTML',
