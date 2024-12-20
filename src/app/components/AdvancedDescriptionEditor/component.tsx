@@ -21,6 +21,8 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     const [css, setCss] = useState(initialCSS);
     const [html, setHtml] = useState(initialHTML);
 
+    const configIcon = "◉";
+    
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     const generateCombinedHTML = (): string => {
@@ -136,7 +138,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 >
                     JS
                 </button>
-                <button className={styles.iconButton}>▶</button>
+                <button className={styles.iconButton}>{configIcon}</button>
             </div>
             <div className={styles.editor}>{renderEditor()}</div>
             <div className={styles.preview}>

@@ -20,12 +20,14 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
     handleInputChange,
     productName,
 }) => {
+    const configIcon = "◉";
+
 
     return (
         <div>
             <header className={styles.header}>
                 <h2>Product Information</h2>
-                <button type="button" className={styles.button}>configure</button>
+                <button type="button" className={styles.button}>configure {configIcon}</button>
             </header>
             <table className={styles.table}>
                 <tbody>
@@ -45,7 +47,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>▶</button></td>
+                        <td><button className={styles.iconButton}>{configIcon}</button></td>
                     </tr>
                     <tr>
                         <td>Product Id</td>
@@ -57,7 +59,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>▶</button></td>
+                        <td><button className={styles.iconButton}>{configIcon}</button></td>
                     </tr>
                     <tr>
                         <td>Intent Range</td>
@@ -93,7 +95,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>▶</button></td>
+                        <td><button className={styles.iconButton}>{configIcon}</button></td>
                     </tr>
                     <tr>
                         <td>Description Footer</td>
@@ -105,7 +107,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>▶</button></td>
+                        <td><button className={styles.iconButton}>{configIcon}</button></td>
                     </tr>
                     <tr>
                         <td>Buy Now Button Text</td>
@@ -117,7 +119,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>▶</button></td>
+                        <td><button className={styles.iconButton}>{configIcon}</button></td>
                     </tr>
                 </tbody>
             </table>

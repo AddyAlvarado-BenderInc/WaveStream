@@ -10,6 +10,8 @@ interface ProductIconManagerProps {
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload }) => {
     const [preview, setPreview] = useState<string | null>(icon || null);
 
+    const configIcon = "◉";
+
     useEffect(() => {
         if (icon) {
             setPreview(icon);
@@ -31,10 +33,12 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
 
     return (
         <div className={styles.container}>
-            <label htmlFor="fileInput" className={styles.uploadLabel}>
-                <span>{label}</span>
-            </label>
-                <button className={styles.iconButton}>▶</button>
+            <div className={styles.header}>
+                <label htmlFor="fileInput" className={styles.uploadLabel}>
+                    <span>{label}</span>
+                </label>
+                <button className={styles.iconButton}>{configIcon}</button>
+            </div>
             <input
                 id="fileInput"
                 type="file"
