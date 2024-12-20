@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ConfigModal from './config/config';
 import styles from './component.module.css';
 
 interface ProductInformationFormProps {
@@ -13,6 +14,7 @@ interface ProductInformationFormProps {
     };
     handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     productName: string;
+    handleOpenConfigModal: (field: string) => void;
 }
 
 const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
@@ -20,14 +22,32 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
     handleInputChange,
     productName,
 }) => {
-    const configIcon = "◉";
+    const [activeField, setActiveField] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const openConfigModal = (field: string) => {
+        setActiveField(field);
+        setIsModalOpen(true);
+    };
+
+    const closeConfigModal = () => {
+        setActiveField(null);
+        setIsModalOpen(false);
+    };
+
+    const configIcon = "◉";
 
     return (
         <div>
             <header className={styles.header}>
                 <h2>Product Information</h2>
-                <button type="button" className={styles.button}>configure {configIcon}</button>
+                <button
+                    type="button"
+                    className={styles.button}
+                    onClick={() => openConfigModal("global")}
+                >
+                    configure {configIcon}
+                </button>
             </header>
             <table className={styles.table}>
                 <tbody>
@@ -47,7 +67,14 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>{configIcon}</button></td>
+                        <td>
+                            <button
+                                className={styles.iconButton}
+                                onClick={() => openConfigModal("displayAs")}
+                            >
+                                {configIcon}
+                            </button>
+                        </td>
                     </tr>
                     <tr>
                         <td>Product Id</td>
@@ -59,7 +86,14 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>{configIcon}</button></td>
+                        <td>
+                            <button
+                                className={styles.iconButton}
+                                onClick={() => openConfigModal("productId")}
+                            >
+                                {configIcon}
+                            </button>
+                        </td>
                     </tr>
                     <tr>
                         <td>Intent Range</td>
@@ -95,7 +129,14 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>{configIcon}</button></td>
+                        <td>
+                            <button
+                                className={styles.iconButton}
+                                onClick={() => openConfigModal("itemTemplate")}
+                            >
+                                {configIcon}
+                            </button>
+                        </td>
                     </tr>
                     <tr>
                         <td>Description Footer</td>
@@ -107,7 +148,14 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>{configIcon}</button></td>
+                        <td>
+                            <button
+                                className={styles.iconButton}
+                                onClick={() => openConfigModal("descriptionFooter")}
+                            >
+                                {configIcon}
+                            </button>
+                        </td>
                     </tr>
                     <tr>
                         <td>Buy Now Button Text</td>
@@ -119,10 +167,24 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 onChange={handleInputChange}
                             />
                         </td>
-                        <td><button className={styles.iconButton}>{configIcon}</button></td>
+                        <td>
+                            <button
+                                className={styles.iconButton}
+                                onClick={() => openConfigModal("buyNowButtonText")}
+                            >
+                                {configIcon}
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+            {isModalOpen && (
+                <ConfigModal
+                    field={activeField}
+                    value={formData[activeField as keyof typeof formData] || ""}
+                    onClose={closeConfigModal}
+                />
+            )}
         </div>
     );
 };

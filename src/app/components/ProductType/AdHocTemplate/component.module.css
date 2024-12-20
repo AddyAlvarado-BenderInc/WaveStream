@@ -1,3 +1,7 @@
+.container {
+    display: flex;
+}
+
 .managerContainer {
     display: flex;
     justify-content: space-between;
@@ -37,4 +41,12 @@
 .saveButton:hover {
     background-color: #fff;
     color: #000;
+}
+
+.brickContainer {
+    margin-top: 20px;
+    padding: 10px;
+    background: #222;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
 }

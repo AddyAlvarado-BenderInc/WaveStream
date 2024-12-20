@@ -24,7 +24,7 @@ interface ProductTemplateProps {
   onToggleActive: (id: string, isActive: boolean) => void;
 }
 
-const iconDefault = 'https://via.placeholder.com/200x300/png';
+const iconDefault = 'https://placehold.co/200x200';
 
 const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, onToggleActive }) => {
   const router = useRouter();
