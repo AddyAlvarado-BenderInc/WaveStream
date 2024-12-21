@@ -32,8 +32,8 @@
 
   .page header button {
     background: inherit;
-    color: #fff;
-    border: 1px solid #fff;
+    color: invert;
+    border: 1px solid invert;
     border-radius: 8px;
     padding: 12px 24px;
     font-size: 10pt;
@@ -43,8 +43,8 @@
   }
 
   .page header button:hover {
-    background: #fff;
-    color: #000;
+    background: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
     border-color: transparent;
   }
   
@@ -54,8 +54,8 @@
       --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
       --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
   
-      --button-primary-hover: #ccc;
-      --button-secondary-hover: #1a1a1a;
+      --button-primary-hover: #fff;
+      --button-secondary-hover: #000;
     }
   }
   
@@ -65,8 +65,8 @@
       --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
       --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
   
-      --button-primary-hover: #1a1a1a;
-      --button-secondary-hover:#ccc;
+      --button-primary-hover: #000;
+      --button-secondary-hover:#fff;
     }
   }
   

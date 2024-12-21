@@ -20,6 +20,7 @@ const ProductManagerSchema = new mongoose.Schema({
   initialCSS: { type: String, default: '' },
   icon: { type: String, default: '' },
   label: { type: String, default: '' },
+  runManager: { type: Boolean, default: false }
 });
 
 export default mongoose.models.ProductManager || mongoose.model('ProductManager', ProductManagerSchema);

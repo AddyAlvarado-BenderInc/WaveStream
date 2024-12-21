@@ -19,4 +19,5 @@ export interface ProductManager {
     icon: string | File;
     label: string;
     iconPreview?: string;
+    runManager?: boolean;
 }

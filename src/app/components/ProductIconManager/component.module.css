@@ -1,3 +1,25 @@
+@media (prefers-color-scheme: dark) {
+    .page {
+      --gray-rgb: 255, 255, 255;
+      --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+      --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+  
+      --button-primary-hover: #fff;
+      --button-secondary-hover: #000;
+    }
+  }
+  
+  @media (prefers-color-scheme: light) {
+    .page {
+      --gray-rgb: 255, 255, 255;
+      --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+      --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+  
+      --button-primary-hover: #000;
+      --button-secondary-hover:#fff;
+    }
+  }
+
 .container {
     display: flex;
     flex-direction: column;
@@ -43,8 +65,8 @@
 }
 
 .uploadLabel:hover {
-    background-color: #fff;
-    color: #000;
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
 }
 
 .fileInput {
@@ -52,8 +74,8 @@
 }
 
 .uploadButton {
-    background-color: #000;
-    color: white;
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
     padding: 8px 16px;
     border: 0.25px solid invert;
     border-radius: 5px;
@@ -62,8 +84,8 @@
 }
 
 .uploadButton:hover {
-    background-color: #fff;
-    color: #000;
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
 }
 
 .icon {
@@ -90,7 +112,7 @@
 .iconButton {
     padding: 5px 10px;
     cursor: pointer;
-    border: 0.8px solid #fff;
+    border: 0.8px solid var(--button-primary-hover);
     background-color: inherit;
     border-radius: 5px;
     transition: 0.3s ease-out;
@@ -98,6 +120,6 @@
 }
 
 .iconButton:hover {
-    background-color: #fff;
-    color: #000;
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
 }

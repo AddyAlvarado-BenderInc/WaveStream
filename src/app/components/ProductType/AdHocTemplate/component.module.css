@@ -1,3 +1,25 @@
+@media (prefers-color-scheme: dark) {
+    .page {
+      --gray-rgb: 255, 255, 255;
+      --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+      --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+  
+      --button-primary-hover: #fff;
+      --button-secondary-hover: #000;
+    }
+  }
+  
+  @media (prefers-color-scheme: light) {
+    .page {
+      --gray-rgb: 255, 255, 255;
+      --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+      --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+  
+      --button-primary-hover: #000;
+      --button-secondary-hover:#fff;
+    }
+  }
+
 .container {
     display: flex;
 }
@@ -32,21 +54,19 @@
 .saveButton {
     padding: 10px 20px;
     cursor: pointer;
-    border: 1px solid #fff;
+    border: 1px solid var(--button-primary-hover);
     background-color: inherit;
     border-radius: 5px;
     transition: 0.3s ease-out;
 }
 
 .saveButton:hover {
-    background-color: #fff;
-    color: #000;
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
 }
 
 .brickContainer {
     margin-top: 20px;
     padding: 10px;
-    background: #222;
     border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
 }

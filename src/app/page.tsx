@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { useRouter } from 'next/navigation';
-import ProductTemplate from './components/ProductTemplate/component';
+import { useRouter } from "next/navigation";
+import ProductTemplate from "./components/ProductTemplate/component";
 
 interface ProductManager {
   _id?: string;
@@ -16,6 +16,7 @@ export default function Home() {
   const [productManagers, setProductManagers] = useState<ProductManager[]>([]);
   const [newManagerName, setNewManagerName] = useState("");
   const [newManagerType, setNewManagerType] = useState("");
+  const [theme, setTheme] = useState<"Light" | "Dark">("Light");
 
   const handleDeleteProductManager = async (managerId: string, productType: string) => {
     try {
@@ -27,7 +28,7 @@ export default function Home() {
         console.error("Unexpected response:", text);
         throw new Error("Failed to delete product manager.");
       } else {
-        setProductManagers(prev => prev.filter(manager => manager._id !== managerId));
+        setProductManagers((prev) => prev.filter((manager) => manager._id !== managerId));
       }
     } catch (error) {
       console.error("Failed to delete product manager:", error);
@@ -35,24 +36,26 @@ export default function Home() {
     }
   };
 
-    const handleToggleActive = async (managerId: string, isActive: boolean) => {
+  const handleToggleActive = async (managerId: string, isActive: boolean) => {
     try {
       const response = await fetch(`/api/productManager/${managerId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive }),
       });
 
       if (response.ok) {
-        setProductManagers(prev => prev.map(manager => 
-          manager._id === managerId ? { ...manager, isActive } : manager
-        ));
+        setProductManagers((prev) =>
+          prev.map((manager) =>
+            manager._id === managerId ? { ...manager, isActive } : manager
+          )
+        );
       } else {
-        throw new Error('Failed to update manager status');
+        throw new Error("Failed to update manager status");
       }
     } catch (error) {
-      console.error('Error updating manager status:', error);
-      alert('Failed to update manager status');
+      console.error("Error updating manager status:", error);
+      alert("Failed to update manager status");
     }
   };
 
@@ -91,18 +94,9 @@ export default function Home() {
       }
 
       const newManager = await response.json();
-      console.log("New manager created:", newManager);
-      setProductManagers((prev) => {
-        console.log("Previous managers:", prev);
-        console.log("Adding new manager:", newManager);
-        return [...prev, newManager];
-    });
+      setProductManagers((prev) => [...prev, newManager]);
       setNewManagerName("");
-      console.log("New manager name:", newManagerName);
-
       setNewManagerType("");
-      console.log("New manager type:", newManagerType);
-
     } catch (error: any) {
       console.error(error.message);
       alert(error.message);
@@ -113,13 +107,24 @@ export default function Home() {
     router.push(`/manager/${managerId}`);
   };
 
-  console.log(productManagers);
+  const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTheme(e.target.value as "Light" | "Dark");
+  };
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${theme === "Dark" ? styles.darkTheme : styles.lightTheme}`}>
       <header>
         <h1>Product Manager</h1>
-        <h4>powered by <img src="/bender_logo_white.svg" alt="Bender Logo" width={100} height={100} /></h4>
+        <h4>
+          powered by{" "}
+          <img
+            className={styles.companyLogo}
+            src="/bender_logo_white.svg"
+            alt="Bender Logo"
+            width={100}
+            height={100}
+          />
+        </h4>
       </header>
       <p>Total Managers: {productManagers.length}</p>
       <form className={styles.form} onSubmit={handleAddProductManager}>
@@ -142,7 +147,9 @@ export default function Home() {
           <option value="Static">Static</option>
           <option value="Product Matrix">Product Matrix</option>
         </select>
-        <button className={styles.button} type="submit">Add manager</button>
+        <button className={styles.button} type="submit">
+          Add manager
+        </button>
       </form>
       <div className={styles.managerList}>
         {productManagers.map((manager) => (
@@ -155,6 +162,10 @@ export default function Home() {
           />
         ))}
       </div>
+      <select className={styles.themeSelect} value={theme} onChange={handleThemeChange}>
+        <option value="Light">Light</option>
+        <option value="Dark">Dark</option>
+      </select>
     </div>
   );
 }

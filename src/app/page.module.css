@@ -17,6 +17,16 @@
   font-family: var(--font-geist-sans);
 }
 
+.lightTheme {
+  background-color: white;
+  color: black;
+}
+
+.darkTheme {
+  background-color: black;
+  color: white;
+}
+
 .page header {
   align-items: baseline;
   display: flex;
@@ -39,8 +49,8 @@
     --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
     --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
 
-    --button-primary-hover: #ccc;
-    --button-secondary-hover: #1a1a1a;
+    --button-primary-hover: #fff;
+    --button-secondary-hover: #000;
   }
 }
 
@@ -50,8 +60,8 @@
     --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
     --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
 
-    --button-primary-hover: #1a1a1a;
-    --button-secondary-hover:#ccc;
+    --button-primary-hover: #000;
+    --button-secondary-hover:#fff;
   }
 }
 
