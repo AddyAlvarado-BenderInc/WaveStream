@@ -6,7 +6,6 @@ import styles from './component.module.css';
 import AdvancedDescription from '../../AdvancedDescriptionEditor/component';
 import ProductIconManager from '../../ProductIconManager/component';
 import ProductInformationForm from '../../ProductInformation/component';
-import ConfigModal from '../../ProductInformation/config/config';
 import BrickEditor from '../../BrickProductEditor/component';
 import { AppDispatch } from '@/app/store/store';
 import { ToastContainer, toast } from 'react-toastify';
@@ -35,7 +34,15 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         iconPreview: productManager.iconPreview || null,
     });
 
-    const [activeField, setActiveField] = useState<{ field: string; value: string | number } | null>(null);
+    const [selectedField, setSelectedField] = useState<string | null>(null);
+    const [selectedBrickId, setSelectedBrickId] = useState<string | boolean>(Boolean);
+
+    const handleFieldSelection = (field: string) => {
+        setSelectedField(field);
+
+        const brickId = `${productManager._id}_${field}`;
+        setSelectedBrickId(brickId);
+    }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -119,19 +126,6 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         }
     };
 
-    const handleOpenConfigModal = (field: string) => {
-        const fieldValue = formData[field as keyof typeof formData];
-        if (typeof fieldValue === 'string' || typeof fieldValue === 'number') {
-            setActiveField({ field, value: fieldValue });
-        } else {
-            console.error(`Invalid field type for ${field}:`, typeof fieldValue);
-        }
-    };    
-
-    const handleCloseConfigModal = () => {
-        setActiveField(null);
-    };
-
     useEffect(() => {
         const fetchProductManager = async () => {
             try {
@@ -173,7 +167,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         formData={formData}
                         handleInputChange={handleInputChange}
                         productName={productManager.name}
-                        handleOpenConfigModal={handleOpenConfigModal}
+                        handleFieldSelect={handleFieldSelection}
                     />
                 </div>
                 <div className={styles.divider} />
@@ -184,6 +178,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialCSS={formData.initialCSS}
                         initialHTML={formData.initialHTML}
                         onUpdate={handleAdvancedDescriptionUpdate}
+                        handleFieldSelect={handleFieldSelection}
                     />
                 </div>
                 <div className={styles.divider} />
@@ -201,6 +196,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                             }));
                             console.log("Icon uploaded:", file);
                         }}
+                        handleFieldSelect={handleFieldSelection}
                     />
                     <button className={styles.saveButton} onClick={handleSave}>
                         Save
@@ -208,16 +204,21 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 </div>
             </div>
             <div className={styles.brickContainer}>
-                {activeField && (
-                    <div className={styles.modalWrapper}>
-                        <ConfigModal
-                            field={activeField.field}
-                            value={activeField.value}
-                            onClose={handleCloseConfigModal}
+                <div className={styles.modalWrapper}>
+                    {selectedField && (
+                        <BrickEditor
+                            brickId={selectedBrickId}
+                            field={selectedField}
+                            targetValue={formData[selectedField as keyof typeof formData] || ""}
+                            intentValue={formData[selectedField as keyof typeof formData] || ""}
+                            specifiedIntentRange={0}
+                            intentSelectionValue={"default"}
+                            actionSelectionValue={"default"}
                         />
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
+
             <ToastContainer />
         </div>
     );

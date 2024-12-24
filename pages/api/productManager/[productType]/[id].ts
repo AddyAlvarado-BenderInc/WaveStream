@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../../lib/mongodb';
 import ProductManager from '../../../../models/ProductManager';
+import BrickEditor from '../../../../models/BrickEditor';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -25,13 +26,13 @@ const upload = multer({
             cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}${ext}`);
         },
     }),
-    limits: { fileSize: 5 * 1024 * 1024 }, 
+    limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 const runMiddleware = promisify(upload.single('icon'));
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const { productType, id } = req.query;
+    const { productType, id, field } = req.query;
 
     if (!id) {
         return res.status(400).json({ error: 'Product manager ID is required' });
@@ -49,7 +50,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
 
-                res.status(200).json(productManager);
+                let brickData = {};
+                if (field) {
+                    brickData = await BrickEditor.findOne({ brickId: `${id}_${field}` }).lean() || {};
+                }
+
+                const combinedData = {
+                    ...productManager, 
+                    ...(brickData as Record<string, any>),
+                };
+
+                res.status(200).json(combinedData);
                 break;
             }
 
@@ -60,16 +71,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         resolve(null);
                     });
                 });
-            
+
                 const file = (req as any).files?.icon?.[0] || null;
-            
+
                 const formFields = req.body ? JSON.parse(JSON.stringify(req.body)) : {};
-            
+
                 if (file) {
                     const iconPath = `/uploads/${file.filename}`;
                     formFields.icon = iconPath;
                 }
-            
+
                 const allowedFields = [
                     'displayAs',
                     'productId',
@@ -85,9 +96,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'icon',
                     'iconPreview',
                     'label',
-                    'runManager'
+                    'runManager',
                 ];
-            
+
                 const sanitizedData = Object.keys(formFields).reduce((acc, key) => {
                     const value = formFields[key];
                     if (allowedFields.includes(key)) {
@@ -95,27 +106,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
                     return acc;
                 }, {} as Record<string, any>);
-            
+
                 if (!Object.keys(sanitizedData).length) {
                     return res.status(400).json({ error: 'No valid fields provided for update' });
                 }
-            
+
                 const query = productType ? { _id: id, productType } : { _id: id };
-            
+
                 const updatedManager = await ProductManager.findOneAndUpdate(
                     query,
                     { $set: sanitizedData },
                     { new: true }
                 );
-            
+
                 if (!updatedManager) {
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
-            
+
+                if (field) {
+                    await BrickEditor.findOneAndUpdate(
+                        { brickId: `${id}_${field}` },
+                        sanitizedData,
+                        { upsert: true }
+                    );
+                }
+
                 res.status(200).json(updatedManager);
                 break;
-            }            
-            
+            }
+
             case 'DELETE': {
                 const query = productType ? { _id: id, productType } : { _id: id };
                 const deletedManager = await ProductManager.findOneAndDelete(query);

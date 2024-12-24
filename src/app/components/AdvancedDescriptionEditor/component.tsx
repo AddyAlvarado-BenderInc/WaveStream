@@ -7,6 +7,7 @@ interface AdvancedDescriptionProps {
     initialHTML: string;
     initialCSS: string;
     onUpdate: (field: string, value: string) => void;
+    handleFieldSelect: (field: string) => void;
 }
 
 const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
@@ -15,6 +16,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     initialCSS,
     initialHTML,
     onUpdate,
+    handleFieldSelect,
 }) => {
     const [activeTab, setActiveTab] = useState<"Javascript" | "CSS" | "HTML">("HTML");
     const [js, setJs] = useState(initialJS);
@@ -22,7 +24,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     const [html, setHtml] = useState(initialHTML);
 
     const configIcon = "◉";
-    
+
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     const generateCombinedHTML = (): string => {
@@ -138,7 +140,10 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 >
                     JS
                 </button>
-                <button className={styles.iconButton}>{configIcon}</button>
+                <button
+                    className={styles.iconButton}
+                    onClick={() => handleFieldSelect("Advanced Description")}
+                >{configIcon}</button>
             </div>
             <div className={styles.editor}>{renderEditor()}</div>
             <div className={styles.preview}>

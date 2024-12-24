@@ -5,9 +5,10 @@ interface ProductIconManagerProps {
     icon: string;
     label: string;
     onUpload: (iconData: File) => void;
+    handleFieldSelect: (field: string) => void;
 }
 
-const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload }) => {
+const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload, handleFieldSelect }) => {
     const [preview, setPreview] = useState<string | null>(icon || null);
 
     const configIcon = "◉";
@@ -37,7 +38,12 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
                 <label htmlFor="fileInput" className={styles.uploadLabel}>
                     <span>{label}</span>
                 </label>
-                <button className={styles.iconButton}>{configIcon}</button>
+                <button
+                    className={styles.iconButton}
+                    onClick={() => handleFieldSelect("Product Icon")}
+                >
+                    {configIcon}
+                </button>
             </div>
             <input
                 id="fileInput"

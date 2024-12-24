@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import ConfigModal from './config/config';
 import styles from './component.module.css';
 
 interface ProductInformationFormProps {
@@ -13,41 +12,22 @@ interface ProductInformationFormProps {
         buyNowButtonText: string;
     };
     handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    handleFieldSelect: (field: string) => void;
     productName: string;
-    handleOpenConfigModal: (field: string) => void;
 }
 
 const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
     formData,
     handleInputChange,
+    handleFieldSelect,
     productName,
 }) => {
-    const [activeField, setActiveField] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const openConfigModal = (field: string) => {
-        setActiveField(field);
-        setIsModalOpen(true);
-    };
-
-    const closeConfigModal = () => {
-        setActiveField(null);
-        setIsModalOpen(false);
-    };
-
     const configIcon = "◉";
 
     return (
         <div>
             <header className={styles.header}>
                 <h2>Product Information</h2>
-                <button
-                    type="button"
-                    className={styles.button}
-                    onClick={() => openConfigModal("global")}
-                >
-                    configure {configIcon}
-                </button>
             </header>
             <table className={styles.table}>
                 <tbody>
@@ -68,9 +48,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                             />
                         </td>
                         <td>
-                            <button
-                                className={styles.iconButton}
-                                onClick={() => openConfigModal("displayAs")}
+                            <button className={styles.iconButton} onClick={() => handleFieldSelect("Display As")}
                             >
                                 {configIcon}
                             </button>
@@ -88,8 +66,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                         </td>
                         <td>
                             <button
-                                className={styles.iconButton}
-                                onClick={() => openConfigModal("productId")}
+                                className={styles.iconButton} onClick={() => handleFieldSelect("Product Id")}
                             >
                                 {configIcon}
                             </button>
@@ -131,8 +108,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                         </td>
                         <td>
                             <button
-                                className={styles.iconButton}
-                                onClick={() => openConfigModal("itemTemplate")}
+                                className={styles.iconButton} onClick={() => handleFieldSelect("Item Template")}
                             >
                                 {configIcon}
                             </button>
@@ -150,8 +126,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                         </td>
                         <td>
                             <button
-                                className={styles.iconButton}
-                                onClick={() => openConfigModal("descriptionFooter")}
+                                className={styles.iconButton} onClick={() => handleFieldSelect("Description Footer")}
                             >
                                 {configIcon}
                             </button>
@@ -168,9 +143,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                             />
                         </td>
                         <td>
-                            <button
-                                className={styles.iconButton}
-                                onClick={() => openConfigModal("buyNowButtonText")}
+                            <button className={styles.iconButton} onClick={() => handleFieldSelect("Buy Now Button Text")}
                             >
                                 {configIcon}
                             </button>
@@ -178,13 +151,6 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                     </tr>
                 </tbody>
             </table>
-            {isModalOpen && (
-                <ConfigModal
-                    field={activeField}
-                    value={formData[activeField as keyof typeof formData] || ""}
-                    onClose={closeConfigModal}
-                />
-            )}
         </div>
     );
 };
