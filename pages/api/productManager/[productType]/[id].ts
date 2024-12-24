@@ -85,6 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'icon',
                     'iconPreview',
                     'label',
+                    'runManager'
                 ];
             
                 const sanitizedData = Object.keys(formFields).reduce((acc, key) => {

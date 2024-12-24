@@ -10,13 +10,18 @@ interface ProductManager {
   name: string;
   productType: string;
   createdAt?: string;
+  runManager?: boolean;
+  icon: string;
+  descriptionFooter: string;
+  label: string;
+  displayAs?: string;
 }
 
 export default function Home() {
   const [productManagers, setProductManagers] = useState<ProductManager[]>([]);
   const [newManagerName, setNewManagerName] = useState("");
   const [newManagerType, setNewManagerType] = useState("");
-  const [theme, setTheme] = useState<"Light" | "Dark">("Light");
+  const [theme, setTheme] = useState<"Light" | "Dark">("Dark");
 
   const handleDeleteProductManager = async (managerId: string, productType: string) => {
     try {
@@ -108,11 +113,11 @@ export default function Home() {
   };
 
   const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTheme(e.target.value as "Light" | "Dark");
+    setTheme(e.target.value as "Dark" | "Light" );
   };
 
   return (
-    <div className={`${styles.page} ${theme === "Dark" ? styles.darkTheme : styles.lightTheme}`}>
+    <div className={`${styles.page} ${theme === "Light" ? styles.lightTheme : styles.darkTheme}`}>
       <header>
         <h1>Product Manager</h1>
         <h4>
@@ -163,8 +168,8 @@ export default function Home() {
         ))}
       </div>
       <select className={styles.themeSelect} value={theme} onChange={handleThemeChange}>
-        <option value="Light">Light</option>
         <option value="Dark">Dark</option>
+        <option value="Light">Light</option>
       </select>
     </div>
   );

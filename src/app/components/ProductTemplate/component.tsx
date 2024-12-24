@@ -14,7 +14,6 @@ interface ProductManager {
   descriptionFooter: string;
   label: string;
   displayAs: string;
-  runManager: boolean;
 }
 
 interface ProductTemplateProps {
@@ -39,7 +38,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
       icon = iconDefault,
       descriptionFooter = '',
       displayAs = '',
-      runManager = false,
   } = manager;
 
   return (
