@@ -10,9 +10,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         specifiedIntentRange: number;
         intentSelectionValue: string;
         actionSelectionValue: string;
+        currentValue: string;
     };
 
-    const { brickId } = req.query;
+    const { brickId, productType } = req.query;
 
     console.log('Incoming brickId:', brickId);
 
@@ -39,11 +40,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const defaultValues: MongooseBrick = {
                     _id: null,
                     __v: 0,
-                    targetValue: null || '',
-                    intentValue: null,
+                    targetValue: '',
+                    intentValue: '',
                     specifiedIntentRange: 0,
                     intentSelectionValue: '',
                     actionSelectionValue: '',
+                    currentValue: '',
                 };
 
                 let brick = await BrickEditor.findOne({ brickId: normalizedBrickId }).lean() as MongooseBrick | null;
@@ -53,31 +55,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     brick = { ...defaultValues };
                 }
 
-                if (brick.targetValue === null || '') {
+                if (!brick.targetValue) {
                     const [id, field] = normalizedBrickId.split('_');
                     if (id && field) {
-                        const productManager = await ProductManager.findOne({ _id: id }).lean();
+                        const query = productType ? { _id: id, productType } : { _id: id };
+                        const productManager = await ProductManager.findOne(query).lean();
 
-                        if (
-                            productManager &&
-                            typeof productManager === 'object' &&
-                            field in productManager
-                        ) {
-                            brick.targetValue = (productManager as Record<string, any>)[field];
+                        if (productManager && field in productManager) {
+                            const productFieldValue = (productManager as Record<string, any>)[field] || '';
+
+                            brick.currentValue = brick.targetValue || productFieldValue;
+                            if (!brick.targetValue) {
+                                brick.targetValue = productFieldValue;
+                            }
                         }
                     }
                 }
-
                 console.log('Brick retrieved with defaults:', brick);
                 res.status(200).json(brick);
                 break;
             }
 
+
             case 'POST': {
                 console.log('POST request body:', req.body);
 
                 const { targetValue, intentValue, specifiedIntentRange, intentSelectionValue, actionSelectionValue } = req.body;
-
                 const normalizedBrickId = brickId.trim().replace(/\s+/g, '_');
 
                 const updatedBrick = await BrickEditor.findOneAndUpdate(

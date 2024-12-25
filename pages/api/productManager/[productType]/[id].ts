@@ -50,14 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
 
-                let brickData = {};
-                if (field) {
-                    brickData = await BrickEditor.findOne({ brickId: `${id}_${field}` }).lean() || {};
-                }
-
                 const combinedData = {
                     ...productManager, 
-                    ...(brickData as Record<string, any>),
                 };
 
                 res.status(200).json(combinedData);

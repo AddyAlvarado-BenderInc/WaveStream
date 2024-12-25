@@ -35,7 +35,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     });
 
     const [selectedField, setSelectedField] = useState<string | null>(null);
-    const [selectedBrickId, setSelectedBrickId] = useState<string | boolean>(Boolean);
+    const [selectedBrickId, setSelectedBrickId] = useState<string | number | boolean>(String);
 
     const handleFieldSelection = (field: string) => {
         setSelectedField(field);
@@ -102,10 +102,10 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 toast.success('Product saved successfully!', {
                     position: 'bottom-right',
                     autoClose: 5000,
-                    hideProgressBar: false,
+                    hideProgressBar: true,
                     closeOnClick: true,
                     pauseOnHover: true,
-                    draggable: true,
+                    draggable: false,
                     progress: undefined,
                 });
             } else {
@@ -113,10 +113,10 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 toast.error(`Error saving product: ${error.message}`, {
                     position: 'bottom-right',
                     autoClose: 5000,
-                    hideProgressBar: false,
+                    hideProgressBar: true,
                     closeOnClick: true,
                     pauseOnHover: true,
-                    draggable: true,
+                    draggable: false,
                     progress: undefined,
                 });
             }
@@ -159,6 +159,11 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         fetchProductManager();
     }, []);
 
+    const handleCloseEditor = () => {
+        setSelectedField(null);
+        setSelectedBrickId("");
+    };    
+
     return (
         <div className={styles.container}>
             <div className={styles.managerContainer}>
@@ -197,28 +202,28 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                             console.log("Icon uploaded:", file);
                         }}
                         handleFieldSelect={handleFieldSelection}
+                        onClose={handleCloseEditor}
                     />
                     <button className={styles.saveButton} onClick={handleSave}>
                         Save
                     </button>
                 </div>
             </div>
-            <div className={styles.brickContainer}>
-                <div className={styles.modalWrapper}>
-                    {selectedField && (
-                        <BrickEditor
-                            brickId={selectedBrickId}
-                            field={selectedField}
-                            targetValue={formData[selectedField as keyof typeof formData] || ""}
-                            intentValue={formData[selectedField as keyof typeof formData] || ""}
-                            specifiedIntentRange={0}
-                            intentSelectionValue={"default"}
-                            actionSelectionValue={"default"}
-                        />
-                    )}
-                </div>
-            </div>
-
+            {selectedField ? (
+                <BrickEditor
+                    brickId={selectedBrickId}
+                    field={selectedField || ''}
+                    targetValue={formData[selectedField as keyof typeof formData] || ''}
+                    intentValue={formData[selectedField as keyof typeof formData] || ''}
+                    specifiedIntentRange={0}
+                    intentSelectionValue="default"
+                    actionSelectionValue="default"
+                    onClose={handleCloseEditor}
+                    formData={formData}
+                />
+            ) : (
+                <h1>Select A Field</h1>
+            )}
             <ToastContainer />
         </div>
     );

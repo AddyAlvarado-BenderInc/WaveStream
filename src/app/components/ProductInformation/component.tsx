@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styles from './component.module.css';
 
 interface ProductInformationFormProps {
@@ -24,8 +24,15 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
 }) => {
     const configIcon = "◉";
 
+    const handleIconClick = (e: React.MouseEvent, field: string) => {
+        e.stopPropagation();
+        handleFieldSelect(field);
+    };
+
     return (
-        <div>
+        <div
+            className={styles.container}
+        >
             <header className={styles.header}>
                 <h2>Product Information</h2>
             </header>
@@ -48,7 +55,9 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                             />
                         </td>
                         <td>
-                            <button className={styles.iconButton} onClick={() => handleFieldSelect("Display As")}
+                            <button
+                                className={styles.iconButton}
+                                onClick={(e) => handleIconClick(e, "Display As")}
                             >
                                 {configIcon}
                             </button>
@@ -66,7 +75,8 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                         </td>
                         <td>
                             <button
-                                className={styles.iconButton} onClick={() => handleFieldSelect("Product Id")}
+                                className={styles.iconButton}
+                                onClick={(e) => handleIconClick(e, "Product Id")}
                             >
                                 {configIcon}
                             </button>
@@ -108,7 +118,8 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                         </td>
                         <td>
                             <button
-                                className={styles.iconButton} onClick={() => handleFieldSelect("Item Template")}
+                                className={styles.iconButton}
+                                onClick={(e) => handleIconClick(e, "Item Template")}
                             >
                                 {configIcon}
                             </button>
@@ -126,7 +137,8 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                         </td>
                         <td>
                             <button
-                                className={styles.iconButton} onClick={() => handleFieldSelect("Description Footer")}
+                                className={styles.iconButton}
+                                onClick={(e) => handleIconClick(e, "Description Footer")}
                             >
                                 {configIcon}
                             </button>
@@ -143,7 +155,9 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                             />
                         </td>
                         <td>
-                            <button className={styles.iconButton} onClick={() => handleFieldSelect("Buy Now Button Text")}
+                            <button
+                                className={styles.iconButton}
+                                onClick={(e) => handleIconClick(e, "Buy Now Button Text")}
                             >
                                 {configIcon}
                             </button>

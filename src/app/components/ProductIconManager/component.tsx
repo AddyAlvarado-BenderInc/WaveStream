@@ -6,6 +6,7 @@ interface ProductIconManagerProps {
     label: string;
     onUpload: (iconData: File) => void;
     handleFieldSelect: (field: string) => void;
+    onClose: () => void;
 }
 
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload, handleFieldSelect }) => {
