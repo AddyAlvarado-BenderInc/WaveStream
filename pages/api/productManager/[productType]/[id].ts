@@ -65,16 +65,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         resolve(null);
                     });
                 });
-
+            
                 const file = (req as any).files?.icon?.[0] || null;
-
+            
                 const formFields = req.body ? JSON.parse(JSON.stringify(req.body)) : {};
-
+            
                 if (file) {
                     const iconPath = `/uploads/${file.filename}`;
                     formFields.icon = iconPath;
                 }
-
+            
                 const allowedFields = [
                     'displayAs',
                     'productId',
@@ -92,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'label',
                     'runManager',
                 ];
-
+            
                 const sanitizedData = Object.keys(formFields).reduce((acc, key) => {
                     const value = formFields[key];
                     if (allowedFields.includes(key)) {
@@ -100,23 +100,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
                     return acc;
                 }, {} as Record<string, any>);
-
+            
+                const { initialHTML = '', initialCSS = '', initialJS = '' } = sanitizedData;
+                if (initialHTML || initialCSS || initialJS) {
+                    sanitizedData.description = `
+                        <html>
+                            <head>
+                                <style>${initialCSS}</style>
+                            </head>
+                            <body>
+                                ${initialHTML}
+                                <script>${initialJS}</script>
+                            </body>
+                        </html>
+                    `.trim();
+                }
+            
                 if (!Object.keys(sanitizedData).length) {
                     return res.status(400).json({ error: 'No valid fields provided for update' });
                 }
-
+            
                 const query = productType ? { _id: id, productType } : { _id: id };
-
+            
                 const updatedManager = await ProductManager.findOneAndUpdate(
                     query,
                     { $set: sanitizedData },
                     { new: true }
                 );
-
+            
                 if (!updatedManager) {
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
-
+            
                 if (field) {
                     await BrickEditor.findOneAndUpdate(
                         { brickId: `${id}_${field}` },
@@ -124,10 +139,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         { upsert: true }
                     );
                 }
-
+            
                 res.status(200).json(updatedManager);
                 break;
-            }
+            }            
 
             case 'DELETE': {
                 const query = productType ? { _id: id, productType } : { _id: id };

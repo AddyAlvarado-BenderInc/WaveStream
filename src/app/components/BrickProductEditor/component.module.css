@@ -55,7 +55,47 @@
     margin-right: 10px;
 }
 
+.actions .button {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.actions .button:hover {
+  background-color: var(--button-secondary-hover);
+  color: var(--button-primary-hover);
+}
+
 .button:hover {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
+}
+
+.container {
+  display: flex;
+  align-items: center;
+}
+
+.form {
+  width: 100%;
+  max-width: 600px;
+  margin-right: 10px;
+  margin-top: 10px;
+  padding: 20px;
+  border: 1px solid var(--button-primary-hover);
+  border-radius: 5px;
+}
+
+.buttonContainer button {
+  font-size: 16pt;
+  font-weight: 200;
+}
+
+.variableActions {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.brickEditor hr {
+  margin: 20px 0;
 }

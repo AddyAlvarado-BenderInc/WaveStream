@@ -206,11 +206,16 @@ a.secondary {
   border: 1px solid var(--gray-alpha-200);
   background: var(--gray-alpha-100);
   cursor: pointer;
+  color: var(--button-secondary-hover);
 }
 
 .select::after {
   content: "*";
   color: var(--button-critical);
+}
+
+.select option {
+  color: var(--button-primary-hover);
 }
 
 .button {

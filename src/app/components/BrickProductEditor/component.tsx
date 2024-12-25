@@ -42,25 +42,25 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     };
 
     const currentValue =
-    inputTargetValue === null || inputTargetValue === '' 
-        ? formData[field] || '' 
-        : inputTargetValue;
+        inputTargetValue === null || inputTargetValue === ''
+            ? formData[field] || ''
+            : inputTargetValue;
 
     useEffect(() => {
         const fetchBrickData = async () => {
             try {
                 console.log('Fetching data for brickId:', brickId);
-    
+
                 const sanitizedBrickId = encodeURIComponent(
                     typeof brickId === 'string' ? brickId.trim().replace(/\s+/g, '_') : brickId
                 );
-    
+
                 const response = await fetch(`/api/brickEditor/${sanitizedBrickId}`);
                 const data = await response.json();
-    
+
                 if (response.ok) {
                     console.log('Fetched data from API:', data);
-    
+
                     setInputTargetValue(
                         data.targetValue !== null && data.targetValue !== ''
                             ? data.targetValue
@@ -81,10 +81,10 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 setInputIntentSelectionValue('default');
             }
         };
-    
+
         if (brickId && field) fetchBrickData();
     }, [brickId, field, formData]);
-    
+
     const handleSave = async () => {
         const payload = {
             targetValue: inputTargetValue === '' || inputTargetValue === null ? formData[field] : inputTargetValue,
@@ -129,53 +129,70 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 <h5>{brickId}</h5>
             </div>
             <p>Current value: {renderValue(currentValue)}</p>
-            <p>Specified Intent Range: {inputSpecifiedIntentRange ? inputSpecifiedIntentRange : 0}</p>
-            <input
-                type="number"
-                value={inputSpecifiedIntentRange}
-                onChange={(e) => setInputSpecifiedIntentRange(Number(e.target.value))}
-                className={styles.input}
-            />
-            <p>Target Value: {renderValue(inputTargetValue)}</p>
-            <input
-                type="text"
-                value={inputTargetValue ?? ''}
-                onChange={(e) => setInputTargetValue(e.target.value)}
-                className={styles.input}
-            />
-            <p>Selected Intent: {inputIntentSelectionValue}</p>
-            <select
-                value={inputIntentSelectionValue}
-                onChange={(e) => setInputIntentSelectionValue(e.target.value)}
-            >
-                <option value="default">Select Intent</option>
-                <option value="chronological">Chronological</option>
-                {/* Add more intent options */}
-            </select>
-            <p>Selected Action: {inputActionSelectionValue}</p>
-            <select
-                value={inputActionSelectionValue}
-                onChange={(e) => setInputActionSelectionValue(e.target.value)}
-            >
-                <option value="default">Select Action</option>
-                <option value="changeTo">Change To</option>
-                <option value="makeAll">Make All</option>
-                {/* Add more action options */}
-            </select>
-            <p>Intent Value: {renderValue(inputIntentValue)}</p>
-            <input
-                type="text"
-                value={inputIntentValue instanceof File ? inputIntentValue.name : inputIntentValue ?? ''}
-                onChange={(e) => setInputIntentValue(e.target.value)}
-                className={styles.input}
-            />
-            <div className={styles.actions}>
-                <button className={styles.button} onClick={handleSave}>
-                    Save
-                </button>
-                <button className={styles.button} onClick={onClose}>
-                    Exit
-                </button>
+            <div className={styles.container}>
+                <div className={styles.form}>
+                    <p>Specified Intent Range: {inputSpecifiedIntentRange ? inputSpecifiedIntentRange : 0}</p>
+                    <input
+                        type="number"
+                        value={inputSpecifiedIntentRange}
+                        onChange={(e) => setInputSpecifiedIntentRange(Number(e.target.value))}
+                        className={styles.input}
+                    />
+                    <p>Target Value: {renderValue(inputTargetValue)}</p>
+                    <input
+                        type="text"
+                        value={inputTargetValue ?? ''}
+                        onChange={(e) => setInputTargetValue(e.target.value)}
+                        className={styles.input}
+                    />
+                    <div className={styles.variableActions}>
+                        <button name='target-button' className={styles.button}>Add Target</button>
+                        <button name='chart-target-button' className={styles.button}>Add Target Chart</button>
+                    </div>
+                    <p>Selected Intent: {inputIntentSelectionValue}</p>
+                    <select
+                        value={inputIntentSelectionValue}
+                        onChange={(e) => setInputIntentSelectionValue(e.target.value)}
+                    >
+                        <option value="default">Select Intent</option>
+                        <option value="chronological">Chronological</option>
+                        {/* Add more intent options */}
+                    </select>
+                    <p>Selected Action: {inputActionSelectionValue}</p>
+                    <select
+                        value={inputActionSelectionValue}
+                        onChange={(e) => setInputActionSelectionValue(e.target.value)}
+                    >
+                        <option value="default">Select Action</option>
+                        <option value="changeTo">Change To</option>
+                        <option value="makeAll">Make All</option>
+                    </select>
+                    <p>Intent Value: {renderValue(inputIntentValue)}</p>
+                    <input
+                        type="text"
+                        value={inputIntentValue instanceof File ? inputIntentValue.name : inputIntentValue ?? ''}
+                        onChange={(e) => setInputIntentValue(e.target.value)}
+                        className={styles.input}
+                    />
+                    <div className={styles.variableActions}>
+                        <button name='intent-button' className={styles.button}>Add Intent</button>
+                        <button name='chart-intent-button' className={styles.button}>Add Intent Chart</button>
+                    </div>
+                    <hr className={styles.divider}></hr>
+                    <div className={styles.actions}>
+                        <button className={styles.button} onClick={handleSave}>
+                            Save
+                        </button>
+                        <button className={styles.button} onClick={onClose}>
+                            Exit
+                        </button>
+                    </div>
+                </div>
+                <div className={styles.buttonContainer}>
+                    <button className={styles.button}>
+                        +
+                    </button>
+                </div>
             </div>
             <ToastContainer />
         </div>

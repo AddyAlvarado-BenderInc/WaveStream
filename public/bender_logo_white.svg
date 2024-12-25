@@ -11,10 +11,10 @@
     .st5{fill:#FFF200;}
     .st6{fill:#231F20;}
     @media (prefers-color-scheme: dark) {
-        .st0{fill:#fff;}
+        .st0{fill:#000;}
     }
     @media (prefers-color-scheme: light) {
-        .st0{fill:#000;}
+        .st0{fill:#fff;}
     }
 </style>
 

@@ -41,6 +41,19 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
         `;
     };
 
+    const handleIconClick = (e: React.MouseEvent, field: string) => {
+        e.stopPropagation();
+
+        const camelCaseField = field
+            .split(' ')
+            .map((word, index) =>
+                index === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1)
+            )
+            .join('');
+
+        handleFieldSelect(camelCaseField);
+    };
+
     const updateIframe = () => {
         const iframe = iframeRef.current;
         if (iframe && iframe.contentDocument) {
@@ -52,8 +65,9 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
 
     useEffect(() => {
         updateIframe();
-        onUpdate(description, generateCombinedHTML());
-    }, [html, css, js]);
+        const combinedHTML = generateCombinedHTML();
+        onUpdate('description', combinedHTML);
+    }, [html, css, js]);    
 
     const handleTabKey = (e: React.KeyboardEvent<HTMLTextAreaElement>, updateState: (value: string) => void) => {
         if (e.key === "Tab") {
@@ -142,8 +156,10 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 </button>
                 <button
                     className={styles.iconButton}
-                    onClick={() => handleFieldSelect("Advanced Description")}
-                >{configIcon}</button>
+                    onClick={(e) => handleIconClick(e, "description")}
+                >
+                    {configIcon}
+                </button>
             </div>
             <div className={styles.editor}>{renderEditor()}</div>
             <div className={styles.preview}>

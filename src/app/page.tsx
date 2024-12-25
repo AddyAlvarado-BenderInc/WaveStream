@@ -113,7 +113,7 @@ export default function Home() {
   };
 
   const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setTheme(e.target.value as "Dark" | "Light" );
+    setTheme(e.target.value as "Dark" | "Light");
   };
 
   return (
