@@ -33,6 +33,19 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
         }
     };
 
+    const handleIconClick = (e: React.MouseEvent, field: string) => {
+        e.stopPropagation();
+    
+        const camelCaseField = field
+            .split(' ')
+            .map((word, index) => 
+                index === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1)
+            )
+            .join('');
+    
+        handleFieldSelect(camelCaseField);
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>

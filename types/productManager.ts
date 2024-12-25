@@ -20,4 +20,6 @@ export interface ProductManager {
     label: string;
     iconPreview?: string;
     runManager?: boolean;
+    targetValue: string;
+    [key: string]: any;
 }

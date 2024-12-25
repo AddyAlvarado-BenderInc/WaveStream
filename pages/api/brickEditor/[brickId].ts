@@ -28,15 +28,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         switch (req.method) {
             case 'GET': {
                 console.log('Incoming brickId:', brickId);
-
+            
                 const normalizedBrickId = brickId.trim().replace(/\s+/g, '_');
                 console.log('Normalized brickId:', normalizedBrickId);
-
+            
                 type MongooseBrick = Brick & {
                     _id: string | null;
                     __v: number;
                 };
-
+            
                 const defaultValues: MongooseBrick = {
                     _id: null,
                     __v: 0,
@@ -47,35 +47,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     actionSelectionValue: '',
                     currentValue: '',
                 };
-
+            
                 let brick = await BrickEditor.findOne({ brickId: normalizedBrickId }).lean() as MongooseBrick | null;
-
+            
                 if (!brick) {
                     console.warn(`Brick with ID ${normalizedBrickId} not found.`);
                     brick = { ...defaultValues };
                 }
-
+            
                 if (!brick.targetValue) {
                     const [id, field] = normalizedBrickId.split('_');
+                    console.log(`Parsed Brick ID: ${id}, Field: ${field}`);
+            
                     if (id && field) {
                         const query = productType ? { _id: id, productType } : { _id: id };
+                        console.log(`Database Query:`, query);
+            
                         const productManager = await ProductManager.findOne(query).lean();
-
-                        if (productManager && field in productManager) {
-                            const productFieldValue = (productManager as Record<string, any>)[field] || '';
-
-                            brick.currentValue = brick.targetValue || productFieldValue;
-                            if (!brick.targetValue) {
-                                brick.targetValue = productFieldValue;
+                        if (!productManager) {
+                            console.warn(`No ProductManager found for query:`, query);
+                        } else {
+                            console.log(`ProductManager found:`, productManager);
+            
+                            const validFields = [
+                                'displayAs',
+                                'productId',
+                                'itemTemplate',
+                                'descriptionFooter',
+                                'buyNowButtonText',
+                                'description',
+                                'icon',
+                            ] as const;
+            
+                            if (validFields.includes(field as typeof validFields[number])) {
+                                const productFieldValue = (productManager as Record<string, any>)[field] || '';
+                                console.log(`Resolved Field Value [${field}]:`, productFieldValue);
+            
+                                brick.currentValue = brick.targetValue || productFieldValue;
+                                if (!brick.targetValue) {
+                                    console.log(`Setting brick.targetValue to:`, productFieldValue);
+                                    brick.targetValue = productFieldValue;
+                                }
+                            } else {
+                                console.warn(`Field [${field}] is not valid. Valid fields are:`, validFields);
                             }
                         }
+                    } else {
+                        console.warn(`Brick ID parsing failed. ID: ${id}, Field: ${field}`);
                     }
                 }
+            
                 console.log('Brick retrieved with defaults:', brick);
                 res.status(200).json(brick);
                 break;
-            }
-
+            }                   
 
             case 'POST': {
                 console.log('POST request body:', req.body);

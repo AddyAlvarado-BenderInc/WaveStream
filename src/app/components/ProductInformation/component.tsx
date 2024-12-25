@@ -26,9 +26,17 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
 
     const handleIconClick = (e: React.MouseEvent, field: string) => {
         e.stopPropagation();
-        handleFieldSelect(field);
+    
+        const camelCaseField = field
+            .split(' ')
+            .map((word, index) => 
+                index === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1)
+            )
+            .join('');
+    
+        handleFieldSelect(camelCaseField);
     };
-
+    
     return (
         <div
             className={styles.container}

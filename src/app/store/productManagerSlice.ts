@@ -19,7 +19,6 @@ const initialState: ProductManagerState = {
           state.productManagers[index] = action.payload;
         }
       },
-      // ... other reducers
     },
   });
 
