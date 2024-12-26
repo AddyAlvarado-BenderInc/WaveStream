@@ -119,17 +119,25 @@ export default function Home() {
   return (
     <div className={`${styles.page} ${theme === "Light" ? styles.lightTheme : styles.darkTheme}`}>
       <header>
-        <h1>Product Manager</h1>
-        <h4>
-          powered by{" "}
-          <img
-            className={styles.companyLogo}
-            src="/bender_logo_white.svg"
-            alt="Bender Logo"
-            width={100}
-            height={100}
-          />
-        </h4>
+        <div className={styles.leftHeader}>
+          <h1>Product Manager</h1>
+          <div className={styles.poweredContent}>
+            <h4>
+              powered by{" "}
+              <img
+                className={styles.companyLogo}
+                src="/bender_logo_white.svg"
+                alt="Bender Logo"
+                width={100}
+                height={100}
+              />
+            </h4>
+          </div>
+        </div>
+        <button name="logout-button" className={styles.button}
+          onClick={() => window.history.back()}>
+          Logout
+        </button>
       </header>
       <p>Total Managers: {productManagers.length}</p>
       <form className={styles.form} onSubmit={handleAddProductManager}>

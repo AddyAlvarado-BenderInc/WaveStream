@@ -28,8 +28,10 @@
 }
 
 .page header {
+  width: 100%;
   align-items: baseline;
   display: flex;
+  justify-content: space-around;
 }
 
 .page header h4 {
@@ -40,7 +42,18 @@
 }
 
 .page header h4 img {
-  margin-left: 5px;;
+  margin-left: 5px;
+}
+
+.page header .leftHeader {
+  display: flex;
+  align-items: baseline;
+}
+
+.page header .poweredContent {
+  display: flex;
+  transform: scale(0.7);
+  margin-left: -10px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -206,7 +219,7 @@ a.secondary {
   border: 1px solid var(--gray-alpha-200);
   background: var(--gray-alpha-100);
   cursor: pointer;
-  color: var(--button-secondary-hover);
+  color: invert;
 }
 
 .select::after {
@@ -241,4 +254,16 @@ a.secondary {
   padding: 8px 16px;
   cursor: pointer;
   transition: 0.2s;
+}
+
+.button[name="logout-button"] {
+  background-color: var(--button-secondary-hover);
+  color: var(--button-primary-hover);
+  border: 1px solid var(--button-primary-hover);
+}
+
+.button[name="logout-button"]:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+  border: 1px solid var(--button-secondary-hover);
 }

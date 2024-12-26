@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Providers } from "./providers";
+import AuthProvider from "./auth";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -24,11 +25,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+
+  const isLoginPage = pathname === "/login";
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Providers>
-          {children}
+          {isLoginPage ? children : <AuthProvider>{children}</AuthProvider>}
         </Providers>
       </body>
     </html>
