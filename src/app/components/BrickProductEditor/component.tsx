@@ -6,11 +6,11 @@ import 'react-toastify/dist/ReactToastify.css';
 interface BrickEditorProps {
     brickId: string | boolean | number;
     field: string;
-    targetValue: string | number | File | null; // Target value is the value the user wants to select from MDSF store
-    intentValue: string | number | File | null; // Intent value is the value the user decides to change in the MDSF store
-    specifiedIntentRange: number; // Specifies the range of intent and overrides the default if changed
-    intentSelectionValue: string; // Specifies the intent selection value
-    actionSelectionValue: string; // Specifies the action selection value
+    targetValue: string | number | File | null; 
+    intentValue: string | number | File | null; 
+    specifiedIntentRange: number; 
+    intentSelectionValue: string; 
+    actionSelectionValue: string; 
     formData: Record<string, any>;
     onClose: () => void;
 }
@@ -121,6 +121,49 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
             toast.error('Failed to save the product. Please try again.');
         }
     };
+    
+    const handleAddNewBrick = async () => {
+        const newBrickId = `newBrick_${Date.now()}`;
+        const payload = {
+            targetValue: '',
+            intentValue: '',
+            specifiedIntentRange: 0,
+            intentSelectionValue: 'default',
+            actionSelectionValue: 'default',
+        };
+
+        try {
+            const response = await fetch(`/api/brickEditor/${encodeURIComponent(newBrickId)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                console.log(`New brick created: ${newBrickId}`);
+                toast.success('New brick created successfully!', {
+                    position: 'bottom-right',
+                    autoClose: 5000,
+                    hideProgressBar: true,
+                    closeOnClick: true,
+                    pauseOnHover: false,
+                    draggable: false,
+                    progress: undefined,
+                });
+                setInputTargetValue('');
+                setInputIntentValue('');
+                setInputSpecifiedIntentRange(0);
+                setInputIntentSelectionValue('default');
+                setInputActionSelectionValue('default');
+            } else {
+                console.error('Failed to create new brick');
+                toast.error('Failed to create new brick. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error creating new brick:', error);
+            toast.error('Error creating new brick. Please try again.');
+        }
+    };
 
     return (
         <div className={styles.brickEditor}>
@@ -189,7 +232,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                     </div>
                 </div>
                 <div className={styles.buttonContainer}>
-                    <button className={styles.button}>
+                    <button className={styles.button} name='add-new-brick' onClick={handleAddNewBrick}>
                         +
                     </button>
                 </div>

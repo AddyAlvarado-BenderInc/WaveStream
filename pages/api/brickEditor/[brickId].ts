@@ -108,11 +108,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const { targetValue, intentValue, specifiedIntentRange, intentSelectionValue, actionSelectionValue } = req.body;
                 const normalizedBrickId = brickId.trim().replace(/\s+/g, '_');
 
+                const newBrick = {
+                    targetValue: targetValue || '',
+                    intentValue: intentValue || '',
+                    specifiedIntentRange: specifiedIntentRange || 0,
+                    intentSelectionValue: intentSelectionValue || 'default',
+                    actionSelectionValue: actionSelectionValue || 'default',
+                };
+                
                 const updatedBrick = await BrickEditor.findOneAndUpdate(
                     { brickId: normalizedBrickId },
-                    { $set: { targetValue, intentValue, specifiedIntentRange, intentSelectionValue, actionSelectionValue } },
+                    { $set: { ...newBrick } },
                     { new: true, upsert: true }
-                );
+                );                
 
                 if (!updatedBrick) {
                     console.error('Failed to update brick data:', brickId);
