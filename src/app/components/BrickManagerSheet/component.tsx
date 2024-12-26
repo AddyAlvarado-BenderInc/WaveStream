@@ -1,26 +1,28 @@
 import React from 'react';
 import styles from './component.module.css';
 
-interface BrickManagerChartProps {
+interface BrickManagerSheetProps {
     brickId: string | boolean | number;
 }
 
-const BrickManagerChart: React.FC<BrickManagerChartProps> = ({
+const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
     brickId
 }) => {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2>Brick Manager Chart {brickId}</h2>
+                <h2>Brick Manager Sheet {brickId}</h2>
             </div>
             <hr className={styles.divider}></hr>
             <div className={styles.chart}>
-                {/* Chart component */}
-                {/* Replace with actual chart component */}
-                <p>Chart Component (Placeholder)</p>
+                <p>Sheet Component (Placeholder)</p>
+                <div className={styles.sheets}>
+                    <p>Target(s): </p>
+                    <p>Intent(s): </p>
+                </div>
             </div>
         </div>
     )
 };
 
-export default BrickManagerChart;
+export default BrickManagerSheet;

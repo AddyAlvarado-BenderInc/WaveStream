@@ -3,7 +3,7 @@ import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import BrickManagerChart from '../BrickManagerChart/component';
+import BrickManagerSheet from '../BrickManagerSheet/component';
 
 interface BrickEditorProps {
     brickId: string | boolean | number;
@@ -124,49 +124,6 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
         }
     };
 
-    const handleAddNewBrick = async () => {
-        const newBrickId = `newBrick_${Date.now()}`;
-        const payload = {
-            targetValue: '',
-            intentValue: '',
-            specifiedIntentRange: 0,
-            intentSelectionValue: 'default',
-            actionSelectionValue: 'default',
-        };
-
-        try {
-            const response = await fetch(`/api/brickEditor/${encodeURIComponent(newBrickId)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-                console.log(`New brick created: ${newBrickId}`);
-                toast.success('New brick created successfully!', {
-                    position: 'bottom-right',
-                    autoClose: 5000,
-                    hideProgressBar: true,
-                    closeOnClick: true,
-                    pauseOnHover: false,
-                    draggable: false,
-                    progress: undefined,
-                });
-                setInputTargetValue('');
-                setInputIntentValue('');
-                setInputSpecifiedIntentRange(0);
-                setInputIntentSelectionValue('default');
-                setInputActionSelectionValue('default');
-            } else {
-                console.error('Failed to create new brick');
-                toast.error('Failed to create new brick. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error creating new brick:', error);
-            toast.error('Error creating new brick. Please try again.');
-        }
-    };
-
     return (
         <div className={styles.brickEditor}>
             <div className={styles.header}>
@@ -192,7 +149,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                     />
                     <div className={styles.variableActions}>
                         <button name='target-button' className={styles.button}>Add Target</button>
-                        <button name='chart-target-button' className={styles.button}>Add Target Chart</button>
+                        <button name='sheet-target-button' className={styles.button}>Add Target Sheet</button>
                     </div>
                     <p>Selected Intent: {inputIntentSelectionValue}</p>
                     <select
@@ -221,7 +178,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                     />
                     <div className={styles.variableActions}>
                         <button name='intent-button' className={styles.button}>Add Intent</button>
-                        <button name='chart-intent-button' className={styles.button}>Add Intent Chart</button>
+                        <button name='sheet-intent-button' className={styles.button}>Add Intent Sheet</button>
                     </div>
                     <hr className={styles.divider}></hr>
                     <div className={styles.actions}>
@@ -233,8 +190,8 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         </button>
                     </div>
                 </div>
-                <div className={styles.chartContainer}>
-                    <BrickManagerChart
+                <div className={styles.sheetContainer}>
+                    <BrickManagerSheet
                         brickId={""}
                     />
                 </div>

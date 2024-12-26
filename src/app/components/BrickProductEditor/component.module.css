@@ -95,7 +95,7 @@
   margin: 20px 0;
 }
 
-.chartContainer {
+.sheetContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -105,7 +105,7 @@
   border: 1px solid var(--button-primary-hover);
 }
 
-.chartContainer h1 {
+.sheetContainer h1 {
   color: var(--button-primary-hover);
   font-weight: 100;
 }
