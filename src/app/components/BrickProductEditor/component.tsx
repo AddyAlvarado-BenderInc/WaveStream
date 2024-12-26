@@ -3,14 +3,16 @@ import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import BrickManagerChart from '../BrickManagerChart/component';
+
 interface BrickEditorProps {
     brickId: string | boolean | number;
     field: string;
-    targetValue: string | number | File | null; 
-    intentValue: string | number | File | null; 
-    specifiedIntentRange: number; 
-    intentSelectionValue: string; 
-    actionSelectionValue: string; 
+    targetValue: string | number | File | null;
+    intentValue: string | number | File | null;
+    specifiedIntentRange: number;
+    intentSelectionValue: string;
+    actionSelectionValue: string;
     formData: Record<string, any>;
     onClose: () => void;
 }
@@ -121,7 +123,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
             toast.error('Failed to save the product. Please try again.');
         }
     };
-    
+
     const handleAddNewBrick = async () => {
         const newBrickId = `newBrick_${Date.now()}`;
         const payload = {
@@ -227,14 +229,14 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                             Save
                         </button>
                         <button className={styles.button} onClick={onClose}>
-                            Exit
+                            Close
                         </button>
                     </div>
                 </div>
-                <div className={styles.buttonContainer}>
-                    <button className={styles.button} name='add-new-brick' onClick={handleAddNewBrick}>
-                        +
-                    </button>
+                <div className={styles.chartContainer}>
+                    <BrickManagerChart
+                        brickId={""}
+                    />
                 </div>
             </div>
             <ToastContainer />
