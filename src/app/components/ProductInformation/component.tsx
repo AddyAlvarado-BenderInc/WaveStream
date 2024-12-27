@@ -101,7 +101,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                             />
                         </td>
                     </tr>
-                    <tr>
+                    {/* <tr>
                         <td>Selector Mode</td>
                         <td>
                             <select
@@ -113,7 +113,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
                                 <option value="custom">Custom</option>
                             </select>
                         </td>
-                    </tr>
+                    </tr> */}
                     <tr>
                         <td>Item Template</td>
                         <td>

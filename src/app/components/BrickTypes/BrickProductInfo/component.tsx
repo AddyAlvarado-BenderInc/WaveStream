@@ -35,6 +35,12 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     const [inputSpecifiedIntentRange, setInputSpecifiedIntentRange] = useState(specifiedIntentRange);
     const [inputIntentSelectionValue, setInputIntentSelectionValue] = useState(intentSelectionValue);
     const [inputActionSelectionValue, setInputActionSelectionValue] = useState(actionSelectionValue);
+    const [sheetData, setSheetData] = useState({
+        targets: [] as string[],
+        intents: [] as string[],
+    });
+    const [onlyIfValue, setOnlyIfValue] = useState<string>('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const renderValue = (value: string | number | File | null): React.ReactNode => {
         if (value instanceof File) {
@@ -48,44 +54,53 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
             ? formData[field] || ''
             : inputTargetValue;
 
-    useEffect(() => {
-        const fetchBrickData = async () => {
-            try {
-                console.log('Fetching data for brickId:', brickId);
-
-                const sanitizedBrickId = encodeURIComponent(
-                    typeof brickId === 'string' ? brickId.trim().replace(/\s+/g, '_') : brickId
-                );
-
-                const response = await fetch(`/api/brickEditor/${sanitizedBrickId}`);
-                const data = await response.json();
-
-                if (response.ok) {
-                    console.log('Fetched data from API:', data);
-
-                    setInputTargetValue(
-                        data.targetValue !== null && data.targetValue !== ''
-                            ? data.targetValue
-                            : formData[field] || ''
-                    );
-                    setInputIntentValue(data.intentValue || '');
-                    setInputSpecifiedIntentRange(data.specifiedIntentRange || 0);
-                    setInputIntentSelectionValue(data.intentSelectionValue || 'default');
-                } else {
-                    console.warn(`Failed to fetch brick data: ${response.statusText}`);
-                    setInputTargetValue(formData[field] || inputTargetValue || '');
-                }
-            } catch (error) {
-                console.error('Error fetching brick data:', error);
-                setInputTargetValue(formData[field] || inputTargetValue || '');
-                setInputIntentValue('');
-                setInputSpecifiedIntentRange(0);
-                setInputIntentSelectionValue('default');
-            }
-        };
-
-        if (brickId && field) fetchBrickData();
-    }, [brickId, field, formData]);
+            useEffect(() => {
+                const fetchBrickData = async () => {
+                    setIsLoading(true);
+                    try {
+                        console.log('Fetching data for brickId:', brickId);
+        
+                        const sanitizedBrickId = encodeURIComponent(
+                            typeof brickId === 'string' ? brickId.trim().replace(/\s+/g, '_') : brickId
+                        );
+        
+                        const response = await fetch(`/api/brickEditor/${sanitizedBrickId}`);
+                        const data = await response.json();
+        
+                        if (response.ok) {
+                            console.log('Fetched data from API:', data);
+        
+                            setInputTargetValue(
+                                data.targetValue !== null && data.targetValue !== ''
+                                    ? data.targetValue
+                                    : formData[field] || ''
+                            );
+                            setInputIntentValue(data.intentValue || '');
+                            setInputSpecifiedIntentRange(data.specifiedIntentRange || 0);
+                            setInputIntentSelectionValue(data.intentSelectionValue || 'default');
+                            setSheetData(data.sheetData || { targets: [], intents: [] });
+                        } else {
+                            console.warn(`Failed to fetch brick data: ${response.statusText}`);
+                            resetState();
+                        }
+                    } catch (error) {
+                        console.error('Error fetching brick data:', error);
+                        resetState();
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+        
+                const resetState = () => {
+                    setInputTargetValue('');
+                    setInputIntentValue('');
+                    setInputSpecifiedIntentRange(0);
+                    setInputIntentSelectionValue('default');
+                    setSheetData({ targets: [], intents: [] });
+                };
+        
+                if (brickId && field) fetchBrickData();
+            }, [brickId, field, formData]);
 
     const handleSave = async () => {
         const payload = {
@@ -93,6 +108,9 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
             intentValue: inputIntentValue,
             specifiedIntentRange: inputSpecifiedIntentRange,
             intentSelectionValue: inputIntentSelectionValue,
+            actionSelectionValue: inputActionSelectionValue,
+            onlyIfValue: inputActionSelectionValue === 'except' ? onlyIfValue : undefined,
+            sheetData: sheetData,
         };
 
         try {
@@ -116,6 +134,96 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
         }
     };
 
+    const renderActionInterface = () => {
+        switch (inputActionSelectionValue) {
+            case 'change-to':
+                return (
+                    <BrickManagerSheet
+                        sheetData={sheetData}
+                        onSheetDataChange={setSheetData}
+                        onlyIfValue=''
+                        actions='change-to'
+                        brickId={brickId}
+                        field={field}
+                        targetValue={currentValue}
+                        intentValue={inputIntentValue}
+                    />
+                );
+            case 'make-all':
+                return (
+                    <BrickManagerSheet
+                        sheetData={sheetData}
+                        onSheetDataChange={setSheetData}
+                        onlyIfValue=''
+                        actions='make-all'
+                        brickId={brickId}
+                        field={field}
+                        targetValue={currentValue}
+                        intentValue={inputIntentValue}
+                    />
+                );
+            case 'except':
+                return (
+                    <BrickManagerSheet
+                        sheetData={sheetData}
+                        onSheetDataChange={setSheetData}
+                        onlyIfValue={onlyIfValue}
+                        actions='except'
+                        brickId={brickId}
+                        field={field}
+                        targetValue={currentValue}
+                        intentValue={inputIntentValue}
+                    />
+                );
+            case 'and':
+                return (
+                    <BrickManagerSheet
+                        sheetData={sheetData}
+                        onSheetDataChange={setSheetData}
+                        onlyIfValue=''
+                        actions='and'
+                        brickId={brickId}
+                        field={field}
+                        targetValue={currentValue}
+                        intentValue={inputIntentValue}
+                    />
+                );
+            default:
+                return (
+                    <BrickManagerSheet
+                        sheetData={sheetData}
+                        onSheetDataChange={setSheetData}
+                        onlyIfValue=''
+                        actions='change-to'
+                        brickId={brickId}
+                        field={field}
+                        targetValue={currentValue}
+                        intentValue={inputIntentValue}
+                    />
+                );
+        }
+    };
+
+    const renderOnlyIfSection = () => {
+        if (inputActionSelectionValue === 'except') {
+            return (
+                <div className={styles.onlyIfSection}>
+                    <p>Initial Parameter:</p>
+                    <input
+                        type="text"
+                        value={onlyIfValue}
+                        onChange={(e) => setOnlyIfValue(e.target.value)}
+                        className={styles.input}
+                    />
+                </div>
+            );
+        }
+        return null;
+    };
+
+    if (isLoading) {
+        return <div className={styles.loading}>Loading...</div>;
+    }
 
     return (
         <div className={styles.brickEditor}>
@@ -138,36 +246,27 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         value={inputIntentSelectionValue}
                         onChange={(e) => setInputIntentSelectionValue(e.target.value)}
                     >
-                        <option value="default">Select Target Option</option>
                         <option value="chronological">Chronological</option>
                         <option value="by-number">By Number</option>
                         <option value="by-alphabet-a-z">By Alphabet [A-Z]</option>
                         <option value="by-alphabet-z-a">By Alphabet [Z-A]</option>
-                        <option value="is-repeating">Is Repeating</option>
                     </select>
                     <p>Selected Action: {inputActionSelectionValue}</p>
                     <select
                         value={inputActionSelectionValue}
                         onChange={(e) => setInputActionSelectionValue(e.target.value)}
                     >
-                        <option value="default">Select Action Option</option>
                         <option value="change-to">Change To</option>
                         <option value="make-all">Make All</option>
-                        <option value="only-if">Only If</option>
+                        <option value="except">Except</option>
                         <option value="and">And</option>
                     </select>
+                    {renderOnlyIfSection()}
                     <p>Intent Value: {renderValue(inputIntentValue)}</p>
                     <input
                         type="text"
                         value={inputIntentValue instanceof File ? inputIntentValue.name : inputIntentValue ?? ''}
                         onChange={(e) => setInputIntentValue(e.target.value)}
-                        className={styles.input}
-                    />
-                    <p>(Optional) Specified Intent Range: {inputSpecifiedIntentRange ? inputSpecifiedIntentRange : 0}</p>
-                    <input
-                        type="number"
-                        value={inputSpecifiedIntentRange}
-                        onChange={(e) => setInputSpecifiedIntentRange(Number(e.target.value))}
                         className={styles.input}
                     />
                     <hr className={styles.divider}></hr>
@@ -181,12 +280,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                     </div>
                 </div>
                 <div className={styles.sheetContainer}>
-                    <BrickManagerSheet
-                        brickId={brickId}
-                        field={field}
-                        targetValue={currentValue}
-                        intentValue={inputIntentValue}
-                    />
+                    {renderActionInterface()}
                 </div>
             </div>
             <ToastContainer

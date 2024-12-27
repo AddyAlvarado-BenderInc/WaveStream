@@ -103,3 +103,8 @@
   color: var(--button-primary-hover);
   font-weight: 100;
 }
+
+.onlyIfSection input[type="text"] {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
