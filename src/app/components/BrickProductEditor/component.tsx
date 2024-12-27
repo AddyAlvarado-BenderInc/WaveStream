@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './component.module.css';
+import * as XLSX from 'xlsx';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -124,6 +125,42 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
         }
     };
 
+    const handleTargetFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const parsedData = XLSX.utils.sheet_to_json(sheet);
+
+            console.log("Parsed Excel Data:", parsedData);
+
+        } catch (error) {
+            console.error("Error processing Excel file:", error);
+            toast.error("Failed to process the Excel file.");
+        }
+    };
+    
+    const handleIntentFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const parsedData = XLSX.utils.sheet_to_json(sheet);
+
+            console.log("Parsed Excel Data:", parsedData);
+
+        } catch (error) {
+            console.error("Error processing Excel file:", error);
+            toast.error("Failed to process the Excel file.");
+        }
+    };
+
     return (
         <div className={styles.brickEditor}>
             <div className={styles.header}>
@@ -148,26 +185,36 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         className={styles.input}
                     />
                     <div className={styles.variableActions}>
-                        <button name='target-button' className={styles.button}>Add Target</button>
-                        <button name='sheet-target-button' className={styles.button}>Add Target Sheet</button>
+                        <label htmlFor="target-excel-upload" className={styles.button}>
+                            Add Target Sheet
+                            <input
+                                id="target-excel-upload"
+                                type="file"
+                                accept=".xls,.xlsx"
+                                onChange={handleTargetFileUpload}
+                            />
+                        </label>
                     </div>
                     <p>Selected Intent: {inputIntentSelectionValue}</p>
                     <select
                         value={inputIntentSelectionValue}
                         onChange={(e) => setInputIntentSelectionValue(e.target.value)}
                     >
-                        <option value="default">Select Intent</option>
                         <option value="chronological">Chronological</option>
-                        {/* Add more intent options */}
+                        <option value="by-number">By Number</option>
+                        <option value="by-alphabet-a-z">By Alphabet [A-Z]</option>
+                        <option value="by-alphabet-z-a">By Alphabet [Z-A]</option>
+                        <option value="is-repeating">Is Repeating</option>
                     </select>
                     <p>Selected Action: {inputActionSelectionValue}</p>
                     <select
                         value={inputActionSelectionValue}
                         onChange={(e) => setInputActionSelectionValue(e.target.value)}
                     >
-                        <option value="default">Select Action</option>
-                        <option value="changeTo">Change To</option>
-                        <option value="makeAll">Make All</option>
+                        <option value="change-to">Change To</option>
+                        <option value="make-all">Make All</option>
+                        <option value="only-if">Only If</option>
+                        <option value="and">And</option>
                     </select>
                     <p>Intent Value: {renderValue(inputIntentValue)}</p>
                     <input
@@ -177,8 +224,15 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         className={styles.input}
                     />
                     <div className={styles.variableActions}>
-                        <button name='intent-button' className={styles.button}>Add Intent</button>
-                        <button name='sheet-intent-button' className={styles.button}>Add Intent Sheet</button>
+                        <label htmlFor="intent-excel-upload" className={styles.button}>
+                            Add Intent Sheet
+                            <input
+                                id="intent-excel-upload"
+                                type="file"
+                                accept=".xls,.xlsx"
+                                onChange={handleIntentFileUpload}
+                            />
+                        </label>
                     </div>
                     <hr className={styles.divider}></hr>
                     <div className={styles.actions}>
@@ -192,7 +246,8 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 </div>
                 <div className={styles.sheetContainer}>
                     <BrickManagerSheet
-                        brickId={""}
+                        brickId={brickId}
+                        field={field}
                     />
                 </div>
             </div>

@@ -54,7 +54,7 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
                 </label>
                 <button
                     className={styles.iconButton}
-                    onClick={() => handleFieldSelect("Product Icon")}
+                    onClick={(e) => handleIconClick(e, "Icon")}
                 >
                     {configIcon}
                 </button>

@@ -116,6 +116,10 @@ export default function Home() {
     setTheme(e.target.value as "Dark" | "Light");
   };
 
+  const handleLogout = () => {
+    router.push(`/login`);
+  }
+
   return (
     <div className={`${styles.page} ${theme === "Light" ? styles.lightTheme : styles.darkTheme}`}>
       <header>
@@ -135,7 +139,7 @@ export default function Home() {
           </div>
         </div>
         <button name="logout-button" className={styles.button}
-          onClick={() => window.history.back()}>
+          onClick={handleLogout}>
           Logout
         </button>
       </header>

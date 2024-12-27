@@ -91,6 +91,15 @@
   margin-bottom: 10px;
 }
 
+.variableActions label {
+  font-size: 10pt;
+  cursor: pointer;
+}
+
+.variableActions input {
+  display: none;
+}
+
 .brickEditor hr {
   margin: 20px 0;
 }
