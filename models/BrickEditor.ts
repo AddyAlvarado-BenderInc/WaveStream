@@ -5,8 +5,8 @@ const BrickEditorSchema = new mongoose.Schema({
     targetValue: { type: mongoose.Schema.Types.Mixed, default: '' },
     intentValue: { type: mongoose.Schema.Types.Mixed, default: null },
     specifiedIntentRange: { type: Number, default: 0 },
-    intentSelectionValue: { type: String, default: 'default' },
-    actionSelectionValue: { type: String, default: 'default' },
+    intentSelectionValue: { type: String, default: 'default [Chronological]' },
+    actionSelectionValue: { type: String, default: 'default [Change To]' },
     currentValue: { type: String, default: 'default'}
 }, { timestamps: true });
 

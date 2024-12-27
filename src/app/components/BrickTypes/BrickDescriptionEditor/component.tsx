@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './component.module.css';
-import * as XLSX from 'xlsx';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
-import BrickManagerSheet from '../BrickManagerSheet/component';
 
 interface BrickEditorProps {
     brickId: string | boolean | number;
@@ -106,15 +103,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
 
             if (response.ok) {
                 console.log("Field data saved successfully");
-                toast.success('Brick saved successfully!', {
-                    position: 'bottom-right',
-                    autoClose: 5000,
-                    hideProgressBar: true,
-                    closeOnClick: true,
-                    pauseOnHover: false,
-                    draggable: false,
-                    progress: undefined,
-                });
+                toast.success('Brick saved successfully!');
             } else {
                 console.error("Failed to save field data");
                 toast.error('Error saving brick data. Please try again.');
@@ -125,58 +114,16 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
         }
     };
 
-    const handleTargetFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        try {
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data, { type: "array" });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const parsedData = XLSX.utils.sheet_to_json(sheet);
-
-            console.log("Parsed Excel Data:", parsedData);
-
-        } catch (error) {
-            console.error("Error processing Excel file:", error);
-            toast.error("Failed to process the Excel file.");
-        }
-    };
-    
-    const handleIntentFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        try {
-            const data = await file.arrayBuffer();
-            const workbook = XLSX.read(data, { type: "array" });
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const parsedData = XLSX.utils.sheet_to_json(sheet);
-
-            console.log("Parsed Excel Data:", parsedData);
-
-        } catch (error) {
-            console.error("Error processing Excel file:", error);
-            toast.error("Failed to process the Excel file.");
-        }
-    };
 
     return (
         <div className={styles.brickEditor}>
             <div className={styles.header}>
-                <h1>Brick Editor {field}</h1>
+                <h1>Brick Advanced Description</h1>
                 <h5>{brickId}</h5>
             </div>
             <p>Current value: {renderValue(currentValue)}</p>
             <div className={styles.container}>
                 <div className={styles.form}>
-                    <p>Specified Intent Range: {inputSpecifiedIntentRange ? inputSpecifiedIntentRange : 0}</p>
-                    <input
-                        type="number"
-                        value={inputSpecifiedIntentRange}
-                        onChange={(e) => setInputSpecifiedIntentRange(Number(e.target.value))}
-                        className={styles.input}
-                    />
                     <p>Target Value: {renderValue(inputTargetValue)}</p>
                     <input
                         type="text"
@@ -184,22 +131,12 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         onChange={(e) => setInputTargetValue(e.target.value)}
                         className={styles.input}
                     />
-                    <div className={styles.variableActions}>
-                        <label htmlFor="target-excel-upload" className={styles.button}>
-                            Add Target Sheet
-                            <input
-                                id="target-excel-upload"
-                                type="file"
-                                accept=".xls,.xlsx"
-                                onChange={handleTargetFileUpload}
-                            />
-                        </label>
-                    </div>
-                    <p>Selected Intent: {inputIntentSelectionValue}</p>
+                    <p>Selected Target: {inputIntentSelectionValue}</p>
                     <select
                         value={inputIntentSelectionValue}
                         onChange={(e) => setInputIntentSelectionValue(e.target.value)}
                     >
+                        <option value="default">Select Target Option</option>
                         <option value="chronological">Chronological</option>
                         <option value="by-number">By Number</option>
                         <option value="by-alphabet-a-z">By Alphabet [A-Z]</option>
@@ -211,6 +148,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         value={inputActionSelectionValue}
                         onChange={(e) => setInputActionSelectionValue(e.target.value)}
                     >
+                        <option value="default">Select Action Option</option>
                         <option value="change-to">Change To</option>
                         <option value="make-all">Make All</option>
                         <option value="only-if">Only If</option>
@@ -223,17 +161,13 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         onChange={(e) => setInputIntentValue(e.target.value)}
                         className={styles.input}
                     />
-                    <div className={styles.variableActions}>
-                        <label htmlFor="intent-excel-upload" className={styles.button}>
-                            Add Intent Sheet
-                            <input
-                                id="intent-excel-upload"
-                                type="file"
-                                accept=".xls,.xlsx"
-                                onChange={handleIntentFileUpload}
-                            />
-                        </label>
-                    </div>
+                    <p>(Optional) Specified Intent Range: {inputSpecifiedIntentRange ? inputSpecifiedIntentRange : 0}</p>
+                    <input
+                        type="number"
+                        value={inputSpecifiedIntentRange}
+                        onChange={(e) => setInputSpecifiedIntentRange(Number(e.target.value))}
+                        className={styles.input}
+                    />
                     <hr className={styles.divider}></hr>
                     <div className={styles.actions}>
                         <button className={styles.button} onClick={handleSave}>
@@ -244,14 +178,17 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         </button>
                     </div>
                 </div>
-                <div className={styles.sheetContainer}>
-                    <BrickManagerSheet
-                        brickId={brickId}
-                        field={field}
-                    />
-                </div>
             </div>
-            <ToastContainer />
+            <ToastContainer
+                position="top-right"
+                autoClose={1000}
+                hideProgressBar
+                newestOnTop={true}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss={false}
+                draggable={false}
+                pauseOnHover={false} />
         </div>
     );
 };

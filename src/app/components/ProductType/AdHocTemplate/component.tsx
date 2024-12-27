@@ -6,7 +6,9 @@ import styles from './component.module.css';
 import AdvancedDescription from '../../AdvancedDescriptionEditor/component';
 import ProductIconManager from '../../ProductIconManager/component';
 import ProductInformationForm from '../../ProductInformation/component';
-import BrickEditor from '../../BrickProductEditor/component';
+import BrickProductInfo from '../../BrickTypes/BrickProductInfo/component';
+import BrickAdvancedDescription from '../../BrickTypes/BrickDescriptionEditor/component';
+import BrickProductIcon from '../../BrickTypes/BrickProductIcon/component';
 import { AppDispatch } from '@/app/store/store';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -41,7 +43,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         setSelectedField(field);
 
         const brickId = `${productManager._id}_${field}`;
-        setSelectedBrickId(brickId);
+                setSelectedBrickId(brickId);
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -162,6 +164,57 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     const handleCloseEditor = () => {
         setSelectedField(null);
         setSelectedBrickId("");
+    };
+
+    const renderBrickComponent = () => {
+        if (!selectedBrickId) {
+            return <h1>Select A Field</h1>;
+        }
+    
+        switch (selectedBrickId) {
+            case `${productManager._id}_description`:
+                return (
+                    <BrickAdvancedDescription
+                        brickId={selectedBrickId}
+                        field="description"
+                        targetValue={formData.description || ''}
+                        intentValue={formData.description || ''}
+                        specifiedIntentRange={0}
+                        intentSelectionValue="default"
+                        actionSelectionValue="default"
+                        onClose={handleCloseEditor}
+                        formData={formData}
+                    />
+                );
+            case `${productManager._id}_icon`:
+                return (
+                    <BrickProductIcon
+                        brickId={selectedBrickId}
+                        field="icon"
+                        targetValue={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
+                        intentValue={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
+                        specifiedIntentRange={0}
+                        intentSelectionValue="default"
+                        actionSelectionValue="default"
+                        onClose={handleCloseEditor}
+                        formData={formData}
+                    />
+                );
+            default:
+                return (
+                    <BrickProductInfo
+                        brickId={selectedBrickId}
+                        field={selectedField || ''}
+                        targetValue={formData[selectedField as keyof typeof formData] || ''}
+                        intentValue={formData[selectedField as keyof typeof formData] || ''}
+                        specifiedIntentRange={0}
+                        intentSelectionValue="default"
+                        actionSelectionValue="default"
+                        onClose={handleCloseEditor}
+                        formData={formData}
+                    />
+                );
+        }
     };    
 
     return (
@@ -209,21 +262,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                     </button>
                 </div>
             </div>
-            {selectedField ? (
-                <BrickEditor
-                    brickId={selectedBrickId}
-                    field={selectedField || ''}
-                    targetValue={formData[selectedField as keyof typeof formData] || ''}
-                    intentValue={formData[selectedField as keyof typeof formData] || ''}
-                    specifiedIntentRange={0}
-                    intentSelectionValue="default"
-                    actionSelectionValue="default"
-                    onClose={handleCloseEditor}
-                    formData={formData}
-                />
-            ) : (
-                <h1>Select A Field</h1>
-            )}
+            {renderBrickComponent()}
             <ToastContainer />
         </div>
     );

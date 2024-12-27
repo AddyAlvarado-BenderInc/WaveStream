@@ -29,6 +29,24 @@
     font-weight: 400;
 }
 
+.sheets h4 {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.sheets h4 span {
+    font-size: 10pt;
+    font-weight: 100;
+    border: 0.85px solid var(--button-primary-hover);
+    border-radius: 4px;
+    padding: 5px;
+    margin-left: 5px;
+}
+
+text.noAssignment {
+    color: rgb(255, 73, 73);
+}
+
 .inputContainer {
     display: flex;
     align-items: center;
@@ -58,4 +76,35 @@ input.singleInput[type="text"] {
 button.button[name="save-button"] {
     max-width: 100px;
     width: 100%;
+}
+
+.variableActions {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.variableActions label {
+    font-size: 10pt;
+    cursor: pointer;
+}
+
+.variableActions input {
+    display: none;
+}
+
+.section {
+    padding: 0;
+    margin: 10px 0 !important;
+    max-width: 400px;
+    width: 100%;
+}
+
+@keyframes jiggle {
+    0% { background-color: red; }
+    100% { background-color: var(--button-secondary-hover);}
+}
+
+.singleInput.jiggle {
+    animation: jiggle 2s ease-in-out !important;
 }

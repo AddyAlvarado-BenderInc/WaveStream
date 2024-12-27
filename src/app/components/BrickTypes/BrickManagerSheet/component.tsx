@@ -1,19 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import styles from './component.module.css';
-import { ToastContainer, toast } from 'react-toastify';
+import { Id, ToastContainer, toast } from 'react-toastify';
+import * as XLSX from 'xlsx';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface BrickManagerSheetProps {
     brickId: string | boolean | number;
     field: string;
+    targetValue: string | number | File | null;
+    intentValue: string | number | File | null;
 }
 
 const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
     brickId,
     field,
+    targetValue,
+    intentValue
 }) => {
     const [inputTargets, setInputTargets] = useState<string[]>([]);
     const [inputIntents, setInputIntents] = useState<string[]>([]);
+    const [jiggleError, setJiggleError] = useState(false);
+
+    const renderValue = (value: string | number | File | null): React.ReactNode => {
+        if (value instanceof File) {
+            return value.name;
+        }
+        return value !== null && value !== undefined ? value.toString() : "default";
+    };
 
     useEffect(() => {
         const fetchSheetData = async () => {
@@ -41,12 +54,18 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
     }, [brickId]);
 
     const handleAddTargetInput = () => {
-        setInputTargets([...inputTargets, ""]);
-    }
+        setInputTargets((prev) => [...prev, ""]);
+    };
 
     const handleAddIntentInput = () => {
-        setInputIntents([...inputIntents, ""]);
-    }
+        if (inputIntents.length >= inputTargets.length) {
+            setJiggleError(true);
+            setTimeout(() => setJiggleError(false), 300 );
+            toast.error("The number of intents cannot exceed the number of targets.");
+            return;
+        }
+        setInputIntents((prev) => [...prev, ""]);
+    };    
 
     const handleTargetChange = (index: number, value: string) => {
         const updatedTargets = [...inputTargets];
@@ -70,6 +89,42 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
         const updatedIntents = [...inputIntents];
         updatedIntents.splice(index, 1);
         setInputIntents(updatedIntents);
+    };
+
+    const handleTargetFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const parsedData = XLSX.utils.sheet_to_json(sheet);
+
+            console.log("Parsed Excel Data:", parsedData);
+
+        } catch (error) {
+            console.error("Error processing Excel file:", error);
+            toast.error("Failed to process the Excel file.");
+        }
+    };
+
+    const handleIntentFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const parsedData = XLSX.utils.sheet_to_json(sheet);
+
+            console.log("Parsed Excel Data:", parsedData);
+
+        } catch (error) {
+            console.error("Error processing Excel file:", error);
+            toast.error("Failed to process the Excel file.");
+        }
     };
 
     const handleSave = async () => {
@@ -113,23 +168,43 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
             <div className={styles.chart}>
                 <div className={styles.sheets}>
                     <div className={styles.sheetsHeader}>
-                        <h3>Target(s):</h3>
-                        {/* TODO: Values for Initial Target from parent BrickEditor component Located here! */}
-                        <button name='target-button' className={styles.button}
-                            onClick={handleAddTargetInput}
-                        >
-                            Add Target
-                        </button>
+                        <h3>Target(s)</h3>
+                        <hr className={styles.section}></hr>
+                        <h4>Initial Value:
+                            <span>
+                                {renderValue(targetValue) || (
+                                    <text className={styles.noAssignment}>
+                                        No Value Assigned
+                                    </text>
+                                )}
+                            </span>
+                        </h4>
+                        <div className={styles.variableActions}>
+                            <button name='target-button' className={styles.button}
+                                onClick={handleAddTargetInput}
+                            >
+                                Add Target
+                            </button>
+                            <label htmlFor="target-excel-upload" className={styles.button}>
+                                Add Target Sheet
+                                <input
+                                    id="target-excel-upload"
+                                    type="file"
+                                    accept=".xls,.xlsx"
+                                    onChange={handleTargetFileUpload}
+                                />
+                            </label>
+                        </div>
                     </div>
                     {inputTargets.map((target, index) => (
                         <div key={`target-${index}`} className={styles.inputContainer}>
                             <input
                                 type="text"
                                 value={target}
-                                onChange={(e) => handleTargetChange(index, e.target.value)}
+                                onChange={(e) => handleIntentChange(index, e.target.value)}
                                 className={styles.singleInput}
                             />
-                            {inputTargets.length > 1 && (
+                            {inputTargets.length > 0 && (
                                 <button
                                     className={styles.button}
                                     onClick={() => handleDeleteTarget(index)}
@@ -142,13 +217,33 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
                 </div>
                 <div className={styles.sheets}>
                     <div className={styles.sheetsHeader}>
-                        <h3>Intent(s):</h3>
-                        {/* TODO: Values for Initial Intent from parent BrickEditor component Located here! */}
-                        <button name='intent-button' className={styles.button}
-                            onClick={handleAddIntentInput}
-                        >
-                            Add Intent
-                        </button>
+                        <h3>Intent(s)</h3>
+                        <hr className={styles.section}></hr>
+                        <h4>Initial Value:
+                            <span>
+                                {renderValue(intentValue) || (
+                                    <text className={styles.noAssignment}>
+                                        No Value Assigned
+                                    </text>
+                                )}
+                            </span>
+                        </h4>
+                        <div className={styles.variableActions}>
+                            <button name='intent-button' className={styles.button}
+                                onClick={handleAddIntentInput}
+                            >
+                                Add Intent
+                            </button>
+                            <label htmlFor="intent-excel-upload" className={styles.button}>
+                                Add Intent Sheet
+                                <input
+                                    id="intent-excel-upload"
+                                    type="file"
+                                    accept=".xls,.xlsx"
+                                    onChange={handleIntentFileUpload}
+                                />
+                            </label>
+                        </div>
                     </div>
                     {inputIntents.map((intent, index) => (
                         <div key={`intent-${index}`} className={styles.inputContainer}>
@@ -156,9 +251,9 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
                                 type="text"
                                 value={intent}
                                 onChange={(e) => handleIntentChange(index, e.target.value)}
-                                className={styles.singleInput}
+                                className={`${styles.singleInput} ${jiggleError ? 'jiggle' : ''}`}
                             />
-                            {inputIntents.length > 1 && (
+                            {inputIntents.length > 0 && (
                                 <button
                                     className={styles.button}
                                     onClick={() => handleDeleteIntent(index)}
@@ -170,12 +265,14 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
                     ))}
                 </div>
             </div>
-            {!inputTargets || !inputIntents && (
-                <button name="save-button" className={styles.button} onClick={handleSave}>
-                    Save
-                </button>
-            )}
-            <ToastContainer />
+            <ToastContainer
+                position="top-right"
+                autoClose={3000}
+                newestOnTop={true}
+                pauseOnFocusLoss={false}
+                draggable={false}
+                pauseOnHover={false}
+            />
         </div>
     );
 };
