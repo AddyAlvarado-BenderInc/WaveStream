@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -7,7 +7,7 @@ interface BrickEditorProps {
     brickId: string | boolean | number;
     field: string;
     targetValue: string | number | File | null;
-    intentValue: string | number | File | null;
+    intentValue: string;
     specifiedIntentRange: number;
     intentSelectionValue: string;
     actionSelectionValue: string;
@@ -26,28 +26,27 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     formData,
     onClose
 }) => {
-    const [inputTargetValue, setInputTargetValue] = useState<string | number | null>(
+    const [inputTargetValue, setInputTargetValue] = useState<string>(
         targetValue ?? formData[field] ?? ''
     );
     const [inputIntentValue, setInputIntentValue] = useState(intentValue);
-    const [inputSpecifiedIntentRange, setInputSpecifiedIntentRange] = useState(specifiedIntentRange);
-    const [inputIntentSelectionValue, setInputIntentSelectionValue] = useState(intentSelectionValue);
-    const [inputActionSelectionValue, setInputActionSelectionValue] = useState(actionSelectionValue);
+    const [isLoading, setIsLoading] = useState(false)
 
-    const renderValue = (value: string | number | File | null): React.ReactNode => {
-        if (value instanceof File) {
-            return value.name;
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    const updateIframeContent = () => {
+        if (iframeRef.current && typeof intentValue === 'string') {
+            iframeRef.current.srcdoc = intentValue;
         }
-        return value !== null && value !== undefined ? value.toString() : "default";
     };
 
-    const currentValue =
-        inputTargetValue === null || inputTargetValue === ''
-            ? formData[field] || ''
-            : inputTargetValue;
+    useEffect(() => {
+        updateIframeContent();
+    }, [inputTargetValue, inputIntentValue]);    
 
     useEffect(() => {
-        const fetchBrickData = async () => {
+        const fetchData = async () => {
+            setIsLoading(true);
             try {
                 console.log('Fetching data for brickId:', brickId);
 
@@ -59,38 +58,35 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 const data = await response.json();
 
                 if (response.ok) {
-                    console.log('Fetched data from API:', data);
+                    console.log('Fetched data:', data);
 
                     setInputTargetValue(
                         data.targetValue !== null && data.targetValue !== ''
                             ? data.targetValue
                             : formData[field] || ''
                     );
-                    setInputIntentValue(data.intentValue || '');
-                    setInputSpecifiedIntentRange(data.specifiedIntentRange || 0);
-                    setInputIntentSelectionValue(data.intentSelectionValue || 'default');
+                    setInputIntentValue(data.intentValue || 'none');
                 } else {
-                    console.warn(`Failed to fetch brick data: ${response.statusText}`);
-                    setInputTargetValue(formData[field] || inputTargetValue || '');
+                    console.warn(`Failed to fetch data: ${response.statusText}`);
                 }
             } catch (error) {
-                console.error('Error fetching brick data:', error);
-                setInputTargetValue(formData[field] || inputTargetValue || '');
-                setInputIntentValue('');
-                setInputSpecifiedIntentRange(0);
-                setInputIntentSelectionValue('default');
+                console.error('Error fetching data:', error);
+                toast.error('Failed to load brick data. Please try again.');
+            } finally {
+                setIsLoading(false);
             }
         };
 
-        if (brickId && field) fetchBrickData();
+        if (brickId) fetchData();
     }, [brickId, field, formData]);
 
     const handleSave = async () => {
         const payload = {
             targetValue: inputTargetValue === '' || inputTargetValue === null ? formData[field] : inputTargetValue,
             intentValue: inputIntentValue,
-            specifiedIntentRange: inputSpecifiedIntentRange,
-            intentSelectionValue: inputIntentSelectionValue,
+            specifiedIntentRange,
+            intentSelectionValue,
+            actionSelectionValue,
         };
 
         try {
@@ -102,18 +98,17 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
             });
 
             if (response.ok) {
-                console.log("Field data saved successfully");
+                console.log('Field data saved successfully');
                 toast.success('Brick saved successfully!');
             } else {
-                console.error("Failed to save field data");
+                console.error('Failed to save field data');
                 toast.error('Error saving brick data. Please try again.');
             }
         } catch (error) {
-            console.error("Error saving field data:", error);
+            console.error('Error saving field data:', error);
             toast.error('Failed to save the product. Please try again.');
         }
     };
-
 
     return (
         <div className={styles.brickEditor}>
@@ -121,53 +116,39 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 <h1>Brick Advanced Description</h1>
                 <h5>{brickId}</h5>
             </div>
-            <p>Current value: {renderValue(currentValue)}</p>
             <div className={styles.container}>
                 <div className={styles.form}>
-                    <p>Target Value: {renderValue(inputTargetValue)}</p>
-                    <input
-                        type="text"
-                        value={inputTargetValue ?? ''}
-                        onChange={(e) => setInputTargetValue(e.target.value)}
-                        className={styles.input}
-                    />
-                    <p>Selected Target: {inputIntentSelectionValue}</p>
+                    <p>Target Value: </p>
                     <select
-                        value={inputIntentSelectionValue}
-                        onChange={(e) => setInputIntentSelectionValue(e.target.value)}
+                        value={inputTargetValue}
+                        onChange={(e) => {
+                            setInputTargetValue(e.target.value);
+                        }}
                     >
-                        <option value="default">Select Target Option</option>
-                        <option value="chronological">Chronological</option>
-                        <option value="by-number">By Number</option>
-                        <option value="by-alphabet-a-z">By Alphabet [A-Z]</option>
-                        <option value="by-alphabet-z-a">By Alphabet [Z-A]</option>
-                        <option value="is-repeating">Is Repeating</option>
+                        <option value="brief-description">Brief Description</option>
+                        <option value="long-description">Long Description</option>
                     </select>
-                    <p>Selected Action: {inputActionSelectionValue}</p>
+                    <button className={styles.button}>
+                        Add Target
+                    </button>
+                    <hr className={styles.divider}></hr>
+                    <p>Intent Value:</p>
                     <select
-                        value={inputActionSelectionValue}
-                        onChange={(e) => setInputActionSelectionValue(e.target.value)}
-                    >
-                        <option value="default">Select Action Option</option>
-                        <option value="change-to">Change To</option>
-                        <option value="make-all">Make All</option>
-                        <option value="only-if">Only If</option>
-                        <option value="and">And</option>
+                        value={inputIntentValue}
+                        onChange={(e) => {
+                            setInputIntentValue(e.target.value);
+                        }}>
+                        <option value="none">None</option>
+                        <option value="description">Advanced Description</option>
                     </select>
-                    <p>Intent Value: {renderValue(inputIntentValue)}</p>
-                    <input
-                        type="text"
-                        value={inputIntentValue instanceof File ? inputIntentValue.name : inputIntentValue ?? ''}
-                        onChange={(e) => setInputIntentValue(e.target.value)}
-                        className={styles.input}
-                    />
-                    <p>(Optional) Specified Intent Range: {inputSpecifiedIntentRange ? inputSpecifiedIntentRange : 0}</p>
-                    <input
-                        type="number"
-                        value={inputSpecifiedIntentRange}
-                        onChange={(e) => setInputSpecifiedIntentRange(Number(e.target.value))}
-                        className={styles.input}
-                    />
+                    {inputIntentValue === "description" ? (
+                        <iframe
+                            ref={iframeRef}
+                            title="Preview"
+                            className={styles.iframe}
+                            style={{ border: '1px solid var(--button-primary-hover)', width: '100%', height: '200px' }}
+                        />
+                    ) : null}
                     <hr className={styles.divider}></hr>
                     <div className={styles.actions}>
                         <button className={styles.button} onClick={handleSave}>
@@ -179,6 +160,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                     </div>
                 </div>
             </div>
+            {isLoading && <p>Loading...</p>}
             <ToastContainer
                 position="top-right"
                 autoClose={1000}
@@ -188,7 +170,8 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 rtl={false}
                 pauseOnFocusLoss={false}
                 draggable={false}
-                pauseOnHover={false} />
+                pauseOnHover={false}
+            />
         </div>
     );
 };

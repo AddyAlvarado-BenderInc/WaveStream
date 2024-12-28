@@ -15,6 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             targets: string[];
             intents: string[];
         };
+        inputIntentValue: string;
     };
 
     const { brickId, productType } = req.query;
@@ -54,6 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         targets: [],
                         intents: [],
                     },
+                    inputIntentValue: '',
                 };
             
                 let brick = await BrickEditor.findOne({ brickId: normalizedBrickId }).lean() as MongooseBrick | null;
@@ -85,7 +87,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 'buyNowButtonText',
                                 'description',
                                 'icon',
-                                'sheetData'
+                                'sheetData',
+                                'inputIntentValue'
                             ] as const;
             
                             if (validFields.includes(field as typeof validFields[number])) {
@@ -114,7 +117,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             case 'POST': {
                 console.log('POST request body:', req.body);
 
-                const { targetValue, intentValue, specifiedIntentRange, intentSelectionValue, actionSelectionValue, sheetData } = req.body;
+                const { targetValue, intentValue, specifiedIntentRange, intentSelectionValue, actionSelectionValue, sheetData, inputIntentValue } = req.body;
                 const normalizedBrickId = brickId.trim().replace(/\s+/g, '_');
 
                 const newBrick = {
@@ -124,6 +127,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     intentSelectionValue: intentSelectionValue || 'default',
                     actionSelectionValue: actionSelectionValue || 'default',
                     sheetData: sheetData || { targets: [], intents: [] },
+                    inputIntentValue: inputIntentValue || '',
                 };
                 
                 const updatedBrick = await BrickEditor.findOneAndUpdate(

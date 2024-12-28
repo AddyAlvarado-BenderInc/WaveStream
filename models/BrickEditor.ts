@@ -15,6 +15,7 @@ const BrickEditorSchema = new mongoose.Schema({
         default: { targets: [], intents: [] },
     },
     currentValue: { type: String, default: 'default'},
+    inputIntentValue: { type: String, default: '' },
 },
 { timestamps: true }
 );

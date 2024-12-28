@@ -108,3 +108,14 @@ button.button[name="save-button"] {
 .singleInput.jiggle {
     animation: jiggle 2s ease-in-out !important;
 }
+
+button.button[name="update-data"] {
+    width: 100px;
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
+}
+
+button.button[name="update-data"]:hover {
+    background-color: var(--button-primary);
+    color: var(--button-secondary);
+}

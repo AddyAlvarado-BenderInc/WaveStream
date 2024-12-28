@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './component.module.css';
 import TargetSection from './BrickComponents/TargetSection';
 import IntentSection from './BrickComponents/IntentSection';
@@ -20,7 +20,6 @@ interface BrickManagerSheetProps {
 }
 
 const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
-    brickId,
     field,
     targetValue,
     intentValue,
@@ -31,23 +30,37 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
 }) => {
     const [inputTargets, setInputTargets] = useState<string[]>([]);
     const [inputIntents, setInputIntents] = useState<string[]>([]);
-    const [jiggleError, setJiggleError] = useState(false);
+    
+    const isUserUpdating = useRef(false); 
 
     useEffect(() => {
-        if (!isEqual(sheetData.targets, inputTargets)) {
-            setInputTargets(sheetData.targets || []);
+        if (!isUserUpdating.current) {
+            if (!isEqual(sheetData.targets, inputTargets)) {
+                setInputTargets(sheetData.targets || []);
+            }
+            if (!isEqual(sheetData.intents, inputIntents)) {
+                setInputIntents(sheetData.intents || []);
+            }
         }
-        if (!isEqual(sheetData.intents, inputIntents)) {
-            setInputIntents(sheetData.intents || []);
-        }
+        isUserUpdating.current = false;
     }, [sheetData]);
 
-    useEffect(() => {
+    const updateParentData = () => {
         onSheetDataChange({ targets: inputTargets, intents: inputIntents });
-    }, [inputTargets, inputIntents, onSheetDataChange]);
+    };
 
     const handleAddTargetInput = () => {
+        isUserUpdating.current = true;
         setInputTargets((prev) => [...prev, '']);
+    };
+
+    const handleAddIntentInput = () => {
+        if (inputIntents.length >= inputTargets.length) {
+            toast.error('The number of intents cannot exceed the number of targets.');
+            return;
+        }
+        isUserUpdating.current = true;
+        setInputIntents((prev) => [...prev, '']);
     };
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,23 +86,15 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
         toast.success("Parameter")
     }
 
-    const handleAddIntentInput = () => {
-        if (inputIntents.length >= inputTargets.length) {
-            setJiggleError(true);
-            setTimeout(() => setJiggleError(false), 300);
-            toast.error('The number of intents cannot exceed the number of targets.');
-            return;
-        }
-        setInputIntents((prev) => [...prev, '']);
-    };
-
     const handleDeleteTarget = (index: number) => {
+        isUserUpdating.current = true;
         const updatedTargets = [...inputTargets];
         updatedTargets.splice(index, 1);
         setInputTargets(updatedTargets);
     };
 
     const handleDeleteIntent = (index: number) => {
+        isUserUpdating.current = true;
         const updatedIntents = [...inputIntents];
         updatedIntents.splice(index, 1);
         setInputIntents(updatedIntents);
@@ -186,6 +191,10 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
             </div>
             <hr className={styles.divider} />
             <div className={styles.chart}>{renderActionInterface()}</div>
+            <hr className={styles.divider} />
+            <button name="update-data" className={styles.button} onClick={updateParentData}>
+                Update
+            </button>
             <ToastContainer
                 position="top-right"
                 autoClose={3000}

@@ -1,5 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { serialize } from "cookie";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -11,8 +14,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const { username, password } = req.body;
-  const loginUsername = process.env.USERNAME;
-  const loginPassword = process.env.PASSWORD;
+  const loginUsername = 'admin'; // temporary hard-coded credentials
+  const loginPassword = 'password'; // temporary hard-coded credentials
+
+  // TODO: env variables for production are USERNAME and PASSWORD
 
   console.log("Login request payload:", { username, password });
 
@@ -30,7 +35,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     console.log("Login successful, token set.");
     return res.status(200).json({ message: "Login successful" });
   }
-
   console.log("Invalid username or password.");
   return res.status(401).json({ message: "Invalid username or password" });
 }
