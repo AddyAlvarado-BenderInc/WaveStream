@@ -1,3 +1,7 @@
+.container {
+  display: flex;
+}
+
 @media (prefers-color-scheme: dark) {
     .page {
       --gray-rgb: 255, 255, 255;
@@ -102,4 +106,8 @@
 .sheetContainer h1 {
   color: var(--button-primary-hover);
   font-weight: 100;
+}
+
+.iframe {
+  margin-bottom: 5px;
 }

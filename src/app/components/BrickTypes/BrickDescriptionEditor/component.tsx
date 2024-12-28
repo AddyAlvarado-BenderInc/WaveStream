@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
+import BrickDescriptionSheet from '../BrickDescriptionSheet/component';
 import 'react-toastify/dist/ReactToastify.css';
 
 interface BrickEditorProps {
@@ -42,7 +43,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
 
     useEffect(() => {
         updateIframeContent();
-    }, [inputTargetValue, inputIntentValue]);    
+    }, [inputTargetValue, inputIntentValue]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -110,6 +111,10 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
         }
     };
 
+    const handleAddTarget = () => {
+
+    };
+
     return (
         <div className={styles.brickEditor}>
             <div className={styles.header}>
@@ -128,7 +133,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         <option value="brief-description">Brief Description</option>
                         <option value="long-description">Long Description</option>
                     </select>
-                    <button className={styles.button}>
+                    <button className={styles.button} onClick={handleAddTarget}>
                         Add Target
                     </button>
                     <hr className={styles.divider}></hr>
@@ -149,6 +154,9 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                             style={{ border: '1px solid var(--button-primary-hover)', width: '100%', height: '200px' }}
                         />
                     ) : null}
+                    <button className={styles.button}>
+                        Add Intent
+                    </button>
                     <hr className={styles.divider}></hr>
                     <div className={styles.actions}>
                         <button className={styles.button} onClick={handleSave}>
@@ -158,6 +166,13 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                             Close
                         </button>
                     </div>
+                </div>
+                <div className={styles.sheetContainer}>
+                    <BrickDescriptionSheet
+                        intentValue={inputIntentValue}
+                        targetValue={inputTargetValue}
+                        brickId={brickId}
+                    />
                 </div>
             </div>
             {isLoading && <p>Loading...</p>}
