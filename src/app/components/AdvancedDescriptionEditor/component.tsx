@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { ToastContainer, toast } from "react-toastify";
 import styles from "./component.module.css";
 
 interface AdvancedDescriptionProps {
@@ -135,6 +136,79 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
         }
     };
 
+    const saveDescription = async () => {
+
+        try {
+            const combinedHTML = generateCombinedHTML();
+            const response = await fetch('/api/descriptions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    descriptionName: 'My Description',
+                    html,
+                    css,
+                    js,
+                    combinedHTML,
+                }),
+            });
+
+            if (response.ok) {
+                toast.success('Description saved successfully!');
+            } else {
+                toast.error('Failed to save description.');
+            }
+        } catch (error) {
+            console.error('Error saving description:', error);
+            toast.error('An error occurred while saving.');
+        }
+        return (
+            <>
+                <div className={styles.modalContainer}>
+                    <h2>Save Your Description</h2>
+                    <input value={saveName}></input>
+                </div>
+            </>
+        )
+    };
+
+    useEffect(() => {
+        const fetchDescriptions = async () => {
+            try {
+                const response = await fetch('/api/descriptions');
+                const data = await response.json();
+
+                if (response.ok) {
+                    setDescriptions(data);
+                } else {
+                    console.error('Failed to fetch descriptions.');
+                }
+            } catch (error) {
+                console.error('Error fetching descriptions:', error);
+            }
+        };
+
+        fetchDescriptions();
+    }, []);
+
+    const deleteDescription = async () => {
+        try {
+            const response = await fetch('/api/descriptions', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: 'My Description' }),
+            });
+
+            if (response.ok) {
+                toast.success('Description deleted successfully!');
+            } else {
+                toast.error('Failed to delete description.');
+            }
+        } catch (error) {
+            console.error('Error deleting description:', error);
+            toast.error('An error occurred while deleting.');
+        }
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.tabs}>
@@ -157,12 +231,22 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                     JS
                 </button>
                 <select
-                    value={""}
-                    // onChange={handleGlobalChange}
-                > {/* User generated descriptions, named by users for loading descriptions, will have a general description database for all saved descriptions for cross-site reuse */}
-                    <option value={"placeholder-1"}>Welcome To...</option> {/* placeholders as an example */}
-                    <option value={"placeholder-2"}>Basic Hospital Description</option>
-                    <option value={"placeholder-3"}>Best Item On Market!</option>
+                    onChange={(e) => {
+                        const selectedDescription = description.find(
+                            (desc) => desc.name === e.target.value
+                        );
+                        if (selectedDescription) {
+                            setHtml(selectedDescription);
+                            setCss(selectedDescription.css);
+                            setJs(selectedDescription.js);
+                        }
+                    }}>
+                    <option value="">Select Description</option>
+                    {description.map((desc) => (
+                        <option key={desc.id} value={desc.name}>
+                            {desc.name}
+                        </option>
+                    ))}
                 </select>
                 <button
                     className={styles.iconButton}
@@ -179,15 +263,19 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                     className={styles.previewFrame}
                 />
             </div>
-            <button className={styles.button}> {/* Users can create a new description intent value, this affects the number of option values for select tag in the BrickDescriptionEditor. This is also a global data change */}
-                Save Description
-            </button>
-            <button className={styles.button}> {/* Clears characters in all tabs, this is not a global change */}
-                Clear Description
-            </button>
-            <button className={styles.button}> {/* Users can delete a description intent value, this affects the number of option values for select tag in the BrickDescriptionEditor. This is also a global data change */}
-                Delete Description
-            </button>
+            <div className={styles.descriptionButtons}>
+
+                <button className={styles.button} onClick={saveDescription}> {/* Users can create a new description intent value, this affects the number of option values for select tag in the BrickDescriptionEditor. This is also a global data change */}
+                    Save Description
+                </button>
+                <button className={styles.button}> {/* Clears characters in all tabs, this is not a global change */}
+                    Clear Description
+                </button>
+                <button className={styles.button}> {/* Users can delete a description intent value, this affects the number of option values for select tag in the BrickDescriptionEditor. This is also a global data change */}
+                    Delete Description
+                </button>
+            </div>
+            <ToastContainer />
         </div>
     );
 };
