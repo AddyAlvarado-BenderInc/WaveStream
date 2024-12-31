@@ -8,6 +8,7 @@ interface AdvancedDescriptionProps {
     initialCSS: string;
     onUpdate: (field: string, value: string) => void;
     handleFieldSelect: (field: string) => void;
+    handleGlobalChange: (field: string) => void;
 }
 
 const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
@@ -17,6 +18,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     initialHTML,
     onUpdate,
     handleFieldSelect,
+    handleGlobalChange
 }) => {
     const [activeTab, setActiveTab] = useState<"Javascript" | "CSS" | "HTML">("HTML");
     const [js, setJs] = useState(initialJS);
@@ -67,7 +69,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
         updateIframe();
         const combinedHTML = generateCombinedHTML();
         onUpdate('description', combinedHTML);
-    }, [html, css, js]);    
+    }, [html, css, js]);
 
     const handleTabKey = (e: React.KeyboardEvent<HTMLTextAreaElement>, updateState: (value: string) => void) => {
         if (e.key === "Tab") {
@@ -154,6 +156,14 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 >
                     JS
                 </button>
+                <select
+                    value={""}
+                    // onChange={handleGlobalChange}
+                > {/* User generated descriptions, named by users for loading descriptions, will have a general description database for all saved descriptions for cross-site reuse */}
+                    <option value={"placeholder-1"}>Welcome To...</option> {/* placeholders as an example */}
+                    <option value={"placeholder-2"}>Basic Hospital Description</option>
+                    <option value={"placeholder-3"}>Best Item On Market!</option>
+                </select>
                 <button
                     className={styles.iconButton}
                     onClick={(e) => handleIconClick(e, "description")}
@@ -169,6 +179,15 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                     className={styles.previewFrame}
                 />
             </div>
+            <button className={styles.button}> {/* Users can create a new description intent value, this affects the number of option values for select tag in the BrickDescriptionEditor. This is also a global data change */}
+                Save Description
+            </button>
+            <button className={styles.button}> {/* Clears characters in all tabs, this is not a global change */}
+                Clear Description
+            </button>
+            <button className={styles.button}> {/* Users can delete a description intent value, this affects the number of option values for select tag in the BrickDescriptionEditor. This is also a global data change */}
+                Delete Description
+            </button>
         </div>
     );
 };

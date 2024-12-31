@@ -1,52 +1,72 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import styles from './component.module.css';
-import { ToastContainer, toast } from 'react-toastify';
-import isEqual from 'lodash.isequal';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import exp from "constants";
 
 interface BrickDescriptionSheetProps {
     brickId: string | boolean | number;
     targetValue: string | number | File | null;
     intentValue: string | number | File | null;
+    inputTargets: string[];
+    inputIntents: string[];
+    handleDeleteTarget: (index: number) => void;
+    handleDeleteIntent: (index: number) => void;
 }
 
 const BrickDescriptionSheet: React.FC<BrickDescriptionSheetProps> = ({
     targetValue,
     intentValue,
-    brickId
+    inputTargets,
+    inputIntents,
+    brickId,
+    handleDeleteTarget,
+    handleDeleteIntent
 }) => {
-    const [inputTargets, setInputTargets] = useState<string[]>([]);
-    const [inputIntents, setInputIntents] = useState<string[]>([]);
-    const isUserUpdating = useRef(false);
+    const renderTargetInterface = () => (
+        <div className={styles.list}>
+            {inputTargets.map((target, index) => (
+                <div key={index} className={styles.listItem}>
+                    <h3>{target}</h3>
+                    <button
+                        className={styles.button}
+                        onClick={() => handleDeleteTarget(index)}
+                    >
+                        Delete
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
 
-    const handleDeleteTarget = (index: number) => {
-        isUserUpdating.current = true;
-        const updatedTargets = [...inputTargets];
-        updatedTargets.splice(index, 1);
-        setInputTargets(updatedTargets);
-    };
-
-    const handleDeleteIntent = (index: number) => {
-        isUserUpdating.current = true;
-        const updatedIntents = [...inputIntents];
-        updatedIntents.splice(index, 1);
-        setInputIntents(updatedIntents);
-    };
-
-    const renderTargetInterface = () => {
-
-    };
+    const renderIntentInterface = () => (
+        <div className={styles.list}>
+            {inputIntents.map((intents, index) => (
+                <div key={index} className={styles.listItem}>
+                    <h3>{intents}</h3>
+                    <button
+                        className={styles.button}
+                        onClick={() => handleDeleteIntent(index)}
+                    >
+                        Delete
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h2>
-                    Brick Manager Sheets_{brickId}
-                </h2>
+                <h2>Brick Manager Sheets_{brickId}</h2>
             </div>
             <hr className={styles.divider} />
-            <div className={styles.chart}>{"WIP"}</div>
+            <div className={styles.chart}>
+                {inputTargets.length > 0 ? (
+                    renderTargetInterface()
+                ) : (
+                    <h3>Select a target first.</h3>
+                )}
+            </div>
             <hr className={styles.divider} />
             <ToastContainer
                 position="top-right"
@@ -57,8 +77,7 @@ const BrickDescriptionSheet: React.FC<BrickDescriptionSheetProps> = ({
                 pauseOnHover={false}
             />
         </div>
-    )
+    );
 };
-
 
 export default BrickDescriptionSheet;

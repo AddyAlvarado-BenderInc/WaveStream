@@ -161,6 +161,10 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         fetchProductManager();
     }, []);
 
+    const handleDescriptionGlobals = () => {
+
+    }
+
     const handleCloseEditor = () => {
         setSelectedField(null);
         setSelectedBrickId("");
@@ -237,6 +241,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialHTML={formData.initialHTML}
                         onUpdate={handleAdvancedDescriptionUpdate}
                         handleFieldSelect={handleFieldSelection}
+                        handleGlobalChange={handleDescriptionGlobals}
                     />
                 </div>
                 <div className={styles.divider} />

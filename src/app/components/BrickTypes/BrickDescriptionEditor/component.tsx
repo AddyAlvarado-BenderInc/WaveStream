@@ -30,6 +30,8 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     const [inputTargetValue, setInputTargetValue] = useState<string>(
         targetValue ?? formData[field] ?? ''
     );
+    const [inputTargets, setInputTargets] = useState<string[]>([]);
+    const [inputIntents, setInputIntents] = useState<string[]>([]);
     const [inputIntentValue, setInputIntentValue] = useState(intentValue);
     const [isLoading, setIsLoading] = useState(false)
 
@@ -112,7 +114,34 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     };
 
     const handleAddTarget = () => {
+        if (!inputTargetValue) {
+            toast.error('Please select a target value before adding.');
+            return;
+        }
+        setInputTargets((prevTargets) => {
+            if (prevTargets.includes(inputTargetValue)) {
+                toast.error('Target value already exists.');
+                return prevTargets;
+            }
+            return [...prevTargets, inputTargetValue];
+        });
+        setInputTargetValue('');
+    };
 
+    const handleDeleteTarget = (index: number) => {
+        setInputTargets((prevTargets) => {
+            const updatedTargets = [...prevTargets];
+            updatedTargets.splice(index, 1);
+            return updatedTargets;
+        });
+    };
+
+    const handleDeleteIntent = (index: number) => {
+        setInputIntents((prevIntents) => {
+            const updatedIntents = [...prevIntents];
+            updatedIntents.splice(index, 1);
+            return updatedIntents;
+        });
     };
 
     return (
@@ -130,11 +159,12 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                             setInputTargetValue(e.target.value);
                         }}
                     >
+                        <option value="default">Select Target(s)</option>
                         <option value="brief-description">Brief Description</option>
                         <option value="long-description">Long Description</option>
                     </select>
                     <button className={styles.button} onClick={handleAddTarget}>
-                        Add Target
+                        Add Target to Sheet
                     </button>
                     <hr className={styles.divider}></hr>
                     <p>Intent Value:</p>
@@ -147,16 +177,18 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         <option value="description">Advanced Description</option>
                     </select>
                     {inputIntentValue === "description" ? (
-                        <iframe
-                            ref={iframeRef}
-                            title="Preview"
-                            className={styles.iframe}
-                            style={{ border: '1px solid var(--button-primary-hover)', width: '100%', height: '200px' }}
-                        />
+                        <>
+                            <iframe
+                                ref={iframeRef}
+                                title="Preview"
+                                className={styles.iframe}
+                                style={{ border: '1px solid var(--button-primary-hover)', width: '100%', height: '200px' }}
+                            />
+                            <button className={styles.button}> {/* Adds intent to description sheet */}
+                                Add Intent to Sheet
+                            </button>
+                        </>
                     ) : null}
-                    <button className={styles.button}>
-                        Add Intent
-                    </button>
                     <hr className={styles.divider}></hr>
                     <div className={styles.actions}>
                         <button className={styles.button} onClick={handleSave}>
@@ -171,7 +203,11 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                     <BrickDescriptionSheet
                         intentValue={inputIntentValue}
                         targetValue={inputTargetValue}
+                        inputTargets={inputTargets}
+                        inputIntents={inputIntents}
                         brickId={brickId}
+                        handleDeleteTarget={handleDeleteTarget}
+                        handleDeleteIntent={handleDeleteIntent}
                     />
                 </div>
             </div>

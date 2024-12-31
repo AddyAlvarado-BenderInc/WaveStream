@@ -1,8 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { serialize } from "cookie";
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {

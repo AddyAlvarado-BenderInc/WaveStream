@@ -53,6 +53,14 @@
     color: var(--button-secondary-hover);
 }
 
+.tabs select {
+    width: 100%;
+    padding: 6px;
+    background-color: inherit;
+    border: 0.5px solid var(--button-primary-hover);
+    border-radius: 4px;
+}
+
 .editor {
     margin-bottom: 10px;
 }
@@ -93,7 +101,7 @@
     border-radius: 8px;
 }
 
-.iconButton {
+.iconButton, .button {
     padding: 5px 10px;
     cursor: pointer;
     border: 0.8px solid var(--button-primary-hover);
@@ -102,7 +110,12 @@
     transition: 0.3s ease-out;
 }
 
-.iconButton:hover {
+.iconButton:hover, .button:hover {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
+}
+
+.button {
+    margin-top: 5px;
+    margin-right: 10px;
 }
