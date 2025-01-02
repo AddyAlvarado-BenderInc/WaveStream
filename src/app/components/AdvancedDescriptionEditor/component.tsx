@@ -1,15 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import styles from "./component.module.css";
 
+interface Description {
+    id: string;
+    name: string;
+    html: string;
+    css: string;
+    js: string;
+}
+
+type DescriptionProp = string | Description[];
+
 interface AdvancedDescriptionProps {
-    description: string;
+    description: DescriptionProp;
     initialJS: string;
     initialHTML: string;
     initialCSS: string;
+    descriptionName: string;
+    onDescriptionName: (name: string) => void;
     onUpdate: (field: string, value: string) => void;
     handleFieldSelect: (field: string) => void;
-    handleGlobalChange: (field: string) => void;
+    handleSaveButton: (name: string, html: string, css: string, js: string) => void;
+    handleClearButton: () => void;
 }
 
 const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
@@ -17,32 +30,40 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     initialJS,
     initialCSS,
     initialHTML,
+    descriptionName,
+    onDescriptionName,
     onUpdate,
     handleFieldSelect,
-    handleGlobalChange
+    handleSaveButton,
+    handleClearButton,
 }) => {
     const [activeTab, setActiveTab] = useState<"Javascript" | "CSS" | "HTML">("HTML");
-    const [js, setJs] = useState(initialJS);
-    const [css, setCss] = useState(initialCSS);
-    const [html, setHtml] = useState(initialHTML);
+    const [showModal, setShowModal] = useState(false);
+    const [descriptionModal, setDescriptionModal] = useState(false);
+    const [descriptionList, setDescriptionList] = useState<Description[]>([]);
+    const [name, setName] = useState(descriptionName || "");
+    const [js, setJs] = useState(initialJS || '');
+    const [css, setCss] = useState(initialCSS || '');
+    const [html, setHtml] = useState(initialHTML || '');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const configIcon = "◉";
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
-    const generateCombinedHTML = (): string => {
-        return `
-            <html>
-                <head>
-                    <style>${css}</style>
-                </head>
-                <body>
-                    ${html}
-                    <script>${js}<\/script>
-                </body>
-            </html>
-        `;
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newName = e.target.value;
+        setName(newName);
+        onDescriptionName(newName);
     };
+
+    const generateCombinedHTML = () => `
+    <html>
+        <head><style>${css || ""}</style></head>
+        <body>${html}<script>${js || ""}</script></body>
+    </html>
+    `;
 
     const handleIconClick = (e: React.MouseEvent, field: string) => {
         e.stopPropagation();
@@ -136,77 +157,140 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
         }
     };
 
-    const saveDescription = async () => {
-
+    const fetchDescription = async ({
+        descriptionId,
+        name,
+    }: { descriptionId?: string; name?: string } = {}): Promise<Description[] | Description> => {
         try {
-            const combinedHTML = generateCombinedHTML();
-            const response = await fetch('/api/descriptions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    descriptionName: 'My Description',
-                    html,
-                    css,
-                    js,
-                    combinedHTML,
-                }),
-            });
-
-            if (response.ok) {
-                toast.success('Description saved successfully!');
-            } else {
-                toast.error('Failed to save description.');
+            let query = [];
+            if (descriptionId) query.push(`descriptionId=${descriptionId}`);
+            if (name) query.push(`name=${encodeURIComponent(name)}`);
+    
+            const response = await fetch(`/api/descriptions${query.length ? `?${query.join("&")}` : ""}`);
+            if (!response.ok) throw new Error(`Error ${response.status}`);
+    
+            const data = await response.json();
+    
+            if (Array.isArray(data)) {
+                return data.map((desc) => ({
+                    id: desc.id,
+                    name: desc.name,
+                    html: desc.html,
+                    css: desc.css,
+                    js: desc.js,
+                }));
             }
+    
+            return {
+                id: data.id,
+                name: data.name,
+                html: data.html,
+                css: data.css,
+                js: data.js,
+            };
         } catch (error) {
-            console.error('Error saving description:', error);
-            toast.error('An error occurred while saving.');
+            console.error("Fetch Description Error:", error);
+            throw error;
         }
-        return (
-            <>
-                <div className={styles.modalContainer}>
-                    <h2>Save Your Description</h2>
-                    <input value={saveName}></input>
-                </div>
-            </>
-        )
+    };    
+
+    const handleClickSave = () => {
+        setShowModal(true);
     };
 
-    useEffect(() => {
-        const fetchDescriptions = async () => {
-            try {
-                const response = await fetch('/api/descriptions');
-                const data = await response.json();
+    const handleDelete = (id: string) => {
+        console.log("Description List:", descriptionList);
+        if (!id) {
+            toast.error("Invalid description ID.");
+            return;
+        }
+        setDeleteId(id);
+        setShowDeleteConfirm(true);
+    };
 
-                if (response.ok) {
-                    setDescriptions(data);
-                } else {
-                    console.error('Failed to fetch descriptions.');
-                }
-            } catch (error) {
-                console.error('Error fetching descriptions:', error);
-            }
-        };
-
-        fetchDescriptions();
-    }, []);
-
-    const deleteDescription = async () => {
+    const handleDeleteConfirm = async () => {
+        if (!deleteId) {
+            toast.error('Description ID is required for deletion.');
+            return;
+        }
+    
         try {
-            const response = await fetch('/api/descriptions', {
+            console.log('Delete ID:', deleteId);
+    
+            const response = await fetch(`/api/descriptions/${deleteId}`, {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: 'My Description' }),
             });
-
-            if (response.ok) {
-                toast.success('Description deleted successfully!');
-            } else {
-                toast.error('Failed to delete description.');
+    
+            if (!response.ok) {
+                const error = await response.json();
+                console.error('Error Response:', error);
+                toast.error(`Error: ${error.message}`);
+                return;
             }
+    
+            toast.success('Description deleted successfully!');
+            setDescriptionList((prev) => prev.filter((desc) => desc.id !== deleteId));
         } catch (error) {
             console.error('Error deleting description:', error);
-            toast.error('An error occurred while deleting.');
+            toast.error('An unexpected error occurred while deleting the description.');
+        } finally {
+            setDeleteId(null);
+            setShowDeleteConfirm(false);
         }
+    };     
+
+    const handleSelectDescription = async (id: string) => {
+        try {
+            const data = await fetchDescription({ descriptionId: id });
+
+            if (!Array.isArray(data)) {
+                setHtml(data.html);
+                setCss(data.css);
+                setJs(data.js);
+                setName(data.name);
+                onDescriptionName(data.name);
+                setShowModal(false);
+            } else {
+                toast.error("Unexpected data format: Received an array instead of an object.");
+            }
+        } catch (error) {
+            toast.error("Failed to fetch description details.");
+        }
+    };
+
+
+    useEffect(() => {
+        if (initialCSS === '' && initialHTML === '' && initialJS === '') {
+            setHtml('');
+            setCss('');
+            setJs('');
+        }
+    }, [initialCSS, initialHTML, initialJS]);
+
+    const ConfirmationModal: React.FC<{
+        show: boolean;
+        message: string;
+        onConfirm: () => void;
+        onCancel: () => void;
+    }> = ({ show, message, onConfirm, onCancel }) => {
+        if (!show) return null;
+
+        return (
+            <div className={styles.modalOverlay}>
+                <div className={styles.modal}>
+                    <h3>Confirm Action</h3>
+                    <p>{message}</p>
+                    <div className={styles.modalActions}>
+                        <button className={styles.button} onClick={onConfirm}>
+                            Confirm
+                        </button>
+                        <button className={styles.button} onClick={onCancel}>
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -230,24 +314,58 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 >
                     JS
                 </button>
-                <select
-                    onChange={(e) => {
-                        const selectedDescription = description.find(
-                            (desc) => desc.name === e.target.value
-                        );
-                        if (selectedDescription) {
-                            setHtml(selectedDescription);
-                            setCss(selectedDescription.css);
-                            setJs(selectedDescription.js);
+                <button
+                    onClick={async () => {
+                        try {
+                            const data = await fetchDescription();
+                            if (Array.isArray(data)) {
+                                console.log("Mapped Descriptions:", data);
+                                setDescriptionList(data);
+                            } else {
+                                toast.error("Unexpected data format: Received an object instead of an array.");
+                            }
+
+                            setDescriptionModal(true);
+                        } catch (error) {
+                            toast.error("Failed to fetch descriptions.");
                         }
-                    }}>
-                    <option value="">Select Description</option>
-                    {description.map((desc) => (
-                        <option key={desc.id} value={desc.name}>
-                            {desc.name}
-                        </option>
-                    ))}
-                </select>
+                    }}
+                >
+                    Select Description
+                </button>
+                {descriptionModal && (
+                    <div className={styles.descriptionModal}>
+                        <div className={styles.modalOverlay}>
+                            <div className={styles.modal}>
+                                <div className={styles.modalHead}>
+                                    <h2>Select a Description</h2>
+                                    <button
+                                        className={styles.crossButton}
+                                        onClick={() => setDescriptionModal(false)}>
+                                        ✕
+                                    </button>
+                                </div>
+                                <hr className={styles.divider}></hr>
+                                <ul>
+                                    {descriptionList.map((desc) => (
+                                        <li key={desc.id} className={styles.descriptionList}>
+                                            <button onClick={() => handleSelectDescription(desc.id)}>
+                                                {desc.name}
+                                            </button>
+                                            <button
+                                                name="delete-button"
+                                                className={styles.deleteButton}
+                                                onClick={() => handleDelete(desc.id)}
+                                            >
+                                                ✕
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <button
                     className={styles.iconButton}
                     onClick={(e) => handleIconClick(e, "description")}
@@ -257,6 +375,8 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
             </div>
             <div className={styles.editor}>{renderEditor()}</div>
             <div className={styles.preview}>
+                {descriptionName ? <h1>{descriptionName}</h1> : ''
+                }
                 <iframe
                     ref={iframeRef}
                     title="Live Preview"
@@ -264,18 +384,64 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                 />
             </div>
             <div className={styles.descriptionButtons}>
-
-                <button className={styles.button} onClick={saveDescription}> {/* Users can create a new description intent value, this affects the number of option values for select tag in the BrickDescriptionEditor. This is also a global data change */}
+                <button className={styles.button} onClick={handleClickSave}>
                     Save Description
                 </button>
-                <button className={styles.button}> {/* Clears characters in all tabs, this is not a global change */}
+                {showModal && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modal}>
+                            <div className={styles.modalHead}>
+                                <h2>Save Your Description</h2>
+                                <button
+                                    className={styles.crossButton}
+                                    onClick={() => setShowModal(false)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Enter description name"
+                                value={descriptionName}
+                                onChange={handleNameChange}
+                                className={styles.input}
+                            />
+                            <div className={styles.modalActions}>
+                                <button
+                                    className={styles.modalButton}
+                                    onClick={() => handleSaveButton(descriptionName, html, css, js)
+                                    }
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    className={styles.modalButton}
+                                    onClick={() => setShowModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <button
+                    className={styles.button}
+                    onClick={handleClearButton}
+                    disabled={!description && !initialCSS && !initialHTML && !initialJS}
+                >
                     Clear Description
                 </button>
-                <button className={styles.button}> {/* Users can delete a description intent value, this affects the number of option values for select tag in the BrickDescriptionEditor. This is also a global data change */}
-                    Delete Description
-                </button>
+                <ConfirmationModal
+                    show={showDeleteConfirm}
+                    message="Are you sure you want to delete this description? This action cannot be undone."
+                    onConfirm={handleDeleteConfirm}
+                    onCancel={() => {
+                        setDeleteId(null);
+                        setShowDeleteConfirm(false);
+                    }}
+                />
+
             </div>
-            <ToastContainer />
         </div>
     );
 };

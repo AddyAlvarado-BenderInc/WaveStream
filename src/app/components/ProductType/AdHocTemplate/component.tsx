@@ -27,7 +27,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         itemTemplate: productManager.itemTemplate || '',
         descriptionFooter: productManager.descriptionFooter || '',
         buyNowButtonText: productManager.buyNowButtonText || '',
-        description: productManager.description || '',
+        description: productManager.description,
         initialJS: productManager.initialJS || '',
         initialCSS: productManager.initialCSS || '',
         initialHTML: productManager.initialHTML || '',
@@ -38,12 +38,19 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
     const [selectedField, setSelectedField] = useState<string | null>(null);
     const [selectedBrickId, setSelectedBrickId] = useState<string | number | boolean>(String);
+    const [descriptionName, setDescriptionName] = useState("");
+
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+    const handleDescriptionNameChange = (name: string) => {
+        setDescriptionName(name);
+    }
 
     const handleFieldSelection = (field: string) => {
         setSelectedField(field);
 
         const brickId = `${productManager._id}_${field}`;
-                setSelectedBrickId(brickId);
+        setSelectedBrickId(brickId);
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -131,7 +138,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     useEffect(() => {
         const fetchProductManager = async () => {
             try {
-                const response = await fetch(`/api/productManager/${productManager.productType}/${productManager._id}`);
+                const response = await fetch(`${BASE_URL}/api/productManager/${productManager.productType}/${productManager._id}`);
                 if (response.ok) {
                     const data = await response.json();
                     setFormData({
@@ -161,9 +168,55 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         fetchProductManager();
     }, []);
 
-    const handleDescriptionGlobals = () => {
+    const descriptionSaveButton = async (name: string, html: string, css: string, js: string) => {
+        try {
+            if (!name.trim()) {
+                toast.error("Description name is required.");
+                return;
+            }            
+    
+            const combinedHTML = `
+            <html>
+                <head><style>${css || ""}</style></head>
+                <body>${html}<script>${js || ""}</script></body>
+            </html>
+            `;
+    
+            console.log("Payload being sent:", { name, html, css, js, combinedHTML });
+    
+            const response = await fetch(`/api/descriptions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, html, css, js, combinedHTML }),
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Response Data:", data);
+                toast.success("Description saved successfully!");
+            } else {
+                const error = await response.json();
+                console.error("Error Response:", error);
+                toast.error(`Error: ${error.message}`);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("An unexpected error occurred.");
+        }
+    };    
 
-    }
+    const descriptionClearButton = () => {
+        if (confirm('Are you sure you want to clear the description?')) {
+            setFormData((prev) => ({
+                ...prev,
+                initialCSS: '',
+                initialHTML: '',
+                initialJS: '',
+                description: '',
+            }));
+            toast.success('Description cleared successfully');
+        }
+    };
 
     const handleCloseEditor = () => {
         setSelectedField(null);
@@ -174,15 +227,15 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         if (!selectedBrickId) {
             return <h1>Select A Field</h1>;
         }
-    
+
         switch (selectedBrickId) {
             case `${productManager._id}_description`:
                 return (
                     <BrickAdvancedDescription
                         brickId={selectedBrickId}
                         field="description"
-                        targetValue={formData.description || ''}
-                        intentValue={formData.description || ''}
+                        targetValue={formData.description}
+                        intentValue={formData.description}
                         specifiedIntentRange={0}
                         intentSelectionValue="default"
                         actionSelectionValue="default"
@@ -219,7 +272,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                     />
                 );
         }
-    };    
+    };
 
     return (
         <div className={styles.container}>
@@ -235,13 +288,16 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 <div className={styles.divider} />
                 <div className={styles.middleContainer}>
                     <AdvancedDescription
+                        descriptionName={descriptionName}
+                        onDescriptionName={handleDescriptionNameChange}
                         description={formData.description}
                         initialJS={formData.initialJS}
                         initialCSS={formData.initialCSS}
                         initialHTML={formData.initialHTML}
                         onUpdate={handleAdvancedDescriptionUpdate}
                         handleFieldSelect={handleFieldSelection}
-                        handleGlobalChange={handleDescriptionGlobals}
+                        handleSaveButton={descriptionSaveButton}
+                        handleClearButton={descriptionClearButton}
                     />
                 </div>
                 <div className={styles.divider} />

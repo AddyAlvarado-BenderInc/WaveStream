@@ -18,7 +18,6 @@ interface BrickEditorProps {
 
 const BrickEditor: React.FC<BrickEditorProps> = ({
     field,
-    targetValue,
     specifiedIntentRange,
     intentSelectionValue,
     actionSelectionValue,
@@ -27,9 +26,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     formData,
     onClose
 }) => {
-    const [inputTargetValue, setInputTargetValue] = useState<string>(
-        targetValue ?? formData[field] ?? ''
-    );
+    const [inputTargetValue, setInputTargetValue] = useState<string>() || '';
     const [inputTargets, setInputTargets] = useState<string[]>([]);
     const [inputIntents, setInputIntents] = useState<string[]>([]);
     const [inputIntentValue, setInputIntentValue] = useState(intentValue);
@@ -50,6 +47,8 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
+
+            // TODO: missing target value but make sure to prevent target value from being intent value
             try {
                 console.log('Fetching data for brickId:', brickId);
 
@@ -63,11 +62,6 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 if (response.ok) {
                     console.log('Fetched data:', data);
 
-                    setInputTargetValue(
-                        data.targetValue !== null && data.targetValue !== ''
-                            ? data.targetValue
-                            : formData[field] || ''
-                    );
                     setInputIntentValue(data.intentValue || 'none');
                 } else {
                     console.warn(`Failed to fetch data: ${response.statusText}`);
@@ -118,11 +112,15 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
             toast.error('Please select a target value before adding.');
             return;
         }
+        if (inputTargetValue === "default") {
+            toast.error('Default target value cannot be added.');
+            return;
+        }
         setInputTargets((prevTargets) => {
             if (prevTargets.includes(inputTargetValue)) {
                 toast.error('Target value already exists.');
                 return prevTargets;
-            }
+            } 
             return [...prevTargets, inputTargetValue];
         });
         setInputTargetValue('');
@@ -159,7 +157,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                             setInputTargetValue(e.target.value);
                         }}
                     >
-                        <option value="default">Select Target(s)</option>
+                        <option value="">Select Target(s)</option>
                         <option value="brief-description">Brief Description</option>
                         <option value="long-description">Long Description</option>
                     </select>
@@ -184,7 +182,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                                 className={styles.iframe}
                                 style={{ border: '1px solid var(--button-primary-hover)', width: '100%', height: '200px' }}
                             />
-                            <button className={styles.button}> {/* Adds intent to description sheet */}
+                            <button className={styles.button}> 
                                 Add Intent to Sheet
                             </button>
                         </>
@@ -202,7 +200,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 <div className={styles.sheetContainer}>
                     <BrickDescriptionSheet
                         intentValue={inputIntentValue}
-                        targetValue={inputTargetValue}
+                        targetValue={inputTargetValue || ''}
                         inputTargets={inputTargets}
                         inputIntents={inputIntents}
                         brickId={brickId}

@@ -1,33 +1,45 @@
-app.post('/api/descriptions', async (req, res) => {
-    const { name, html, css, js, combinedHTML } = req.body;
+import { NextApiRequest, NextApiResponse } from 'next';
+import connectToDatabase from '../../../lib/mongodb';
+import Description from '../../../models/Description';
 
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
-        await db.collection('descriptions').insertOne({ name, html, css, js, combinedHTML });
-        res.status(201).send({ message: 'Description saved successfully.' });
-    } catch (error) {
-        console.error('Error saving description:', error);
-        res.status(500).send({ error: 'Failed to save description.' });
-    }
-});
+        await connectToDatabase();
 
-app.get('/api/descriptions', async (req, res) => {
-    try {
-        const descriptions = await db.collection('descriptions').find().toArray();
-        res.status(200).send(descriptions);
-    } catch (error) {
-        console.error('Error fetching descriptions:', error);
-        res.status(500).send({ error: 'Failed to fetch descriptions.' });
-    }
-});
+        const { descriptionId } = req.query;
 
-app.delete('/api/descriptions', async (req, res) => {
-    const { name } = req.body;
+        if (!descriptionId || typeof descriptionId !== 'string') {
+            return res.status(400).json({ error: 'Valid descriptionId is required for deletion.' });
+        }
 
-    try {
-        await db.collection('descriptions').deleteOne({ name });
-        res.status(200).send({ message: 'Description deleted successfully.' });
+        switch (req.method) {
+            case 'DELETE': {
+                console.log("Received descriptionId for DELETE:", descriptionId);
+            
+                if (!descriptionId || typeof descriptionId !== 'string') {
+                    return res.status(400).json({ error: 'Valid descriptionId is required for deletion.' });
+                }
+            
+                try {
+                    const deletedDescription = await Description.findByIdAndDelete(descriptionId);
+                    if (!deletedDescription) {
+                        return res.status(404).json({ error: 'Description not found.' });
+                    }
+            
+                    return res.status(200).json({ message: 'Description deleted successfully.' });
+                } catch (error) {
+                    console.error('Error deleting description:', error);
+                    return res.status(500).json({ error: 'Internal server error.' });
+                }
+            }            
+
+            default: {
+                res.setHeader('Allow', ['DELETE']);
+                return res.status(405).json({ error: `Method ${req.method} is not allowed.` });
+            }
+        }
     } catch (error) {
-        console.error('Error deleting description:', error);
-        res.status(500).send({ error: 'Failed to delete description.' });
+        console.error('Error handling DELETE request:', error);
+        return res.status(500).json({ error: 'Internal server error.' });
     }
-});
+}

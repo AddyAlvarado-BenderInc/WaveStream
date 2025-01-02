@@ -110,7 +110,21 @@
     transition: 0.3s ease-out;
 }
 
-.iconButton:hover, .button:hover {
+.crossButton {
+    position: relative;
+    padding: 0;
+    margin: 0;
+    bottom: 14px;
+    left: 8px;
+    z-index: 100;
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    color: var(--button-primary-hover);
+    transition: 0.3s ease;
+}
+
+.iconButton:hover, .button:hover, .modalButton:hover {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
 }
@@ -118,4 +132,99 @@
 .button {
     margin-top: 5px;
     margin-right: 10px;
+}
+
+.button:disabled {
+    background-color: var(--gray-alpha-100);
+    color: var(--gray-alpha-200);
+    cursor: default;
+}
+
+.modalHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal {
+    background: var(--button-secondary-hover);
+    border: 1px solid var(--button-primary-hover);
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    box-shadow: 0 2px 10px #0000001a;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.modalButton {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.1s ease-in-out;
+    background-color: var(--button-secondary-hover);
+    border: 1px solid var(--button-primary-hover);
+    color: #fff;
+}
+
+.input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.descriptionList {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.descriptionList button {
+    border: none;
+}
+
+.descriptionList button[name="delete-button"] {
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.1s ease-in-out;
+    background-color: var(--button-secondary-hover);
+    color: #fff;
+}
+
+.descriptionList button[name="delete-button"]:hover {
+    background-color: var(--button-primary-hover);
+    color:red;
+}
+
+.descriptionModal button.crossButton {
+    padding: 0
+}
+
+.descriptionModal button.crossButton:hover {
+    background-color: transparent;
+    color: initial;
 }
