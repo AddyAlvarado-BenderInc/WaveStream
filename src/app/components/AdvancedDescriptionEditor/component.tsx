@@ -217,7 +217,6 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
 
         try {
             console.log('Delete ID:', deleteId);
-            const productType = window.location.pathname.split('/')[1];
             const response = await fetch(`/api/productManager/descriptions/${deleteId}`, {
                 method: 'DELETE',
             });
@@ -247,9 +246,18 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
             if (!Array.isArray(data)) {
                 const { html, css, js, name } = data;
     
-                if (html !== undefined) setHtml(html);
-                if (css !== undefined) setCss(css);
-                if (js !== undefined) setJs(js);
+                if (html !== undefined) {
+                    setHtml(html);
+                    onUpdate('html', html);
+                }
+                if (css !== undefined) {
+                    setCss(css);
+                    onUpdate('css', css);
+                }
+                if (js !== undefined) {
+                    setJs(js);
+                    onUpdate('js', js);
+                }
     
                 if (name) {
                     setName(name);

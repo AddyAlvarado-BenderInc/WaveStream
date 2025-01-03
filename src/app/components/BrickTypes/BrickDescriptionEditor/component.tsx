@@ -47,8 +47,6 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
-
-            // TODO: missing target value but make sure to prevent target value from being intent value
             try {
                 console.log('Fetching data for brickId:', brickId);
 
