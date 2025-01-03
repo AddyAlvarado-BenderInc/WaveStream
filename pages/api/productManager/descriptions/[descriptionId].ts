@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import connectToDatabase from '../../../lib/mongodb';
-import Description from '../../../models/Description';
+import connectToDatabase from '../../../../lib/mongodb';
+import Description from '../../../../models/Description';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {

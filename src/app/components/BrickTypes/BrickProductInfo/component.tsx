@@ -63,8 +63,10 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         const sanitizedBrickId = encodeURIComponent(
                             typeof brickId === 'string' ? brickId.trim().replace(/\s+/g, '_') : brickId
                         );
+
+                        const productType = window.location.pathname.split('/')[1];
         
-                        const response = await fetch(`/api/brickEditor/${sanitizedBrickId}`);
+                        const response = await fetch(`/api/productManager/${productType}/brickEditor/${sanitizedBrickId}`);
                         const data = await response.json();
         
                         if (response.ok) {
@@ -115,7 +117,8 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
 
         try {
             const sanitizedBrickId = encodeURIComponent(brickId);
-            const response = await fetch(`/api/brickEditor/${sanitizedBrickId}`, {
+            const productType = window.location.pathname.split('/')[1];
+            const response = await fetch(`/api/productManager/${productType}/brickEditor/${sanitizedBrickId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

@@ -1,12 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import connectToDatabase from '../../../lib/mongodb';
-import Description from '../../../models/Description';
+import connectToDatabase from '../../../../lib/mongodb';
+import Description from '../../../../models/Description';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
         await connectToDatabase();
-
-        const { descriptionId, name } = req.query;
 
         switch (req.method) {
             case 'GET': {
@@ -22,6 +20,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return res.status(404).json({ error: 'Description not found.' });
                 }
             
+                if (descriptionId) {
+                    return res.status(200).json(descriptions[0]);
+                }
+            
                 const formattedDescriptions = descriptions.map((desc) => ({
                     id: desc._id,
                     name: desc.name,
@@ -31,28 +33,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }));
             
                 return res.status(200).json(formattedDescriptions);
-            }            
+            }          
 
             case 'POST': {
                 const { name, html, css, js, combinedHTML } = req.body;
-
+            
                 if (!name || !html || !combinedHTML) {
                     return res.status(400).json({ error: 'Name, HTML, and combinedHTML are required.' });
                 }
-
+            
                 const existingDescription = await Description.findOne({ name });
                 if (existingDescription) {
-                    return res.status(400).json({ error: 'A description with this name already exists.' });
+                    return res.status(409).json({ 
+                        message: 'A description with this name already exists.',
+                        description: {
+                            id: existingDescription._id,
+                            name: existingDescription.name,
+                            html: existingDescription.html,
+                            css: existingDescription.css,
+                            js: existingDescription.js,
+                        },
+                    });
                 }
-
+            
                 const newDescription = new Description({ name, html, css, js, combinedHTML });
                 await newDescription.save();
-
+            
                 return res.status(201).json({
                     message: 'Description created successfully.',
                     id: newDescription._id,
                 });
-            }
+            }            
 
             case 'PUT': {
                 const { descriptionId } = req.query;
@@ -60,6 +71,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             
                 if (!descriptionId || typeof descriptionId !== 'string') {
                     return res.status(400).json({ error: 'Valid descriptionId is required.' });
+                }
+            
+                if (!name || !html || !combinedHTML) {
+                    return res.status(400).json({ error: 'Name, HTML, and combinedHTML are required.' });
                 }
             
                 const updatedDescription = await Description.findByIdAndUpdate(
@@ -76,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     message: 'Description updated successfully.',
                     description: updatedDescription,
                 });
-            }            
+            }                        
 
             default: {
                 res.setHeader('Allow', ['GET', 'POST', 'PUT']);

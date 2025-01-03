@@ -168,42 +168,92 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         fetchProductManager();
     }, []);
 
-    const descriptionSaveButton = async (name: string, html: string, css: string, js: string) => {
+    const overwriteDescription = async (
+        id: string,
+        name: string,
+        html: string,
+        css: string,
+        js: string,
+        combinedHTML: string
+    ) => {
         try {
-            if (!name.trim()) {
-                toast.error("Description name is required.");
-                return;
-            }            
-    
-            const combinedHTML = `
-            <html>
-                <head><style>${css || ""}</style></head>
-                <body>${html}<script>${js || ""}</script></body>
-            </html>
-            `;
-    
-            console.log("Payload being sent:", { name, html, css, js, combinedHTML });
-    
-            const response = await fetch(`/api/descriptions`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            const response = await fetch(`/api/productManager/descriptions?descriptionId=${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, html, css, js, combinedHTML }),
             });
     
             if (response.ok) {
                 const data = await response.json();
-                console.log("Response Data:", data);
-                toast.success("Description saved successfully!");
+                toast.success('Description overwritten successfully!');
             } else {
                 const error = await response.json();
-                console.error("Error Response:", error);
                 toast.error(`Error: ${error.message}`);
             }
         } catch (error) {
-            console.error(error);
-            toast.error("An unexpected error occurred.");
+            console.error('Overwrite Description Error:', error);
+            toast.error('Failed to overwrite the description.');
         }
     };    
+
+    const descriptionSaveButton = async (
+        name: string,
+        html: string,
+        css: string,
+        js: string
+    ): Promise<void> => {
+        try {
+            console.log("Inputs before validation:", { name, html, css, js });
+    
+            if (!name.trim() || !html.trim()) {
+                toast.error("Name and HTML fields are required.");
+                return;
+            }
+    
+            const combinedHTML = `
+            <html>
+                <head><style>${css || ""}</style></head>
+                <body>${html}${js ? `<script>${js}</script>` : ""}</body>
+            </html>
+            `;
+    
+            console.log("Combined HTML:", combinedHTML);
+    
+            const response = await fetch(`/api/productManager/descriptions`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, html, css, js, combinedHTML }),
+            });
+
+            if (response.status === 409) {
+                const { description } = await response.json();
+    
+                const overwrite = confirm(
+                    `Description with the name "${name}" already exists. Do you want to overwrite it?`
+                );
+    
+                if (overwrite) {
+                    await overwriteDescription(description.id, name, html, css, js, combinedHTML);
+                } else {
+                    toast.info('Description overwrite canceled.');
+                }
+                return;
+            }
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log("API Response Data:", data);
+                toast.success("Description saved successfully!");
+            } else {
+                const error = await response.json();
+                console.error("API Error:", error);
+                toast.error(`Error: ${error.message}`);
+            }
+        } catch (error) {
+            console.error("Save Description Error:", error);
+            toast.error("An unexpected error occurred.");
+        }
+    };        
 
     const descriptionClearButton = () => {
         if (confirm('Are you sure you want to clear the description?')) {
@@ -296,7 +346,10 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialHTML={formData.initialHTML}
                         onUpdate={handleAdvancedDescriptionUpdate}
                         handleFieldSelect={handleFieldSelection}
-                        handleSaveButton={descriptionSaveButton}
+                        handleSaveButton={(name, html, css, js) => {
+                            console.log("handleSaveButton invoked with:", { name, html, css, js });
+                            descriptionSaveButton(name, html, css, js);
+                        }}
                         handleClearButton={descriptionClearButton}
                     />
                 </div>

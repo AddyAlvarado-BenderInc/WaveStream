@@ -55,8 +55,8 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                 const sanitizedBrickId = encodeURIComponent(
                     typeof brickId === 'string' ? brickId.trim().replace(/\s+/g, '_') : brickId
                 );
-
-                const response = await fetch(`/api/brickEditor/${sanitizedBrickId}`);
+                const productType = window.location.pathname.split('/')[1];
+                const response = await fetch(`/api/productManager/${productType}/brickEditor/${sanitizedBrickId}`);
                 const data = await response.json();
 
                 if (response.ok) {

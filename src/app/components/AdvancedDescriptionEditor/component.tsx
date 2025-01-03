@@ -165,12 +165,13 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
             let query = [];
             if (descriptionId) query.push(`descriptionId=${descriptionId}`);
             if (name) query.push(`name=${encodeURIComponent(name)}`);
-    
-            const response = await fetch(`/api/descriptions${query.length ? `?${query.join("&")}` : ""}`);
-            if (!response.ok) throw new Error(`Error ${response.status}`);
-    
+            const response = await fetch(`/api/productManager/descriptions${query.length ? `?${query.join("&")}` : ""}`);
+            if (!response.ok) {
+                toast.error('Error in retrieving description list or no description found');
+            };
+
             const data = await response.json();
-    
+
             if (Array.isArray(data)) {
                 return data.map((desc) => ({
                     id: desc.id,
@@ -180,7 +181,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                     js: desc.js,
                 }));
             }
-    
+
             return {
                 id: data.id,
                 name: data.name,
@@ -192,7 +193,7 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
             console.error("Fetch Description Error:", error);
             throw error;
         }
-    };    
+    };
 
     const handleClickSave = () => {
         setShowModal(true);
@@ -213,21 +214,21 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
             toast.error('Description ID is required for deletion.');
             return;
         }
-    
+
         try {
             console.log('Delete ID:', deleteId);
-    
-            const response = await fetch(`/api/descriptions/${deleteId}`, {
+            const productType = window.location.pathname.split('/')[1];
+            const response = await fetch(`/api/productManager/descriptions/${deleteId}`, {
                 method: 'DELETE',
             });
-    
+
             if (!response.ok) {
                 const error = await response.json();
                 console.error('Error Response:', error);
                 toast.error(`Error: ${error.message}`);
                 return;
             }
-    
+
             toast.success('Description deleted successfully!');
             setDescriptionList((prev) => prev.filter((desc) => desc.id !== deleteId));
         } catch (error) {
@@ -237,27 +238,34 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
             setDeleteId(null);
             setShowDeleteConfirm(false);
         }
-    };     
+    };
 
     const handleSelectDescription = async (id: string) => {
         try {
             const data = await fetchDescription({ descriptionId: id });
-
+    
             if (!Array.isArray(data)) {
-                setHtml(data.html);
-                setCss(data.css);
-                setJs(data.js);
-                setName(data.name);
-                onDescriptionName(data.name);
+                const { html, css, js, name } = data;
+    
+                if (html !== undefined) setHtml(html);
+                if (css !== undefined) setCss(css);
+                if (js !== undefined) setJs(js);
+    
+                if (name) {
+                    setName(name);
+                    onDescriptionName(name);
+                }
+    
                 setShowModal(false);
             } else {
-                toast.error("Unexpected data format: Received an array instead of an object.");
+                console.error("Unexpected data format: Received an array instead of an object.");
             }
         } catch (error) {
             toast.error("Failed to fetch description details.");
+            console.error("Error in handleSelectDescription:", error);
         }
     };
-
+    
 
     useEffect(() => {
         if (initialCSS === '' && initialHTML === '' && initialJS === '') {
@@ -409,8 +417,15 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                             <div className={styles.modalActions}>
                                 <button
                                     className={styles.modalButton}
-                                    onClick={() => handleSaveButton(descriptionName, html, css, js)
-                                    }
+                                    onClick={() => {
+                                        console.log("Save Button clicked with:", {
+                                            name: descriptionName,
+                                            html,
+                                            css,
+                                            js,
+                                        });
+                                        handleSaveButton(descriptionName, html, css, js);
+                                    }}
                                 >
                                     Save
                                 </button>
@@ -440,7 +455,6 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                         setShowDeleteConfirm(false);
                     }}
                 />
-
             </div>
         </div>
     );

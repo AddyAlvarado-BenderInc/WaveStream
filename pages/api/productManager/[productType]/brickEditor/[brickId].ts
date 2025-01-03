@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import connectToDatabase from '../../../lib/mongodb';
-import BrickEditor from '../../../models/BrickEditor';
-import ProductManager from '../../../models/ProductManager';
+import connectToDatabase from '../../../../../lib/mongodb';
+import BrickEditor from '../../../../../models/BrickEditor';
+import ProductManager from '../../../../../models/ProductManager';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     type Brick = {
