@@ -11,7 +11,7 @@ interface ProductIconManagerProps {
 
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload, handleFieldSelect }) => {
     const [preview, setPreview] = useState<string | null>(icon || null);
-
+    
     const configIcon = "◉";
 
     useEffect(() => {
@@ -46,6 +46,9 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
         handleFieldSelect(camelCaseField);
     };
 
+    const handleImageChange = (e: React.MouseEvent, field: string) => {
+    }
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -68,9 +71,24 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
             <div className={styles.previewBox}>
                 {preview && (
                     <div className={styles.previewContainer}>
+                        <button 
+                            name="arrow-previous"
+                            className={styles.button}
+                        >
+                            ‹
+                        </button>
                         <img src={preview} alt="Icon Preview" className={styles.previewImage} />
+                        <button 
+                            name="arrow-next"
+                            className={styles.button}
+                        >
+                            ›
+                        </button>
                     </div>
                 )}
+                <div className={styles.pagination}>
+                •••
+                </div>
             </div>
         </div>
     );
