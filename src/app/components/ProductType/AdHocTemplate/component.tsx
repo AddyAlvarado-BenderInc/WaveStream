@@ -358,12 +358,12 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                     <ProductIconManager
                         icon={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
                         label="Product Icon"
-                        onUpload={(file: File) => {
-                            const previewURL = URL.createObjectURL(file);
+                        onUpload={(file: File | null) => {
+                            const previewURL = file ? URL.createObjectURL(file) : null;
 
                             setFormData((prev) => ({
                                 ...prev,
-                                icon: file,
+                                icon: file || "",
                                 iconPreview: previewURL,
                             }));
                             console.log("Icon uploaded:", file);
