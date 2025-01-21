@@ -31,9 +31,9 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         initialJS: productManager.initialJS || '',
         initialCSS: productManager.initialCSS || '',
         initialHTML: productManager.initialHTML || '',
-        icon: productManager.icon || '',
+        icon: productManager.icon || [],
         label: productManager.label || '',
-        iconPreview: productManager.iconPreview || null,
+        iconPreview: productManager.iconPreview || [],
     });
 
     const [selectedField, setSelectedField] = useState<string | null>(null);
@@ -83,8 +83,12 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
             const formDataPayload = new FormData();
 
             Object.entries(formData).forEach(([key, value]) => {
-                if (key === 'icon' && value instanceof File) {
-                    formDataPayload.append(key, value);
+                if (key === 'icons' && Array.isArray(value)) {
+                    value.forEach((file, index) => {
+                        if (file instanceof File) {
+                            formDataPayload.append(`icon_${index}`, file);
+                        }
+                    });
                 } else if (value !== null && value !== undefined) {
                     formDataPayload.append(key, value.toString());
                 }
@@ -153,8 +157,8 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialJS: data.initialJS || '',
                         initialCSS: data.initialCSS || '',
                         initialHTML: data.initialHTML || '',
-                        iconPreview: typeof productManager.icon === 'string' ? productManager.icon : null,
-                        icon: data.icon || '',
+                        iconPreview: (data.icons || []).map((icon: string) => `${BASE_URL}/${icon}`),
+                        icon: data.icon || [],
                         label: data.label || '',
                     });
                 } else {
@@ -182,7 +186,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, html, css, js, combinedHTML }),
             });
-    
+
             if (response.ok) {
                 const data = await response.json();
                 toast.success('Description overwritten successfully!');
@@ -194,7 +198,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
             console.error('Overwrite Description Error:', error);
             toast.error('Failed to overwrite the description.');
         }
-    };    
+    };
 
     const descriptionSaveButton = async (
         name: string,
@@ -204,21 +208,21 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     ): Promise<void> => {
         try {
             console.log("Inputs before validation:", { name, html, css, js });
-    
+
             if (!name.trim() || !html.trim()) {
                 toast.error("Name and HTML fields are required.");
                 return;
             }
-    
+
             const combinedHTML = `
             <html>
                 <head><style>${css || ""}</style></head>
                 <body>${html}${js ? `<script>${js}</script>` : ""}</body>
             </html>
             `;
-    
+
             console.log("Combined HTML:", combinedHTML);
-    
+
             const response = await fetch(`/api/productManager/descriptions`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -227,11 +231,11 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
             if (response.status === 409) {
                 const { description } = await response.json();
-    
+
                 const overwrite = confirm(
                     `Description with the name "${name}" already exists. Do you want to overwrite it?`
                 );
-    
+
                 if (overwrite) {
                     await overwriteDescription(description.id, name, html, css, js, combinedHTML);
                 } else {
@@ -239,7 +243,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 }
                 return;
             }
-    
+
             if (response.ok) {
                 const data = await response.json();
                 console.log("API Response Data:", data);
@@ -253,7 +257,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
             console.error("Save Description Error:", error);
             toast.error("An unexpected error occurred.");
         }
-    };        
+    };
 
     const descriptionClearButton = () => {
         if (confirm('Are you sure you want to clear the description?')) {
@@ -298,8 +302,8 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                     <BrickProductIcon
                         brickId={selectedBrickId}
                         field="icon"
-                        targetValue={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
-                        intentValue={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
+                        targetValue={Array.isArray(formData.icon) ? formData.icon.join(', ') : formData.icon}
+                        intentValue={Array.isArray(formData.iconPreview) ? formData.iconPreview.join(', ') : formData.iconPreview}
                         specifiedIntentRange={0}
                         intentSelectionValue="default"
                         actionSelectionValue="default"
@@ -312,14 +316,23 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                     <BrickProductInfo
                         brickId={selectedBrickId}
                         field={selectedField || ''}
-                        targetValue={formData[selectedField as keyof typeof formData] || ''}
-                        intentValue={formData[selectedField as keyof typeof formData] || ''}
+                        targetValue={
+                            Array.isArray(formData[selectedField as keyof typeof formData])
+                                ? (formData[selectedField as keyof typeof formData] as Array<string | File>).join(', ')
+                                : (formData[selectedField as keyof typeof formData] as string | number | File | null) || ''
+                        }
+                        intentValue={
+                            Array.isArray(formData[selectedField as keyof typeof formData])
+                                ? (formData[selectedField as keyof typeof formData] as Array<string | File>).join(', ')
+                                : (formData[selectedField as keyof typeof formData] as string | number | File | null) || ''
+                        }
                         specifiedIntentRange={0}
                         intentSelectionValue="default"
                         actionSelectionValue="default"
                         onClose={handleCloseEditor}
                         formData={formData}
                     />
+
                 );
         }
     };
@@ -356,17 +369,15 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 <div className={styles.divider} />
                 <div className={styles.rightContainer}>
                     <ProductIconManager
-                        icon={formData.iconPreview || (typeof formData.icon === "string" ? formData.icon : "")}
-                        label="Product Icon"
-                        onUpload={(file: File | null) => {
-                            const previewURL = file ? URL.createObjectURL(file) : null;
-
+                        icon={formData.iconPreview} // Array of preview URLs
+                        label="Product Icons"
+                        onUpload={(files: File[]) => {
+                            const previews = files.map((file) => URL.createObjectURL(file));
                             setFormData((prev) => ({
                                 ...prev,
-                                icon: file || "",
-                                iconPreview: previewURL,
+                                icons: [...prev.icon, ...files], // Append new files
+                                iconPreviews: [...prev.iconPreview, ...previews], // Append new previews
                             }));
-                            console.log("Icon uploaded:", file);
                         }}
                         handleFieldSelect={handleFieldSelection}
                         onClose={handleCloseEditor}

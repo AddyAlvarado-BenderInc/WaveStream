@@ -2,42 +2,51 @@ import React, { useState, useEffect } from "react";
 import styles from "./component.module.css";
 
 interface ProductIconManagerProps {
-    icon: string;
+    icon: string[];
     label: string;
-    onUpload: (iconData: File | null) => void;
+    onUpload: (iconData: File[]) => void;
     handleFieldSelect: (field: string) => void;
     onClose: () => void;
 }
 
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload, handleFieldSelect }) => {
-    const [preview, setPreview] = useState<string | null>(icon || null);
-    const [pagination, setPagination] = useState(true);
+    const [preview, setPreview] = useState<string[]>(icon || null);
+    const [images, setImages] = useState<string[]>(icon || []);
+    const [currentIndex, setCurrentIndex] = useState<number>(0);
 
     const configIcon = "◉";
 
     useEffect(() => {
-        if (icon) {
-            setPreview(icon);
+        if (Array.isArray(icon) && icon.length > 0) {
+            setImages(icon);
         }
     }, [icon]);
 
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                alert("File size exceeds the 5MB limit.");
-                return;
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            const validFiles = files.filter((file) => file.size <= 5 * 1024 * 1024);
+
+            if (validFiles.length !== files.length) {
+                alert("Some files were too large and were not added.");
             }
-            setPreview(URL.createObjectURL(file));
-            onUpload(file);
+
+            const newImages = validFiles.map((file) => URL.createObjectURL(file));
+            setImages((prev) => [...prev, ...newImages]);
+
+                onUpload(validFiles);
         }
     };
 
-    const deleteFile = (e: React.MouseEvent) => {
-        setPreview(null);
-        onUpload(null);
-    }
+
+    const handleNextImage = () => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+    };
+
+    const handlePreviousImage = () => {
+        setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+    };
 
     const handleIconClick = (e: React.MouseEvent, field: string) => {
         e.stopPropagation();
@@ -50,23 +59,6 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
             .join('');
 
         handleFieldSelect(camelCaseField);
-    };
-
-    const handleAddIcons = (e: React.MouseEvent) => {
-        
-        return (
-            <></>
-        )
-    };
-
-    const handleImageChange = (e: React.MouseEvent, field: string) => {
-
-    };
-
-    const handleImagePagination = () => {
-        if (!preview) {
-            setPagination(false);
-        }
     };
 
     return (
@@ -85,35 +77,45 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
             <input
                 id="fileInput"
                 type="file"
+                multiple
                 onChange={handleFileChange}
                 className={styles.fileInput}
             />
             <div className={styles.previewBox}>
-                {preview && (
+                {images.length > 0 && (
                     <div className={styles.previewContainer}>
                         <button
                             name="arrow-previous"
                             className={styles.button}
-                            onClick={(e) => handleImageChange(e, "arrow-previous")}
+                            onClick={handlePreviousImage}
                         >
                             ‹
                         </button>
-                        <img src={preview} alt="Icon Preview" className={styles.previewImage} />
-                        <button name="delete" className={styles.button} onClick={(e) => deleteFile(e)}>✕</button>
+                        <img
+                            src={images[currentIndex]}
+                            alt={`Preview ${currentIndex + 1}`}
+                            className={styles.previewImage}
+                        />
                         <button
                             name="arrow-next"
                             className={styles.button}
-                            onClick={(e) => handleImageChange(e, "arrow-next")}
+                            onClick={handleNextImage}
                         >
                             ›
                         </button>
                     </div>
                 )}
-                <div className={styles.lowerContainer}>
-                    {pagination && (
-                        <button name="pagination" className={styles.button}>•</button>
-                    )}
-                    <button name="add-icons" className={styles.button}>+ Add Icons</button>
+                <div className={styles.pagination}>
+                    {images.map((_, index) => (
+                        <span
+                            key={index}
+                            className={`${styles.dot} ${index === currentIndex ? styles.activeDot : ""
+                                }`}
+                            onClick={() => setCurrentIndex(index)}
+                        >
+                            •
+                        </span>
+                    ))}
                 </div>
             </div>
         </div>

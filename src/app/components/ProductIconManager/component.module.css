@@ -170,7 +170,7 @@
 
 button.button[name="delete"] {
     position: absolute;
-    top: 80px;
+    top: 90px;
     right: 50px;
     background-color: transparent;
     font-size: 16pt;
@@ -180,4 +180,17 @@ button.button[name="pagination"] {
     border: none;
     margin: 0;
     font-size: 16pt;
+}
+
+.dot {
+    display: inline-block;
+    margin: 0 5px;
+    cursor: pointer;
+    font-size: 20px;
+    color: #333;
+    transition: color 0.3s;
+}
+
+.activeDot {
+    color: #ccc;
 }
