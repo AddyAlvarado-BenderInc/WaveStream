@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import style from './component.module.css';
 
@@ -48,7 +48,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
         onCancel: () => void;
     }> = ({ show, message, onConfirm, onCancel }) => {
         if (!show) return null;
-    
+
         return (
             <div
                 className={style.modalOverlay}
@@ -76,7 +76,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
             </div>
         );
     };
-    
+
 
     return (
         <div className={style.productTemplate} onClick={() => router.push(`/${productType}/${_id}`)}>
@@ -94,7 +94,15 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
                 <div className={style.divider}>
                     <img
                         className={style.icon}
-                        src={icon.startsWith('/uploads/') ? icon : iconDefault}
+                        src={
+                            Array.isArray(icon) && icon.length > 0
+                                ? icon[0].startsWith('/uploads/')
+                                    ? icon[0]
+                                    : iconDefault
+                                : typeof icon === 'string' && icon.startsWith('/uploads/')
+                                ? icon
+                                : iconDefault
+                        }
                         alt={icon ? `Product Icon: ${name}` : "No icon available"}
                     />
                 </div>

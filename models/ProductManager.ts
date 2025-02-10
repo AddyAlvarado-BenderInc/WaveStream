@@ -18,7 +18,11 @@ const ProductManagerSchema = new mongoose.Schema({
   initialJS: { type: String, default: '' },
   initialHTML: { type: String, default: '' },
   initialCSS: { type: String, default: '' },
-  icon: { type: String, default: '' },
+  icon: { 
+    type: [String], 
+    default: [] 
+  },
+  iconPreview: { type: [String], default: [] },
   label: { type: String, default: '' },
   runManager: { type: Boolean, default: false }
 });

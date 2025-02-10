@@ -145,6 +145,13 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 const response = await fetch(`${BASE_URL}/api/productManager/${productManager.productType}/${productManager._id}`);
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Fetched Product Manager:', data);
+                    const icons = Array.isArray(data.icon)
+                        ? data.icon.map((icon: string) =>
+                            icon.startsWith('http') ? icon : `${BASE_URL}/${icon}`
+                        )
+                        : [];
+
                     setFormData({
                         displayAs: data.displayAs || '',
                         productId: data.productId || '',
@@ -157,8 +164,8 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         initialJS: data.initialJS || '',
                         initialCSS: data.initialCSS || '',
                         initialHTML: data.initialHTML || '',
-                        iconPreview: (data.icons || []).map((icon: string) => `${BASE_URL}/${icon}`),
-                        icon: data.icon || [],
+                        iconPreview: icons,
+                        icon: icons || [],
                         label: data.label || '',
                     });
                 } else {
@@ -277,6 +284,68 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         setSelectedBrickId("");
     };
 
+    const handleSaveIcons = async () => {
+        try {
+            console.log('Saving icons...');
+            const { productType, _id } = productManager;
+
+            const iconFormData = new FormData();
+            const newIcons = formData.icon.filter((file) => file instanceof File) as File[];
+            const deletedIcons = formData.iconPreview.filter(
+                (icon) => !formData.icon.includes(icon) && !icon.startsWith('blob:')
+            );
+
+            newIcons.forEach((file, index) => {
+                iconFormData.append(`icon_${index}`, file);
+            });
+
+            iconFormData.append('deletedIcons', JSON.stringify(deletedIcons));
+
+            console.log('Sending PATCH request to icon.ts for icons');
+            const response = await fetch(`/api/productManager/${productType}/icon?id=${_id}`, {
+                method: 'PATCH',
+                body: iconFormData,
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({
+                    message: 'Unknown server error',
+                }));
+                throw new Error(`Failed to update icons: ${error.message}`);
+            }
+
+            const responseData = await response.json();
+            console.log('Updated icons:', responseData.icons);
+
+            setFormData((prev) => ({
+                ...prev,
+                icon: responseData.icons,
+                iconPreview: responseData.icons,
+            }));
+
+            toast.success('Icons updated successfully!', {
+                position: 'bottom-right',
+                autoClose: 5000,
+                hideProgressBar: true,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: false,
+                progress: undefined,
+            });
+        } catch (error) {
+            console.error('Error saving icons:', error);
+            toast.error(`Failed to save icons: ${error}`, {
+                position: 'bottom-right',
+                autoClose: 5000,
+                hideProgressBar: true,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: false,
+                progress: undefined,
+            });
+        }
+    };
+
     const renderBrickComponent = () => {
         if (!selectedBrickId) {
             return <h1>Select A Field</h1>;
@@ -369,18 +438,85 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 <div className={styles.divider} />
                 <div className={styles.rightContainer}>
                     <ProductIconManager
-                        icon={formData.iconPreview} // Array of preview URLs
+                        productType={productManager.productType}
+                        productId={productManager._id}
+                        icon={formData.iconPreview}
                         label="Product Icons"
-                        onUpload={(files: File[]) => {
-                            const previews = files.map((file) => URL.createObjectURL(file));
-                            setFormData((prev) => ({
-                                ...prev,
-                                icons: [...prev.icon, ...files], // Append new files
-                                iconPreviews: [...prev.iconPreview, ...previews], // Append new previews
-                            }));
+                        setFormData={setFormData}
+                        handleSaveIcons={handleSaveIcons}
+                        onUpload={async (files: File[]) => {
+                            try {
+                                const formData = new FormData();
+                        
+                                files.forEach((file) => {
+                                    formData.append('icons', file);
+                                });
+                        
+                                const response = await fetch(`/api/productManager/${productManager.productType}/icon?id=${productManager._id}`, {
+                                    method: 'POST',
+                                    body: formData,
+                                });
+                        
+                                if (!response.ok) {
+                                    const error = await response.json();
+                                    console.error('Failed to upload icons:', error);
+                                    throw new Error(error.message);
+                                }
+                        
+                                const data = await response.json();
+                                console.log('Icons uploaded successfully:', data.icons);
+                        
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    iconPreview: data.icons,
+                                    icon: data.icons,
+                                }));
+                            } catch (error) {
+                                console.error('Error uploading icons:', error);
+                            }
                         }}
                         handleFieldSelect={handleFieldSelection}
-                        onClose={handleCloseEditor}
+                        onDelete={async (index: number) => {
+                            const imageToDelete = formData.iconPreview[index];
+                            const { productType, _id: productId } = productManager;
+                        
+                            if (!imageToDelete || !productId || !productType) {
+                                console.error('Missing required fields for deletion:', { imageToDelete, productId, productType });
+                                return;
+                            }
+                        
+                            const sanitizedPath = imageToDelete.replace(/^http(s)?:\/\/[^/]+/, '').replace(/^\/+/, '');
+                        
+                            try {
+                                const response = await fetch(`/api/productManager/${productType}/icon?id=${productId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({ filePath: sanitizedPath }),
+                                });
+                        
+                                if (response.ok) {
+                                    const data = await response.json();
+                                    console.log('Image deleted successfully:', data);
+                        
+                                    setFormData((prev) => {
+                                        const updatedPreviews = prev.iconPreview.filter((_, imgIndex) => imgIndex !== index);
+                                        const updatedIcons = prev.icon.filter((_, imgIndex) => imgIndex !== index);
+                                        return {
+                                            ...prev,
+                                            icon: updatedIcons,
+                                            iconPreview: updatedPreviews,
+                                        };
+                                    });
+                                } else {
+                                    const errorData = await response.json();
+                                    console.error('Failed to delete the image:', errorData);
+                                }
+                            } catch (error) {
+                                console.error('Error deleting the image:', error);
+                            }
+                        }}                        
                     />
                     <button className={styles.saveButton} onClick={handleSave}>
                         Save

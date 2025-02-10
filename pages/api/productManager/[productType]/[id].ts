@@ -5,7 +5,10 @@ import BrickEditor from '../../../../models/BrickEditor';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { promisify } from 'util';
+
+export interface NextApiRequestWithFiles extends NextApiRequest {
+    files?: Express.Multer.File[];
+}
 
 export const config = {
     api: {
@@ -27,9 +30,7 @@ const upload = multer({
         },
     }),
     limits: { fileSize: 5 * 1024 * 1024 },
-});
-
-const runMiddleware = promisify(upload.single('icon'));
+}).any();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { productType, id, field } = req.query;
@@ -47,20 +48,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const productManager = await ProductManager.findOne(query).lean();
 
                 if (!productManager) {
-                    return res.status(404).json({ error: 'Product manager not found' });
+                    return res.status(404).json({ error: 'Product manager not found.' });
                 }
 
-                const combinedData = {
-                    ...productManager, 
-                };
-
-                res.status(200).json(combinedData);
+                console.log('Fetched Product Manager:', productManager);
+                res.status(200).json(productManager);
                 break;
             }
-
             case 'PATCH': {
                 await new Promise((resolve, reject) => {
-                    upload.fields([{ name: 'icon', maxCount: 1 }])(req as any, res as any, (err: any) => {
+                    upload(req as any, res as any, (err: any) => {
                         if (err) return reject(err);
                         resolve(null);
                     });
@@ -142,8 +139,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             
                 res.status(200).json(updatedManager);
                 break;
-            }            
-
+            }
             case 'DELETE': {
                 const query = productType ? { _id: id, productType } : { _id: id };
                 const deletedManager = await ProductManager.findOneAndDelete(query);
@@ -154,8 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 res.status(200).json({ message: 'Product manager deleted successfully' });
                 break;
-            }
-
+            }                 
             default:
                 res.setHeader('Allow', ['GET', 'PATCH', 'DELETE']);
                 res.status(405).json({ error: `Method ${req.method} Not Allowed` });

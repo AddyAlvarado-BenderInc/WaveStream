@@ -101,6 +101,23 @@
     gap: 10px;
 }
 
+.imageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.button {
+    background-color: inherit;
+    color: var(--button-primary-hover);
+    padding: 8px 16px;
+    border: 0.25px solid invert;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
 .previewContainer .button {
     padding: 5px 10px;
     cursor: pointer;
@@ -160,17 +177,9 @@
     color: var(--button-secondary-hover);
 }
 
-.previewBox .lowerContainer {
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    margin-top: 15px;
-    padding: 0;
-}
-
 button.button[name="delete"] {
     position: absolute;
-    top: 90px;
+    top: 80px;
     right: 50px;
     background-color: transparent;
     font-size: 16pt;

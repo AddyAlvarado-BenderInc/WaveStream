@@ -4,24 +4,62 @@ import styles from "./component.module.css";
 interface ProductIconManagerProps {
     icon: string[];
     label: string;
+    onDelete: (index: number) => void;
     onUpload: (iconData: File[]) => void;
     handleFieldSelect: (field: string) => void;
-    onClose: () => void;
+    handleSaveIcons: () => Promise<void>;
+    productType: string;
+    productId: string;
+    setFormData: React.Dispatch<React.SetStateAction<{
+        displayAs: string;
+        productId: string;
+        intentRange: string | number;
+        selectorMode: string;
+        itemTemplate: string;
+        descriptionFooter: string;
+        buyNowButtonText: string;
+        description: string;
+        initialJS: string;
+        initialCSS: string;
+        initialHTML: string;
+        icon: (string | File)[];
+        label: string;
+        iconPreview: string[];
+    }>>;
 }
 
-const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload, handleFieldSelect }) => {
-    const [preview, setPreview] = useState<string[]>(icon || null);
+const MAX_IMAGES = 5;
+
+const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload, onDelete, handleFieldSelect, setFormData, productType, productId, handleSaveIcons }) => {
     const [images, setImages] = useState<string[]>(icon || []);
     const [currentIndex, setCurrentIndex] = useState<number>(0);
 
     const configIcon = "◉";
 
     useEffect(() => {
-        if (Array.isArray(icon) && icon.length > 0) {
-            setImages(icon);
+        async function fetchIcons() {
+            try {
+                const response = await fetch(`/api/productManager/${productType}/icon?id=${productId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Image(s) retrieved successfully:', data.icons);
+                    setFormData((prev) => ({
+                        ...prev,
+                        icon: data.icons,
+                        iconPreview: data.icons,
+                    }));
+                } else {
+                    console.error('Failed to fetch icons:', await response.json());
+                }
+            } catch (error) {
+                console.error('Error fetching icons:', error);
+            }
         }
-    }, [icon]);
 
+        if (productId) {
+            fetchIcons();
+        }
+    }, [productId, productType]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
@@ -33,12 +71,21 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
             }
 
             const newImages = validFiles.map((file) => URL.createObjectURL(file));
-            setImages((prev) => [...prev, ...newImages]);
 
-                onUpload(validFiles);
+            if (images.length + newImages.length > MAX_IMAGES) {
+                alert("You can only add up to 5 images.");
+                return;
+            }
+
+            setImages((prev) => [...prev, ...newImages]);
+            onUpload(validFiles);
         }
     };
 
+    const handleDeleteImage = (index: number) => {
+        onDelete(index);
+        setImages((prev) => prev.filter((_, imgIndex) => imgIndex !== index));
+    };
 
     const handleNextImage = () => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
@@ -85,24 +132,33 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
                 {images.length > 0 && (
                     <div className={styles.previewContainer}>
                         <button
-                            name="arrow-previous"
+                            name="delete"
                             className={styles.button}
-                            onClick={handlePreviousImage}
+                            onClick={() => handleDeleteImage(currentIndex)}
                         >
-                            ‹
+                            ✕
                         </button>
-                        <img
-                            src={images[currentIndex]}
-                            alt={`Preview ${currentIndex + 1}`}
-                            className={styles.previewImage}
-                        />
-                        <button
-                            name="arrow-next"
-                            className={styles.button}
-                            onClick={handleNextImage}
-                        >
-                            ›
-                        </button>
+                        <div className={styles.imageContainer}>
+                            <button
+                                name="arrow-previous"
+                                className={styles.button}
+                                onClick={handlePreviousImage}
+                            >
+                                ‹
+                            </button>
+                            <img
+                                src={images[currentIndex]}
+                                alt={`Preview ${currentIndex + 1}`}
+                                className={styles.previewImage}
+                            />
+                            <button
+                                name="arrow-next"
+                                className={styles.button}
+                                onClick={handleNextImage}
+                            >
+                                ›
+                            </button>
+                        </div>
                     </div>
                 )}
                 <div className={styles.pagination}>
@@ -117,10 +173,22 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
                         </span>
                     ))}
                 </div>
+                <button
+                    name="save"
+                    className={styles.button}
+                    onClick={async () => {
+                        try {
+                            await handleSaveIcons();
+                        } catch (error) {
+                            console.error('Error saving icons from child:', error);
+                        }
+                    }}
+                >
+                    Update Icons
+                </button>
             </div>
         </div>
     );
 };
-
 
 export default ProductIconManager;
