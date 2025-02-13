@@ -58,6 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     console.log("Formatted iconPreview:", iconPreview);
 
                     res.status(200).json({ icons, iconPreview });
+
                 } catch (error) {
                     console.error('Error fetching icons:', error);
                     res.status(500).json({ error: 'Internal server error.' });
@@ -108,7 +109,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         await new Promise<void>((resolve, reject) => {
                             readableStream.pipe(uploadStream);
                             uploadStream.on('finish', () => {
-                                uploadedPaths.map((name) => `http://localhost:3000/uploads/${name}`);
+                                uploadedPaths.push(`/uploads/${uploadStream.id}`);
                                 resolve();
                             });
                             uploadStream.on('error', reject);
@@ -130,13 +131,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         return res.status(404).json({ error: 'Product manager not found.' });
                     }
 
+                    console.log('Updated ProductManager:', updatedProductManager);
+
                     res.status(200).json({
                         message: 'Icons uploaded successfully.',
                         icons: updatedProductManager.icon,
                         iconPreview: updatedProductManager.iconPreview,
                     });
-
-                    console.log("Updated ProductManager after POST:", updatedProductManager);
                 } catch (error) {
                     console.error('Error uploading icons:', error);
                     res.status(500).json({ error: 'Internal server error.' });

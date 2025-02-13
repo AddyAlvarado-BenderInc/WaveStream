@@ -36,18 +36,19 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
 
     const configIcon = "◉";
 
-    const sanitizePaths = (paths: string[]): string[] =>
-    paths
-        .filter((path) => path && path.trim() !== "")
-        .map((path) => {
-            console.log("Sanitizing path:", path);
-            try {
-                const parsed = JSON.parse(path);
-                return parsed.length > 1 ? `http://localhost:3000${parsed[1]}` : path;
-            } catch {
-                return path.startsWith("http") ? path : `http://localhost:3000${path}`;
-            }
-        });
+    const sanitizePaths = (paths: (string | File)[]): string[] =>
+        paths
+            .filter((path): path is string => {
+                return typeof path === 'string' && !!path && !path.includes('undefined');
+            })
+            .map((path) => {
+                try {
+                    const parsed = JSON.parse(path);
+                    return Array.isArray(parsed) ? parsed[1] || '' : path;
+                } catch {
+                    return path.startsWith('/uploads/') ? path : `/uploads/${path}`;
+                }
+            });
 
     useEffect(() => {
         async function fetchIcons() {

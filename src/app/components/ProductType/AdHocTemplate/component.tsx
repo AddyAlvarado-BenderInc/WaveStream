@@ -286,20 +286,33 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         try {
             console.log("Saving icons...");
             const { productType, _id } = productManager;
-
-            const deletedIcons = formData.iconPreview.filter(
-                (icon) => !formData.icon.includes(icon)
-            );
-
-            const newIcons = formData.icon.filter((icon) => typeof icon === "string");
-
+    
+            const sanitizePaths = (paths: (string | File)[]): string[] =>
+                paths.map((path) => {
+                    if (typeof path === "string") {
+                        try {
+                            const parsed = JSON.parse(path);
+                            return Array.isArray(parsed) ? parsed[1] || "" : path;
+                        } catch {
+                            return path;
+                        }
+                    }
+                    return "";
+                });
+    
+            const sanitizedIcons = sanitizePaths(formData.icon || []);
+            const sanitizedPreviews = sanitizePaths(formData.iconPreview || []);
+    
+            const deletedIcons = sanitizedPreviews.filter((icon) => !sanitizedIcons.includes(icon));
+            const newIcons = sanitizedIcons.filter((icon) => icon.startsWith("/uploads/"));
+    
             const payload = {
                 newIcons,
                 deletedIcons,
             };
-
+    
             console.log("Payload before sending:", payload);
-
+    
             const response = await fetch(`/api/productManager/${productType}/icon?id=${_id}`, {
                 method: "PATCH",
                 headers: {
@@ -307,23 +320,23 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 },
                 body: JSON.stringify(payload),
             });
-
+    
             if (!response.ok) {
                 const error = await response.json().catch(() => ({
                     message: "Unknown server error",
                 }));
                 throw new Error(`Failed to update icons: ${error.message}`);
             }
-
+    
             const responseData = await response.json();
             console.log("Updated icons:", responseData.icons);
-
+    
             setFormData((prev) => ({
                 ...prev,
                 icon: responseData.icons,
                 iconPreview: responseData.icons,
             }));
-
+    
             toast.success("Icons updated successfully!", {
                 position: "bottom-right",
                 autoClose: 5000,
@@ -345,7 +358,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 progress: undefined,
             });
         }
-    };
+    };    
 
     const renderBrickComponent = () => {
         if (!selectedBrickId) {
