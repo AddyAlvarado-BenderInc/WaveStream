@@ -79,38 +79,36 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     const handleSave = async () => {
         try {
             const { productType, _id } = productManager;
-
+    
             const formDataPayload = new FormData();
-
+    
             Object.entries(formData).forEach(([key, value]) => {
-                if (key === 'icons' && Array.isArray(value)) {
-                    value.forEach((file, index) => {
-                        if (file instanceof File) {
-                            formDataPayload.append(`icon_${index}`, file);
-                        }
-                    });
-                } else if (value !== null && value !== undefined) {
-                    formDataPayload.append(key, value.toString());
+                if (value !== null && value !== undefined) {
+                    if (Array.isArray(value)) {
+                        formDataPayload.append(key, JSON.stringify(value));
+                    } else {
+                        formDataPayload.append(key, value.toString());
+                    }
                 }
             });
-
-            console.log("FormData Payload before sending:", formDataPayload);
-
+    
+            console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
+    
             const response = await fetch(`/api/productManager/${productType}/${_id}`, {
                 method: 'PATCH',
                 body: formDataPayload,
             });
-
+    
             if (response.ok) {
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
-
+    
                 setFormData((prev) => ({
                     ...prev,
                     ...updatedProduct,
                     iconPreview: updatedProduct.icon,
                 }));
-
+    
                 dispatch(updateProductManager(updatedProduct));
                 toast.success('Product saved successfully!', {
                     position: 'bottom-right',
@@ -137,7 +135,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
             console.error('Error saving product:', error);
             toast.error('Failed to save the product. Please try again.');
         }
-    };
+    };    
 
     useEffect(() => {
         const fetchProductManager = async () => {
@@ -286,36 +284,39 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
     const handleSaveIcons = async () => {
         try {
-            console.log('Saving icons...');
+            console.log("Saving icons...");
             const { productType, _id } = productManager;
 
-            const iconFormData = new FormData();
-            const newIcons = formData.icon.filter((file) => file instanceof File) as File[];
             const deletedIcons = formData.iconPreview.filter(
-                (icon) => !formData.icon.includes(icon) && !icon.startsWith('blob:')
+                (icon) => !formData.icon.includes(icon)
             );
 
-            newIcons.forEach((file, index) => {
-                iconFormData.append(`icon_${index}`, file);
-            });
+            const newIcons = formData.icon.filter((icon) => typeof icon === "string");
 
-            iconFormData.append('deletedIcons', JSON.stringify(deletedIcons));
+            const payload = {
+                newIcons,
+                deletedIcons,
+            };
 
-            console.log('Sending PATCH request to icon.ts for icons');
+            console.log("Payload before sending:", payload);
+
             const response = await fetch(`/api/productManager/${productType}/icon?id=${_id}`, {
-                method: 'PATCH',
-                body: iconFormData,
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
             });
 
             if (!response.ok) {
                 const error = await response.json().catch(() => ({
-                    message: 'Unknown server error',
+                    message: "Unknown server error",
                 }));
                 throw new Error(`Failed to update icons: ${error.message}`);
             }
 
             const responseData = await response.json();
-            console.log('Updated icons:', responseData.icons);
+            console.log("Updated icons:", responseData.icons);
 
             setFormData((prev) => ({
                 ...prev,
@@ -323,8 +324,8 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 iconPreview: responseData.icons,
             }));
 
-            toast.success('Icons updated successfully!', {
-                position: 'bottom-right',
+            toast.success("Icons updated successfully!", {
+                position: "bottom-right",
                 autoClose: 5000,
                 hideProgressBar: true,
                 closeOnClick: true,
@@ -333,9 +334,9 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 progress: undefined,
             });
         } catch (error) {
-            console.error('Error saving icons:', error);
+            console.error("Error saving icons:", error);
             toast.error(`Failed to save icons: ${error}`, {
-                position: 'bottom-right',
+                position: "bottom-right",
                 autoClose: 5000,
                 hideProgressBar: true,
                 closeOnClick: true,
@@ -447,25 +448,25 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         onUpload={async (files: File[]) => {
                             try {
                                 const formData = new FormData();
-                        
+
                                 files.forEach((file) => {
                                     formData.append('icons', file);
                                 });
-                        
+
                                 const response = await fetch(`/api/productManager/${productManager.productType}/icon?id=${productManager._id}`, {
                                     method: 'POST',
                                     body: formData,
                                 });
-                        
+
                                 if (!response.ok) {
                                     const error = await response.json();
                                     console.error('Failed to upload icons:', error);
                                     throw new Error(error.message);
                                 }
-                        
+
                                 const data = await response.json();
                                 console.log('Icons uploaded successfully:', data.icons);
-                        
+
                                 setFormData((prev) => ({
                                     ...prev,
                                     iconPreview: data.icons,
@@ -479,14 +480,14 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         onDelete={async (index: number) => {
                             const imageToDelete = formData.iconPreview[index];
                             const { productType, _id: productId } = productManager;
-                        
+
                             if (!imageToDelete || !productId || !productType) {
                                 console.error('Missing required fields for deletion:', { imageToDelete, productId, productType });
                                 return;
                             }
-                        
+
                             const sanitizedPath = imageToDelete.replace(/^http(s)?:\/\/[^/]+/, '').replace(/^\/+/, '');
-                        
+
                             try {
                                 const response = await fetch(`/api/productManager/${productType}/icon?id=${productId}`, {
                                     method: 'DELETE',
@@ -495,11 +496,11 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                                     },
                                     body: JSON.stringify({ filePath: sanitizedPath }),
                                 });
-                        
+
                                 if (response.ok) {
                                     const data = await response.json();
                                     console.log('Image deleted successfully:', data);
-                        
+
                                     setFormData((prev) => {
                                         const updatedPreviews = prev.iconPreview.filter((_, imgIndex) => imgIndex !== index);
                                         const updatedIcons = prev.icon.filter((_, imgIndex) => imgIndex !== index);
@@ -516,7 +517,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                             } catch (error) {
                                 console.error('Error deleting the image:', error);
                             }
-                        }}                        
+                        }}
                     />
                     <button className={styles.saveButton} onClick={handleSave}>
                         Save

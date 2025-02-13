@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { ProductManager } from "../../../../types/productManager";
 import styles from "./component.module.css";
 
 interface ProductIconManagerProps {
