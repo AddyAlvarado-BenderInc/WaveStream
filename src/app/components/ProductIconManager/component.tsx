@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { ProductManager } from "../../../../types/productManager";
 import styles from "./component.module.css";
 
 interface ProductIconManagerProps {
@@ -37,23 +36,47 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
 
     const configIcon = "◉";
 
+    const sanitizePaths = (paths: string[]): string[] =>
+    paths
+        .filter((path) => path && path.trim() !== "")
+        .map((path) => {
+            console.log("Sanitizing path:", path);
+            try {
+                const parsed = JSON.parse(path);
+                return parsed.length > 1 ? `http://localhost:3000${parsed[1]}` : path;
+            } catch {
+                return path.startsWith("http") ? path : `http://localhost:3000${path}`;
+            }
+        });
+
     useEffect(() => {
         async function fetchIcons() {
             try {
-                const response = await fetch(`/api/productManager/${productType}/icon?id=${productId}`);
+                const response = await fetch(
+                    `/api/productManager/${productType}/icon?id=${productId}`
+                );
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Image(s) retrieved successfully:', data.icons);
+                    console.log("Image(s) retrieved successfully:", data);
+
+                    const sanitizedIcons = sanitizePaths(data.icons || []);
+                    const sanitizedPreviews = sanitizePaths(data.iconPreview || []);
+
+                    setImages(sanitizedPreviews);
+
                     setFormData((prev) => ({
                         ...prev,
-                        icon: data.icons,
-                        iconPreview: data.icons,
+                        icon: sanitizedIcons,
+                        iconPreview: sanitizedPreviews,
                     }));
                 } else {
-                    console.error('Failed to fetch icons:', await response.json());
+                    console.error(
+                        "Failed to fetch icons:",
+                        await response.json()
+                    );
                 }
             } catch (error) {
-                console.error('Error fetching icons:', error);
+                console.error("Error fetching icons:", error);
             }
         }
 
@@ -132,48 +155,62 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
             <div className={styles.previewBox}>
                 {images.length > 0 && (
                     <div className={styles.previewContainer}>
-                        <button
-                            name="delete"
-                            className={styles.button}
-                            onClick={() => handleDeleteImage(currentIndex)}
-                        >
-                            ✕
-                        </button>
+                        {images[currentIndex] && (
+                            <button
+                                name="delete"
+                                className={styles.button}
+                                onClick={() => handleDeleteImage(currentIndex)}
+                            >
+                                ✕
+                            </button>
+                        )}
                         <div className={styles.imageContainer}>
-                            <button
-                                name="arrow-previous"
-                                className={styles.button}
-                                onClick={handlePreviousImage}
-                            >
-                                ‹
-                            </button>
-                            <img
-                                src={images[currentIndex]}
-                                alt={`Preview ${currentIndex + 1}`}
-                                className={styles.previewImage}
-                            />
-                            <button
-                                name="arrow-next"
-                                className={styles.button}
-                                onClick={handleNextImage}
-                            >
-                                ›
-                            </button>
+                            {images[currentIndex] && (
+                                <button
+                                    name="arrow-previous"
+                                    className={styles.button}
+                                    onClick={handlePreviousImage}
+                                >
+                                    ‹
+                                </button>
+                            )}
+                            {images[currentIndex] ? (
+                                <img
+                                    src={images[currentIndex]}
+                                    alt={`Preview ${currentIndex + 1}`}
+                                    className={styles.previewImage}
+                                />
+                            ) : (
+                                <div className={styles.placeholder}>
+                                    No image available
+                                </div>
+                            )}
+                            {images[currentIndex] && (
+                                <button
+                                    name="arrow-next"
+                                    className={styles.button}
+                                    onClick={handleNextImage}
+                                >
+                                    ›
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
-                <div className={styles.pagination}>
-                    {images.map((_, index) => (
-                        <span
-                            key={index}
-                            className={`${styles.dot} ${index === currentIndex ? styles.activeDot : ""
-                                }`}
-                            onClick={() => setCurrentIndex(index)}
-                        >
-                            •
-                        </span>
-                    ))}
-                </div>
+                {images[currentIndex] && (
+                    <div className={styles.pagination}>
+                        {images.map((_, index) => (
+                            <span
+                                key={index}
+                                className={`${styles.dot} ${index === currentIndex ? styles.activeDot : ""
+                                    }`}
+                                onClick={() => setCurrentIndex(index)}
+                            >
+                                •
+                            </span>
+                        ))}
+                    </div>
+                )}
                 <button
                     name="save"
                     className={styles.button}

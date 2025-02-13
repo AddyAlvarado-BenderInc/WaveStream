@@ -14,6 +14,7 @@ export const config = {
 
 const upload = multer({ storage: multer.memoryStorage() }).any();
 
+
 export const getGridFSBucket = (): mongoose.mongo.GridFSBucket => {
     const db = mongoose.connection.db;
     if (!db) {
@@ -37,27 +38,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             case 'GET': {
                 try {
                     const productManager = await ProductManager.findOne({ _id: productId, productType }).lean<ProductManagerType | null>();
-            
+
                     if (!productManager) {
                         return res.status(404).json({ error: 'Product manager not found.' });
                     }
-            
+
+                    const formatIconPath = (path: string) =>
+                        path.startsWith('/uploads/') ? `http://localhost:3000${path}` : path;
+
                     const icons = (productManager.icon || [])
                         .filter((icon): icon is string => typeof icon === 'string')
-                        .map((iconPath) => ({
-                            id: iconPath,
-                            url: iconPath.startsWith('/uploads/') 
-                                ? `http://localhost:3000${iconPath}`
-                                : iconPath,
-                        }));
-            
-                    res.status(200).json({ icons });
+                        .map(formatIconPath);
+
+                    const iconPreview = (productManager.iconPreview || [])
+                        .filter((icon): icon is string => typeof icon === 'string')
+                        .map(formatIconPath);
+
+                    console.log("Formatted icons:", icons);
+                    console.log("Formatted iconPreview:", iconPreview);
+
+                    res.status(200).json({ icons, iconPreview });
                 } catch (error) {
                     console.error('Error fetching icons:', error);
                     res.status(500).json({ error: 'Internal server error.' });
                 }
                 break;
-            }            
+            }
 
             case 'PATCH': {
                 const uploadedIds: string[] = [];
@@ -91,30 +97,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
 
                     const bucket = getGridFSBucket();
-                    const uploadedIds: string[] = [];
+                    const uploadedPaths: string[] = [];
+
                     for (const file of files) {
                         const readableStream = Readable.from(file.buffer);
                         const uploadStream = bucket.openUploadStream(file.originalname, {
                             contentType: file.mimetype,
                         });
-                    
+
                         await new Promise<void>((resolve, reject) => {
                             readableStream.pipe(uploadStream);
                             uploadStream.on('finish', () => {
-                                uploadedIds.push(`/uploads/${uploadStream.id}`);
+                                uploadedPaths.map((name) => `http://localhost:3000/uploads/${name}`);
                                 resolve();
                             });
                             uploadStream.on('error', reject);
                         });
-                    }                    
-
-                    const existingProductManager = await ProductManager.findOne({ _id: productId, productType }).lean<ProductManagerType | null>();
-                    const existingIcons = existingProductManager?.icon || [];
-                    const cleanedIcons = existingIcons.filter((icon): icon is string => typeof icon === 'string');
+                    }
 
                     const updatedProductManager = await ProductManager.findOneAndUpdate(
                         { _id: productId, productType },
-                        { $set: { icon: [...cleanedIcons, ...uploadedIds] } },
+                        {
+                            $push: {
+                                icon: { $each: uploadedPaths },
+                                iconPreview: { $each: uploadedPaths.map((path) => `http://localhost:3000${path}`) },
+                            },
+                        },
                         { new: true }
                     );
 
@@ -122,7 +130,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         return res.status(404).json({ error: 'Product manager not found.' });
                     }
 
-                    res.status(200).json({ message: 'Icons uploaded successfully.', icons: updatedProductManager.icon });
+                    res.status(200).json({
+                        message: 'Icons uploaded successfully.',
+                        icons: updatedProductManager.icon,
+                        iconPreview: updatedProductManager.iconPreview,
+                    });
+
+                    console.log("Updated ProductManager after POST:", updatedProductManager);
                 } catch (error) {
                     console.error('Error uploading icons:', error);
                     res.status(500).json({ error: 'Internal server error.' });

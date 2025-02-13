@@ -191,6 +191,10 @@ button.button[name="pagination"] {
     font-size: 16pt;
 }
 
+button.button[name="save"] { 
+    margin-top: 15px;
+}
+
 .dot {
     display: inline-block;
     margin: 0 5px;
@@ -202,4 +206,16 @@ button.button[name="pagination"] {
 
 .activeDot {
     color: #ccc;
+}
+
+.placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 200px;
+    height: 200px;
+    background-color: #f0f0f0;
+    color: #666;
+    font-size: 16px;
+    border-radius: 8px;
 }

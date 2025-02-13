@@ -70,6 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 if (file) {
                     const iconPath = `/uploads/${file.filename}`;
                     formFields.icon = iconPath;
+                    formFields.iconPreview = `http://localhost:3000${iconPath}`; //TODO: change to actual domain name when available
                 }
             
                 const allowedFields = [

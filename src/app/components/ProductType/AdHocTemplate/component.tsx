@@ -448,34 +448,34 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         onUpload={async (files: File[]) => {
                             try {
                                 const formData = new FormData();
-
+                        
                                 files.forEach((file) => {
                                     formData.append('icons', file);
                                 });
-
+                        
                                 const response = await fetch(`/api/productManager/${productManager.productType}/icon?id=${productManager._id}`, {
                                     method: 'POST',
                                     body: formData,
                                 });
-
+                        
                                 if (!response.ok) {
                                     const error = await response.json();
                                     console.error('Failed to upload icons:', error);
                                     throw new Error(error.message);
                                 }
-
+                        
                                 const data = await response.json();
-                                console.log('Icons uploaded successfully:', data.icons);
-
+                                console.log('Icons uploaded successfully:', data.icons, data.iconPreview);
+                        
                                 setFormData((prev) => ({
                                     ...prev,
-                                    iconPreview: data.icons,
-                                    icon: data.icons,
+                                    icon: data.icons.map((icon: string) => icon),
+                                    iconPreview: data.iconPreview,
                                 }));
                             } catch (error) {
                                 console.error('Error uploading icons:', error);
                             }
-                        }}
+                        }}                                                               
                         handleFieldSelect={handleFieldSelection}
                         onDelete={async (index: number) => {
                             const imageToDelete = formData.iconPreview[index];
