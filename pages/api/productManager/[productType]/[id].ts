@@ -1,10 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../../lib/mongodb';
 import ProductManager from '../../../../models/ProductManager';
+import { IProductManager } from '../../../../models/ProductManager';
 import BrickEditor from '../../../../models/BrickEditor';
+import { cleanOrphanedFiles } from '../../../../lib/fileCleanup';
+import { Readable } from 'stream';
+import { getGridFSBucket } from '../../../../lib/gridFSBucket';
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
 
 export interface NextApiRequestWithFiles extends NextApiRequest {
     files?: Express.Multer.File[];
@@ -16,21 +18,7 @@ export const config = {
     },
 };
 
-const uploadDir = path.join(process.cwd(), 'public/uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: uploadDir,
-        filename: (req, file, cb) => {
-            const ext = path.extname(file.originalname);
-            cb(null, `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}${ext}`);
-        },
-    }),
-    limits: { fileSize: 5 * 1024 * 1024 },
-}).any();
+const upload = multer({ storage: multer.memoryStorage() }).any();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     const { productType, id, field } = req.query;
@@ -45,14 +33,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         switch (req.method) {
             case 'GET': {
                 const query = productType ? { _id: id, productType } : { _id: id };
-                const productManager = await ProductManager.findOne(query).lean();
+                const productManager = await ProductManager.findOne(query)
+                    .lean<IProductManager & { __v: number }>();
 
                 if (!productManager) {
                     return res.status(404).json({ error: 'Product manager not found.' });
                 }
 
-                console.log('Fetched Product Manager:', productManager);
-                res.status(200).json(productManager);
+                async function getFileMetadata(fileId: string) {
+                    try {
+                        const bucket = await getGridFSBucket();
+                        const mongooseInstance = await connectToDatabase();
+                        const files = await bucket.find({
+                            _id: new mongooseInstance.Types.ObjectId(fileId)
+                        }).toArray();
+
+                        return files[0] || null;
+                    } catch (error) {
+                        console.error(`Error fetching file ${fileId}:`, error);
+                        return null;
+                    }
+                }
+
+                const icons = productManager.icon.map(filename => ({
+                    filename,
+                    url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                }));
+
+                res.status(200).json({
+                    ...productManager,
+                    icons
+                });
+
+                const fileNames = icons
+                    .filter(icon => !('error' in icon))
+                    .map(icon => icon.filename);
+
+                await cleanOrphanedFiles(fileNames);
+
+                const enhancedResponse = {
+                    ...productManager,
+                    icons: icons.map(iconPath => ({
+                        path: iconPath,
+                        url: `${process.env.NEXTAUTH_URL}${iconPath}`
+                    }))
+                };
+
+                res.status(200).json(enhancedResponse);
                 break;
             }
             case 'PATCH': {
@@ -62,17 +89,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         resolve(null);
                     });
                 });
-            
-                const file = (req as any).files?.icon?.[0] || null;
-            
+
+                const uploadedFiles = (req as any).files || [];
+                const existingIcons = Array.isArray(req.body.icons) ? req.body.icons : [];
+
+                const newIcons = await Promise.all(
+                    uploadedFiles.map(async (file: Express.Multer.File) => {
+                        const bucket = await getGridFSBucket();
+                        const filename = file.originalname;
+
+                        const existingFiles = await bucket.find({ filename }).toArray();
+                        if (existingFiles.length > 0) {
+                            await Promise.all(existingFiles.map(f => bucket.delete(f._id)));
+                        }
+
+                        const uploadStream = bucket.openUploadStream(filename, {
+                            contentType: file.mimetype
+                        });
+
+                        await new Promise<void>((resolve, reject) => {
+                            Readable.from(file.buffer)
+                                .pipe(uploadStream)
+                                .on('finish', resolve)
+                                .on('error', reject);
+                        });
+                        return filename;
+                    })
+                );
+
+                console.log('Uploaded files count:', uploadedFiles.length);
+                console.log('New icons:', newIcons);
+
+                const allIcons = [...existingIcons, ...newIcons];
+                console.log('All icons:', allIcons);
                 const formFields = req.body ? JSON.parse(JSON.stringify(req.body)) : {};
-            
-                if (file) {
-                    const iconPath = `/uploads/${file.filename}`;
-                    formFields.icon = iconPath;
-                    formFields.iconPreview = `http://localhost:3000${iconPath}`; //TODO: change to actual domain name when available
-                }
-            
+
                 const allowedFields = [
                     'displayAs',
                     'productId',
@@ -85,12 +136,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'initialHTML',
                     'initialCSS',
                     'initialJS',
-                    'icon',
-                    'iconPreview',
                     'label',
                     'runManager',
                 ];
-            
+
                 const sanitizedData = Object.keys(formFields).reduce((acc, key) => {
                     const value = formFields[key];
                     if (allowedFields.includes(key)) {
@@ -98,7 +147,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
                     return acc;
                 }, {} as Record<string, any>);
-            
+
+                const updateData = {
+                    ...sanitizedData,
+                    icon: allIcons,
+                    iconPreview: allIcons.map(id =>
+                        `${process.env.NEXTAUTH_URL}/api/files/${id}`
+                    )
+                };
+
                 const { initialHTML = '', initialCSS = '', initialJS = '' } = sanitizedData;
                 if (initialHTML || initialCSS || initialJS) {
                     sanitizedData.description = `
@@ -113,23 +170,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         </html>
                     `.trim();
                 }
-            
+
                 if (!Object.keys(sanitizedData).length) {
                     return res.status(400).json({ error: 'No valid fields provided for update' });
                 }
-            
+
                 const query = productType ? { _id: id, productType } : { _id: id };
-            
+
                 const updatedManager = await ProductManager.findOneAndUpdate(
                     query,
-                    { $set: sanitizedData },
+                    { $set: updateData },
                     { new: true }
                 );
-            
+
                 if (!updatedManager) {
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
-            
+
                 if (field) {
                     await BrickEditor.findOneAndUpdate(
                         { brickId: `${id}_${field}` },
@@ -137,8 +194,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         { upsert: true }
                     );
                 }
-            
-                res.status(200).json(updatedManager);
+
+                res.status(200).json({
+                    ...updatedManager.toObject(),
+                    icon: allIcons,
+                    iconPreview: allIcons.map(id =>
+                        `${process.env.NEXTAUTH_URL}/api/files/${id}`
+                    )
+                });
                 break;
             }
             case 'DELETE': {
@@ -151,7 +214,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 res.status(200).json({ message: 'Product manager deleted successfully' });
                 break;
-            }                 
+            }
             default:
                 res.setHeader('Allow', ['GET', 'PATCH', 'DELETE']);
                 res.status(405).json({ error: `Method ${req.method} Not Allowed` });

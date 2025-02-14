@@ -16,7 +16,7 @@ export interface ProductManager {
     initialHTML: string;
     initialJS: string;
     initialCSS: string;
-    icon: (string | File)[]
+    icon: string[];
     label: string;
     iconPreview: string[];
     runManager?: boolean;

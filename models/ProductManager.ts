@@ -1,5 +1,28 @@
 import mongoose from 'mongoose';
 
+export interface IProductManager extends Document {
+  _id: string;
+  name: string;
+  productType: string;
+  isActive: boolean;
+  createdAt: Date;
+  displayAs: string;
+  productId: string;
+  intentRange: string;
+  selectorMode: string;
+  itemTemplate: string;
+  descriptionFooter: string;
+  buyNowButtonText: string;
+  description: string;
+  initialJS: string;
+  initialHTML: string;
+  initialCSS: string;
+  icon: string[];
+  iconPreview: string[];
+  label: string;
+  runManager: boolean;
+}
+
 const ProductManagerSchema = new mongoose.Schema({
   _id: { type: String, required: true },
   name: { type: String, required: true },
@@ -20,11 +43,15 @@ const ProductManagerSchema = new mongoose.Schema({
   initialCSS: { type: String, default: '' },
   icon: { 
     type: [String], 
-    default: [] 
-  },
+    default: [],
+    validate: {
+        validator: (filenames: string[]) => filenames.every(f => f.match(/^[\w.-]+$/)),
+        message: 'Invalid filename format'
+    }
+},
   iconPreview: { type: [String], default: [] },
   label: { type: String, default: '' },
   runManager: { type: Boolean, default: false }
 });
 
-export default mongoose.models.ProductManager || mongoose.model('ProductManager', ProductManagerSchema);
+export default mongoose.models.ProductManager || mongoose.model<IProductManager>('ProductManager', ProductManagerSchema);

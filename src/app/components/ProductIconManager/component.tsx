@@ -5,119 +5,65 @@ interface ProductIconManagerProps {
     icon: string[];
     label: string;
     onDelete: (index: number) => void;
-    onUpload: (iconData: File[]) => void;
+    onUpload: (files: File[]) => void;
     handleFieldSelect: (field: string) => void;
-    handleSaveIcons: () => Promise<void>;
     productType: string;
     productId: string;
-    setFormData: React.Dispatch<React.SetStateAction<{
-        displayAs: string;
-        productId: string;
-        intentRange: string | number;
-        selectorMode: string;
-        itemTemplate: string;
-        descriptionFooter: string;
-        buyNowButtonText: string;
-        description: string;
-        initialJS: string;
-        initialCSS: string;
-        initialHTML: string;
-        icon: (string | File)[];
-        label: string;
-        iconPreview: string[];
-    }>>;
 }
 
 const MAX_IMAGES = 5;
 
-const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, onUpload, onDelete, handleFieldSelect, setFormData, productType, productId, handleSaveIcons }) => {
-    const [images, setImages] = useState<string[]>(icon || []);
+const ProductIconManager: React.FC<ProductIconManagerProps> = ({
+    icon, label, onUpload, onDelete, handleFieldSelect, productType, productId
+}) => {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-
+    const [newFiles, setNewFiles] = useState<File[]>([]);
     const configIcon = "◉";
 
-    const sanitizePaths = (paths: (string | File)[]): string[] =>
-        paths
-            .filter((path): path is string => {
-                return typeof path === 'string' && !!path && !path.includes('undefined');
-            })
-            .map((path) => {
-                try {
-                    const parsed = JSON.parse(path);
-                    return Array.isArray(parsed) ? parsed[1] || '' : path;
-                } catch {
-                    return path.startsWith('/uploads/') ? path : `/uploads/${path}`;
-                }
-            });
-
     useEffect(() => {
-        async function fetchIcons() {
-            try {
-                const response = await fetch(
-                    `/api/productManager/${productType}/icon?id=${productId}`
-                );
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("Image(s) retrieved successfully:", data);
-
-                    const sanitizedIcons = sanitizePaths(data.icons || []);
-                    const sanitizedPreviews = sanitizePaths(data.iconPreview || []);
-
-                    setImages(sanitizedPreviews);
-
-                    setFormData((prev) => ({
-                        ...prev,
-                        icon: sanitizedIcons,
-                        iconPreview: sanitizedPreviews,
-                    }));
-                } else {
-                    console.error(
-                        "Failed to fetch icons:",
-                        await response.json()
-                    );
-                }
-            } catch (error) {
-                console.error("Error fetching icons:", error);
-            }
-        }
-
-        if (productId) {
-            fetchIcons();
-        }
-    }, [productId, productType]);
+        return () => {
+            newFiles.forEach(file => URL.revokeObjectURL(URL.createObjectURL(file)));
+        };
+    }, [newFiles]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
-            const validFiles = files.filter((file) => file.size <= 5 * 1024 * 1024);
+            const validFiles = files.filter(file => file.size <= 5 * 1024 * 1024);
 
             if (validFiles.length !== files.length) {
                 alert("Some files were too large and were not added.");
             }
 
-            const newImages = validFiles.map((file) => URL.createObjectURL(file));
-
-            if (images.length + newImages.length > MAX_IMAGES) {
+            if (icon.length + validFiles.length > MAX_IMAGES) {
                 alert("You can only add up to 5 images.");
                 return;
             }
 
-            setImages((prev) => [...prev, ...newImages]);
+            setNewFiles(prev => [...prev, ...validFiles]);
             onUpload(validFiles);
         }
     };
 
     const handleDeleteImage = (index: number) => {
-        onDelete(index);
-        setImages((prev) => prev.filter((_, imgIndex) => imgIndex !== index));
+        if (index < icon.length) {
+            onDelete(index);
+        } else {
+            setNewFiles(prev => prev.filter((_, i) => i !== (index - icon.length)));
+        }
     };
 
+    const allImages = [
+        ...icon,
+        ...newFiles.map(file => URL.createObjectURL(file))
+    ];
+
     const handleNextImage = () => {
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % allImages.length);
     };
 
     const handlePreviousImage = () => {
-        setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
+        setCurrentIndex((prevIndex) => (prevIndex - 1 + allImages.length) % allImages.length);
     };
 
     const handleIconClick = (e: React.MouseEvent, field: string) => {
@@ -154,9 +100,9 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
                 className={styles.fileInput}
             />
             <div className={styles.previewBox}>
-                {images.length > 0 && (
-                    <div className={styles.previewContainer}>
-                        {images[currentIndex] && (
+                {allImages.length > 0 ? (
+                    <>
+                        <div className={styles.previewContainer}>
                             <button
                                 name="delete"
                                 className={styles.button}
@@ -164,67 +110,56 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({ icon, label, on
                             >
                                 ✕
                             </button>
-                        )}
-                        <div className={styles.imageContainer}>
-                            {images[currentIndex] && (
+                            <div className={styles.imageContainer}>
                                 <button
                                     name="arrow-previous"
                                     className={styles.button}
                                     onClick={handlePreviousImage}
+                                    disabled={allImages.length <= 1}
                                 >
                                     ‹
                                 </button>
-                            )}
-                            {images[currentIndex] ? (
-                                <img
-                                    src={images[currentIndex]}
-                                    alt={`Preview ${currentIndex + 1}`}
-                                    className={styles.previewImage}
-                                />
-                            ) : (
-                                <div className={styles.placeholder}>
-                                    No image available
-                                </div>
-                            )}
-                            {images[currentIndex] && (
+
+                                {allImages[currentIndex] ? (
+                                    <img
+                                        src={allImages[currentIndex]}
+                                        alt={`Preview ${currentIndex + 1}`}
+                                        className={styles.previewImage}
+                                    />
+                                ) : (
+                                    <div className={styles.placeholder}>
+                                        No image available
+                                    </div>
+                                )}
+
                                 <button
                                     name="arrow-next"
                                     className={styles.button}
                                     onClick={handleNextImage}
+                                    disabled={allImages.length <= 1}
                                 >
                                     ›
                                 </button>
-                            )}
+                            </div>
                         </div>
+                        <div className={styles.pagination}>
+                            {allImages.map((_, index) => (
+                                <span
+                                    key={index}
+                                    className={`${styles.dot} ${index === currentIndex ? styles.activeDot : ""
+                                        }`}
+                                    onClick={() => setCurrentIndex(index)}
+                                >
+                                    •
+                                </span>
+                            ))}
+                        </div>
+                    </>
+                ) : (
+                    <div className={styles.placeholder}>
+                        Upload images to get started
                     </div>
                 )}
-                {images[currentIndex] && (
-                    <div className={styles.pagination}>
-                        {images.map((_, index) => (
-                            <span
-                                key={index}
-                                className={`${styles.dot} ${index === currentIndex ? styles.activeDot : ""
-                                    }`}
-                                onClick={() => setCurrentIndex(index)}
-                            >
-                                •
-                            </span>
-                        ))}
-                    </div>
-                )}
-                <button
-                    name="save"
-                    className={styles.button}
-                    onClick={async () => {
-                        try {
-                            await handleSaveIcons();
-                        } catch (error) {
-                            console.error('Error saving icons from child:', error);
-                        }
-                    }}
-                >
-                    Update Icons
-                </button>
             </div>
         </div>
     );
