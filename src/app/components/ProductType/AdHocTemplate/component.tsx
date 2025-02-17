@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { updateProductManager } from "../../../store/productManagerSlice";
-import { ProductManager } from '../../../../../types/productManager';
+import { ProductManager, IconData } from '../../../../../types/productManager';
+import { BASE_URL } from '../../../config';
 import styles from './component.module.css';
 import AdvancedDescription from '../../AdvancedDescriptionEditor/component';
 import ProductIconManager from '../../ProductIconManager/component';
@@ -31,17 +32,21 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
         initialJS: productManager.initialJS || '',
         initialCSS: productManager.initialCSS || '',
         initialHTML: productManager.initialHTML || '',
-        icon: productManager.icon || [],
         label: productManager.label || '',
-        iconPreview: productManager.iconPreview || [],
+        icon: (productManager.icon || []).map((icon: IconData) => ({
+            filename: icon?.filename,
+            url: `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename)}`
+        })),
+        iconPreview: (productManager.iconPreview || []).map((icon: IconData) => ({
+            filename: icon?.filename,
+            url: `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename)}`
+        })),
         newFiles: [] as File[]
     });
 
     const [selectedField, setSelectedField] = useState<string | null>(null);
     const [selectedBrickId, setSelectedBrickId] = useState<string | number | boolean>(String);
     const [descriptionName, setDescriptionName] = useState("");
-
-    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
     const handleDescriptionNameChange = (name: string) => {
         setDescriptionName(name);
@@ -94,8 +99,8 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                 }
             });
 
-            formData.icon.forEach(path => {
-                formDataPayload.append('icons', path);
+            formData.icon.forEach(icon => {
+                formDataPayload.append('icons', icon.filename);
             });
 
             formData.newFiles.forEach(file => {
@@ -389,13 +394,26 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         productId={productManager._id}
                         icon={formData.icon}
                         label="Product Icons"
-                        onDelete={async (index: number) => {
-                            const updatedIcons = formData.icon.filter((_, i) => i !== index);
-                            setFormData(prev => ({
-                                ...prev,
-                                icon: updatedIcons,
-                                iconPreview: updatedIcons,
-                            }));
+                        onDelete={async (filename: string) => {
+                            const { productType, _id: productId } = productManager;
+                            
+                            try {
+                                const response = await fetch(`/api/productManager/${productType}/icon?id=${productId}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ filename }),
+                                });
+                    
+                                if (response.ok) {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        icon: prev.icon.filter(f => f.filename !== filename),
+                                        iconPreview: prev.iconPreview.filter(f => f.filename !== filename)
+                                    }));
+                                }
+                            } catch (error) {
+                                console.error('Delete error:', error);
+                            }
                         }}
                         onUpload={(files: File[]) => {
                             setFormData(prev => ({
@@ -403,7 +421,10 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                                 newFiles: [...prev.newFiles, ...files],
                                 iconPreview: [
                                     ...prev.iconPreview,
-                                    ...files.map(file => URL.createObjectURL(file))
+                                    ...files.map(file => ({
+                                        filename: `temp-${Date.now()}-${file.name}`,
+                                        url: URL.createObjectURL(file)
+                                    }))
                                 ]
                             }));
                         }}

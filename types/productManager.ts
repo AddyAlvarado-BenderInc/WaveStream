@@ -1,3 +1,8 @@
+export interface IconData {
+    filename: string;
+    url: string;
+}
+
 export interface ProductManager {
     _id: string;
     name: string;
@@ -16,9 +21,9 @@ export interface ProductManager {
     initialHTML: string;
     initialJS: string;
     initialCSS: string;
-    icon: string[];
+    icon: IconData[];
+    iconPreview: IconData[];
     label: string;
-    iconPreview: string[];
     runManager?: boolean;
     targetValue: string;
     [key: string]: any;

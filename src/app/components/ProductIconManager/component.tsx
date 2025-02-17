@@ -2,9 +2,12 @@ import React, { useState, useEffect } from "react";
 import styles from "./component.module.css";
 
 interface ProductIconManagerProps {
-    icon: string[];
+    icon: Array<{
+        filename: string;
+        url: string;
+    }>;
     label: string;
-    onDelete: (index: number) => void;
+    onDelete: (filename: string) => void;
     onUpload: (files: File[]) => void;
     handleFieldSelect: (field: string) => void;
     productType: string;
@@ -47,14 +50,14 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
 
     const handleDeleteImage = (index: number) => {
         if (index < icon.length) {
-            onDelete(index);
+            onDelete(icon[index].filename);
         } else {
             setNewFiles(prev => prev.filter((_, i) => i !== (index - icon.length)));
         }
     };
 
     const allImages = [
-        ...icon,
+        ...icon.map(i => i.url),
         ...newFiles.map(file => URL.createObjectURL(file))
     ];
 

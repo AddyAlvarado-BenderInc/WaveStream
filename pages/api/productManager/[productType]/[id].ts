@@ -33,37 +33,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         switch (req.method) {
             case 'GET': {
                 const query = productType ? { _id: id, productType } : { _id: id };
-                const productManager = await ProductManager.findOne(query)
-                    .lean<IProductManager & { __v: number }>();
+                const productManager = await ProductManager.findOne(query).lean<IProductManager>();
 
                 if (!productManager) {
                     return res.status(404).json({ error: 'Product manager not found.' });
-                }
-
-                async function getFileMetadata(fileId: string) {
-                    try {
-                        const bucket = await getGridFSBucket();
-                        const mongooseInstance = await connectToDatabase();
-                        const files = await bucket.find({
-                            _id: new mongooseInstance.Types.ObjectId(fileId)
-                        }).toArray();
-
-                        return files[0] || null;
-                    } catch (error) {
-                        console.error(`Error fetching file ${fileId}:`, error);
-                        return null;
-                    }
                 }
 
                 const icons = productManager.icon.map(filename => ({
                     filename,
                     url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                 }));
-
-                res.status(200).json({
-                    ...productManager,
-                    icons
-                });
 
                 const fileNames = icons
                     .filter(icon => !('error' in icon))
@@ -73,9 +52,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 const enhancedResponse = {
                     ...productManager,
-                    icons: icons.map(iconPath => ({
-                        path: iconPath,
-                        url: `${process.env.NEXTAUTH_URL}${iconPath}`
+                    icon: productManager.icon.map(filename => ({
+                        filename,
+                        url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                    })),
+                    iconPreview: productManager.iconPreview.map(filename => ({
+                        filename,
+                        url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                     }))
                 };
 
@@ -97,10 +80,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     uploadedFiles.map(async (file: Express.Multer.File) => {
                         const bucket = await getGridFSBucket();
                         const filename = file.originalname;
-
                         const existingFiles = await bucket.find({ filename }).toArray();
+                        
                         if (existingFiles.length > 0) {
                             await Promise.all(existingFiles.map(f => bucket.delete(f._id)));
+                        }
+
+                        if (!filename || filename === 'undefined') {
+                            throw new Error('Invalid filename during upload');
                         }
 
                         const uploadStream = bucket.openUploadStream(filename, {
@@ -151,8 +138,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const updateData = {
                     ...sanitizedData,
                     icon: allIcons,
-                    iconPreview: allIcons.map(id =>
-                        `${process.env.NEXTAUTH_URL}/api/files/${id}`
+                    iconPreview: allIcons.map(filename =>
+                        `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                     )
                 };
 
@@ -197,21 +184,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 res.status(200).json({
                     ...updatedManager.toObject(),
-                    icon: allIcons,
+                    icon: allIcons.map(filename => ({
+                        filename,
+                        url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                    })),
                     iconPreview: allIcons.map(id =>
-                        `${process.env.NEXTAUTH_URL}/api/files/${id}`
+                        `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(__filename)}`
                     )
                 });
                 break;
             }
             case 'DELETE': {
                 const query = productType ? { _id: id, productType } : { _id: id };
-                const deletedManager = await ProductManager.findOneAndDelete(query);
-
-                if (!deletedManager) {
+                const productManager = await ProductManager.findOne(query);
+            
+                if (!productManager) {
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
-
+            
+                const bucket = await getGridFSBucket();
+                const filenames = productManager.icon;
+                for (const filename of filenames) {
+                    const files = await bucket.find({ filename }).toArray();
+                    await Promise.all(files.map(file => bucket.delete(file._id)));
+                }
+            
+                await BrickEditor.deleteMany({ brickId: new RegExp(`^${id}_`) });
+            
+                await ProductManager.deleteOne(query);
+            
                 res.status(200).json({ message: 'Product manager deleted successfully' });
                 break;
             }
