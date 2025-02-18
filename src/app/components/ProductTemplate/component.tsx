@@ -10,7 +10,7 @@ interface ProductManager {
     isActive?: boolean;
     intentRange?: string;
     selectorMode?: string;
-    icon: string;
+    icon: string[];
     descriptionFooter: string;
     label: string;
     displayAs: string;
@@ -40,6 +40,10 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
         displayAs = '',
     } = manager;
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    const mainIcon = icon.length > 0 
+    ? `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(icon[0])}`
+    : iconDefault;
 
     const ConfirmationModal: React.FC<{
         show: boolean;
@@ -94,17 +98,17 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
                 <div className={style.divider}>
                     <img
                         className={style.icon}
-                        src={
-                            Array.isArray(icon) && icon.length > 0
-                                ? icon[0].startsWith('/uploads/')
-                                    ? icon[0]
-                                    : iconDefault
-                                : typeof icon === 'string' && icon.startsWith('/uploads/')
-                                ? icon
-                                : iconDefault
-                        }
-                        alt={icon ? `Product Icon: ${name}` : "No icon available"}
+                        src={mainIcon}
+                        alt={icon.length > 0 ? `Product Icon: ${name}` : "No icon available"}
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = iconDefault;
+                        }}
                     />
+                    {icon.length > 1 && (
+                        <div className={style.badge}>
+                            +{icon.length - 1}
+                        </div>
+                    )}
                 </div>
             </div>
             <div className={style.status}>

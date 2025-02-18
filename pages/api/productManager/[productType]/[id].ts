@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     .filter(icon => !('error' in icon))
                     .map(icon => icon.filename);
 
-                await cleanOrphanedFiles(fileNames);
+                await cleanOrphanedFiles(fileNames, id.toString());
 
                 const enhancedResponse = {
                     ...productManager,
@@ -80,18 +80,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     uploadedFiles.map(async (file: Express.Multer.File) => {
                         const bucket = await getGridFSBucket();
                         const filename = file.originalname;
-                        const existingFiles = await bucket.find({ filename }).toArray();
-                        
+
+                        const existingFiles = await bucket.find({
+                            filename,
+                            'metadata.productId': id
+                        }).toArray();
+
                         if (existingFiles.length > 0) {
                             await Promise.all(existingFiles.map(f => bucket.delete(f._id)));
                         }
 
-                        if (!filename || filename === 'undefined') {
-                            throw new Error('Invalid filename during upload');
-                        }
-
                         const uploadStream = bucket.openUploadStream(filename, {
-                            contentType: file.mimetype
+                            contentType: file.mimetype,
+                            metadata: { productId: id }
                         });
 
                         await new Promise<void>((resolve, reject) => {
@@ -197,22 +198,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             case 'DELETE': {
                 const query = productType ? { _id: id, productType } : { _id: id };
                 const productManager = await ProductManager.findOne(query);
-            
+
                 if (!productManager) {
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
-            
+
                 const bucket = await getGridFSBucket();
                 const filenames = productManager.icon;
                 for (const filename of filenames) {
                     const files = await bucket.find({ filename }).toArray();
                     await Promise.all(files.map(file => bucket.delete(file._id)));
                 }
-            
+
                 await BrickEditor.deleteMany({ brickId: new RegExp(`^${id}_`) });
-            
+
                 await ProductManager.deleteOne(query);
-            
+
                 res.status(200).json({ message: 'Product manager deleted successfully' });
                 break;
             }
