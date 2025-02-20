@@ -23,6 +23,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "pages/api/productTypesAutomation/adHoc.js", "pages/api/productTypesAutomation/staticDocument.js", "pages/api/productTypesAutomation/productMatrix.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "pages/api/automation/adHoc.js", "pages/api/automation/staticDocument.js", "pages/api/automation/productMatrix.js"],
   "exclude": ["node_modules"]
 }
