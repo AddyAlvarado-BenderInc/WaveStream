@@ -396,23 +396,36 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
                         label="Product Icons"
                         onDelete={async (filename: string) => {
                             const { productType, _id: productId } = productManager;
-                            
+
                             try {
-                                const response = await fetch(`/api/productManager/${productType}/icon?id=${productId}`, {
-                                    method: 'DELETE',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ filename }),
-                                });
-                    
+                                const response = await fetch(
+                                    `/api/productManager/${productType}/${productId}/icon?filename=${encodeURIComponent(filename)}`,
+                                    { method: 'DELETE' }
+                                );
+
                                 if (response.ok) {
+                                    const result = await response.json();
+
                                     setFormData(prev => ({
                                         ...prev,
-                                        icon: prev.icon.filter(f => f.filename !== filename),
-                                        iconPreview: prev.iconPreview.filter(f => f.filename !== filename)
+                                        icon: result.remainingIcons.map((f: string) => ({
+                                            filename: f,
+                                            url: `${BASE_URL}/api/files/${encodeURIComponent(f)}`
+                                        })),
+                                        iconPreview: result.remainingIcons.map((f: string) => ({
+                                            filename: f,
+                                            url: `${BASE_URL}/api/files/${encodeURIComponent(f)}`
+                                        }))
                                     }));
+
+                                    toast.success(result.message);
+                                } else {
+                                    const error = await response.json();
+                                    toast.error(`Delete failed: ${error.error}`);
                                 }
                             } catch (error) {
                                 console.error('Delete error:', error);
+                                toast.error('Failed to delete icon. Please try again.');
                             }
                         }}
                         onUpload={(files: File[]) => {

@@ -48,11 +48,28 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
         }
     };
 
-    const handleDeleteImage = (index: number) => {
-        if (index < icon.length) {
-            onDelete(icon[index].filename);
-        } else {
-            setNewFiles(prev => prev.filter((_, i) => i !== (index - icon.length)));
+    const handleDeleteImage = async (index: number) => {
+        try {
+            if (index < icon.length) {
+                const filename = icon[index].filename;
+                
+                await onDelete(filename);
+                
+                const newImages = [...icon];
+                newImages.splice(index, 1);
+                if (currentIndex >= newImages.length) {
+                    setCurrentIndex(Math.max(0, newImages.length - 1));
+                }
+            } else {
+                setNewFiles(prev => {
+                    const updatedFiles = prev.filter((_, i) => i !== (index - icon.length));
+                    URL.revokeObjectURL(allImages[index]);
+                    return updatedFiles;
+                });
+            }
+        } catch (error) {
+            console.error('Delete failed:', error);
+            alert('Failed to delete image. Please try again.');
         }
     };
 

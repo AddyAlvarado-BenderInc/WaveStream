@@ -1,11 +1,11 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import connectToDatabase from '../../../../lib/mongodb';
-import ProductManager from '../../../../models/ProductManager';
-import { IProductManager } from '../../../../models/ProductManager';
-import BrickEditor from '../../../../models/BrickEditor';
-import { cleanOrphanedFiles } from '../../../../lib/fileCleanup';
+import connectToDatabase from '../../../../../lib/mongodb';
+import ProductManager from '../../../../../models/ProductManager';
+import { IProductManager } from '../../../../../models/ProductManager';
+import BrickEditor from '../../../../../models/BrickEditor';
+import { cleanOrphanedFiles } from '../../../../../lib/fileCleanup';
 import { Readable } from 'stream';
-import { getGridFSBucket } from '../../../../lib/gridFSBucket';
+import { getGridFSBucket } from '../../../../../lib/gridFSBucket';
 import multer from 'multer';
 
 export interface NextApiRequestWithFiles extends NextApiRequest {
