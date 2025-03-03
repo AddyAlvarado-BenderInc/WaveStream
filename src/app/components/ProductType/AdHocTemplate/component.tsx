@@ -22,6 +22,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
     const [formData, setFormData] = useState({
         displayAs: productManager.displayAs || '',
+        itemName: productManager.itemName || '',
         productId: productManager.productId || '',
         intentRange: productManager.intentRange || '',
         selectorMode: productManager.selectorMode || 'default',
@@ -167,6 +168,7 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
 
                     setFormData({
                         displayAs: data.displayAs || '',
+                        itemName: data.itemName || '',
                         productId: data.productId || '',
                         intentRange: data.intentRange || '',
                         selectorMode: data.selectorMode || 'default',

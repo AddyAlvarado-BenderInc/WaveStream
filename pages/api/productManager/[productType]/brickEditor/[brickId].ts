@@ -80,6 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             console.log(`ProductManager found:`, productManager);
             
                             const validFields = [
+                                'itemName',
                                 'displayAs',
                                 'productId',
                                 'itemTemplate',

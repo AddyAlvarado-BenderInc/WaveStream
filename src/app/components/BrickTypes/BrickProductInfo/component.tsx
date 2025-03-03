@@ -29,7 +29,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
     onClose
 }) => {
     const [inputTargetValue, setInputTargetValue] = useState<string | number | null>(
-        targetValue ?? formData[field] ?? ''
+        targetValue ?? formData[field] ?? 'ANY_VALUE',
     );
     const [inputIntentValue, setInputIntentValue] = useState(intentValue);
     const [inputSpecifiedIntentRange, setInputSpecifiedIntentRange] = useState(specifiedIntentRange);
@@ -51,7 +51,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
 
     const currentValue =
         inputTargetValue === null || inputTargetValue === ''
-            ? formData[field] || ''
+            ? formData[field] || 'ANY_VALUE'
             : inputTargetValue;
 
             useEffect(() => {
@@ -106,7 +106,9 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
 
     const handleSave = async () => {
         const payload = {
-            targetValue: inputTargetValue === '' || inputTargetValue === null ? formData[field] : inputTargetValue,
+            targetValue: inputTargetValue === '' || inputTargetValue === null 
+            ? inputTargetValue
+            : formData[field] || 'any',
             intentValue: inputIntentValue,
             specifiedIntentRange: inputSpecifiedIntentRange,
             intentSelectionValue: inputIntentSelectionValue,
@@ -191,6 +193,19 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         intentValue={inputIntentValue}
                     />
                 );
+            case 'none':
+                return (
+                    <BrickManagerSheet
+                        sheetData={sheetData}
+                        onSheetDataChange={setSheetData}
+                        onlyIfValue=''
+                        actions='none'
+                        brickId={brickId}
+                        field={field}
+                        targetValue={currentValue}
+                        intentValue={null}
+                    />
+                );
             default:
                 return (
                     <BrickManagerSheet
@@ -228,6 +243,23 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
         return <div className={styles.loading}>Loading...</div>;
     }
 
+    const renderIntentSection = (inputIntentValue: string | File | number | null) => {
+        if (inputActionSelectionValue !== 'none' && inputIntentValue !== null) {
+            return (
+                <>
+                    <p>Intent Value: {renderValue(inputIntentValue)}</p>
+                    <input
+                        type="text"
+                        value={inputIntentValue instanceof File ? inputIntentValue.name : inputIntentValue ?? ''}
+                        onChange={(e) => setInputIntentValue(e.target.value)}
+                        className={styles.input}
+                    />
+                </>
+            );
+        }
+        return null;
+    };
+
     return (
         <div className={styles.brickEditor}>
             <div className={styles.header}>
@@ -240,7 +272,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                     <p>Target Value: {renderValue(inputTargetValue)}</p>
                     <input
                         type="text"
-                        value={inputTargetValue ?? ''}
+                        value={inputTargetValue ?? 'ANY VALUE'}
                         onChange={(e) => setInputTargetValue(e.target.value)}
                         className={styles.input}
                     />
@@ -263,15 +295,10 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                         <option value="make-all">Make All</option>
                         <option value="except">Except</option>
                         <option value="and">And</option>
+                        <option value="none">None / Act-As-Selector</option>
                     </select>
                     {renderOnlyIfSection()}
-                    <p>Intent Value: {renderValue(inputIntentValue)}</p>
-                    <input
-                        type="text"
-                        value={inputIntentValue instanceof File ? inputIntentValue.name : inputIntentValue ?? ''}
-                        onChange={(e) => setInputIntentValue(e.target.value)}
-                        className={styles.input}
-                    />
+                    {renderIntentSection(inputIntentValue)}
                     <hr className={styles.divider}></hr>
                     <div className={styles.actions}>
                         <button className={styles.button} onClick={handleSave}>

@@ -10,6 +10,7 @@ export interface ProductManager {
     productType: string;
     createdAt: string;
     isActive?: boolean;
+    itemName: string;
     displayAs: string;
     productId: string;
     intentRange: number;

@@ -3,6 +3,7 @@ import styles from './component.module.css';
 
 interface ProductInformationFormProps {
     formData: {
+        itemName: string;
         displayAs: string;
         productId: string;
         intentRange: number | string;
@@ -20,7 +21,7 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
     formData,
     handleInputChange,
     handleFieldSelect,
-    productName,
+    productName
 }) => {
     const configIcon = "◉";
 
@@ -47,9 +48,28 @@ const ProductInformationForm: React.FC<ProductInformationFormProps> = ({
             <table className={styles.table}>
                 <tbody>
                     <tr>
-                        <td>Product Name</td>
+                        <td>Product Manager Name</td>
                         <td>
                             <input type="text" value={productName} readOnly />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Item Name</td>
+                        <td>
+                            <input
+                                type="text"
+                                name="itemName"
+                                value={formData.itemName}
+                                onChange={handleInputChange}
+                            />
+                        </td>
+                        <td>
+                            <button
+                                className={styles.iconButton}
+                                onClick={(e) => handleIconClick(e, "Item Name")}
+                            >
+                                {configIcon}
+                            </button>
                         </td>
                     </tr>
                     <tr>

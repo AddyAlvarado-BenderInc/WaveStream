@@ -37,7 +37,7 @@ const TargetSection: React.FC<{
                     <input
                         id="target-excel-upload"
                         type="file"
-                        accept=".xls,.xlsx"
+                        accept=".xls,.xlsx,.csv"
                         onChange={handleFileUpload}
                     />
                 </label>

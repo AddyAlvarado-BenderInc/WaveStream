@@ -113,6 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const formFields = req.body ? JSON.parse(JSON.stringify(req.body)) : {};
 
                 const allowedFields = [
+                    'itemName',
                     'displayAs',
                     'productId',
                     'intentRange',

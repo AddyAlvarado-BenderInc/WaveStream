@@ -177,6 +177,21 @@ const BrickManagerSheet: React.FC<BrickManagerSheetProps> = ({
                         <OnlyIfSection value={onlyIfValue} onAddParameter={handleAddParameter}/>
                     </>
                 );
+            case 'none':
+                return (
+                    <>
+                        <TargetSection
+                            targetValue={targetValue}
+                            targets={inputTargets}
+                            onAddTarget={handleAddTargetInput}
+                            onDeleteTarget={handleDeleteTarget}
+                            onChangeTarget={(index, value) =>
+                                setInputTargets((prev) => prev.map((v, i) => (i === index ? value : v)))
+                            }
+                            handleFileUpload={handleFileUpload}
+                        />
+                    </>
+                );
             default:
                 return null;
         }

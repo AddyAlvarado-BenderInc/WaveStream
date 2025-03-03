@@ -5,6 +5,7 @@ import style from './component.module.css';
 interface ProductManager {
     _id: string;
     name: string;
+    itemName: string;
     productType: string;
     createdAt: string;
     isActive?: boolean;
@@ -30,6 +31,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
     const {
         _id,
         name,
+        itemName,
         productType,
         createdAt,
         isActive = false,
@@ -88,6 +90,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
             <div className={style.managerInfo}>
                 <div className={style.divider}>
                     <p>ID: {_id}</p>
+                    <p>Initial Item Name: {itemName}</p>
                     <p>Display As: {displayAs}</p>
                     <p>Type: <span className={style.productType}>{productType}</span></p>
                     <p>Intent range: {intentRange}</p>
