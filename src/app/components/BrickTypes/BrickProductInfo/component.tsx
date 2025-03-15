@@ -80,6 +80,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
                             setInputIntentValue(data.intentValue || '');
                             setInputSpecifiedIntentRange(data.specifiedIntentRange || 0);
                             setInputIntentSelectionValue(data.intentSelectionValue || 'default');
+                            setInputActionSelectionValue(data.actionSelectionValue || 'none'); 
                             setSheetData(data.sheetData || { targets: [], intents: [] });
                         } else {
                             console.warn(`Failed to fetch brick data: ${response.statusText}`);
@@ -108,7 +109,7 @@ const BrickEditor: React.FC<BrickEditorProps> = ({
         const payload = {
             targetValue: inputTargetValue === '' || inputTargetValue === null 
             ? inputTargetValue
-            : formData[field] || 'any',
+            : formData[field] || 'ANY_VALUE',
             intentValue: inputIntentValue,
             specifiedIntentRange: inputSpecifiedIntentRange,
             intentSelectionValue: inputIntentSelectionValue,
