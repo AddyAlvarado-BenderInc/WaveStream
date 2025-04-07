@@ -1,17 +1,30 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import style from './component.module.css';
+import dotenv from 'dotenv';
+import path from "path";
+
+dotenv.config({
+    path: path.resolve(process.cwd(), '../../../../', '.env')
+  });
+
+console.log("HERE IS OUR AUTHORIZED URL: ", process.env.NEXTAUTH_URL);
+
+// TODO: My hypothesis on fixing the productManager Icon display would likely be to fix the icon type and 
+// determine the filename (the name for this is explicitly named "filename" from our database) and instead of
+// encoding the icon string, we need to encode the icon.filename. I'm also wondering if the productId and productName
+// have something to do with how the icon is being queried as well... 
 
 interface ProductManager {
     _id: string;
     name: string;
-    itemName: string;
+    itemName?: string;
     productType: string;
     createdAt: string;
     isActive?: boolean;
     intentRange?: string;
     selectorMode?: string;
-    icon: string[];
+    icon: string;
     descriptionFooter: string;
     label: string;
     displayAs: string;
@@ -37,14 +50,14 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
         isActive = false,
         intentRange = 'N/A',
         selectorMode = 'N/A',
-        icon = iconDefault,
+        icon = '',
         descriptionFooter = '',
         displayAs = '',
     } = manager;
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const mainIcon = icon.length > 0 
-    ? `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(icon[0])}`
+    ? `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(icon[1])}`
     : iconDefault;
 
     const ConfirmationModal: React.FC<{

@@ -11,6 +11,7 @@ export interface IProductManager extends Document {
   intentRange: string;
   selectorMode: string;
   itemTemplate: string;
+  itemName: string;
   descriptionFooter: string;
   buyNowButtonText: string;
   description: string;
@@ -30,6 +31,7 @@ const ProductManagerSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   displayAs: { type: String, default: '' },
+  itemName: { type: String, default: '', required: false },
   productId: { type: String, default: '' },
   intentRange: { type: String, default: '' },
   selectorMode: { type: String, default: 'default' },
