@@ -41,29 +41,28 @@ export default function Home() {
     }
   };
 
-  // TOOD: Fix the toggle active function
-  const handleToggleActive = async (managerId: string, isActive: boolean) => {
+  const handleEditName = async (managerId: string, newName: string) => {
     try {
       const response = await fetch(`/api/productManager/${managerId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive }),
+        body: JSON.stringify({ name: newName }),
       });
 
       if (response.ok) {
         setProductManagers((prev) =>
           prev.map((manager) =>
-            manager._id === managerId ? { ...manager, isActive } : manager
+            manager._id === managerId ? { ...manager, name: newName } : manager
           )
         );
       } else {
-        throw new Error("Failed to update manager status");
+        throw new Error("Failed to update manager name");
       }
     } catch (error) {
-      console.error("Error updating manager status:", error);
-      alert("Failed to update manager status");
+      console.error("Error updating manager name:", error);
+      alert("Failed to update manager name");
     }
-  };
+  }
 
   const router = useRouter();
 
@@ -165,7 +164,7 @@ export default function Home() {
             manager={manager as Required<ProductManager>}
             onClick={handleManagerClick}
             onDelete={handleDeleteProductManager}
-            onToggleActive={handleToggleActive}
+            onEditName={handleEditName}
           />
         ))}
       </div>

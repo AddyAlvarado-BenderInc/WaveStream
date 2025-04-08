@@ -6,8 +6,8 @@ import style from './index.module.css';
 import "../../../src/app/globals.css";
 import dynamic from 'next/dynamic';
 
-const AdHocTemplate = dynamic<{ productManager: ProductManager }>(
-    () => import('../../../src/app/components/ProductType/AdHocTemplate/component'),
+const WaveManager = dynamic<{ productManager: ProductManager }>(
+    () => import('../../../src/app/components/ProductType/WaveManager/component'),
     { ssr: false }
 );
 
@@ -27,15 +27,6 @@ export default function ProductTypePage({ productManager, error }: ProductTypePa
         return <div>Loading...</div>;
     }
 
-    const renderProductType = () => {
-        switch (productManager.productType) {
-            case 'Ad-Hoc':
-                return <AdHocTemplate productManager={productManager} />;
-            default:
-                return <div>Unknown product type: {productManager.productType}</div>;
-        }
-    };
-
     return (
         <div className={style.page}>
             <header>
@@ -46,7 +37,9 @@ export default function ProductTypePage({ productManager, error }: ProductTypePa
                 <button onClick={() => window.history.back()}>Back</button>
             </header>
             <Provider store={store}>
-                <div className={style.content}>{renderProductType()}</div>
+                <div className={style.content}>
+                    <WaveManager productManager={productManager} />
+                </div>
             </Provider>
         </div>
     );

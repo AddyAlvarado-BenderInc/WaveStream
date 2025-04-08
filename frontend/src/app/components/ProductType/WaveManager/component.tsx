@@ -14,11 +14,11 @@ import { AppDispatch } from '@/app/store/store';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-interface AdHocTemplateProps {
+interface WaveManagerProps {
     productManager: ProductManager;
 }
 
-const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
+const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
     const [formData, setFormData] = useState({
         displayAs: productManager.displayAs || '',
@@ -456,4 +456,4 @@ const AdHocTemplate: React.FC<AdHocTemplateProps> = ({ productManager }) => {
     );
 };
 
-export default AdHocTemplate;
+export default WaveManager;

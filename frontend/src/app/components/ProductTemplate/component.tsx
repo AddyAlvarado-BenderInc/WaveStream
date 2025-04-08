@@ -3,17 +3,14 @@ import { useRouter } from 'next/navigation';
 import style from './component.module.css';
 import dotenv from 'dotenv';
 import path from "path";
+import { set } from 'mongoose';
+import { on } from 'events';
 
 dotenv.config({
     path: path.resolve(process.cwd(), '../../../../', '.env')
-  });
+});
 
 console.log("HERE IS OUR AUTHORIZED URL: ", process.env.NEXTAUTH_URL);
-
-// TODO: My hypothesis on fixing the productManager Icon display would likely be to fix the icon type and 
-// determine the filename (the name for this is explicitly named "filename" from our database) and instead of
-// encoding the icon string, we need to encode the icon.filename. I'm also wondering if the productId and productName
-// have something to do with how the icon is being queried as well... 
 
 interface ProductManager {
     _id: string;
@@ -24,7 +21,6 @@ interface ProductManager {
     isActive?: boolean;
     intentRange?: string;
     selectorMode?: string;
-    icon: string;
     descriptionFooter: string;
     label: string;
     displayAs: string;
@@ -34,31 +30,20 @@ interface ProductTemplateProps {
     manager: ProductManager;
     onClick: (id: string) => void;
     onDelete: (id: string, productType: string) => void;
-    onToggleActive: (id: string, isActive: boolean) => void;
+    onEditName: (id: string, newName: string) => void;
 }
 
-const iconDefault = 'https://placehold.co/200x200';
-
-const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, onToggleActive }) => {
+const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, onEditName }) => {
     const router = useRouter();
     const {
         _id,
         name,
-        itemName,
         productType,
         createdAt,
         isActive = false,
-        intentRange = 'N/A',
-        selectorMode = 'N/A',
-        icon = '',
-        descriptionFooter = '',
-        displayAs = '',
     } = manager;
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-    const mainIcon = icon.length > 0 
-    ? `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(icon[1])}`
-    : iconDefault;
+    const [showEditNameModal, setShowEditNameModal] = useState(false);
 
     const ConfirmationModal: React.FC<{
         show: boolean;
@@ -96,6 +81,67 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
         );
     };
 
+    const EditNameModal: React.FC<{
+        show: boolean;
+        onEditName: (id: string, newName: string) => void;
+        onClose: () => void;
+        setShowEditNameModal: React.Dispatch<React.SetStateAction<boolean>>;
+        name: string;
+        _id: string;
+    }> = ({ show, onEditName, onClose, setShowEditNameModal, name, _id }) => {
+        const [newName, setNewName] = useState(name);
+
+        if (!show) return null;
+
+        const handleEditName = (e: React.FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            onEditName(_id, newName);
+            setShowEditNameModal(false);
+        };
+
+        return (
+            <div className={style.modalOverlay}>
+                <div className={style.modal}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                    }}
+                >
+                    <h3>Edit Name</h3>
+                    <form 
+                        onSubmit={handleEditName}
+                    >
+                        <input
+                            type="text"
+                            placeholder="New Name"
+                            onClick={(e) => e.stopPropagation()}
+                            value={newName}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                setNewName(e.target.value);
+                            }}
+                        />
+                        <button
+                            className={style.button}
+                            onSubmit={(e) => {
+                                e.stopPropagation();
+                            }}
+                        >
+                            Save
+                        </button>
+                    <button
+                        className={style.button}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onClose();
+                        }}
+                        >
+                        Close
+                    </button>
+                    </form>
+                </div>
+            </div>
+        );
+    };
+
 
     return (
         <div className={style.productTemplate} onClick={() => router.push(`/${productType}/${_id}`)}>
@@ -103,28 +149,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
             <div className={style.managerInfo}>
                 <div className={style.divider}>
                     <p>ID: {_id}</p>
-                    <p>Initial Item Name: {itemName}</p>
-                    <p>Display As: {displayAs}</p>
-                    <p>Type: <span className={style.productType}>{productType}</span></p>
-                    <p>Intent range: {intentRange}</p>
-                    <p>Selector mode: {selectorMode}</p>
                     <p>Created: {new Date(createdAt).toLocaleDateString()}</p>
-                    <p>Footer Description: {descriptionFooter}</p>
-                </div>
-                <div className={style.divider}>
-                    <img
-                        className={style.icon}
-                        src={mainIcon}
-                        alt={icon.length > 0 ? `Product Icon: ${name}` : "No icon available"}
-                        onError={(e) => {
-                            (e.target as HTMLImageElement).src = iconDefault;
-                        }}
-                    />
-                    {icon.length > 1 && (
-                        <div className={style.badge}>
-                            +{icon.length - 1}
-                        </div>
-                    )}
                 </div>
             </div>
             <div className={style.status}>
@@ -141,7 +166,15 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
                     className={style.button}
                     onClick={(e) => {
                         e.stopPropagation();
-                        onToggleActive(_id, !isActive);
+                        setShowEditNameModal(true);
+                    }}
+                >
+                    Rename
+                </button>
+                <button
+                    className={style.button}
+                    onClick={(e) => {
+                        e.stopPropagation();
                     }}
                 >
                     {isActive ? 'Deactivate' : 'Activate'}
@@ -150,6 +183,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
                     className={style.runButton}
                     onClick={(e) => {
                         e.stopPropagation();
+                        alert('Running the product manager...[mockup]');
                     }}
                 >
                     Run
@@ -160,6 +194,14 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
                 message="Are you sure you want to delete this manager? This action cannot be undone."
                 onConfirm={() => onDelete(_id, productType)}
                 onCancel={() => setShowDeleteConfirm(false)}
+            />
+            <EditNameModal
+                show={showEditNameModal}
+                name={name}
+                _id={_id}
+                onEditName={onEditName}
+                onClose={() => setShowEditNameModal(false)}
+                setShowEditNameModal={setShowEditNameModal}
             />
         </div>
     );
