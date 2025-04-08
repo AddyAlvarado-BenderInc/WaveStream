@@ -1,0 +1,1066 @@
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/backend
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/backend.deps.json
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/backend.runtimeconfig.json
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/backend.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/backend.pdb
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.GeneratedMSBuildEditorConfig.editorconfig
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.AssemblyInfoInputs.cache
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.AssemblyInfo.cs
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.csproj.CoreCompileInputs.cache
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.dll
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/refint/backend.dll
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.pdb
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.genruntimeconfig.cache
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/ref/backend.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Abstractions.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Npgsql.dll
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.csproj.AssemblyReference.cache
+/Users/pre-press2/Desktop/directUpdate/backend/obj/Debug/net9.0/backend.csproj.Up2Date
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/dotenv.net.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/node/darwin-arm64/node
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/node/LICENSE
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/api.json
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/install_media_pack.ps1
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/PrintDeps.exe
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/README.md
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_linux.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_mac.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_win.ps1
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_linux.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_mac.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_win.ps1
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_linux.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_mac.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_win.ps1
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_linux.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_mac.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_win.ps1
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_linux.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_mac.sh
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_win.ps1
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/browsers.json
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/cli.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/index.d.ts
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/index.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/index.mjs
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/androidServerImpl.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/browserServerImpl.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/cli/driver.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/cli/program.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/cli/programWithTestStub.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/accessibility.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/android.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/api.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/artifact.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/browser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/browserContext.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/browserType.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/cdpSession.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/channelOwner.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/clientHelper.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/clientInstrumentation.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/clock.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/connection.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/consoleMessage.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/coverage.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/dialog.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/download.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/electron.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/elementHandle.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/errors.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/events.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/fetch.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/fileChooser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/frame.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/harRouter.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/input.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/jsHandle.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/jsonPipe.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/localUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/locator.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/network.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/page.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/playwright.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/selectors.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/stream.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/tracing.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/types.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/video.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/waiter.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/webError.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/worker.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/client/writableStream.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/common/socksProxy.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/common/timeoutSettings.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/common/types.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/generated/clockSource.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/generated/consoleApiSource.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/generated/injectedScriptSource.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/generated/recorderSource.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/generated/utilityScriptSource.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/colorUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/compare.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/imageChannel.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/stats.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/inprocess.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/inProcessFactory.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/outofprocess.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/debug.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/serializers.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/transport.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/validator.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/validatorPrimitives.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/remote/playwrightConnection.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/remote/playwrightServer.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/accessibility.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/android/android.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/android/backendAdb.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/artifact.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/browser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/browserContext.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/browserType.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/appIcon.png
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/chromium.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/chromiumSwitches.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crAccessibility.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crBrowser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crConnection.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crCoverage.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crDevTools.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crDragDrop.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crExecutionContext.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crInput.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crNetworkManager.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crPage.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crPdf.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crProtocolHelper.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crServiceWorker.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/defaultFontFamilies.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/videoRecorder.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/clock.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/console.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/cookieStore.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/debugController.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/debugger.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/deviceDescriptors.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/deviceDescriptorsSource.json
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dialog.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/androidDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/artifactDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserContextDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserTypeDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/cdpSessionDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/debugControllerDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/dialogDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/dispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/electronDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/elementHandlerDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/frameDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/jsHandleDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/jsonPipeDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/localUtilsDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/networkDispatchers.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/pageDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/playwrightDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/selectorsDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/streamDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/tracingDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/writableStreamDispatcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/dom.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/download.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/electron/electron.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/electron/loader.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/errors.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/fetch.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/fileChooser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/fileUploadUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffAccessibility.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffBrowser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffConnection.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffExecutionContext.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffInput.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffNetworkManager.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffPage.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/firefox.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/formData.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/frames.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/frameSelectors.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/har/harRecorder.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/har/harTracer.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/helper.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/index.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/input.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/instrumentation.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/isomorphic/utilityScriptSerializers.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/javascript.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/launchApp.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/macEditingCommands.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/network.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/page.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/pipeTransport.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/playwright.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/progress.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/protocolError.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/codeGenerator.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/csharp.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/java.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/javascript.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/jsonl.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/language.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/python.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderActions.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderApp.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/utils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/browserFetcher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/dependencies.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/index.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/nativeDeps.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/oopDownloadBrowserMain.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/screenshotter.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/selectors.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/socksInterceptor.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/snapshotter.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/snapshotterInjected.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/tracing.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/test/inMemorySnapshotter.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/viewer/traceViewer.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/transport.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/types.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/usKeyboardLayout.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/webkit.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkAccessibility.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkBrowser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkConnection.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkExecutionContext.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkInput.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkInterceptableRequest.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkPage.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkProvisionalPage.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkWorkers.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/third_party/diff_match_patch.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/third_party/pixelmatch.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/ascii.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/comparators.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/crypto.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/debug.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/debugLogger.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/env.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/eventsHelper.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/fileUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/glob.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/happy-eyeballs.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/headers.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/hostPlatform.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/httpServer.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/index.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/cssParser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/cssTokenizer.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorGenerators.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorParser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/selectorParser.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/stringUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/traceUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/linuxUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/manualPromise.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/mimeType.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/multimap.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/network.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/processLauncher.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/profiler.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/rtti.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/semaphore.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/spawnAsync.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/stackTrace.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/task.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/time.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/timeoutRunner.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/traceUtils.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/userAgent.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/wsServer.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/zipFile.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utils/zones.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundle.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundleImpl/index.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundleImpl/xdg-open
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/htmlReport/index.html
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codeMirrorModule-Bzggq412.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codeMirrorModule-ez37Vkbh.css
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codicon-DMa5iZz2.ttf
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/index-5SSs4-n_.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/index-B5iDPo7P.css
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/index.html
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/playwright-logo.svg
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/codeMirrorModule-BfR9u_dG.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/testServerConnection-CLJOcN3M.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/xtermModule-BeNbaIVa.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/codeMirrorModule.ez37Vkbh.css
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/codicon.DMa5iZz2.ttf
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.CrbWWHbf.css
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.D7JIa5vL.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.html
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/playwright-logo.svg
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/snapshot.html
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/sw.bundle.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/testServerConnection.0WapKERv.css
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.Btn2TM9w.css
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.DGx1ltIi.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.html
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/xtermModule.DSXBckUd.css
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/zipBundle.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/lib/zipBundleImpl.js
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/LICENSE
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/NOTICE
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/package.json
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/protocol.yml
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/README.md
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/ThirdPartyNotices.txt
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/types/protocol.d.ts
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/types/structs.d.ts
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/.playwright/package/types/types.d.ts
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/playwright.ps1
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Bcl.AsyncInterfaces.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Playwright.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Abstractions.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Binder.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.CommandLine.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.EnvironmentVariables.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.FileExtensions.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Json.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.UserSecrets.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.DependencyInjection.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Diagnostics.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Diagnostics.Abstractions.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.FileProviders.Abstractions.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.FileProviders.Physical.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.FileSystemGlobbing.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Hosting.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Hosting.Abstractions.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Configuration.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Console.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Debug.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.EventLog.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.EventSource.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Options.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Options.ConfigurationExtensions.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/Microsoft.Extensions.Primitives.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/System.Diagnostics.EventLog.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/runtimes/win/lib/net9.0/System.Diagnostics.EventLog.Messages.dll
+/Users/pre-press2/Desktop/directUpdate/backend/bin/Debug/net9.0/runtimes/win/lib/net9.0/System.Diagnostics.EventLog.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/node/LICENSE
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/api.json
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/install_media_pack.ps1
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/PrintDeps.exe
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/README.md
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_linux.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_mac.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_win.ps1
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_linux.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_mac.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_win.ps1
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_linux.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_mac.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_win.ps1
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_linux.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_mac.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_win.ps1
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_linux.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_mac.sh
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_win.ps1
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/browsers.json
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/cli.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/index.d.ts
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/index.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/index.mjs
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/androidServerImpl.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/browserServerImpl.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/accessibility.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/android.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/api.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/artifact.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/browser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/browserContext.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/browserType.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/cdpSession.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/channelOwner.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/clientHelper.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/clientInstrumentation.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/clock.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/connection.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/consoleMessage.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/coverage.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/dialog.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/download.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/electron.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/elementHandle.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/errors.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/events.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/fetch.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/fileChooser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/frame.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/harRouter.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/input.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/jsHandle.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/jsonPipe.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/localUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/locator.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/network.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/page.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/playwright.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/selectors.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/stream.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/tracing.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/types.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/video.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/waiter.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/webError.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/worker.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/writableStream.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/cli/driver.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/cli/program.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/cli/programWithTestStub.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/common/socksProxy.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/common/timeoutSettings.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/common/types.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/clockSource.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/consoleApiSource.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/injectedScriptSource.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/recorderSource.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/utilityScriptSource.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/colorUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/compare.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/imageChannel.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/stats.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/inprocess.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/inProcessFactory.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/outofprocess.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/debug.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/serializers.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/transport.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/validator.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/validatorPrimitives.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/remote/playwrightConnection.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/remote/playwrightServer.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/accessibility.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/android/android.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/android/backendAdb.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/artifact.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/browser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/browserContext.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/browserType.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/appIcon.png
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/chromium.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/chromiumSwitches.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crAccessibility.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crBrowser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crConnection.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crCoverage.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crDevTools.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crDragDrop.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crExecutionContext.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crInput.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crNetworkManager.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crPage.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crPdf.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crProtocolHelper.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crServiceWorker.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/defaultFontFamilies.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/videoRecorder.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/clock.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/console.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/cookieStore.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/debugController.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/debugger.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/deviceDescriptors.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/deviceDescriptorsSource.json
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dialog.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/androidDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/artifactDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserContextDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserTypeDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/cdpSessionDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/debugControllerDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/dialogDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/dispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/electronDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/elementHandlerDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/frameDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/jsHandleDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/jsonPipeDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/localUtilsDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/networkDispatchers.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/pageDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/playwrightDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/selectorsDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/streamDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/tracingDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/writableStreamDispatcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dom.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/download.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/electron/electron.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/electron/loader.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/errors.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/fetch.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/fileChooser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/fileUploadUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffAccessibility.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffBrowser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffConnection.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffExecutionContext.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffInput.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffNetworkManager.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffPage.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/firefox.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/formData.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/frames.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/frameSelectors.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/har/harRecorder.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/har/harTracer.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/helper.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/index.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/input.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/instrumentation.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/isomorphic/utilityScriptSerializers.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/javascript.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/launchApp.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/macEditingCommands.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/network.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/page.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/pipeTransport.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/playwright.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/progress.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/protocolError.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/codeGenerator.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/csharp.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/java.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/javascript.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/jsonl.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/language.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/python.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderActions.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderApp.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/utils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/browserFetcher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/dependencies.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/index.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/nativeDeps.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/oopDownloadBrowserMain.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/screenshotter.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/selectors.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/socksInterceptor.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/snapshotter.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/snapshotterInjected.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/tracing.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/test/inMemorySnapshotter.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/viewer/traceViewer.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/transport.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/types.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/usKeyboardLayout.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/webkit.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkAccessibility.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkBrowser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkConnection.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkExecutionContext.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkInput.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkInterceptableRequest.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkPage.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkProvisionalPage.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkWorkers.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/third_party/diff_match_patch.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/third_party/pixelmatch.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundle.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundleImpl/index.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundleImpl/xdg-open
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/ascii.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/comparators.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/crypto.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/debug.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/debugLogger.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/env.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/eventsHelper.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/fileUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/glob.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/happy-eyeballs.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/headers.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/hostPlatform.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/httpServer.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/index.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/cssParser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/cssTokenizer.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorGenerators.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorParser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/selectorParser.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/stringUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/traceUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/linuxUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/manualPromise.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/mimeType.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/multimap.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/network.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/processLauncher.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/profiler.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/rtti.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/semaphore.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/spawnAsync.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/stackTrace.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/task.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/time.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/timeoutRunner.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/traceUtils.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/userAgent.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/wsServer.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/zipFile.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/zones.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/htmlReport/index.html
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codeMirrorModule-Bzggq412.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codeMirrorModule-ez37Vkbh.css
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codicon-DMa5iZz2.ttf
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/index-5SSs4-n_.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/index-B5iDPo7P.css
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/index.html
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/playwright-logo.svg
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/codeMirrorModule-BfR9u_dG.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/testServerConnection-CLJOcN3M.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/xtermModule-BeNbaIVa.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/codeMirrorModule.ez37Vkbh.css
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/codicon.DMa5iZz2.ttf
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.CrbWWHbf.css
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.D7JIa5vL.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.html
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/playwright-logo.svg
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/snapshot.html
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/sw.bundle.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/testServerConnection.0WapKERv.css
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.Btn2TM9w.css
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.DGx1ltIi.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.html
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/xtermModule.DSXBckUd.css
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/zipBundle.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/zipBundleImpl.js
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/LICENSE
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/NOTICE
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/package.json
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/protocol.yml
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/README.md
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/ThirdPartyNotices.txt
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/types/protocol.d.ts
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/types/structs.d.ts
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/package/types/types.d.ts
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/playwright.ps1
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/.playwright/node/win32_x64/node.exe
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/backend.exe
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/backend.deps.json
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/backend.runtimeconfig.json
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/backend.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/backend.pdb
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/dotenv.net.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Bcl.AsyncInterfaces.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Abstractions.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Binder.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.CommandLine.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.EnvironmentVariables.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.FileExtensions.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Json.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.UserSecrets.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.DependencyInjection.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Diagnostics.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Diagnostics.Abstractions.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.FileProviders.Abstractions.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.FileProviders.Physical.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.FileSystemGlobbing.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Hosting.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Hosting.Abstractions.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Abstractions.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Configuration.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Console.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Debug.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.EventLog.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.EventSource.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Options.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Options.ConfigurationExtensions.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Primitives.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Microsoft.Playwright.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/Npgsql.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/System.Diagnostics.EventLog.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/bin/Debug/net9.0/runtimes/win/lib/net9.0/System.Diagnostics.EventLog.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.csproj.AssemblyReference.cache
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.GeneratedMSBuildEditorConfig.editorconfig
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.AssemblyInfoInputs.cache
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.AssemblyInfo.cs
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.csproj.CoreCompileInputs.cache
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.sourcelink.json
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.csproj.Up2Date
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/refint/backend.dll
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.pdb
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/backend.genruntimeconfig.cache
+C:/Users/mardo/OneDrive/Desktop/waveKey/waveKey/backend/obj/Debug/net9.0/ref/backend.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/node/darwin-arm64/node
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/node/LICENSE
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/api.json
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/install_media_pack.ps1
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/PrintDeps.exe
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/README.md
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_linux.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_mac.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_beta_win.ps1
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_linux.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_mac.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_chrome_stable_win.ps1
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_linux.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_mac.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_beta_win.ps1
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_linux.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_mac.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_dev_win.ps1
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_linux.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_mac.sh
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/bin/reinstall_msedge_stable_win.ps1
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/browsers.json
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/cli.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/index.d.ts
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/index.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/index.mjs
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/androidServerImpl.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/browserServerImpl.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/cli/driver.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/cli/program.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/cli/programWithTestStub.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/accessibility.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/android.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/api.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/artifact.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/browser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/browserContext.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/browserType.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/cdpSession.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/channelOwner.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/clientHelper.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/clientInstrumentation.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/clock.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/connection.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/consoleMessage.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/coverage.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/dialog.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/download.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/electron.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/elementHandle.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/errors.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/events.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/fetch.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/fileChooser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/frame.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/harRouter.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/input.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/jsHandle.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/jsonPipe.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/localUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/locator.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/network.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/page.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/playwright.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/selectors.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/stream.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/tracing.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/types.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/video.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/waiter.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/webError.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/worker.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/client/writableStream.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/common/socksProxy.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/common/timeoutSettings.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/common/types.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/clockSource.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/consoleApiSource.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/injectedScriptSource.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/recorderSource.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/generated/utilityScriptSource.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/colorUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/compare.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/imageChannel.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/image_tools/stats.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/inprocess.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/inProcessFactory.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/outofprocess.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/debug.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/serializers.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/transport.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/validator.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/protocol/validatorPrimitives.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/remote/playwrightConnection.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/remote/playwrightServer.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/accessibility.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/android/android.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/android/backendAdb.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/artifact.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/browser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/browserContext.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/browserType.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/appIcon.png
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/chromium.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/chromiumSwitches.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crAccessibility.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crBrowser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crConnection.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crCoverage.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crDevTools.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crDragDrop.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crExecutionContext.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crInput.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crNetworkManager.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crPage.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crPdf.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crProtocolHelper.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/crServiceWorker.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/defaultFontFamilies.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/chromium/videoRecorder.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/clock.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/console.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/cookieStore.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/debugController.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/debugger.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/deviceDescriptors.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/deviceDescriptorsSource.json
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dialog.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/androidDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/artifactDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserContextDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/browserTypeDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/cdpSessionDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/debugControllerDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/dialogDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/dispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/electronDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/elementHandlerDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/frameDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/jsHandleDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/jsonPipeDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/localUtilsDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/networkDispatchers.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/pageDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/playwrightDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/selectorsDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/streamDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/tracingDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dispatchers/writableStreamDispatcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/dom.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/download.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/electron/electron.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/electron/loader.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/errors.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/fetch.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/fileChooser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/fileUploadUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffAccessibility.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffBrowser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffConnection.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffExecutionContext.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffInput.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffNetworkManager.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/ffPage.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/firefox/firefox.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/formData.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/frames.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/frameSelectors.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/har/harRecorder.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/har/harTracer.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/helper.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/index.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/input.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/instrumentation.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/isomorphic/utilityScriptSerializers.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/javascript.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/launchApp.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/macEditingCommands.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/network.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/page.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/pipeTransport.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/playwright.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/progress.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/protocolError.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/codeGenerator.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/csharp.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/java.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/javascript.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/jsonl.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/language.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/python.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderActions.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderApp.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/recorderUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/recorder/utils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/browserFetcher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/dependencies.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/index.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/nativeDeps.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/registry/oopDownloadBrowserMain.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/screenshotter.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/selectors.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/socksInterceptor.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/snapshotter.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/snapshotterInjected.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/recorder/tracing.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/test/inMemorySnapshotter.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/trace/viewer/traceViewer.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/transport.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/types.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/usKeyboardLayout.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/webkit.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkAccessibility.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkBrowser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkConnection.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkExecutionContext.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkInput.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkInterceptableRequest.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkPage.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkProvisionalPage.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/server/webkit/wkWorkers.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/third_party/diff_match_patch.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/third_party/pixelmatch.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/ascii.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/comparators.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/crypto.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/debug.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/debugLogger.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/env.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/eventsHelper.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/fileUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/glob.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/happy-eyeballs.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/headers.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/hostPlatform.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/httpServer.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/index.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/cssParser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/cssTokenizer.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorGenerators.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorParser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/locatorUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/selectorParser.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/stringUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/isomorphic/traceUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/linuxUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/manualPromise.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/mimeType.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/multimap.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/network.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/processLauncher.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/profiler.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/rtti.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/semaphore.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/spawnAsync.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/stackTrace.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/task.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/time.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/timeoutRunner.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/traceUtils.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/userAgent.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/wsServer.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/zipFile.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utils/zones.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundle.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundleImpl/index.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/utilsBundleImpl/xdg-open
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/htmlReport/index.html
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codeMirrorModule-Bzggq412.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codeMirrorModule-ez37Vkbh.css
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/codicon-DMa5iZz2.ttf
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/index-5SSs4-n_.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/assets/index-B5iDPo7P.css
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/index.html
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/recorder/playwright-logo.svg
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/codeMirrorModule-BfR9u_dG.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/testServerConnection-CLJOcN3M.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/assets/xtermModule-BeNbaIVa.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/codeMirrorModule.ez37Vkbh.css
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/codicon.DMa5iZz2.ttf
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.CrbWWHbf.css
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.D7JIa5vL.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/index.html
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/playwright-logo.svg
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/snapshot.html
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/sw.bundle.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/testServerConnection.0WapKERv.css
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.Btn2TM9w.css
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.DGx1ltIi.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/uiMode.html
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/vite/traceViewer/xtermModule.DSXBckUd.css
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/zipBundle.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/lib/zipBundleImpl.js
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/LICENSE
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/NOTICE
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/package.json
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/protocol.yml
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/README.md
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/ThirdPartyNotices.txt
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/types/protocol.d.ts
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/types/structs.d.ts
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/.playwright/package/types/types.d.ts
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/playwright.ps1
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/backend
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/backend.deps.json
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/backend.runtimeconfig.json
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/backend.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/backend.pdb
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/dotenv.net.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Bcl.AsyncInterfaces.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Abstractions.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Binder.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.CommandLine.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.EnvironmentVariables.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.FileExtensions.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.Json.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Configuration.UserSecrets.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.DependencyInjection.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Diagnostics.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Diagnostics.Abstractions.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.FileProviders.Abstractions.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.FileProviders.Physical.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.FileSystemGlobbing.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Hosting.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Hosting.Abstractions.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Abstractions.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Configuration.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Console.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.Debug.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.EventLog.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Logging.EventSource.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Options.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Options.ConfigurationExtensions.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Extensions.Primitives.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Microsoft.Playwright.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/Npgsql.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/System.Diagnostics.EventLog.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/runtimes/win/lib/net9.0/System.Diagnostics.EventLog.Messages.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/bin/Debug/net9.0/runtimes/win/lib/net9.0/System.Diagnostics.EventLog.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.csproj.AssemblyReference.cache
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.GeneratedMSBuildEditorConfig.editorconfig
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.AssemblyInfoInputs.cache
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.AssemblyInfo.cs
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.csproj.CoreCompileInputs.cache
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.sourcelink.json
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.csproj.Up2Date
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/refint/backend.dll
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.pdb
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/backend.genruntimeconfig.cache
+/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/Debug/net9.0/ref/backend.dll
