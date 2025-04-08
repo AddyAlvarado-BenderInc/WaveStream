@@ -3,8 +3,6 @@ import { useRouter } from 'next/navigation';
 import style from './component.module.css';
 import dotenv from 'dotenv';
 import path from "path";
-import { set } from 'mongoose';
-import { on } from 'events';
 
 dotenv.config({
     path: path.resolve(process.cwd(), '../../../../', '.env')

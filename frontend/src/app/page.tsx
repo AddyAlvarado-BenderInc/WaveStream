@@ -153,6 +153,15 @@ export default function Home() {
           placeholder="Enter Key Name"
           required
         />
+        <select
+          className={styles.select}
+          value={newManagerType}
+          onChange={(e) => setNewManagerType(e.target.value)}
+          required
+        >
+          <option value="">Select A Type</option>
+          <option value="Manager">Manager</option>
+        </select>
         <button className={styles.button} type="submit">
           Add Key
         </button>

@@ -20,7 +20,6 @@ interface AdvancedDescriptionProps {
     descriptionName: string;
     onDescriptionName: (name: string) => void;
     onUpdate: (field: string, value: string) => void;
-    handleFieldSelect: (field: string) => void;
     handleSaveButton: (name: string, html: string, css: string, js: string) => void;
     handleClearButton: () => void;
 }
@@ -33,7 +32,6 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     descriptionName,
     onDescriptionName,
     onUpdate,
-    handleFieldSelect,
     handleSaveButton,
     handleClearButton,
 }) => {
@@ -47,8 +45,6 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
     const [html, setHtml] = useState(initialHTML || '');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
-
-    const configIcon = "◉";
 
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -64,19 +60,6 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
         <body>${html}<script>${js || ""}</script></body>
     </html>
     `;
-
-    const handleIconClick = (e: React.MouseEvent, field: string) => {
-        e.stopPropagation();
-
-        const camelCaseField = field
-            .split(' ')
-            .map((word, index) =>
-                index === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1)
-            )
-            .join('');
-
-        handleFieldSelect(camelCaseField);
-    };
 
     const updateIframe = () => {
         const iframe = iframeRef.current;
@@ -382,12 +365,6 @@ const AdvancedDescription: React.FC<AdvancedDescriptionProps> = ({
                         </div>
                     </div>
                 )}
-                <button
-                    className={styles.iconButton}
-                    onClick={(e) => handleIconClick(e, "description")}
-                >
-                    {configIcon}
-                </button>
             </div>
             <div className={styles.editor}>{renderEditor()}</div>
             <div className={styles.preview}>

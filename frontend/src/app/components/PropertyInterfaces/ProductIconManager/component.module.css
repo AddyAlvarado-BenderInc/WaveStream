@@ -73,7 +73,7 @@
     display: none;
 }
 
-.uploadButton {
+.uploadButton, .copyButton {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
     padding: 8px 16px;
@@ -83,7 +83,7 @@
     transition: background-color 0.3s ease;
 }
 
-.uploadButton:hover {
+.uploadButton:hover, .copyButton:hover {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
 }
@@ -175,6 +175,21 @@
 .iconButton:hover {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
+}
+
+.tooltip {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    text-align: center;
+    background-color: #3333337e;
+    color: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 12pt;
+    z-index: 1;
 }
 
 button.button[name="delete"] {

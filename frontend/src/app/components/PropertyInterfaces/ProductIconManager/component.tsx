@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "./component.module.css";
+import { toast } from "react-toastify";
 
 interface ProductIconManagerProps {
     icon: Array<{
@@ -9,19 +10,15 @@ interface ProductIconManagerProps {
     label: string;
     onDelete: (filename: string) => void;
     onUpload: (files: File[]) => void;
-    handleFieldSelect: (field: string) => void;
-    productType: string;
-    productId: string;
 }
 
 const MAX_IMAGES = 5;
 
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({
-    icon, label, onUpload, onDelete, handleFieldSelect, productType, productId
+    icon, label, onUpload, onDelete
 }) => {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [newFiles, setNewFiles] = useState<File[]>([]);
-    const configIcon = "◉";
 
     useEffect(() => {
         return () => {
@@ -73,6 +70,44 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
         }
     };
 
+    const displayFileName = (filename: string) => {
+        const maxLength = 20;
+        if (filename.length > maxLength) {
+            return `${filename.slice(0, maxLength)}...`;
+        }
+        return filename;
+    };
+
+    const FileNameWithTooltip: React.FC<{ filename: string }> = ({ filename }) => {
+        const [isHovered, setIsHovered] = useState(false);
+    
+        const handleCopy = () => {
+            navigator.clipboard.writeText(filename).then(() => {
+                toast("Filename copied to clipboard!");
+            }).catch(err => {
+                console.error("Failed to copy: ", err);
+            });
+        };
+    
+        return (
+            <div
+                className={styles.imageInfo}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
+                <strong>{displayFileName(filename)}</strong>
+                {isHovered && (
+                    <div className={styles.tooltip}>
+                        <strong>{filename}</strong>
+                        <button onClick={handleCopy} className={styles.copyButton}>
+                            Copy
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const allImages = [
         ...icon.map(i => i.url),
         ...newFiles.map(file => URL.createObjectURL(file))
@@ -86,31 +121,12 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
         setCurrentIndex((prevIndex) => (prevIndex - 1 + allImages.length) % allImages.length);
     };
 
-    const handleIconClick = (e: React.MouseEvent, field: string) => {
-        e.stopPropagation();
-
-        const camelCaseField = field
-            .split(' ')
-            .map((word, index) =>
-                index === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1)
-            )
-            .join('');
-
-        handleFieldSelect(camelCaseField);
-    };
-
     return (
         <div className={styles.container}>
             <div className={styles.header}>
                 <label htmlFor="fileInput" className={styles.uploadLabel}>
                     <span>{label}</span>
                 </label>
-                <button
-                    className={styles.iconButton}
-                    onClick={(e) => handleIconClick(e, "Icon")}
-                >
-                    {configIcon}
-                </button>
             </div>
             <input
                 id="fileInput"
@@ -161,6 +177,9 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
                                     ›
                                 </button>
                             </div>
+                        </div>
+                        <div className={styles.imageInfo}>
+                            <FileNameWithTooltip filename={allImages[currentIndex].split('/').pop() || ""} />
                         </div>
                         <div className={styles.pagination}>
                             {allImages.map((_, index) => (

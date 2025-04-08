@@ -7,7 +7,7 @@ import "../../../src/app/globals.css";
 import dynamic from 'next/dynamic';
 
 const WaveManager = dynamic<{ productManager: ProductManager }>(
-    () => import('../../../src/app/components/ProductType/WaveManager/component'),
+    () => import('../../../src/app/components/WaveManager/component'),
     { ssr: false }
 );
 

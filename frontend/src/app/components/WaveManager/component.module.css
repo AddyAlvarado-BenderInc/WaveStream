@@ -28,31 +28,15 @@
     width: 100%;
 }
 
-.managerContainer {
+.buttonContainer {
     display: flex;
     justify-content: space-between;
-    transform: scale(0.95);
+    margin-top: 5px;
+    width: 100%;
 }
 
-.leftContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.rightContainer {
-    height: auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-
-.footerSettings {
-    text-align: center;
-}
-
-.saveButton {
+.saveButton, .propertyInterfacesButton {
+    margin-right: 5px;
     padding: 10px 20px;
     cursor: pointer;
     border: 1px solid var(--button-primary-hover);
@@ -61,7 +45,7 @@
     transition: 0.3s ease-out;
 }
 
-.saveButton:hover {
+.saveButton:hover, .propertyInterfacesButton:hover {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
 }

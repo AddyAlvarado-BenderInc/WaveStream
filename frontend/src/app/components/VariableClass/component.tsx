@@ -1,0 +1,270 @@
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setStringInput, setTextareaInput, setIntegerInput } from "@/store/slice";
+import { setTaskName, setTaskType } from "@/store/slice";
+import { RootState } from "@/app/store/store";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import React from 'react';
+import styles from './component.module.css';
+
+interface VariableClasses {
+    stringInput: string;
+    textareaInput: string;
+    integerInput: string;
+    task: string;
+    type: string;
+}
+
+interface variableClassProps {
+    onSave?: (variableClasses: VariableClasses) => void;
+}
+
+const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
+    const reduxState = useSelector((state: RootState) => state.variables);
+    console.log("Redux State:", reduxState);
+
+    const dispatch = useDispatch();
+
+    const [MKSType, setMKSType] = useState<string>('StringMKS');
+    const [IntVar, setIntVar] = useState<string[]>([]);
+
+    const { stringInput, textareaInput, integerInput } = useSelector(
+        (state: RootState) => state.variables
+    );
+
+    useEffect(() => {
+        setLocalString(stringInput);
+        setLocalTextarea(textareaInput);
+        setLocalInteger(integerInput);
+    }, [stringInput, textareaInput, integerInput]);
+    
+
+    const [localString, setLocalString] = useState<string>(stringInput);
+    const [localTextarea, setLocalTextarea] = useState<string>(textareaInput);
+    const [localInteger, setLocalInteger] = useState<number>(integerInput);
+    const [localEscapeSequence, setLocalEscapeSequence] = useState<string>("");
+    const [localFile, setLocalFile] = useState<File | null>(null);
+
+    const selectMKSType = (type: string) => {
+        switch (type) {
+            case 'StringMKS':
+                return stringMKS();
+            case 'IntegerMKS':
+                return integerMKS();
+            case 'TextareaMKS':
+                return textareaMKS();
+            case 'EscapeSequenceMKS':
+                return escapeSequenceMKS();
+            case 'LinkedMKS':
+                return linkedMKS();
+            default:
+                return stringMKS();
+        }
+    };
+
+    function detectInterpolatedVariables(text: string) {
+        const detectVariable = text.match(/\%\{(.*?)\}/g);
+        if (detectVariable) {
+            const cleanVariable = detectVariable.map((variable) =>
+                variable.replace(/^\%\{|\}$/g, '')
+            );
+            setIntVar(cleanVariable);
+        } else {
+            setIntVar([]);
+        }
+    };
+
+    const handleInterpolatedVariables = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (MKSType === 'StringMKS') {
+            const newText = e.target.value;
+            setLocalString(newText);
+            detectInterpolatedVariables(newText);
+        } else if (MKSType === 'TextareaMKS') {
+            const newText = e.target.value;
+            setLocalTextarea(newText);
+            detectInterpolatedVariables(newText);
+        }
+    };
+
+    const highlightInterVar = (text: string) => {
+        return text.split(/(\%\{.*?\})/g).map((word, index) => {
+            if (word.match(/^\%\{.*?\}$/)) {
+                word.replace(/^\%\{|\}$/g, '');
+                return <span key={index} className={styles.highlightedInterpolatedVariables}>{word}</span>;
+            } else {
+                return <span key={index}>{word}</span>;
+            }
+        });
+    };
+
+    // TODO: This function is not used in the current code, but it can be used to handle the loading of variable classes from the database
+    const handleLoadVariableClasses = (e: React.FormEvent) => {
+        alert("Loading variable classes from the database...");
+    };
+
+    const handleEscapeSequence = (text: string) => {
+        const skipField = text.match(/(!SKIP)/g);
+        if (skipField) {
+            return "!SKIP";
+        }
+        return;
+    };
+
+    const handleMediaLink = (text: string, file: File) => {
+        const mediaLink = text.match(/(Select From Media)/g);
+        if (mediaLink) {
+            return file;
+        }
+        return;
+    };
+
+    const stringMKS = () => (
+        <div className={styles.containerMKS}>
+            <div className={styles.highlightedTextArea}>
+                <textarea placeholder="Input Main Key String Here..."
+                    value={localString}
+                    onChange={handleInterpolatedVariables}
+                />
+                {
+                    localString.length !== 0 ? <div className={styles.highlightTextContent}>{highlightInterVar(localString)}</div>
+                        :
+                        <p style={{ fontSize: "18pt" }}>Type your variable text like <span style={{ color: "black", backgroundColor: "yellow", padding: "5px" }}>{"%{this}"}</span></p>
+                }
+            </div>
+        </div>
+    );
+
+    const integerMKS = () => (
+        <div className={styles.containerMKS}>
+            <input
+                type="number"
+                placeholder="Enter a number..."
+                value={localInteger}
+                onChange={(e) => setLocalInteger(parseInt(e.target.value))}
+            />
+        </div>
+    );
+
+    const textareaMKS = () => (
+        <div className={styles.descriptionMKS}>
+            {
+                localTextarea.length !== 0 ? ""
+                    :
+                    <p style={{ fontSize: "18pt" }}>Type your variable text like <span style={{ color: "black", backgroundColor: "yellow", padding: "5px" }}>{"%{this}"}</span></p>
+            }
+            <textarea
+                className={styles.textareaMKS}
+                placeholder="Enter text..."
+                value={localTextarea}
+                onChange={handleInterpolatedVariables}
+            />
+            <div className={styles.extractedVariablesList}>
+                <h6>Extracted Variables</h6>
+                {IntVar.length > 0 ? (
+                    <ul>
+                        {IntVar.map((v, index) => (
+                            <li key={index}>{v}</li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>No variables detected.</p>
+                )}
+            </div>
+        </div>
+    );
+
+    const escapeSequenceMKS = () => (
+        <div>
+            <select
+                onChange={(e) => handleEscapeSequence(e.target.value)}
+            >
+                <option value="1">!SKIP</option>
+            </select>
+        </div>
+    );
+
+    const linkedMKS = () => (
+        <div>
+            { }
+            <input type="file" />
+        </div>
+    );
+
+    const saveAndConfigureVariables = (e?: React.FormEvent) => {
+        e?.preventDefault();
+
+        dispatch(setStringInput(localString));
+        dispatch(setTextareaInput(localTextarea));
+        dispatch(setIntegerInput(localInteger));
+
+        const variableData: Record<string, any> = {
+            StringMKS: { stringInput: localString },
+            IntegerMKS: { integerInput: localInteger.toString() },
+            TextareaMKS: { textareaInput: localTextarea },
+            EscapeSequenceMKS: { escapeSequence: localEscapeSequence },
+            LinkedMKS: { linkedInput: localFile },
+        };
+        
+        const selectedData = variableData[MKSType] || { stringInput: localString };
+
+        const hasValidInput = Object.values(selectedData).some(value => value !== "" && value !== "0" && value !== false);
+        if (!hasValidInput) {
+            toast.error("Please fill in at least one field!");
+            return;
+        }
+
+        const typeMappings: Record<string, { task: string; type: string }> = {
+            StringMKS: { task: "Text Line", type: "String" },
+            IntegerMKS: { task: "Number", type: "Integer" },
+            TextareaMKS: { task: "Description", type: "Textarea" },
+            EscapeSequenceMKS: { task: "Special Instructions", type: "EscapeSequence" },
+            LinkedMKS: { task: "File Upload", type: "Linked" },
+        };
+
+        const { task, type } = typeMappings[MKSType] || { task: "Text Line", type: "String" };
+        dispatch(setTaskName(task));
+        dispatch(setTaskType(type));
+        
+        if (onSave) {
+            onSave({
+                stringInput: localString,
+                textareaInput: localTextarea,
+                integerInput: localInteger.toString(),
+                task: task,
+                type: type,
+            })
+        };
+        toast.success("Variable saved successfully!");
+    };
+
+    {
+        return (
+            <>
+                <div className={styles.variableClassContainer}>
+                    <div className={styles.variableClassForm}>
+                        <form>
+                            <select
+                                value={MKSType}
+                                onChange={(e) => setMKSType(e.target.value)}>
+                                <option value='StringMKS'>Single Line</option>
+                                <option value='IntegerMKS'>Integer</option>
+                                <option value='TextareaMKS'>Description</option>
+                                <option value='EscapeSequenceMKS'>Escape Sequence</option>
+                                <option value='LinkedMKS'>Linked Media</option>
+                            </select>
+                            <div className={styles.MKSContainer}>
+                                {selectMKSType(MKSType)}
+                            </div>
+                            <button type='submit' onClick={saveAndConfigureVariables}>Save & Configure</button>
+                            <button type='submit' onClick={(e) => {handleLoadVariableClasses(e)}}>Load Variable Classes</button>
+                        </form>
+                    </div>
+                <ToastContainer />
+                </div>
+            </>
+        );
+    };
+};
+
+export default VariableClass;
