@@ -6,7 +6,9 @@ import { ProductManager, IconData } from '../../../../types/productManager';
 import { BASE_URL } from '../../config';
 import styles from './component.module.css';
 import PropertyInterfaceTable from '../PropertyInterfaces/component';
-import VariableClass from '../VariableClass/component';
+import VariableClass from '../VariableManager/VariableClass/component';
+import ParameterizationTab from '../VariableManager/ParameterTab/component';
+import Table from '../Table/component';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -120,8 +122,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
     useEffect(() => {
         const fetchProductManager = async () => {
+            const controller = new AbortController();
             try {
-                const response = await fetch(`${BASE_URL}/api/productManager/${productManager.productType}/${productManager._id}`);
+                const response = await fetch(
+                    `${BASE_URL}/api/productManager/${productManager.productType}/${productManager._id}`,
+                    { signal: controller.signal }    
+                );
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Fetched Product Manager:', data);
@@ -149,40 +155,58 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     console.error('Failed to fetch product manager data');
                 }
             } catch (error) {
-                console.error('Error fetching product manager:', error);
+                if (controller.signal.aborted) {
+                    console.log('Fetch aborted');
+                } else {
+                    console.error('Error fetching product manager:', error);
+                }
             }
+            return () => controller.abort();
         };
 
         fetchProductManager();
-    }, []);
+    }, [productManager.productType, productManager._id]);
 
     const handleOpenParameterizationTab = (variableClasses: object) => {
         console.log('Open Parameterization Tab', variableClasses);
         setParameterizationData(variableClasses);
         setParameterizationOpen(true);
+    };
+
+    const handleCloseParameterizationTab = () => {
+        setParameterizationOpen(false);
       };
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Wave Manager</h1>
                 <div className={styles.buttonContainer}>
                     <button
                         className={styles.propertyInterfacesButton}
                         onClick={() => setShowPropertyInterfaces(!showPropertyInterfaces)}
                     >
-                        {showPropertyInterfaces ? 'Hide Property Interfaces' : 'Show Property Interfaces'}
+                        {showPropertyInterfaces ? 'Close Property Interfaces' : 'Open Property Interfaces'}
                     </button>
                     <button className={styles.saveButton} onClick={handleSave}>
                         Save
                     </button>
                 </div>
             </div>
-                <div className={styles.formContainer}>
+            <div className={styles.formContainer}>
                 <VariableClass
-              onSave={(parameterizationData) => handleOpenParameterizationTab(parameterizationData)}
-            />
-                </div>
+                    onSave={(parameterizationData) => handleOpenParameterizationTab(parameterizationData)}
+                />
+                {parameterizationData && parameterizationOpen && (
+              <ParameterizationTab
+                variableClass={parameterizationData}
+                onClose={handleCloseParameterizationTab}
+              />
+            )}
+            </div>
+            <div className={styles.tableContainer}>
+                <Table 
+                />
+            </div>
             {showPropertyInterfaces && (
                 <div className={styles.propertyInterfacesContainer}>
                     {showPropertyInterfaces && (

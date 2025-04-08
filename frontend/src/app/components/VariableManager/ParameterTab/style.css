@@ -1,0 +1,183 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: black;
+  padding: 20px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 80%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  position: relative;
+  font-size: 12pt;
+}
+
+.send-to-sheet-button {
+  background-color: white;
+  color: black;
+  padding: 10px 20px;
+  margin: 10px 10px 0 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.send-to-sheet-button:hover {
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+}
+
+.configure-button {
+  background-color: white;
+  color: black;
+  padding: 10px 20px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.configure-button:hover {
+  background-color: black;
+  color: white;
+  border: 1px solid white;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: white;
+}
+
+.close-button:hover {
+  background-color: #f0f0f0;
+  color: black;
+}
+
+.interpolated-variable-editor {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.interpolated-variable-editor button {
+  background-color: yellow;
+  color: black;
+  font-weight: bold;
+  padding: 10px 20px;
+  margin: 0 10px;
+  border: none;
+}
+
+.interpolated-variable-editor button:hover {
+  background-color: black;
+  border: 1px solid yellow;
+  cursor: pointer;
+  color: yellow;
+}
+
+.parameter-table {
+  height: 100%;
+  max-height: 800px;
+  overflow-y: auto;
+  scroll-behavior: auto;
+}
+
+.parameterization-details {
+  border-top: 1px solid #eee;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.added-parameters {
+  margin-top: 20px;
+  padding-top: 15px;
+}
+
+.parameter-item {
+  display: flex;
+  align-items: center;
+}
+
+.parameter-item thead {
+  color: black;
+  font-weight: bold;
+  background-color: #f0f0f0;
+  font-size: 14pt;
+}
+
+.parameter-item th {
+  padding: 8px;
+}
+
+.parameter-item td {
+  padding: 8px;
+  font-size: 12pt;
+}
+
+.parameter-item td:nth-child(1) {
+  width: 20%;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.parameter-item span {
+  padding: 4px 8px;
+}
+
+.parameter-item .action-buttons button {
+  padding: 0 10px ;
+}
+
+.action-buttons button.delete-button:hover, 
+.action-buttons button.edit-button:hover {
+  cursor: pointer;
+  background-color: #f0f0f0;
+  color: black;
+}
+
+button.delete-button, button.edit-button {
+  cursor: pointer;
+  background: none;
+	color: inherit;
+	border: none;
+	padding: 0;
+	font: inherit;
+	outline: inherit;
+}
+
+.drag-handle {
+  cursor: move;
+  user-select: none;
+  padding: 0 10px;
+}
+
+tr.dragging {
+  opacity: 0.5;
+  background: #f0f0f0;
+}
+
+tr.drag-over {
+  border-top: 2px solid #2196F3;
+}

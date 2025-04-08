@@ -4,9 +4,9 @@ import { setStringInput, setTextareaInput, setIntegerInput } from "@/store/slice
 import { setTaskName, setTaskType } from "@/store/slice";
 import { RootState } from "@/app/store/store";
 import { ToastContainer, toast } from 'react-toastify';
+import styles from './component.module.css';
 import 'react-toastify/dist/ReactToastify.css';
 import React from 'react';
-import styles from './component.module.css';
 
 interface VariableClasses {
     stringInput: string;
@@ -38,7 +38,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         setLocalTextarea(textareaInput);
         setLocalInteger(integerInput);
     }, [stringInput, textareaInput, integerInput]);
-    
+
 
     const [localString, setLocalString] = useState<string>(stringInput);
     const [localTextarea, setLocalTextarea] = useState<string>(textareaInput);
@@ -99,7 +99,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     };
 
     // TODO: This function is not used in the current code, but it can be used to handle the loading of variable classes from the database
-    const handleLoadVariableClasses = (e: React.FormEvent) => {
+    const loadVariableClasses = (e: React.FormEvent) => {
         alert("Loading variable classes from the database...");
     };
 
@@ -121,44 +121,66 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
 
     const stringMKS = () => (
         <div className={styles.containerMKS}>
-            <div className={styles.highlightedTextArea}>
-                <textarea placeholder="Input Main Key String Here..."
+            {localString.length !== 0 ? (
+                <div className={styles.highlightTextContent}>
+                    {highlightInterVar(localString)}
+                </div>
+            ) : null}
+            <div className={styles.tooltipContainer}>
+                <textarea
+                    placeholder="Input Main Key String Here..."
                     value={localString}
                     onChange={handleInterpolatedVariables}
+                    aria-describedby="input-tooltip"
                 />
-                {
-                    localString.length !== 0 ? <div className={styles.highlightTextContent}>{highlightInterVar(localString)}</div>
-                        :
-                        <p style={{ fontSize: "18pt" }}>Type your variable text like <span style={{ color: "black", backgroundColor: "yellow", padding: "5px" }}>{"%{this}"}</span></p>
-                }
+                <div className={styles.customTooltip} id="input-tooltip">
+                    Type your variable text like {" "}
+                    <span style={{
+                        color: "black",
+                        backgroundColor: "yellow",
+                        padding: "2px 4px",
+                        borderRadius: "3px"
+                    }}>
+                        %{"{this}"}
+                    </span>
+                </div>
             </div>
         </div>
     );
 
     const integerMKS = () => (
         <div className={styles.containerMKS}>
-            <input
-                type="number"
-                placeholder="Enter a number..."
-                value={localInteger}
-                onChange={(e) => setLocalInteger(parseInt(e.target.value))}
-            />
+            <div className={styles.integer}>
+                <input
+                    type="number"
+                    placeholder="Enter a number..."
+                    value={localInteger}
+                    onChange={(e) => setLocalInteger(parseInt(e.target.value))}
+                />
+            </div>
         </div>
     );
 
     const textareaMKS = () => (
         <div className={styles.descriptionMKS}>
-            {
-                localTextarea.length !== 0 ? ""
-                    :
-                    <p style={{ fontSize: "18pt" }}>Type your variable text like <span style={{ color: "black", backgroundColor: "yellow", padding: "5px" }}>{"%{this}"}</span></p>
-            }
             <textarea
                 className={styles.textareaMKS}
                 placeholder="Enter text..."
                 value={localTextarea}
                 onChange={handleInterpolatedVariables}
+                aria-describedby="input-tooltip"
             />
+            <div className={styles.customTooltip} id="input-tooltip">
+                Type your variable text like {" "}
+                <span style={{
+                    color: "black",
+                    backgroundColor: "yellow",
+                    padding: "2px 4px",
+                    borderRadius: "3px"
+                }}>
+                    %{"{this}"}
+                </span>
+            </div>
             <div className={styles.extractedVariablesList}>
                 <h6>Extracted Variables</h6>
                 {IntVar.length > 0 ? (
@@ -191,7 +213,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         </div>
     );
 
-    const saveAndConfigureVariables = (e?: React.FormEvent) => {
+    const configureVariables = (e?: React.FormEvent) => {
         e?.preventDefault();
 
         dispatch(setStringInput(localString));
@@ -205,7 +227,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
             EscapeSequenceMKS: { escapeSequence: localEscapeSequence },
             LinkedMKS: { linkedInput: localFile },
         };
-        
+
         const selectedData = variableData[MKSType] || { stringInput: localString };
 
         const hasValidInput = Object.values(selectedData).some(value => value !== "" && value !== "0" && value !== false);
@@ -225,7 +247,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         const { task, type } = typeMappings[MKSType] || { task: "Text Line", type: "String" };
         dispatch(setTaskName(task));
         dispatch(setTaskType(type));
-        
+
         if (onSave) {
             onSave({
                 stringInput: localString,
@@ -235,7 +257,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
                 type: type,
             })
         };
-        toast.success("Variable saved successfully!");
     };
 
     {
@@ -244,23 +265,27 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
                 <div className={styles.variableClassContainer}>
                     <div className={styles.variableClassForm}>
                         <form>
-                            <select
-                                value={MKSType}
-                                onChange={(e) => setMKSType(e.target.value)}>
-                                <option value='StringMKS'>Single Line</option>
-                                <option value='IntegerMKS'>Integer</option>
-                                <option value='TextareaMKS'>Description</option>
-                                <option value='EscapeSequenceMKS'>Escape Sequence</option>
-                                <option value='LinkedMKS'>Linked Media</option>
-                            </select>
                             <div className={styles.MKSContainer}>
                                 {selectMKSType(MKSType)}
                             </div>
-                            <button type='submit' onClick={saveAndConfigureVariables}>Save & Configure</button>
-                            <button type='submit' onClick={(e) => {handleLoadVariableClasses(e)}}>Load Variable Classes</button>
+                            <div className={styles.configurationTools}>
+                                <div className={styles.buttonContainer}>
+                                    <button type='submit' onClick={configureVariables}>Configure</button>
+                                    <button type='submit' onClick={(e) => { loadVariableClasses(e) }}>Load</button>
+                                </div>
+                                <select
+                                    value={MKSType}
+                                    onChange={(e) => setMKSType(e.target.value)}>
+                                    <option value='StringMKS'>Single Line</option>
+                                    <option value='IntegerMKS'>Integer</option>
+                                    <option value='TextareaMKS'>Description</option>
+                                    <option value='EscapeSequenceMKS'>Escape Sequence</option>
+                                    <option value='LinkedMKS'>Linked Media</option>
+                                </select>
+                            </div>
                         </form>
                     </div>
-                <ToastContainer />
+                    <ToastContainer />
                 </div>
             </>
         );
