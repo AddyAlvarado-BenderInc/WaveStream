@@ -49,8 +49,3 @@
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
 }
-
-.formContainer {
-  margin-top: 10px;
-  padding-bottom: 50px;
-}

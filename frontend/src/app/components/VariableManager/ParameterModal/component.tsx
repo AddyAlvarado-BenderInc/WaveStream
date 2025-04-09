@@ -38,7 +38,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({onSave, onCancel, parame
                         }))}
                     />
                     <div className="parameter-modal-actions">
-                        <button onClick={onSave}>Add & Save</button>
+                        <button onClick={onSave}>Add Parameter</button>
                         <button onClick={onCancel}>Cancel</button>
                     </div>
                 </div>

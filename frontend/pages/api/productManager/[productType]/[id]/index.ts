@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import connectToDatabase from '../../../../../lib/mongodb';
 import ProductManager from '../../../../../models/ProductManager';
 import { IProductManager } from '../../../../../models/ProductManager';
-import BrickEditor from '../../../../../models/BrickEditor';
 import { cleanOrphanedFiles } from '../../../../../lib/fileCleanup';
 import { Readable } from 'stream';
 import { getGridFSBucket } from '../../../../../lib/gridFSBucket';
@@ -176,14 +175,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return res.status(404).json({ error: 'Product manager not found' });
                 }
 
-                if (field) {
-                    await BrickEditor.findOneAndUpdate(
-                        { brickId: `${id}_${field}` },
-                        sanitizedData,
-                        { upsert: true }
-                    );
-                }
-
                 res.status(200).json({
                     ...updatedManager.toObject(),
                     icon: allIcons.map(filename => ({
@@ -210,8 +201,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const files = await bucket.find({ filename }).toArray();
                     await Promise.all(files.map(file => bucket.delete(file._id)));
                 }
-
-                await BrickEditor.deleteMany({ brickId: new RegExp(`^${id}_`) });
 
                 await ProductManager.deleteOne(query);
 

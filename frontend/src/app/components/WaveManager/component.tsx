@@ -3,12 +3,10 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/app/store/store';
 import { updateProductManager } from "../../store/productManagerSlice";
 import { ProductManager, IconData } from '../../../../types/productManager';
+import PropertyInterfaceTable from '../PropertyInterfaces/component';
+import VariableManager from '../VariableManager/component';
 import { BASE_URL } from '../../config';
 import styles from './component.module.css';
-import PropertyInterfaceTable from '../PropertyInterfaces/component';
-import VariableClass from '../VariableManager/VariableClass/component';
-import ParameterizationTab from '../VariableManager/ParameterTab/component';
-import Table from '../Table/component';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -17,8 +15,6 @@ interface WaveManagerProps {
 }
 
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
-    const [parameterizationOpen, setParameterizationOpen] = useState(false);
-    const [parameterizationData, setParameterizationData] = useState<object | null>(null);
     const dispatch = useDispatch<AppDispatch>();
     const [formData, setFormData] = useState({
         itemName: productManager.itemName || '',
@@ -40,6 +36,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         })),
         newFiles: [] as File[]
     });
+    const [variableData, setVariableData] = useState({
+        tableSheet: (productManager.tableSheet)
+    })
 
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
@@ -167,16 +166,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         fetchProductManager();
     }, [productManager.productType, productManager._id]);
 
-    const handleOpenParameterizationTab = (variableClasses: object) => {
-        console.log('Open Parameterization Tab', variableClasses);
-        setParameterizationData(variableClasses);
-        setParameterizationOpen(true);
-    };
-
-    const handleCloseParameterizationTab = () => {
-        setParameterizationOpen(false);
-      };
-
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -192,21 +181,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     </button>
                 </div>
             </div>
-            <div className={styles.formContainer}>
-                <VariableClass
-                    onSave={(parameterizationData) => handleOpenParameterizationTab(parameterizationData)}
-                />
-                {parameterizationData && parameterizationOpen && (
-              <ParameterizationTab
-                variableClass={parameterizationData}
-                onClose={handleCloseParameterizationTab}
-              />
-            )}
-            </div>
-            <div className={styles.tableContainer}>
-                <Table 
-                />
-            </div>
+            <VariableManager />
             {showPropertyInterfaces && (
                 <div className={styles.propertyInterfacesContainer}>
                     {showPropertyInterfaces && (

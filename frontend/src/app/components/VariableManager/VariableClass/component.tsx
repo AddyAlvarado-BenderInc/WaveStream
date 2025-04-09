@@ -47,7 +47,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     const [inputValue, setInputValue] = useState('');
     const [result, setResult] = useState<number | null>(null);
     const [error, setError] = useState('');
-    const [localFile, setLocalFile] = useState<File | null>(null);
+    const [localFile, setLocalFile] = useState<string>("");
 
     const selectMKSType = (type: string) => {
         switch (type) {
@@ -110,14 +110,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         const skipField = text.match(/(!SKIP)/g);
         if (skipField) {
             return "!SKIP";
-        }
-        return;
-    };
-
-    const handleMediaLink = (text: string, file: File) => {
-        const mediaLink = text.match(/(Select From Media)/g);
-        if (mediaLink) {
-            return file;
         }
         return;
     };
@@ -242,9 +234,17 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     );
 
     const linkedMKS = () => (
-        <div>
-            { }
-            <input type="file" />
+        <div className={styles.containerMKS}>
+            <div className={styles.tooltipContainer}>
+                <textarea
+                    placeholder="Input Filename..."
+                    value={localFile}
+                    aria-describedby="input-tooltip"
+                />
+                <div className={styles.customTooltip} id="input-tooltip">
+                    Copy and paste icon name from the Property Interfaces
+                </div>
+            </div>
         </div>
     );
 

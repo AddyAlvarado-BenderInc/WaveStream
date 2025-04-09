@@ -1,9 +1,18 @@
 import { useState } from "react";
 import styles from './component.module.css';
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
-const Table = () => {
+interface TableProps {
+    variableClassSheet: string[];
+    originAssignment: (key: string) => void;
+}
+
+const Table: React.FC<TableProps> = ({ variableClassSheet, originAssignment }) => {
     const [localClassKeyInput, setLocalClassKeyInput] = useState<string>('');
     const [addedClassKeys, setAddedClassKeys] = useState<string[]>([]);
+    const [headerOrigin, setHeaderOrigin] = useState("");
+    const [permanentOrigin, setPermanentOrigin] = useState("");
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setLocalClassKeyInput(event.target.value);
@@ -27,7 +36,7 @@ const Table = () => {
                             const classKeys = rows[0].split(',').map(key => key.trim());
                             setAddedClassKeys(classKeys);
                         } else {
-                            alert('The uploaded CSV file is empty or invalid.');
+                            toast.error('The uploaded CSV file is empty or invalid.');
                         }
                     }
                 };
@@ -40,8 +49,43 @@ const Table = () => {
         }
     };
 
+    const handleHeaderOrigin = (key: string) => {
+        if (permanentOrigin) {
+            return null;
+        }
+
+        if (headerOrigin !== key) {
+            setHeaderOrigin(key);
+        }
+    };
+
+    const handlePermanentOrigin = (key: string) => {
+        if (headerOrigin === key && !permanentOrigin) {
+            window.prompt(`Are you sure you want to set ${key} as the permanent origin?`);
+            setPermanentOrigin(key);
+        }
+    };
+
     const handleDeleteKey = (key: string) => {
         setAddedClassKeys(addedClassKeys.filter(k => k !== key));
+    };
+
+    const handleEditKey = (key: string, newValue: string) => {
+        setAddedClassKeys((prevKeys) =>
+            prevKeys.map((k) => (k === key ? newValue : k))
+        );
+    };
+
+    const handleVariableRows = (row: string[]) => {
+        if (row.length === 0) {
+            return null;
+        }
+        const filteredMap = row.map(([key, value]) => {
+
+        })
+        return (
+            <td></td>
+        )
     };
 
     return (
@@ -54,38 +98,67 @@ const Table = () => {
                     placeholder="Enter Class Key"
                     className={styles.inputField}
                 />
-                <div className={styles.classKeyButtons}>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (localClassKeyInput.trim() === '') {
-                                alert('Please enter a valid class key');
-                                return;
-                            }
-                            setAddedClassKeys([...addedClassKeys, localClassKeyInput]);
-                            setLocalClassKeyInput('');
-                        }}
-                        className={styles.addButton}
-                    >
-                        Add Class Key
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setAddedClassKeys([])}
-                        className={styles.deleteButton}
-                    >
-                        Delete All Class Keys
-                    </button>
-                    <label>
-                        <div className={styles.uploadButton}>Upload Header Sheet</div>
-                        <input
-                            id="class-key-upload"
-                            type="file"
-                            accept=".csv"
-                            onChange={handleImportHeaderSheet}
-                            className={styles.fileInput}
-                        />
-                    </label>
+                <div className={styles.rowContainer}>
+                    <div className={styles.classKeyButtons}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (localClassKeyInput.trim() === '') {
+                                    toast.error('Please enter a valid class key');
+                                    return;
+                                }
+                                setAddedClassKeys([...addedClassKeys, localClassKeyInput]);
+                                setLocalClassKeyInput('');
+                            }}
+                            className={styles.addButton}
+                        >
+                            Add Class Key
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setAddedClassKeys([])}
+                            className={styles.deleteButton}
+                        >
+                            Delete All Class Keys
+                        </button>
+                        <label>
+                            <div className={styles.uploadButton}>Upload Header Sheet</div>
+                            <input
+                                id="class-key-upload"
+                                type="file"
+                                accept=".csv"
+                                onChange={handleImportHeaderSheet}
+                                className={styles.fileInput}
+                            />
+                        </label>
+                    </div>
+                    {headerOrigin && !permanentOrigin ? (
+                        <div className={styles.currentOriginContainer}>
+                            <h4>Current Origin {" "}
+                                <span style={{ color: "black", backgroundColor: "yellow", padding: "5px", borderRadius: "5px" }}>
+                                    {headerOrigin}
+                                </span>
+                            </h4>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePermanentOrigin(headerOrigin);
+                                }}
+                            >
+                                Set As Origin
+                            </button>
+                        </div>
+                    ) : (
+                        <div className={styles.currentOriginContainer}>
+                            {permanentOrigin ? (
+                                <h4 style={{ color: "black", backgroundColor: "yellow", padding: "5px", borderRadius: "5px" }}>
+                                    {permanentOrigin}
+                                </h4>
+                            ) : (
+                                null
+                            )}
+                        </div>
+                    )}
                 </div>
             </form>
             <div className={styles.wavekeyTableForm}>
@@ -93,34 +166,99 @@ const Table = () => {
                     <thead>
                         <tr>
                             {addedClassKeys.map((key, index) => (
-                                <ClassKey key={index} input={key} onDelete={handleDeleteKey} />
+                                <ClassKey
+                                    key={index}
+                                    input={key}
+                                    onDelete={handleDeleteKey}
+                                    onEdit={handleEditKey}
+                                    originAssignment={handleHeaderOrigin}
+                                    headerOrigin={headerOrigin}
+                                />
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>No data yet</td>
-                        </tr>
+                        {handleVariableRows(variableClassSheet) ?? (
+                            <tr>
+                                <td>No Data Found</td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
+            <ToastContainer />
         </div>
     );
 };
 
-const ClassKey: React.FC<{ input: string; onDelete: (key: string) => void }> = ({ input, onDelete }) => (
-    <th>
-        <div className={styles.classKeyContainer}>
-            {input}
-            <button
-                type="button"
-                onClick={() => onDelete(input)}
-                className={styles.deleteKeyButton}
-            >
-                ✕
-            </button>
-        </div>
-    </th>
-);
+const ClassKey: React.FC<{
+    input: string;
+    onDelete: (key: string) => void;
+    onEdit: (key: string, newValue: string) => void;
+    originAssignment: (key: string) => void;
+    headerOrigin: string;
+}> = ({ input, onDelete, onEdit, originAssignment, headerOrigin }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editValue, setEditValue] = useState(input);
+
+    const handleEditSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onEdit(input, editValue);
+        setIsEditing(false);
+    };
+
+    return (
+        <th
+            className={styles.classKeyHeader}
+            onClick={() => originAssignment(input)}
+        >
+            {
+                headerOrigin === input ?
+                    <div className={styles.headerOriginDisplay}>
+                        {headerOrigin.replace(headerOrigin, "ORIGIN")}
+                    </div>
+                    : ''}
+            <div className={styles.classKeyContainer}>
+                {isEditing ? (
+                    <form onSubmit={handleEditSubmit}>
+                        <input
+                            type="text"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                        />
+                        <button type="submit">Save</button>
+                    </form>
+                ) : (
+                    <>
+                        {input}
+                        <div
+                            className={styles.keyButtons}
+                        >
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsEditing(true);
+                                }}
+                                className={styles.editKeyButton}
+                            >
+                                Edit
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDelete(input)
+                                }}
+                                className={styles.deleteKeyButton}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </th>
+    );
+};
+
 
 export default Table;
