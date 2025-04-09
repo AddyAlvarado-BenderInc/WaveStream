@@ -23,6 +23,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     const [intVar, setIntVar] = useState<string[]>([]);
     const [selectedInterpolatedVariables, setSelectedInterpolatedVariables] = useState<string | null>(null);
     const [showParameterModal, setShowParameterModal] = useState(false);
+    const [integerOptions, setIntegerOptions] = useState(false);
     const [addedParameters, setAddedParameters] = useState<AddedParameter[]>([]);
     const [localParameter, setLocalParameter] = useState({
         parameterName: '',
@@ -88,6 +89,19 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     };
 
     const { value, detectVariables } = cleanedInputValues(variableClass);
+    const numberedValue = cleanedInputValues(variableClass).value.replace("Integer", "").replace("Number", "").trim();
+
+    // TODO: Currently adjusting the numbered value before manipulation
+    const displayIntegerVariables = (value: string) => {
+        if (value.length === 0) {
+            return null;
+        }
+        return (
+            <div className='interpolated-variable-editor'>
+                <b style={{ textTransform: "uppercase" }}>{value}</b>
+            </div>
+        );
+    };
 
     const handleInterpolatedVariables = (value: string) => {
         setSelectedInterpolatedVariables(value);
@@ -228,6 +242,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         if (value.length === 0) {
             return null;
         }
+
         return (
             <div className='interpolated-variable-editor'>
                 {value.map((value, index) => {
@@ -270,9 +285,10 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 </button>
                 <h2>Parameterization Details</h2>
                 <pre>{value}</pre>
+                {displayIntegerVariables(numberedValue)}
                 {displayInterpolatedVariables(detectVariables)}
                 <button className='send-to-sheet-button'
-                    onClick={() => {handleSaveVariableClass(variableClass)}}>
+                    onClick={() => { handleSaveVariableClass(variableClass) }}>
                     Save Variable Class
                 </button>
                 <button className='send-to-sheet-button'

@@ -44,6 +44,9 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     const [localTextarea, setLocalTextarea] = useState<string>(textareaInput);
     const [localInteger, setLocalInteger] = useState<number>(integerInput);
     const [localEscapeSequence, setLocalEscapeSequence] = useState<string>("");
+    const [inputValue, setInputValue] = useState('');
+    const [result, setResult] = useState<number | null>(null);
+    const [error, setError] = useState('');
     const [localFile, setLocalFile] = useState<File | null>(null);
 
     const selectMKSType = (type: string) => {
@@ -148,18 +151,50 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         </div>
     );
 
-    const integerMKS = () => (
-        <div className={styles.containerMKS}>
-            <div className={styles.integer}>
-                <input
-                    type="number"
-                    placeholder="Enter a number..."
-                    value={localInteger}
-                    onChange={(e) => setLocalInteger(parseInt(e.target.value))}
-                />
+    const integerMKS = () => {
+        const safeEvaluate = (expression: string) => {
+            try {
+                const sanitized = expression
+                    .replace(/[^0-9+\-*/().]/g, '')
+                    .replace(/(\d)([+\-*/])/g, '$1 $2 ')
+                    .trim();
+
+                const value = eval(sanitized);
+
+                if (isNaN(value)) throw new Error('Invalid expression');
+
+                setResult(Number(value));
+                setLocalInteger(Number(value));
+                setError('');
+            } catch (err) {
+                setError('Invalid math expression');
+                setResult(null);
+            }
+        };
+
+        return (
+            <div className={styles.containerMKS}>
+                {error && <div className={styles.errorMessage}>{error}</div>}
+                {result !== null && (
+                    <div className={styles.resultPreview}>
+                        Result: {result}
+                    </div>
+                )}
+                <div className={styles.integer}>
+                    <input
+                        type="text"
+                        placeholder="Enter math expression (e.g., 5+3*2)..."
+                        value={inputValue}
+                        onChange={(e) => {
+                            setInputValue(e.target.value);
+                            safeEvaluate(e.target.value);
+                        }}
+                        className={`${styles.input} ${error ? styles.error : ''}`}
+                    />
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const textareaMKS = () => (
         <div className={styles.descriptionMKS}>
@@ -230,7 +265,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
 
         const selectedData = variableData[MKSType] || { stringInput: localString };
 
-        const hasValidInput = Object.values(selectedData).some(value => value !== "" && value !== "0" && value !== false);
+        const hasValidInput = Object.values(selectedData).some(value => value !== "" && value !== false);
         if (!hasValidInput) {
             toast.error("Please fill in at least one field!");
             return;
@@ -277,7 +312,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
                                     value={MKSType}
                                     onChange={(e) => setMKSType(e.target.value)}>
                                     <option value='StringMKS'>Single Line</option>
-                                    <option value='IntegerMKS'>Integer</option>
+                                    <option value='IntegerMKS'>Math</option>
                                     <option value='TextareaMKS'>Description</option>
                                     <option value='EscapeSequenceMKS'>Escape Sequence</option>
                                     <option value='LinkedMKS'>Linked Media</option>
