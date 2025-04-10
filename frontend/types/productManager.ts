@@ -29,4 +29,5 @@ export interface ProductManager {
     targetValue: string;
     [key: string]: any;
     tableSheet: string[];
+    variableClass: string[];
 }

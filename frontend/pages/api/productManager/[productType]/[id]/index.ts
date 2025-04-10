@@ -126,6 +126,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     'initialJS',
                     'label',
                     'runManager',
+                    'tableSheet',
+                    'variableClass'
                 ];
 
                 const sanitizedData = Object.keys(formFields).reduce((acc, key) => {

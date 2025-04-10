@@ -37,8 +37,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         newFiles: [] as File[]
     });
     const [variableData, setVariableData] = useState({
-        tableSheet: (productManager.tableSheet)
-    })
+        tableSheet: productManager.tableSheet || [],
+        variableClass: productManager.variableClass || [],
+    });
 
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
@@ -58,6 +59,30 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     }
                 }
             });
+            
+            Object.entries(variableData.tableSheet).forEach(([key, value]) => {
+                if (key === 'Variable' || key === 'Name' || key == 'Value') return;
+                
+                if (value !== null && value !== undefined) {
+                    if (Array.isArray(value)) {
+                        formDataPayload.append(key, JSON.stringify(value));
+                    } else {
+                        formDataPayload.append(key, value);
+                    }
+                }
+            })
+            
+            Object.entries(variableData.variableClass).forEach(([key, value]) => {
+                if (key === 'Variable' || key === 'Name' || key == 'Value') return;
+                
+                if (value !== null && value !== undefined) {
+                    if (Array.isArray(value)) {
+                        formDataPayload.append(key, JSON.stringify(value));
+                    } else {
+                        formDataPayload.append(key, value);
+                    }
+                }
+            })
 
             iconData.icon.forEach(icon => {
                 formDataPayload.append('icons', icon.filename);
@@ -90,6 +115,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     iconPreview: updatedProduct.icon,
                     newFiles: []
                 }));
+
+                setVariableData((prev) => ({
+                    ...prev,
+                    tableSheet: updatedProduct,
+                    variableClass: updatedProduct,
+                }))
 
                 dispatch(updateProductManager(updatedProduct));
                 toast.success('Product saved successfully!', {
@@ -150,6 +181,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         icon: data.icon || [],
                         newFiles: []
                     });
+                    setVariableData({
+                        variableClass: data.variableClass || [],
+                        tableSheet: data.tableSheet || [],
+                    });
                 } else {
                     console.error('Failed to fetch product manager data');
                 }
@@ -181,7 +216,11 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     </button>
                 </div>
             </div>
-            <VariableManager />
+            <VariableManager 
+                variableData={variableData}
+                productManager={productManager}
+                setVariableData={setVariableData}
+            />
             {showPropertyInterfaces && (
                 <div className={styles.propertyInterfacesContainer}>
                     {showPropertyInterfaces && (

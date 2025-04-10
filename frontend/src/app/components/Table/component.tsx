@@ -61,10 +61,15 @@ const Table: React.FC<TableProps> = ({ variableClassSheet, originAssignment }) =
 
     const handlePermanentOrigin = (key: string) => {
         if (headerOrigin === key && !permanentOrigin) {
-            window.prompt(`Are you sure you want to set ${key} as the permanent origin?`);
-            setPermanentOrigin(key);
+            const confirmation = window.confirm(
+                `Are you sure you want to set "${key}" as the permanent origin?\nMake sure that this class key has a wide range of variable classes`
+                );
+            if (confirmation) {
+                setPermanentOrigin(key);
+                originAssignment(key);
+            }
         }
-    };
+    };    
 
     const handleDeleteKey = (key: string) => {
         setAddedClassKeys(addedClassKeys.filter(k => k !== key));
@@ -76,6 +81,7 @@ const Table: React.FC<TableProps> = ({ variableClassSheet, originAssignment }) =
         );
     };
 
+    // TODO: Will have variable sheet data entered here
     const handleVariableRows = (row: string[]) => {
         if (row.length === 0) {
             return null;
@@ -90,6 +96,9 @@ const Table: React.FC<TableProps> = ({ variableClassSheet, originAssignment }) =
 
     return (
         <div className={styles.wavekeyTable}>
+            <div className={styles.header}>
+                <h2>Table</h2>
+            </div>
             <form>
                 <input
                     type="text"
@@ -223,10 +232,15 @@ const ClassKey: React.FC<{
                     <form onSubmit={handleEditSubmit}>
                         <input
                             type="text"
-                            value={editValue}
+                            value={editValue || ""}
                             onChange={(e) => setEditValue(e.target.value)}
                         />
                         <button type="submit">Save</button>
+                        <button type="button" onClick={() => {
+                            setIsEditing(false);
+                        }}>
+                            Cancel
+                        </button>
                     </form>
                 ) : (
                     <>

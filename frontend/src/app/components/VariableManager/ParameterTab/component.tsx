@@ -3,9 +3,12 @@ import { addParameter, clearParameter, setVariableClass } from '@/store/slice';
 import ParameterModal from '../ParameterModal/component';
 import { useDispatch } from 'react-redux';
 import React from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './style.css';
 
 interface ParameterizationTabProps {
+    variableClassData: object;
     variableClass: object;
     onClose: () => void;
 }
@@ -17,7 +20,7 @@ interface AddedParameter {
     value: string;
 }
 
-const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose }) => {
+const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClassData, variableClass, onClose }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const [intVar, setIntVar] = useState<string[]>([]);
@@ -373,33 +376,36 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
     }, [detectVariables]);
 
-    // const handleSendToSheet = (object: object) => {
-        // Take current variable class as an object, separate from other task/types by extracting type and task.
-        // Parsed data must match task/type, for example if type is string, accept only stringInput with intVar string parameters...
+    // Take current variable class as an object, separate from other task/types by extracting type and task.
+    // Parsed data must match task/type, for example if type is string, accept only stringInput with intVar string parameters...
 
-        // For any String values with Text Line task | String type or Description task | Textarea type, the below will occur:
-        // Will take the param.value from the renderedAddedParameters then creates an array of strings based off of the cleanedInputValue
-        // The detectVariables variable will be replaced by the mapped param.value and append to the original value of the string creating
-        // an array of strings with the original value and the individual param.value and distinguishing sets with param.variable
+    // For any String values with Text Line task | String type or Description task | Textarea type, the below will occur:
+    // Will take the param.value from the renderedAddedParameters then creates an array of strings based off of the cleanedInputValue
+    // The detectVariables variable will be replaced by the mapped param.value and append to the original value of the string creating
+    // an array of strings with the original value and the individual param.value and distinguishing sets with param.variable
 
-        // For example, if param.variable = color and param.value = [red, blue, green] and the original value = Bender %color, the sheetValue will be:
-        // [Bender red, Bender blue, Bender green]. This can occur if the original value with the intVar [A string with a percentage sign infront of it]
-        // also has multiple of the intVar. 
-        // Original = Bender %brand %color %size
-        // param.variable = [brand, color, size]
-        // param.value = [Nike, Adidas, Puma, red, blue, green, S, M, L, XL]
-        // Established mapped variable and value assignment = [brand: "Nike", brand: "Adidas", brand: "Puma", color: "red", color: "blue"... etc.]
-        // Expected sheetValue = [Bender Nike red S, Bender Nike blue S, Bender Nike green S... etc.]
-        // Values must be unique and cannot match another value in the sheetValue, and sheeValue must iterate through all possible varieties
-        // Values must also be contained within the variable parameters so nothing like [Bender Nike Adidas Puma red blue green S M L XL] or 
-        // like varieties will occur.
+    // For example, if param.variable = color and param.value = [red, blue, green] and the original value = Bender %color, the sheetValue will be:
+    // [Bender red, Bender blue, Bender green]. This can occur if the original value with the intVar [A string with a percentage sign infront of it]
+    // also has multiple of the intVar. 
+    // Original = Bender %brand %color %size
+    // param.variable = [brand, color, size]
+    // param.value = [Nike, Adidas, Puma, red, blue, green, S, M, L, XL]
+    // Established mapped variable and value assignment = [brand: "Nike", brand: "Adidas", brand: "Puma", color: "red", color: "blue"... etc.]
+    // Expected sheetValue = [Bender Nike red S, Bender Nike blue S, Bender Nike green S... etc.]
+    // Values must be unique and cannot match another value in the sheetValue, and sheeValue must iterate through all possible varieties
+    // Values must also be contained within the variable parameters so nothing like [Bender Nike Adidas Puma red blue green S M L XL] or 
+    // like varieties will occur.
 
-        // This function will handle the object and convert it into an array of strings which will be sent as a prop to the table component
-        // Table component will prompt user to choose which column to send the array and convert the array into strings
-        // Table component must have an origin column/class key header, if none are present, the first class key the user sends data 
-        // to will be assigned as the origin class key header
-    // }    
+    // This function will handle the object and convert it into an array of strings which will be sent as a prop to the table component
+    // Table component will prompt user to choose which column to send the array and convert the array into strings
+    // Table component must have an origin column/class key header, if none are present, the first class key the user sends data 
+    // to will be assigned as the origin class key header
+    const handleAddVariable = (object: object, params: []) => {
+        Object.entries(object).map(([key, value]) => {
 
+        })
+    };
+    
     return (
         <div className="modal-overlay">
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -428,12 +434,12 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 </div>
                 {displayInterpolatedVariables(detectVariables)}
                 <button className='send-to-sheet-button'
-                    onClick={() => { handleSaveVariableClass(variableClass) }}>
-                    Save Variable Class
+                    onClick={() => {handleSaveVariableClass(variableClass)}}>
+                    Save Key String
                 </button>
                 <button className='send-to-sheet-button'
-                    onClick={() => null}>
-                    Send To Sheet
+                    onClick={() => {handleAddVariable}}>
+                    Add Variable
                 </button>
                 <div className="parameterization-details">
                     {addedParameters.length > 0 && renderAddedParameters()}
@@ -478,6 +484,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                     />
                 )}
             </div>
+            <ToastContainer />
         </div>
     );
 };
