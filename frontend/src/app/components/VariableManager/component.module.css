@@ -6,3 +6,26 @@
   .tableContainer {
     margin-top: 20px;
   }
+
+  .variableClassContainer {
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .variableClassItem {
+    margin-bottom: 0.5rem;
+    display: flex;
+  }
+  
+  .variableKey {
+    font-weight: bold;
+    margin-right: 0.5rem;
+    color: #333;
+  }
+  
+  .variableValue {
+    color: #555;
+  }
+  

@@ -1,13 +1,18 @@
-import { useState, useEffect } from 'react';
-import { addParameter, clearParameter, setVariableClass } from '@/store/slice';
+import React, { useState, useEffect } from 'react';
+import { addParameter, clearParameter, setVariableClass, addVariableClassArray, setParameterBundle } from '@/app/store/productManagerSlice';
 import ParameterModal from '../ParameterModal/component';
-import { useDispatch } from 'react-redux';
-import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
+import { RootState } from '@/app/store/store';
 import 'react-toastify/dist/ReactToastify.css';
 import './style.css';
 
+interface VariableDataState {
+    mainKeyString: [string, any][];
+}
+
 interface ParameterizationTabProps {
+    saveMainKeyString: (object: VariableDataState) => void;
     variableClassData: object;
     variableClass: object;
     onClose: () => void;
@@ -20,7 +25,14 @@ interface AddedParameter {
     value: string;
 }
 
-const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClassData, variableClass, onClose }) => {
+interface BundlizedParameters {
+    id: number;
+    variable: string;
+    parameterName: string;
+    addedParameter: string;
+}
+
+const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClassData, variableClass, onClose, saveMainKeyString }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const [intVar, setIntVar] = useState<string[]>([]);
@@ -32,16 +44,31 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         parameterName: '',
         addedParameter: ''
     });
+    const globalParameterBundle = useSelector((state: RootState) => state.parameter.parameters);
 
     const dispatch = useDispatch();
 
-    const handleSaveVariableClass = (object: Object) => {
+    const handleSaveVariableClass = (object: Object, param: BundlizedParameters[]) => {
         if (!object) {
-            alert('Variable class is empty');
+            toast.error('Key String is empty');
             return;
         }
-        alert('Variable class saved successfully');
+        toast.success('Key String saved successfully');
         dispatch(setVariableClass(object));
+        
+        const mainKeyString = Object.entries(object)
+            .filter(([key, value]) => key !== 'task' && key !== 'type' && value);
+        console.log('Main Key String: ', mainKeyString);
+        saveMainKeyString({ mainKeyString });
+
+        const transformedParams = param.map((p) => ({
+            id: p.id,
+            variable: p.variable,
+            parameterName: p.parameterName,
+            addedParameter: p.addedParameter,
+        }));
+
+        dispatch(setParameterBundle(transformedParams));
     };
 
 
@@ -375,35 +402,57 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             setIntVar(detectVariables);
         }
     }, [detectVariables]);
+    
+    const generateCombinations = (groupedParams: Record<string, string[]>) => {
+        const keys = Object.keys(groupedParams);
+        const values = keys.map((key) => groupedParams[key]);
+        const combinations = cartesianProduct(values);
+    
+        return combinations.map((combo) => {
+            const result: Record<string, string> = {};
+            keys.forEach((key, index) => {
+                result[key] = combo[index];
+            });
+            return result;
+        });
+    };
+    
+    const cartesianProduct = (arrays: string[][]): string[][] => {
+        return arrays.reduce(
+            (acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])),
+            [[]] as string[][]
+        );
+    };
 
-    // Take current variable class as an object, separate from other task/types by extracting type and task.
-    // Parsed data must match task/type, for example if type is string, accept only stringInput with intVar string parameters...
-
-    // For any String values with Text Line task | String type or Description task | Textarea type, the below will occur:
-    // Will take the param.value from the renderedAddedParameters then creates an array of strings based off of the cleanedInputValue
-    // The detectVariables variable will be replaced by the mapped param.value and append to the original value of the string creating
-    // an array of strings with the original value and the individual param.value and distinguishing sets with param.variable
-
-    // For example, if param.variable = color and param.value = [red, blue, green] and the original value = Bender %color, the sheetValue will be:
-    // [Bender red, Bender blue, Bender green]. This can occur if the original value with the intVar [A string with a percentage sign infront of it]
-    // also has multiple of the intVar. 
-    // Original = Bender %brand %color %size
-    // param.variable = [brand, color, size]
-    // param.value = [Nike, Adidas, Puma, red, blue, green, S, M, L, XL]
-    // Established mapped variable and value assignment = [brand: "Nike", brand: "Adidas", brand: "Puma", color: "red", color: "blue"... etc.]
-    // Expected sheetValue = [Bender Nike red S, Bender Nike blue S, Bender Nike green S... etc.]
-    // Values must be unique and cannot match another value in the sheetValue, and sheeValue must iterate through all possible varieties
-    // Values must also be contained within the variable parameters so nothing like [Bender Nike Adidas Puma red blue green S M L XL] or 
-    // like varieties will occur.
-
-    // This function will handle the object and convert it into an array of strings which will be sent as a prop to the table component
-    // Table component will prompt user to choose which column to send the array and convert the array into strings
-    // Table component must have an origin column/class key header, if none are present, the first class key the user sends data 
-    // to will be assigned as the origin class key header
-    const handleAddVariable = (object: object, params: []) => {
-        Object.entries(object).map(([key, value]) => {
-
-        })
+    const handleAddVariable = (object: object, param: BundlizedParameters[]) => {
+        const { stringInput, task, type } = object as Record<string, string>;
+    
+        const groupedParams = param.reduce((acc, item) => {
+            if (!acc[item.variable]) {
+                acc[item.variable] = [];
+            }
+            acc[item.variable].push(item.addedParameter);
+            return acc;
+        }, {} as Record<string, string[]>);
+    
+        const variables = Object.keys(groupedParams);
+        const combinations = generateCombinations(groupedParams);
+    
+        const variableData = combinations.map((combo) => {
+            let result = stringInput;
+            variables.forEach((variable) => {
+                result = result.replace(`%{${variable}}`, combo[variable]);
+            });
+            return result;
+        });
+    
+        const payload = {
+            task,
+            type,
+            variableData,
+        };
+        console.log("Generated Payload:", JSON.stringify(payload, null, 2));
+        dispatch(addVariableClassArray(payload));
     };
     
     return (
@@ -426,19 +475,19 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 <div>{displayOnlyType(value)}</div>
                 <div>
                     {displayIntegerVariables(variableClass) ?
-                        displayIntegerVariables(variableClass) : 
+                        displayIntegerVariables(variableClass) :
                         <div style={{ textAlign: "center", fontSize: "16pt", marginBottom: "10px" }}>
                             {displayOnlyValue(value)}
                         </div>
-                        }
+                    }
                 </div>
                 {displayInterpolatedVariables(detectVariables)}
                 <button className='send-to-sheet-button'
-                    onClick={() => {handleSaveVariableClass(variableClass)}}>
+                    onClick={() => { handleSaveVariableClass(variableClass, globalParameterBundle) }}>
                     Save Key String
                 </button>
                 <button className='send-to-sheet-button'
-                    onClick={() => {handleAddVariable}}>
+                    onClick={() => { handleAddVariable(variableClass, globalParameterBundle) }}>
                     Add Variable
                 </button>
                 <div className="parameterization-details">

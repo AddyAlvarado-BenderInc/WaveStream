@@ -28,6 +28,7 @@ export interface ProductManager {
     runManager?: boolean;
     targetValue: string;
     [key: string]: any;
-    tableSheet: string[];
+    tableSheet: object;
     variableClass: string[];
+    mainKeyString: [string, any][];
 }

@@ -4,11 +4,12 @@ import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
 interface TableProps {
+    variableData: string[];
     variableClassSheet: string[];
     originAssignment: (key: string) => void;
 }
 
-const Table: React.FC<TableProps> = ({ variableClassSheet, originAssignment }) => {
+const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originAssignment }) => {
     const [localClassKeyInput, setLocalClassKeyInput] = useState<string>('');
     const [addedClassKeys, setAddedClassKeys] = useState<string[]>([]);
     const [headerOrigin, setHeaderOrigin] = useState("");
@@ -63,13 +64,13 @@ const Table: React.FC<TableProps> = ({ variableClassSheet, originAssignment }) =
         if (headerOrigin === key && !permanentOrigin) {
             const confirmation = window.confirm(
                 `Are you sure you want to set "${key}" as the permanent origin?\nMake sure that this class key has a wide range of variable classes`
-                );
+            );
             if (confirmation) {
                 setPermanentOrigin(key);
                 originAssignment(key);
             }
         }
-    };    
+    };
 
     const handleDeleteKey = (key: string) => {
         setAddedClassKeys(addedClassKeys.filter(k => k !== key));
@@ -100,47 +101,51 @@ const Table: React.FC<TableProps> = ({ variableClassSheet, originAssignment }) =
                 <h2>Table</h2>
             </div>
             <form>
-                <input
-                    type="text"
-                    value={localClassKeyInput}
-                    onChange={handleInputChange}
-                    placeholder="Enter Class Key"
-                    className={styles.inputField}
-                />
+                {!permanentOrigin && (
+                    <input
+                        type="text"
+                        value={localClassKeyInput}
+                        onChange={handleInputChange}
+                        placeholder="Enter Class Key"
+                        className={styles.inputField}
+                    />
+                )}
                 <div className={styles.rowContainer}>
-                    <div className={styles.classKeyButtons}>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (localClassKeyInput.trim() === '') {
-                                    toast.error('Please enter a valid class key');
-                                    return;
-                                }
-                                setAddedClassKeys([...addedClassKeys, localClassKeyInput]);
-                                setLocalClassKeyInput('');
-                            }}
-                            className={styles.addButton}
-                        >
-                            Add Class Key
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setAddedClassKeys([])}
-                            className={styles.deleteButton}
-                        >
-                            Delete All Class Keys
-                        </button>
-                        <label>
-                            <div className={styles.uploadButton}>Upload Header Sheet</div>
-                            <input
-                                id="class-key-upload"
-                                type="file"
-                                accept=".csv"
-                                onChange={handleImportHeaderSheet}
-                                className={styles.fileInput}
-                            />
-                        </label>
-                    </div>
+                    {!permanentOrigin && (
+                        <div className={styles.classKeyButtons}>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (localClassKeyInput.trim() === '') {
+                                        toast.error('Please enter a valid class key');
+                                        return;
+                                    }
+                                    setAddedClassKeys([...addedClassKeys, localClassKeyInput]);
+                                    setLocalClassKeyInput('');
+                                }}
+                                className={styles.addButton}
+                            >
+                                Add Class Key
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setAddedClassKeys([])}
+                                className={styles.deleteButton}
+                            >
+                                Delete All Class Keys
+                            </button>
+                            <label>
+                                <div className={styles.uploadButton}>Upload Header Sheet</div>
+                                <input
+                                    id="class-key-upload"
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={handleImportHeaderSheet}
+                                    className={styles.fileInput}
+                                />
+                            </label>
+                        </div>
+                    )}
                     {headerOrigin && !permanentOrigin ? (
                         <div className={styles.currentOriginContainer}>
                             <h4>Current Origin {" "}
@@ -181,20 +186,19 @@ const Table: React.FC<TableProps> = ({ variableClassSheet, originAssignment }) =
                                     onDelete={handleDeleteKey}
                                     onEdit={handleEditKey}
                                     originAssignment={handleHeaderOrigin}
+                                    permanentOrigin={permanentOrigin}
                                     headerOrigin={headerOrigin}
                                 />
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {handleVariableRows(variableClassSheet) ?? (
-                            <tr>
-                                <td>No Data Found</td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
             </div>
+            {addedClassKeys.length === 0 && (
+                <em>No Data Found</em>
+            )}
             <ToastContainer />
         </div>
     );
@@ -205,8 +209,9 @@ const ClassKey: React.FC<{
     onDelete: (key: string) => void;
     onEdit: (key: string, newValue: string) => void;
     originAssignment: (key: string) => void;
+    permanentOrigin: string;
     headerOrigin: string;
-}> = ({ input, onDelete, onEdit, originAssignment, headerOrigin }) => {
+}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(input);
 
@@ -219,7 +224,10 @@ const ClassKey: React.FC<{
     return (
         <th
             className={styles.classKeyHeader}
-            onClick={() => originAssignment(input)}
+            onClick={(e) => {
+                e.preventDefault();
+                originAssignment(input);
+            }}
         >
             {
                 headerOrigin === input ?
@@ -248,15 +256,17 @@ const ClassKey: React.FC<{
                         <div
                             className={styles.keyButtons}
                         >
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsEditing(true);
-                                }}
-                                className={styles.editKeyButton}
-                            >
-                                Edit
-                            </button>
+                            {!permanentOrigin ? (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsEditing(true);
+                                    }}
+                                    className={styles.editKeyButton}
+                                >
+                                    Edit
+                                </button>
+                            ) : ("")}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();

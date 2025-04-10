@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setStringInput, setTextareaInput, setIntegerInput } from "@/store/slice";
-import { setTaskName, setTaskType } from "@/store/slice";
+import { setTaskName, setTaskType } from "@/app/store/productManagerSlice"
 import { RootState } from "@/app/store/store";
 import { ToastContainer, toast } from 'react-toastify';
 import styles from './component.module.css';
@@ -17,37 +16,29 @@ interface VariableClasses {
 }
 
 interface variableClassProps {
+    variableData: object;
     onSave?: (variableClasses: VariableClasses) => void;
 }
 
-const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
-    const reduxState = useSelector((state: RootState) => state.variables);
-    console.log("Redux State:", reduxState);
-
-    const dispatch = useDispatch();
-
+const VariableClass: React.FC<variableClassProps> = ({ onSave, variableData }) => {
     const [MKSType, setMKSType] = useState<string>('StringMKS');
     const [IntVar, setIntVar] = useState<string[]>([]);
+    const [loadStringsModal, setLoadStringsModal] = useState(false);
+    const dispatch = useDispatch();
+
 
     const { stringInput, textareaInput, integerInput } = useSelector(
         (state: RootState) => state.variables
     );
 
-    useEffect(() => {
-        setLocalString(stringInput);
-        setLocalTextarea(textareaInput);
-        setLocalInteger(integerInput);
-    }, [stringInput, textareaInput, integerInput]);
-
-
     const [localString, setLocalString] = useState<string>(stringInput);
     const [localTextarea, setLocalTextarea] = useState<string>(textareaInput);
-    const [localInteger, setLocalInteger] = useState<number>(integerInput);
+    const [localInteger, setLocalInteger] = useState<string>(integerInput);
+    const [localIntegerResult, setLocalIntegerResult] = useState<number | null>(null);
     const [localEscapeSequence, setLocalEscapeSequence] = useState<string>("");
-    const [inputValue, setInputValue] = useState('');
-    const [result, setResult] = useState<number | null>(null);
-    const [error, setError] = useState('');
     const [localFile, setLocalFile] = useState<string>("");
+    const [localIntegerError, setLocalIntegerError] = useState('');
+
 
     const selectMKSType = (type: string) => {
         switch (type) {
@@ -101,9 +92,9 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         });
     };
 
-    // TODO: This function is not used in the current code, but it can be used to handle the loading of variable classes from the database
     const loadVariableClasses = (e: React.FormEvent) => {
-        alert("Loading variable classes from the database...");
+        e.preventDefault();
+        setLoadStringsModal(true);
     };
 
     const handleEscapeSequence = (text: string) => {
@@ -155,33 +146,33 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
 
                 if (isNaN(value)) throw new Error('Invalid expression');
 
-                setResult(Number(value));
-                setLocalInteger(Number(value));
-                setError('');
+                setLocalIntegerResult(Number(value));
+                setLocalInteger('');
+                setLocalIntegerError('');
             } catch (err) {
-                setError('Invalid math expression');
-                setResult(null);
+                setLocalIntegerError('Invalid math expression');
+                setLocalIntegerResult(null);
             }
         };
 
         return (
             <div className={styles.containerMKS}>
-                {error && <div className={styles.errorMessage}>{error}</div>}
-                {result !== null && (
+                {localIntegerError && <div className={styles.errorMessage}>{localIntegerError}</div>}
+                {localIntegerResult !== null && (
                     <div className={styles.resultPreview}>
-                        Result: {result}
+                        Result: {localIntegerResult}
                     </div>
                 )}
                 <div className={styles.integer}>
                     <input
                         type="text"
                         placeholder="Enter math expression (e.g., 5+3*2)..."
-                        value={inputValue}
+                        value={localInteger}
                         onChange={(e) => {
-                            setInputValue(e.target.value);
+                            setLocalInteger(e.target.value);
                             safeEvaluate(e.target.value);
                         }}
-                        className={`${styles.input} ${error ? styles.error : ''}`}
+                        className={`${styles.input} ${localIntegerError ? styles.error : ''}`}
                     />
                 </div>
             </div>
@@ -250,10 +241,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
 
     const configureVariables = (e?: React.FormEvent) => {
         e?.preventDefault();
-
-        dispatch(setStringInput(localString));
-        dispatch(setTextareaInput(localTextarea));
-        dispatch(setIntegerInput(localInteger));
 
         const variableData: Record<string, any> = {
             StringMKS: { stringInput: localString },

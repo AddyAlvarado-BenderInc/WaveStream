@@ -39,9 +39,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [variableData, setVariableData] = useState({
         tableSheet: productManager.tableSheet || [],
         variableClass: productManager.variableClass || [],
+        mainKeyString: productManager.mainKeyString || [],
     });
 
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
+
+    console.log("Main key string before save:", variableData.mainKeyString);
 
     const handleSave = async () => {
         try {
@@ -72,7 +75,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 }
             })
             
-            Object.entries(variableData.variableClass).forEach(([key, value]) => {
+            variableData.variableClass.forEach(([key, value]) => {
                 if (key === 'Variable' || key === 'Name' || key == 'Value') return;
                 
                 if (value !== null && value !== undefined) {
@@ -91,6 +94,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             iconData.newFiles.forEach(file => {
                 formDataPayload.append('files', file);
             });
+
+            formDataPayload.append('mainKeyString', JSON.stringify(variableData.mainKeyString));
 
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
 
@@ -118,9 +123,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
                 setVariableData((prev) => ({
                     ...prev,
-                    tableSheet: updatedProduct,
-                    variableClass: updatedProduct,
-                }))
+                    tableSheet: updatedProduct.tableSheet || prev.tableSheet,
+                    variableClass: updatedProduct.variableClass || prev.variableClass,
+                    mainKeyString: updatedProduct.mainKeyString || prev.mainKeyString,
+                }));                
 
                 dispatch(updateProductManager(updatedProduct));
                 toast.success('Product saved successfully!', {
@@ -184,6 +190,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     setVariableData({
                         variableClass: data.variableClass || [],
                         tableSheet: data.tableSheet || [],
+                        mainKeyString: data.mainKeyString || [''],
                     });
                 } else {
                     console.error('Failed to fetch product manager data');
@@ -200,6 +207,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
         fetchProductManager();
     }, [productManager.productType, productManager._id]);
+
+    console.log("Main key string load: ", JSON.stringify(variableData.mainKeyString));
 
     return (
         <div className={styles.container}>
@@ -218,7 +227,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             </div>
             <VariableManager 
                 variableData={variableData}
-                productManager={productManager}
                 setVariableData={setVariableData}
             />
             {showPropertyInterfaces && (

@@ -10,17 +10,23 @@ const initialManagerState: ProductManagerState = {
 };
 
 interface VariableState {
+  variableClassArray: Array<{
+    task: string,
+    type: string;
+    variableData: string[],
+  }>
   variableClass: Object;
   stringInput: string;
   textareaInput: string;
-  integerInput: number;
+  integerInput: string;
 }
 
 const initialState: VariableState = {
+  variableClassArray: [],
   variableClass: Object,
   stringInput: "",
   textareaInput: "",
-  integerInput: 0,
+  integerInput: "",
 };
 
 interface TaskState {
@@ -40,22 +46,12 @@ interface ParameterState {
     parameterName: string;
     addedParameter: string;
   }>;
+  parameterBundle: Object;
 }
 
 const initialParameterState: ParameterState = {
   parameters: [],
-};
-
-interface SheetDataState {
-  classKeys: string[];
-  columnNames: string[];
-  columnData: string[];
-}
-
-const initialSheetDataState: SheetDataState = {
-  classKeys: [],
-  columnNames: [],
-  columnData: [],
+  parameterBundle: Object
 };
 
 const productManagerSlice = createSlice({
@@ -75,27 +71,29 @@ const variableSlice = createSlice({
   name: "variableMKS",
   initialState,
   reducers: {
+    addVariableClassArray: (state, action: PayloadAction<{
+      task: string;
+      type: string;
+      variableData: string[];
+    }>) => {
+      state.variableClassArray.push(action.payload);
+    },
     setVariableClass: (state, action: PayloadAction<Object>) => {
-      console.log("Updating variable class to:", action.payload)
       state.variableClass = action.payload;
-      // TODO: Will send this to the backend in the future
     },
     setStringInput: (state, action: PayloadAction<string>) => {
-      console.log("Updating string input to:", action.payload)
       state.stringInput = action.payload;
     },
     setTextareaInput: (state, action: PayloadAction<string>) => {
-      console.log("Updating textarea input to:", action.payload)
       state.textareaInput = action.payload;
     },
-    setIntegerInput: (state, action: PayloadAction<number>) => {
-      console.log("Updating integer input to:", action.payload)
+    setIntegerInput: (state, action: PayloadAction<string>) => {
       state.integerInput = action.payload;
     },
     clearAllInputs: (state) => {
       state.stringInput = "";
       state.textareaInput = "";
-      state.integerInput = 0;
+      state.integerInput = "";
     },
   },
 });
@@ -124,7 +122,15 @@ const parameterSlice = createSlice({
       addedParameter: string;
     }>) => {
       state.parameters.push(action.payload);
-    }
+    },
+    setParameterBundle: (state, action: PayloadAction<{
+      id: number;
+      variable: string;
+      parameterName: string;
+      addedParameter: string;
+    }[]>) => {
+      state.parameterBundle = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(clearParameter, (state, action) => {
@@ -135,23 +141,8 @@ const parameterSlice = createSlice({
   },
 });
 
-const sheetDataSlice = createSlice({
-  name: "sheetData",
-  initialState: initialSheetDataState,
-  reducers: {
-    setClassKeys: (state, action: PayloadAction<string[]>) => {
-      state.classKeys = action.payload;
-    },
-    setColumnNames: (state, action: PayloadAction<string[]>) => {
-      state.columnNames = action.payload;
-      state.columnData = action.payload;
-    },
-    setColumnData: (state, action: PayloadAction<string[]>) => {
-      state.columnData = action.payload;
-    },
-  },
-})
 export const {
+  addVariableClassArray,
   setVariableClass,
   setStringInput,
   setTextareaInput,
@@ -160,13 +151,11 @@ export const {
 } = variableSlice.actions;
 
 export const { setTaskName, setTaskType } = typeTaskSlice.actions;
-export const { addParameter } = parameterSlice.actions;
+export const { addParameter, setParameterBundle } = parameterSlice.actions;
 export const clearParameter = createAction<number | undefined>('parameters/clear');
-export const { setClassKeys, setColumnNames, setColumnData } = sheetDataSlice.actions;
 export const { updateProductManager } = productManagerSlice.actions;
 
 export default productManagerSlice.reducer;
 export const variableReducer = variableSlice.reducer;
 export const typeTaskReducer = typeTaskSlice.reducer;
 export const parameterReducer = parameterSlice.reducer;
-export const sheetDataReducer = sheetDataSlice.reducer;

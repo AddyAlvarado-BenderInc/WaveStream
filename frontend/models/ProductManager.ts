@@ -22,6 +22,7 @@ export interface IProductManager extends Document {
   iconPreview: string[];
   label: string;
   tableSheet: string[];
+  mainKeyString: string[];
 }
 
 const ProductManagerSchema = new mongoose.Schema({
@@ -53,7 +54,8 @@ const ProductManagerSchema = new mongoose.Schema({
 },
   iconPreview: { type: [String], default: [] },
   label: { type: String, default: '' },
-  tableSheet: { type: [String], default: []}
+  tableSheet: { type: [String], default: []},
+  mainKeyString: { type: [String], default: [] },
 });
 
 export default mongoose.models.ProductManager || mongoose.model<IProductManager>('ProductManager', ProductManagerSchema);
