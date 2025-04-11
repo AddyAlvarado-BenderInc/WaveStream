@@ -284,5 +284,4 @@ const ClassKey: React.FC<{
     );
 };
 
-
 export default Table;

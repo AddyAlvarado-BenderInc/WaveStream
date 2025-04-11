@@ -239,6 +239,19 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, variableData }) =
         </div>
     );
 
+    const handleClear = (e: React.FormEvent) => {
+        e.preventDefault();
+        setLocalString('');
+        setLocalTextarea('');
+        setLocalInteger('');
+        setLocalIntegerResult(null);
+        setLocalEscapeSequence('');
+        setLocalFile('');
+        setLocalIntegerError('');
+        setIntVar([]);
+        toast.info("Inputs cleared");
+    };
+
     const configureVariables = (e?: React.FormEvent) => {
         e?.preventDefault();
 
@@ -293,6 +306,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, variableData }) =
                             <div className={styles.configurationTools}>
                                 <div className={styles.buttonContainer}>
                                     <button type='submit' onClick={configureVariables}>Configure</button>
+                                    <button type='submit' onClick={(e) => { handleClear(e) }}>Clear</button>
                                     <button type='submit' onClick={(e) => { loadVariableClasses(e) }}>Load</button>
                                 </div>
                                 <select

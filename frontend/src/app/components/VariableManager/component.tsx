@@ -18,7 +18,7 @@ interface VariableManagerProps {
 }
 
 //TODO: Top-down situation with data, will need to pass variableData and productManager to child components
-const VariableManager: React.FC<VariableManagerProps> = ({variableData, setVariableData}) => {
+const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVariableData }) => {
     const [parameterizationOpen, setParameterizationOpen] = useState(false);
     const [parameterizationData, setParameterizationData] = useState<object | null>(null);
     const [variableClassSheet, setVariableClassSheet] = useState<string[]>([]);
@@ -44,37 +44,66 @@ const VariableManager: React.FC<VariableManagerProps> = ({variableData, setVaria
 
     const handleSaveMainKeyString = (data: Partial<VariableDataState>) => {
         setVariableData((prevState) => ({
-          ...prevState,
-          mainKeyString: data.mainKeyString ?? prevState.mainKeyString,
+            ...prevState,
+            mainKeyString: data.mainKeyString ?? prevState.mainKeyString,
         }));
-      };
-      
+    };
+
 
     const handleVariableClassData = (object: object) => {
         Object.entries(object).map(([key, value]) => {
-            
+
         })
+    };
+
+    const handleSendToSheet = (object: Record<string, any>) => {
+
+    }
+
+    const handleDeleteVariableClass = () => {
+        
     };
 
     const displayVariableClass = (object: Record<string, any>) => {
         const filteredEntries = Object.entries(object).map(([key, value], index) => {
-            if (value === null) {
-                return !key;
+            let displayValue: string;
+
+            if (Array.isArray(value)) {
+                displayValue = value.join(", ");
+            } else if (typeof value === "object" && value !== null) {
+                displayValue = JSON.stringify(value);
+            } else {
+                displayValue = value.toString();
             }
+
             return (
-          <div key={index} className={styles.variableClassItem}>
-            <span className={styles.variableKey}>{key}:</span>{" "}
-            <span className={styles.variableValue}>{value.toString()}</span>
-          </div>
-        )});
-      
+                <div key={index} className={styles.variableClassItem}>
+                    <span className={styles.variableKey}>{key}:</span>{" "}
+                    <span className={styles.variableValue}>{displayValue}</span>
+                </div>
+            );
+        });
+
         return (
-          <div className={styles.variableClassContainer}>
-            {filteredEntries}
-          </div>
+            <div
+                onClick={(e) => {
+                    e.preventDefault();
+                    handleOpenParameterizationTab;
+                }}
+                className={styles.variableClassContainer}>
+                <div className={styles.variableItems}>
+                    {filteredEntries}
+                </div>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        
+                    }}
+                >Delete
+                </button>
+            </div>
         );
-      };
-      
+    };
 
     return (
         <>
@@ -83,7 +112,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({variableData, setVaria
                     <VariableClass
                         variableData={variableData}
                         onSave={(parameterizationData) => handleOpenParameterizationTab(parameterizationData)}
-                        />
+                    />
                     {parameterizationData && parameterizationOpen && (
                         <ParameterizationTab
                             saveMainKeyString={handleSaveMainKeyString}
@@ -92,20 +121,32 @@ const VariableManager: React.FC<VariableManagerProps> = ({variableData, setVaria
                             onClose={handleCloseParameterizationTab}
                         />
                     )}
-                    {globalVariableClass && (
-                        <>
-                        {displayVariableClass(globalVariableClass)}
-                        </>
+                    {globalVariableClass.length !== 0 && (
+                        <div className={styles.variableClassList}>
+                            {globalVariableClass.map((item, index) => (
+                                <div key={index}>
+                                    {displayVariableClass(item)}
+                                </div>
+                            ))}
+                            <button
+                                className={styles.sendToSheetButton}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handleSendToSheet(globalVariableClass);
+                                }}
+                            >Send To Sheet
+                            </button>
+                        </div>
                     )}
                 </div>
             )}
-                <div className={styles.tableContainer}>
-                    <Table
-                        variableData={variableData}
-                        variableClassSheet={variableClassSheet}
-                        originAssignment={handleOriginAssignment}
-                    />
-                </div>
+            <div className={styles.tableContainer}>
+                <Table
+                    variableData={variableData}
+                    variableClassSheet={variableClassSheet}
+                    originAssignment={handleOriginAssignment}
+                />
+            </div>
         </>
     )
 }

@@ -1,31 +1,81 @@
+@media (prefers-color-scheme: dark) {
+  .page {
+    --gray-rgb: 255, 255, 255;
+    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+
+    --button-primary-hover: #fff;
+    --button-secondary-hover: #000;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .page {
+    --gray-rgb: 255, 255, 255;
+    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+
+    --button-primary-hover: #000;
+    --button-secondary-hover: #fff;
+  }
+}
+
 .formContainer {
-    margin-top: 10px;
-    padding-bottom: 50px;
-  }
+  margin-top: 10px;
+  padding-bottom: 50px;
+}
 
-  .tableContainer {
-    margin-top: 20px;
-  }
+.tableContainer {
+  margin-top: 20px;
+}
 
-  .variableClassContainer {
-    padding: 1rem;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-  }
-  
-  .variableClassItem {
-    margin-bottom: 0.5rem;
-    display: flex;
-  }
-  
-  .variableKey {
-    font-weight: bold;
-    margin-right: 0.5rem;
-    color: #333;
-  }
-  
-  .variableValue {
-    color: #555;
-  }
-  
+.variableClassContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  background-color: var(--button-secondary-hover);
+  border: 1px solid var(--button-primary-hover);
+  border-radius: 5px;
+  padding: 10px;
+  transition: 0.2s ease-in-out;
+}
+
+.variableClassContainer:hover {
+  background-color: var(--gray-alpha-100);
+  cursor: pointer;
+}
+
+.sendToSheetButton {
+  margin-top: 10px;
+}
+
+.variableClassContainer button, .sendToSheetButton {
+  cursor: pointer;
+  border: 1px solid var(--button-primary-hover);
+  background-color: inherit;
+  border-radius: 5px;
+  transition: 0.3s ease-out;
+  margin-right: 5px;
+  padding: 10px 20px;
+}
+
+.variableClassContainer button:hover, .sendToSheetButton:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.variableClassItem {
+  padding: 0.5rem;
+  display: flex;
+}
+
+.variableKey {
+  font-weight: bold;
+  margin-right: 0.5rem;
+  color: var(--gray-rgb);
+}
+
+.variableValue {
+  color: var(--button-primary-hover);
+}

@@ -21,7 +21,7 @@ export interface IProductManager extends Document {
   icon: string[];
   iconPreview: string[];
   label: string;
-  tableSheet: string[];
+  tableSheet: object;
   mainKeyString: string[];
 }
 
@@ -35,7 +35,6 @@ const ProductManagerSchema = new mongoose.Schema({
   itemName: { type: String, default: '', required: false },
   productId: { type: String, default: '' },
   intentRange: { type: String, default: '' },
-  selectorMode: { type: String, default: 'default' },
   itemTemplate: { type: String, default: '' },
   descriptionFooter: { type: String, default: '' },
   initialProductLink: { type: String, default: '' },
@@ -54,7 +53,7 @@ const ProductManagerSchema = new mongoose.Schema({
 },
   iconPreview: { type: [String], default: [] },
   label: { type: String, default: '' },
-  tableSheet: { type: [String], default: []},
+  tableSheet: { type: Object, default: []},
   mainKeyString: { type: [String], default: [] },
 });
 

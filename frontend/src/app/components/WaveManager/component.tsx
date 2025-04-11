@@ -39,12 +39,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [variableData, setVariableData] = useState({
         tableSheet: productManager.tableSheet || [],
         variableClass: productManager.variableClass || [],
-        mainKeyString: productManager.mainKeyString || [],
+        mainKeyString: productManager.mainKeyString || [''],
     });
 
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
-
-    console.log("Main key string before save:", variableData.mainKeyString);
 
     const handleSave = async () => {
         try {
@@ -64,7 +62,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             });
             
             Object.entries(variableData.tableSheet).forEach(([key, value]) => {
-                if (key === 'Variable' || key === 'Name' || key == 'Value') return;
+                if (key === 'variable' || key === 'name' || key == 'value') return;
                 
                 if (value !== null && value !== undefined) {
                     if (Array.isArray(value)) {
@@ -76,7 +74,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             })
             
             variableData.variableClass.forEach(([key, value]) => {
-                if (key === 'Variable' || key === 'Name' || key == 'Value') return;
+                if (key === 'variable' || key === 'name' || key == 'value') return;
                 
                 if (value !== null && value !== undefined) {
                     if (Array.isArray(value)) {
@@ -188,8 +186,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         newFiles: []
                     });
                     setVariableData({
-                        variableClass: data.variableClass || [],
                         tableSheet: data.tableSheet || [],
+                        variableClass: data.variableClass || [],
                         mainKeyString: data.mainKeyString || [''],
                     });
                 } else {
@@ -208,7 +206,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         fetchProductManager();
     }, [productManager.productType, productManager._id]);
 
-    console.log("Main key string load: ", JSON.stringify(variableData.mainKeyString));
+    // console.log("Main key string load: ", JSON.stringify(variableData.mainKeyString));
 
     return (
         <div className={styles.container}>
