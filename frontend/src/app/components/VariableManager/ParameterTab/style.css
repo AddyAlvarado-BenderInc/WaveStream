@@ -1,3 +1,25 @@
+@media (prefers-color-scheme: dark) {
+  .page {
+    --gray-rgb: 255, 255, 255;
+    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+
+    --button-primary-hover: #fff;
+    --button-secondary-hover: #000;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .page {
+    --gray-rgb: 255, 255, 255;
+    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+
+    --button-primary-hover: #000;
+    --button-secondary-hover: #fff;
+  }
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -109,6 +131,41 @@
   max-height: 800px;
   overflow-y: auto;
   scroll-behavior: auto;
+}
+
+.name-modal {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.name-modal input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+}
+
+.name-modal input:focus {
+  outline: none;
+  border: 1px solid var(--button-primary-hover);
+}
+
+.name-modal button {
+  background-color: var(--button-secondary-hover);
+  color: var(--button-primary-hover);
+  border: 1px solid var(--button-primary-hover);
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.name-modal button:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
 }
 
 .parameterization-details {

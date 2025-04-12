@@ -11,14 +11,18 @@ const initialManagerState: ProductManagerState = {
 
 interface VariableState {
   variableClassArray: Array<{
-    task: string,
-    type: string;
     variableData: string[],
   }>
   variableClass: Object;
   stringInput: string;
   textareaInput: string;
   integerInput: string;
+}
+
+interface VariableClass {
+  name: string;
+  index: number;
+  variableData: string[];
 }
 
 const initialState: VariableState = {
@@ -71,12 +75,20 @@ const variableSlice = createSlice({
   name: "variableMKS",
   initialState,
   reducers: {
-    addVariableClassArray: (state, action: PayloadAction<{
-      task: string;
-      type: string;
-      variableData: string[];
-    }>) => {
+    addVariableClassArray: (state, action: PayloadAction<VariableClass>) => {
       state.variableClassArray.push(action.payload);
+    },
+    clearAllVariableClassArray: (state) => {
+      state.variableClassArray = [];
+    },
+    deleteVariableClassArray: (state, action: PayloadAction<number>) => {
+      state.variableClassArray = state.variableClassArray.filter((_, index) => index !== action.payload);
+    },
+    updateVariableClassArray: (state, action: PayloadAction<VariableClass>) => {
+      const { index, variableData } = action.payload;
+      if (state.variableClassArray[index]) {
+        state.variableClassArray[index].variableData = variableData;
+      }
     },
     setVariableClass: (state, action: PayloadAction<Object>) => {
       state.variableClass = action.payload;
@@ -143,6 +155,9 @@ const parameterSlice = createSlice({
 
 export const {
   addVariableClassArray,
+  clearAllVariableClassArray,
+  deleteVariableClassArray,
+  updateVariableClassArray,
   setVariableClass,
   setStringInput,
   setTextareaInput,

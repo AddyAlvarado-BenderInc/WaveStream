@@ -147,7 +147,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, variableData }) =
                 if (isNaN(value)) throw new Error('Invalid expression');
 
                 setLocalIntegerResult(Number(value));
-                setLocalInteger('');
+                setLocalInteger(value);
                 setLocalIntegerError('');
             } catch (err) {
                 setLocalIntegerError('Invalid math expression');
@@ -166,7 +166,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, variableData }) =
                 <div className={styles.integer}>
                     <input
                         type="text"
-                        placeholder="Enter math expression (e.g., 5+3*2)..."
+                        placeholder="Enter a numerical expression"
                         value={localInteger}
                         onChange={(e) => {
                             setLocalInteger(e.target.value);
@@ -313,9 +313,8 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, variableData }) =
                                     value={MKSType}
                                     onChange={(e) => setMKSType(e.target.value)}>
                                     <option value='StringMKS'>Single Line</option>
-                                    <option value='IntegerMKS'>Math</option>
+                                    <option value='IntegerMKS'>Number</option>
                                     <option value='TextareaMKS'>Description</option>
-                                    <option value='EscapeSequenceMKS'>Escape Sequence</option>
                                     <option value='LinkedMKS'>Linked Media</option>
                                 </select>
                             </div>

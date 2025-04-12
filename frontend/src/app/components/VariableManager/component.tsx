@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import VariableClass from '../VariableManager/VariableClass/component';
+import {
+    clearAllVariableClassArray,
+    deleteVariableClassArray,
+    updateVariableClassArray
+} from '@/app/store/productManagerSlice';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
 import { RootState } from '@/app/store/store';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import Table from '../Table/component';
 import styles from './component.module.css';
 
@@ -17,14 +22,15 @@ interface VariableManagerProps {
     setVariableData: React.Dispatch<React.SetStateAction<VariableDataState>>;
 }
 
-//TODO: Top-down situation with data, will need to pass variableData and productManager to child components
 const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVariableData }) => {
     const [parameterizationOpen, setParameterizationOpen] = useState(false);
     const [parameterizationData, setParameterizationData] = useState<object | null>(null);
     const [variableClassSheet, setVariableClassSheet] = useState<string[]>([]);
     const [originAssignment, setOriginAssignment] = useState("");
-
+    const [variableOriginAssignment, setVariableOriginAssignment] = useState("");
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
+
+    const dispatch = useDispatch();
 
     const handleOpenParameterizationTab = (variableClasses: object) => {
         console.log('Open Parameterization Tab', variableClasses);
@@ -49,20 +55,26 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
         }));
     };
 
-
-    const handleVariableClassData = (object: object) => {
-        Object.entries(object).map(([key, value]) => {
-
-        })
-    };
-
     const handleSendToSheet = (object: Record<string, any>) => {
 
     }
 
-    const handleDeleteVariableClass = () => {
-        
+    const handleDeleteVariableClass = (id: number) => {
+        dispatch(deleteVariableClassArray(id));
     };
+
+    const handleClearAllVariableClass = () => {
+        dispatch(clearAllVariableClassArray());
+    };
+
+    const handleMakeVariableClassOrigin = () => {
+
+    }
+
+    // This function is used to update the variable class array in the Redux store but it needs to reopen the parameterization tab
+    const handleEditVariableClass = (name: string, id: number, variableData: string[]) => {
+        dispatch(updateVariableClassArray({ name, index: id, variableData }));
+    }
 
     const displayVariableClass = (object: Record<string, any>) => {
         const filteredEntries = Object.entries(object).map(([key, value], index) => {
@@ -76,31 +88,20 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                 displayValue = value.toString();
             }
 
+            console.log("Display Value:", displayValue);
+
             return (
                 <div key={index} className={styles.variableClassItem}>
-                    <span className={styles.variableKey}>{key}:</span>{" "}
                     <span className={styles.variableValue}>{displayValue}</span>
                 </div>
             );
         });
 
         return (
-            <div
-                onClick={(e) => {
-                    e.preventDefault();
-                    handleOpenParameterizationTab;
-                }}
-                className={styles.variableClassContainer}>
+            <div className={styles.variableClassContainer}>
                 <div className={styles.variableItems}>
                     {filteredEntries}
                 </div>
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        
-                    }}
-                >Delete
-                </button>
             </div>
         );
     };
@@ -116,28 +117,50 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                     {parameterizationData && parameterizationOpen && (
                         <ParameterizationTab
                             saveMainKeyString={handleSaveMainKeyString}
-                            variableClassData={handleVariableClassData}
                             variableClass={parameterizationData}
                             onClose={handleCloseParameterizationTab}
                         />
                     )}
-                    {globalVariableClass.length !== 0 && (
+                    {Object.keys(globalVariableClass).length > 0 && (
                         <div className={styles.variableClassList}>
-                            {globalVariableClass.map((item, index) => (
-                                <div key={index}>
-                                    {displayVariableClass(item)}
+                            {Object.entries(globalVariableClass).map(([variableClassKey, variableClassValue], index) => (
+                                <div key={variableClassKey} className={styles.variableClassRow}>
+                                    <div className={styles.variableClassContent}>
+                                        {displayVariableClass(variableClassValue)}
+                                    <button
+                                        className={styles.deleteButton}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleDeleteVariableClass(index);
+                                        }}
+                                        title={`Delete ${variableClassKey}`}
+                                        >
+                                        Delete
+                                    </button>
+                                    </div>
                                 </div>
                             ))}
-                            <button
-                                className={styles.sendToSheetButton}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    handleSendToSheet(globalVariableClass);
-                                }}
-                            >Send To Sheet
-                            </button>
+                            <div className={styles.actionButtons}>
+                                <button
+                                    className={styles.sendToSheetButton}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleSendToSheet(globalVariableClass);
+                                    }}
+                                >Send To Sheet
+                                </button>
+                                <button
+                                    className={styles.deleteAllButton}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleClearAllVariableClass();
+                                    }}
+                                >Delete All
+                                </button>
+                            </div>
                         </div>
                     )}
+
                 </div>
             )}
             <div className={styles.tableContainer}>

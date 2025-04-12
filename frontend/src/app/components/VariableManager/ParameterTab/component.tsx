@@ -13,7 +13,6 @@ interface VariableDataState {
 
 interface ParameterizationTabProps {
     saveMainKeyString: (object: VariableDataState) => void;
-    variableClassData: object;
     variableClass: object;
     onClose: () => void;
 }
@@ -32,7 +31,7 @@ interface BundlizedParameters {
     addedParameter: string;
 }
 
-const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClassData, variableClass, onClose, saveMainKeyString }) => {
+const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose, saveMainKeyString }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const [intVar, setIntVar] = useState<string[]>([]);
@@ -40,6 +39,8 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     const [showParameterModal, setShowParameterModal] = useState(false);
     const [integerOptions, setIntegerOptions] = useState<string | null>(null);
     const [addedParameters, setAddedParameters] = useState<AddedParameter[]>([]);
+    const [openNameModal, setOpenNameModal] = useState(false);
+    const [localVariableName, setLocalVariableName] = useState<string>('');
     const [localParameter, setLocalParameter] = useState({
         parameterName: '',
         addedParameter: ''
@@ -55,7 +56,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
         toast.success('Key String saved successfully');
         dispatch(setVariableClass(object));
-        
+
         const mainKeyString = Object.entries(object)
             .filter(([key, value]) => key !== 'task' && key !== 'type' && value);
         console.log('Main Key String: ', mainKeyString);
@@ -402,12 +403,12 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             setIntVar(detectVariables);
         }
     }, [detectVariables]);
-    
+
     const generateCombinations = (groupedParams: Record<string, string[]>) => {
         const keys = Object.keys(groupedParams);
         const values = keys.map((key) => groupedParams[key]);
         const combinations = cartesianProduct(values);
-    
+
         return combinations.map((combo) => {
             const result: Record<string, string> = {};
             keys.forEach((key, index) => {
@@ -416,7 +417,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             return result;
         });
     };
-    
+
     const cartesianProduct = (arrays: string[][]): string[][] => {
         return arrays.reduce(
             (acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])),
@@ -425,8 +426,8 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     };
 
     const handleAddVariable = (object: object, param: BundlizedParameters[]) => {
-        const { stringInput, task, type } = object as Record<string, string>;
-    
+        const { stringInput } = object as Record<string, string>;
+
         const groupedParams = param.reduce((acc, item) => {
             if (!acc[item.variable]) {
                 acc[item.variable] = [];
@@ -434,10 +435,10 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             acc[item.variable].push(item.addedParameter);
             return acc;
         }, {} as Record<string, string[]>);
-    
+
         const variables = Object.keys(groupedParams);
         const combinations = generateCombinations(groupedParams);
-    
+
         const variableData = combinations.map((combo) => {
             let result = stringInput;
             variables.forEach((variable) => {
@@ -445,16 +446,24 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             });
             return result;
         });
-    
+
+        const index = variableData.length;
+
         const payload = {
-            task,
-            type,
+            name: localVariableName,
+            index,
             variableData,
         };
+
         console.log("Generated Payload:", JSON.stringify(payload, null, 2));
         dispatch(addVariableClassArray(payload));
     };
-    
+
+    const handleCreateName = (name: string) => {
+        const cleanedName = name.replace(/[^a-zA-Z0-9]/g, '');
+        return cleanedName;
+    };
+
     return (
         <div className="modal-overlay">
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -471,54 +480,88 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 >
                     ×
                 </button>
-                <h2>Parameterization Details</h2>
-                <div>{displayOnlyType(value)}</div>
-                <div>
-                    {displayIntegerVariables(variableClass) ?
-                        displayIntegerVariables(variableClass) :
-                        <div style={{ textAlign: "center", fontSize: "16pt", marginBottom: "10px" }}>
-                            {displayOnlyValue(value)}
-                        </div>
-                    }
-                </div>
-                {displayInterpolatedVariables(detectVariables)}
-                <button className='send-to-sheet-button'
-                    onClick={() => { handleSaveVariableClass(variableClass, globalParameterBundle) }}>
-                    Save Key String
-                </button>
-                <button className='send-to-sheet-button'
-                    onClick={() => { handleAddVariable(variableClass, globalParameterBundle) }}>
-                    Add Variable
-                </button>
-                <div className="parameterization-details">
-                    {addedParameters.length > 0 && renderAddedParameters()}
-                    {selectedInterpolatedVariables && (
-                        <div className="variable-details">
-                            <p>Configure for <b style={{ textTransform: "uppercase" }}>{selectedInterpolatedVariables}</b></p>
-                            <button className='configure-button'
-                                onClick={() => configureInterpolatedVariables(selectedInterpolatedVariables)}>
-                                Add
-                            </button>
-                            <button className='configure-button'
+                {!openNameModal && (
+                    <div className="name-modal">
+                        <h1>Parameterization Tab</h1>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                const cleanedName = handleCreateName(localVariableName);
+                                setLocalVariableName(cleanedName);
+                                setOpenNameModal(true);
+                            }}
+                        >
+                            <input
+                                type="text"
+                                placeholder="Name"
+                                onChange={(e) => setLocalVariableName(e.target.value)}
+                                value={localVariableName}
+                            />
+                            <button
+                                type='submit'
+                                className="name-button"
                                 onClick={() => {
-                                    alert('Save functionality will save the parameters of the specified variable to the database and allow users to load it later. If the variable is already saved in the database it will be updated, but paramter names will be in conflict with the existing ones and prompt the user to either ignore or overwrite. Please make sure to use unique parameter names.');
-                                }}>
-                                Save
-                            </button>
-                            <button className='configure-button'
-                                onClick={() => {
-                                    alert('Load functionality will grab relevant data (via variable) from the database and allow users to update the parameterization');
-                                }}>
-                                Load
-                            </button>
-                            <button className='configure-button'
-                                onClick={() => setSelectedInterpolatedVariables(null)}
+                                    setLocalParameter({ parameterName: '', addedParameter: '' });
+                                }}
                             >
-                                Close
+                                Create Name
                             </button>
+                        </form>
+                    </div>
+                )}
+                {openNameModal && (
+                    <>
+                        <h2>Parameterization Details</h2>
+                        <div>{displayOnlyType(value)}</div>
+                        <h3>{localVariableName}</h3>
+                        <div>
+                            {displayIntegerVariables(variableClass) ?
+                                displayIntegerVariables(variableClass) :
+                                <div style={{ textAlign: "center", fontSize: "16pt", marginBottom: "10px" }}>
+                                    {displayOnlyValue(value)}
+                                </div>
+                            }
                         </div>
-                    )}
-                </div>
+                        {displayInterpolatedVariables(detectVariables)}
+                        <button className='send-to-sheet-button'
+                            onClick={() => { handleSaveVariableClass(variableClass, globalParameterBundle) }}>
+                            Save Key String
+                        </button>
+                        <button className='send-to-sheet-button'
+                            onClick={() => { handleAddVariable(variableClass, globalParameterBundle) }}>
+                            Add Variable
+                        </button>
+                        <div className="parameterization-details">
+                            {addedParameters.length > 0 && renderAddedParameters()}
+                            {selectedInterpolatedVariables && (
+                                <div className="variable-details">
+                                    <p>Configure for <b style={{ textTransform: "uppercase" }}>{selectedInterpolatedVariables}</b></p>
+                                    <button className='configure-button'
+                                        onClick={() => configureInterpolatedVariables(selectedInterpolatedVariables)}>
+                                        Add
+                                    </button>
+                                    <button className='configure-button'
+                                        onClick={() => {
+                                            alert('Save functionality will save the parameters of the specified variable to the database and allow users to load it later. If the variable is already saved in the database it will be updated, but paramter names will be in conflict with the existing ones and prompt the user to either ignore or overwrite. Please make sure to use unique parameter names.');
+                                        }}>
+                                        Save
+                                    </button>
+                                    <button className='configure-button'
+                                        onClick={() => {
+                                            alert('Load functionality will grab relevant data (via variable) from the database and allow users to update the parameterization');
+                                        }}>
+                                        Load
+                                    </button>
+                                    <button className='configure-button'
+                                        onClick={() => setSelectedInterpolatedVariables(null)}
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
                 {showParameterModal && (
                     <ParameterModal
                         onSave={handleParameterSave}

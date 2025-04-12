@@ -29,7 +29,33 @@
   margin-top: 20px;
 }
 
-.variableClassContainer {
+.sendToSheetButton {
+  margin-top: 15px;
+}
+
+.variableClassList {
+  margin: 20px 0;
+  padding: 15px 20px 40px 20px;
+  border-radius: 8px;
+  border-top: 1px solid var(--button-primary-hover);
+}
+
+.variableClassContainer button, .sendToSheetButton, .deleteAllButton, .deleteButton {
+  cursor: pointer;
+  border: 1px solid var(--button-primary-hover);
+  background-color: inherit;
+  border-radius: 5px;
+  transition: 0.3s ease-out;
+  margin-right: 10px;
+  padding: 10px 20px;
+}
+
+.variableClassContainer button:hover, .sendToSheetButton:hover, .deleteAllButton:hover, .deleteButton:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.variableClassContent {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -41,28 +67,9 @@
   transition: 0.2s ease-in-out;
 }
 
-.variableClassContainer:hover {
+.variableClassContent:hover {
   background-color: var(--gray-alpha-100);
   cursor: pointer;
-}
-
-.sendToSheetButton {
-  margin-top: 10px;
-}
-
-.variableClassContainer button, .sendToSheetButton {
-  cursor: pointer;
-  border: 1px solid var(--button-primary-hover);
-  background-color: inherit;
-  border-radius: 5px;
-  transition: 0.3s ease-out;
-  margin-right: 5px;
-  padding: 10px 20px;
-}
-
-.variableClassContainer button:hover, .sendToSheetButton:hover {
-  background-color: var(--button-primary-hover);
-  color: var(--button-secondary-hover);
 }
 
 .variableClassItem {
