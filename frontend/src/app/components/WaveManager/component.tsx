@@ -37,14 +37,27 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         newFiles: [] as File[]
     });
     const [variableData, setVariableData] = useState({
-        tableSheet: (productManager.tableSheet || []).map((data: tableSheetData) => ({
-            index: data.index,
-            value: data.value,
-            isOrigin: data.isOrigin,
-        })),    
+        tableSheet: Array.isArray(productManager.tableSheet)
+            ? productManager.tableSheet.map((data: tableSheetData) => ({
+                  index: data.index,
+                  value: data.value,
+                  isOrigin: data.isOrigin,
+              }))
+            : (Object.values(productManager.tableSheet || {}) as tableSheetData[]).map((data) => ({
+                  index: data.index,
+                  value: data.value,
+                  isOrigin: data.isOrigin,
+              })),
         variableClass: productManager.variableClass || [],
         mainKeyString: productManager.mainKeyString || [],
     });
+    
+    const isValidTableSheetData = (data: any): data is tableSheetData =>
+        typeof data.index === "number" &&
+        typeof data.value === "string" &&
+        typeof data.isOrigin === "boolean";
+    
+    const tableSheetDataArray = Object.values(productManager.tableSheet || {}).filter(isValidTableSheetData);    
 
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
@@ -126,7 +139,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
                 setVariableData((prev) => ({
                     ...prev,
-                    tableSheet: updatedProduct.tableSheet || prev.tableSheet,
+                    tableSheet: tableSheetDataArray,
                     variableClass: updatedProduct.variableClass || prev.variableClass,
                     mainKeyString: updatedProduct.mainKeyString || prev.mainKeyString,
                 }));

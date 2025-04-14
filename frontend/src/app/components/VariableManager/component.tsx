@@ -5,6 +5,7 @@ import {
     deleteVariableClassArray,
     updateVariableClassArray
 } from '@/app/store/productManagerSlice';
+import { tableSheetData } from '../../../../types/productManager';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
 import { RootState } from '@/app/store/store';
 import { useSelector, useDispatch } from 'react-redux';
@@ -12,7 +13,7 @@ import Table from '../Table/component';
 import styles from './component.module.css';
 
 interface VariableDataState {
-    tableSheet: string[];
+    tableSheet: tableSheetData[];
     variableClass: string[];
     mainKeyString: [string, any][];
 }
@@ -38,10 +39,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
         setParameterizationOpen(true);
     };
 
-    const handleSubmitTableData = (tableSheetData: string[]) => {
+    const handleSubmitTableData = (tableSheetData: tableSheetData[]) => {
         setVariableData((prevState) => ({
           ...prevState,
-          tableSheet: tableSheetData.filter(data => data.trim() !== ''),
+          tableSheet: tableSheetData,
         }));
       };
 

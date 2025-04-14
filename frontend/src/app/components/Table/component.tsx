@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { tableSheetData } from "../../../../types/productManager";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -7,9 +8,10 @@ interface TableProps {
     variableData: [];
     variableClassSheet: string[];
     originAssignment: (key: string) => void;
-    submitVariableData: (object: string[]) => void;
+    submitVariableData: (object: tableSheetData[]) => void;
 }
 
+// TODO: will have to refactor this component to accept object of tableSheetData
 const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originAssignment, submitVariableData }) => {
     const [localClassKeyInput, setLocalClassKeyInput] = useState<string>('');
     const [addedClassKeys, setAddedClassKeys] = useState<string[]>([]);
@@ -39,7 +41,6 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                         if (rows.length > 0) {
                             const classKeys = rows[0].split(',').map(key => key.trim());
                             setAddedClassKeys(classKeys);
-                            submitVariableData(classKeys);
                             setLocalClassKeyInput('');
                         } else {
                             toast.error('The uploaded CSV file is empty or invalid.');
@@ -126,7 +127,6 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                                         return;
                                     }
                                     setAddedClassKeys([...addedClassKeys, localClassKeyInput]);
-                                    submitVariableData([...addedClassKeys, localClassKeyInput]);
                                     console.log('Local Class Key:', localClassKeyInput);
                                     setLocalClassKeyInput('');
                                 }}
@@ -138,7 +138,6 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                                 type="button"
                                 onClick={() => {
                                     setAddedClassKeys([]);
-                                    submitVariableData(['']);
                                 }}
                                 className={styles.deleteButton}
                             >

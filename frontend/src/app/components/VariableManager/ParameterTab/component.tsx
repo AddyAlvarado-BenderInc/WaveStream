@@ -510,7 +510,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                     </div>
                 )}
                 {openNameModal && (
-                    <>
+                    <div className='modalContent'>
                         <h2>Parameterization Details</h2>
                         <div>{displayOnlyType(value)}</div>
                         <h3>{localVariableName}</h3>
@@ -560,7 +560,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                 </div>
                             )}
                         </div>
-                    </>
+                    </div>
                 )}
                 {showParameterModal && (
                     <ParameterModal

@@ -1,4 +1,4 @@
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   .page {
     --gray-rgb: 255, 255, 255;
     --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
@@ -9,7 +9,7 @@
   }
 }
 
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   .page {
     --gray-rgb: 255, 255, 255;
     --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
@@ -140,6 +140,10 @@
   align-items: center;
 }
 
+.name-modal h1 {
+  color: var(--button-secondary-hover);
+}
+
 .name-modal input {
   width: 100%;
   padding: 10px;
@@ -165,6 +169,10 @@
 
 .name-modal button:hover {
   background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.modal-content {
   color: var(--button-secondary-hover);
 }
 
