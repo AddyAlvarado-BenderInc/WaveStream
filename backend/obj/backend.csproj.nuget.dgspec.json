@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/backend.csproj": {}
+    "C:\\Users\\mardo\\OneDrive\\Desktop\\product-management-app\\product-management-app-1\\backend\\backend.csproj": {}
   },
   "projects": {
-    "/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/backend.csproj": {
+    "C:\\Users\\mardo\\OneDrive\\Desktop\\product-management-app\\product-management-app-1\\backend\\backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/backend.csproj",
+        "projectUniqueName": "C:\\Users\\mardo\\OneDrive\\Desktop\\product-management-app\\product-management-app-1\\backend\\backend.csproj",
         "projectName": "backend",
-        "projectPath": "/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/backend.csproj",
-        "packagesPath": "/Users/pre-press2/.nuget/packages/",
-        "outputPath": "/Users/pre-press2/Desktop/EnTo Developer Ver/ento_product_manager/waveKey/backend/obj/",
+        "projectPath": "C:\\Users\\mardo\\OneDrive\\Desktop\\product-management-app\\product-management-app-1\\backend\\backend.csproj",
+        "packagesPath": "C:\\Users\\mardo\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\mardo\\OneDrive\\Desktop\\product-management-app\\product-management-app-1\\backend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/pre-press2/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\mardo\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -88,7 +88,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.202/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.202/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

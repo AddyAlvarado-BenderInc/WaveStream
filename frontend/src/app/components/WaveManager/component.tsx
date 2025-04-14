@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/app/store/store';
 import { updateProductManager } from "../../store/productManagerSlice";
-import { ProductManager, IconData } from '../../../../types/productManager';
+import { ProductManager, IconData, tableSheetData } from '../../../../types/productManager';
 import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import VariableManager from '../VariableManager/component';
 import { BASE_URL } from '../../config';
@@ -37,9 +37,13 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         newFiles: [] as File[]
     });
     const [variableData, setVariableData] = useState({
-        tableSheet: productManager.tableSheet || [],
+        tableSheet: (productManager.tableSheet || []).map((data: tableSheetData) => ({
+            index: data.index,
+            value: data.value,
+            isOrigin: data.isOrigin,
+        })),    
         variableClass: productManager.variableClass || [],
-        mainKeyString: productManager.mainKeyString || [''],
+        mainKeyString: productManager.mainKeyString || [],
     });
 
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
@@ -60,22 +64,24 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     }
                 }
             });
-            
-            Object.entries(variableData.tableSheet).forEach(([key, value]) => {
-                if (key === 'variable' || key === 'name' || key == 'value') return;
-                
-                if (value !== null && value !== undefined) {
-                    if (Array.isArray(value)) {
-                        formDataPayload.append(key, JSON.stringify(value));
-                    } else {
-                        formDataPayload.append(key, value);
-                    }
-                }
-            })
-            
+
+            // TODO: We'll need to refactor this to accept object of tableSheetData
+            // if (Array.isArray(variableData.tableSheet) && variableData.tableSheet.length > 0) {
+            //     const validTableSheet = variableData.tableSheet.filter(data => data.trim() !== '');
+            //     formDataPayload.append('tableSheet', JSON.stringify(validTableSheet));
+            // } else {
+            //     formDataPayload.append('tableSheet', 'No Data');
+            // }
+
+            if (variableData.mainKeyString && variableData.mainKeyString.length > 0) {
+                formDataPayload.append('mainKeyString', JSON.stringify(variableData.mainKeyString));
+            } else {
+                formDataPayload.append('mainKeyString', 'No Data');
+            }
+
             variableData.variableClass.forEach(([key, value]) => {
                 if (key === 'variable' || key === 'name' || key == 'value') return;
-                
+
                 if (value !== null && value !== undefined) {
                     if (Array.isArray(value)) {
                         formDataPayload.append(key, JSON.stringify(value));
@@ -84,6 +90,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     }
                 }
             })
+
 
             iconData.icon.forEach(icon => {
                 formDataPayload.append('icons', icon.filename);
@@ -92,8 +99,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             iconData.newFiles.forEach(file => {
                 formDataPayload.append('files', file);
             });
-
-            formDataPayload.append('mainKeyString', JSON.stringify(variableData.mainKeyString));
 
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
 
@@ -124,9 +129,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     tableSheet: updatedProduct.tableSheet || prev.tableSheet,
                     variableClass: updatedProduct.variableClass || prev.variableClass,
                     mainKeyString: updatedProduct.mainKeyString || prev.mainKeyString,
-                }));                
+                }));
 
                 dispatch(updateProductManager(updatedProduct));
+                console.log('Product saved successfully!', updatedProduct);
                 toast.success('Product saved successfully!', {
                     position: 'bottom-right',
                     autoClose: 5000,
@@ -160,7 +166,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             try {
                 const response = await fetch(
                     `${BASE_URL}/api/productManager/${productManager.productType}/${productManager._id}`,
-                    { signal: controller.signal }    
+                    { signal: controller.signal }
                 );
                 if (response.ok) {
                     const data = await response.json();
@@ -186,9 +192,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         newFiles: []
                     });
                     setVariableData({
-                        tableSheet: data.tableSheet || [],
+                        tableSheet: data.tablehheet || [],
                         variableClass: data.variableClass || [],
-                        mainKeyString: data.mainKeyString || [''],
+                        mainKeyString: data.mainKeyString || [],
                     });
                 } else {
                     console.error('Failed to fetch product manager data');
@@ -206,8 +212,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         fetchProductManager();
     }, [productManager.productType, productManager._id]);
 
-    // console.log("Main key string load: ", JSON.stringify(variableData.mainKeyString));
-
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -216,14 +220,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         className={styles.propertyInterfacesButton}
                         onClick={() => setShowPropertyInterfaces(!showPropertyInterfaces)}
                     >
-                        {showPropertyInterfaces ? 'Close Property Interfaces' : 'Open Property Interfaces'}
+                        {showPropertyInterfaces ? 'Close Property Interface' : 'Open Property Interface'}
                     </button>
                     <button className={styles.saveButton} onClick={handleSave}>
                         Save
                     </button>
                 </div>
             </div>
-            <VariableManager 
+            <VariableManager
                 variableData={variableData}
                 setVariableData={setVariableData}
             />

@@ -12,7 +12,7 @@ import Table from '../Table/component';
 import styles from './component.module.css';
 
 interface VariableDataState {
-    tableSheet: object;
+    tableSheet: string[];
     variableClass: string[];
     mainKeyString: [string, any][];
 }
@@ -37,6 +37,13 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
         setParameterizationData(variableClasses);
         setParameterizationOpen(true);
     };
+
+    const handleSubmitTableData = (tableSheetData: string[]) => {
+        setVariableData((prevState) => ({
+          ...prevState,
+          tableSheet: tableSheetData.filter(data => data.trim() !== ''),
+        }));
+      };
 
     const handleOriginAssignment = (key: string) => {
         if (originAssignment !== key) {
@@ -127,16 +134,16 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                                 <div key={variableClassKey} className={styles.variableClassRow}>
                                     <div className={styles.variableClassContent}>
                                         {displayVariableClass(variableClassValue)}
-                                    <button
-                                        className={styles.deleteButton}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            handleDeleteVariableClass(index);
-                                        }}
-                                        title={`Delete ${variableClassKey}`}
+                                        <button
+                                            className={styles.deleteButton}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleDeleteVariableClass(index);
+                                            }}
+                                            title={`Delete ${variableClassKey}`}
                                         >
-                                        Delete
-                                    </button>
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
                             ))}
@@ -168,6 +175,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                     variableData={variableData}
                     variableClassSheet={variableClassSheet}
                     originAssignment={handleOriginAssignment}
+                    submitVariableData={handleSubmitTableData}
                 />
             </div>
         </>

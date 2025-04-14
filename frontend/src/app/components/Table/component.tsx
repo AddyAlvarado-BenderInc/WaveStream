@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
 interface TableProps {
-    variableData: string[];
+    variableData: [];
     variableClassSheet: string[];
     originAssignment: (key: string) => void;
+    submitVariableData: (object: string[]) => void;
 }
 
-const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originAssignment }) => {
+const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originAssignment, submitVariableData }) => {
     const [localClassKeyInput, setLocalClassKeyInput] = useState<string>('');
     const [addedClassKeys, setAddedClassKeys] = useState<string[]>([]);
     const [headerOrigin, setHeaderOrigin] = useState("");
@@ -32,10 +33,14 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                 reader.onload = (event) => {
                     const csvData = event.target?.result;
                     if (csvData) {
-                        const rows = (csvData as string).split('\n').filter(row => row.trim());
+                        const rows = (csvData as string)
+                            .split('\n')
+                            .filter(row => row.trim());
                         if (rows.length > 0) {
                             const classKeys = rows[0].split(',').map(key => key.trim());
                             setAddedClassKeys(classKeys);
+                            submitVariableData(classKeys);
+                            setLocalClassKeyInput('');
                         } else {
                             toast.error('The uploaded CSV file is empty or invalid.');
                         }
@@ -121,6 +126,8 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                                         return;
                                     }
                                     setAddedClassKeys([...addedClassKeys, localClassKeyInput]);
+                                    submitVariableData([...addedClassKeys, localClassKeyInput]);
+                                    console.log('Local Class Key:', localClassKeyInput);
                                     setLocalClassKeyInput('');
                                 }}
                                 className={styles.addButton}
@@ -129,7 +136,10 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                             </button>
                             <button
                                 type="button"
-                                onClick={() => setAddedClassKeys([])}
+                                onClick={() => {
+                                    setAddedClassKeys([]);
+                                    submitVariableData(['']);
+                                }}
                                 className={styles.deleteButton}
                             >
                                 Delete All Class Keys
@@ -181,6 +191,7 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                         <tr>
                             {addedClassKeys.map((key, index) => (
                                 <ClassKey
+                                    variableData={variableData}
                                     key={index}
                                     input={key}
                                     onDelete={handleDeleteKey}
@@ -211,7 +222,8 @@ const ClassKey: React.FC<{
     originAssignment: (key: string) => void;
     permanentOrigin: string;
     headerOrigin: string;
-}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin }) => {
+    variableData: string[];
+}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin, variableData }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(input);
 
@@ -219,6 +231,18 @@ const ClassKey: React.FC<{
         e.preventDefault();
         onEdit(input, editValue);
         setIsEditing(false);
+    };
+
+    const handleVariableRows = () => {
+        if (!variableData.length) return null;
+
+        return variableData.map((row, index) => (
+            <tr key={index}>
+                {row.split(',').map((cell, idx) => (
+                    <th key={idx}>{cell.trim()}</th>
+                ))}
+            </tr>
+        ));
     };
 
     return (
@@ -252,7 +276,7 @@ const ClassKey: React.FC<{
                     </form>
                 ) : (
                     <>
-                        {input}
+                        {handleVariableRows() || input}
                         <div
                             className={styles.keyButtons}
                         >

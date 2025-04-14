@@ -3,6 +3,12 @@ export interface IconData {
     url: string;
 }
 
+export interface tableSheetData {
+    index: number;
+    value: string;
+    isOrigin: boolean;
+}
+
 export interface ProductManager {
     _id: string;
     name: string;
@@ -28,7 +34,7 @@ export interface ProductManager {
     runManager?: boolean;
     targetValue: string;
     [key: string]: any;
-    tableSheet: object;
+    tableSheet: tableSheetData[];
     variableClass: string[];
     mainKeyString: [string, any][];
 }

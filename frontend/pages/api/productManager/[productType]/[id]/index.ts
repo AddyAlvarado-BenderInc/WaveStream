@@ -109,7 +109,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 const allIcons = [...existingIcons, ...newIcons];
                 console.log('All icons:', allIcons);
+                
                 const formFields = req.body ? JSON.parse(JSON.stringify(req.body)) : {};
+                console.log("Form fields:", formFields);
 
                 const allowedFields = [
                     'itemName',

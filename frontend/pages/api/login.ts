@@ -16,9 +16,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       .json({ message: `Method ${req.method} Not Allowed` });
   }
 
+  //TODO: uncomment on production
   const { username, password } = req.body;
-  const loginUsername = process.env.USERNAME;
-  const loginPassword = process.env.PASSWORD;
+  // const loginUsername = process.env.USERNAME;
+  // const loginPassword = process.env.PASSWORD;
+  const loginUsername = "admin";
+  const loginPassword = "password123";
 
   console.log("Login request payload:", { username, password });
 
