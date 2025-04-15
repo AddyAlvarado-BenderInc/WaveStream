@@ -3,12 +3,18 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/app/store/store';
 import { updateProductManager } from "../../store/productManagerSlice";
 import { ProductManager, IconData, tableSheetData } from '../../../../types/productManager';
-import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import VariableManager from '../VariableManager/component';
+import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import { BASE_URL } from '../../config';
 import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+
+interface VariableDataState {
+    tableSheet: tableSheetData[];
+    variableClass: string[];
+    mainKeyString: [string, any][];
+}
 
 interface WaveManagerProps {
     productManager: ProductManager;
@@ -36,39 +42,26 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         })),
         newFiles: [] as File[]
     });
-    const [variableData, setVariableData] = useState({
+    const [variableData, setVariableData] = useState<VariableDataState>({
         tableSheet: Array.isArray(productManager.tableSheet)
-            ? productManager.tableSheet.map((data: tableSheetData) => ({
-                  index: data.index,
-                  value: data.value,
-                  isOrigin: data.isOrigin,
+            ? productManager.tableSheet.map((value, index) => ({
+                  index,
+                  value: value.value,
+                  isOrigin: false,
               }))
-            : (Object.values(productManager.tableSheet || {}) as tableSheetData[]).map((data) => ({
-                  index: data.index,
-                  value: data.value,
-                  isOrigin: data.isOrigin,
-              })),
+            : [],
         variableClass: productManager.variableClass || [],
         mainKeyString: productManager.mainKeyString || [],
     });
-    
-    const isValidTableSheetData = (data: any): data is tableSheetData =>
-        typeof data.index === "number" &&
-        typeof data.value === "string" &&
-        typeof data.isOrigin === "boolean";
-    
-    const tableSheetDataArray = Object.values(productManager.tableSheet || {}).filter(isValidTableSheetData);    
-
-    const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
     const handleSave = async () => {
         try {
             const { productType, _id } = productManager;
             const formDataPayload = new FormData();
-
+    
             Object.entries(formData).forEach(([key, value]) => {
                 if (key === 'icon' || key === 'newFiles' || key === 'iconPreview') return;
-
+    
                 if (value !== null && value !== undefined) {
                     if (Array.isArray(value)) {
                         formDataPayload.append(key, JSON.stringify(value));
@@ -77,24 +70,24 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     }
                 }
             });
-
-            // TODO: We'll need to refactor this to accept object of tableSheetData
-            // if (Array.isArray(variableData.tableSheet) && variableData.tableSheet.length > 0) {
-            //     const validTableSheet = variableData.tableSheet.filter(data => data.trim() !== '');
-            //     formDataPayload.append('tableSheet', JSON.stringify(validTableSheet));
-            // } else {
-            //     formDataPayload.append('tableSheet', 'No Data');
-            // }
-
+    
+            if (Array.isArray(variableData.tableSheet) && variableData.tableSheet.length > 0) {
+                variableData.tableSheet.forEach((item) => {
+                    formDataPayload.append('tableSheet', item.index.toString());
+                    formDataPayload.append('tableSheet', item.value);
+                    formDataPayload.append('tableSheet', item.isOrigin.valueOf().toString());
+                });
+            };
+    
             if (variableData.mainKeyString && variableData.mainKeyString.length > 0) {
                 formDataPayload.append('mainKeyString', JSON.stringify(variableData.mainKeyString));
             } else {
-                formDataPayload.append('mainKeyString', 'No Data');
+                formDataPayload.append('mainKeyString', JSON.stringify([]));
             }
-
+    
             variableData.variableClass.forEach(([key, value]) => {
-                if (key === 'variable' || key === 'name' || key == 'value') return;
-
+                if (key === 'variable' || key === 'name' || key === 'value') return;
+    
                 if (value !== null && value !== undefined) {
                     if (Array.isArray(value)) {
                         formDataPayload.append(key, JSON.stringify(value));
@@ -102,128 +95,71 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         formDataPayload.append(key, value);
                     }
                 }
-            })
-
-
+            });
+    
             iconData.icon.forEach(icon => {
                 formDataPayload.append('icons', icon.filename);
             });
-
+    
             iconData.newFiles.forEach(file => {
                 formDataPayload.append('files', file);
             });
-
+    
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
-
+    
             const response = await fetch(`/api/productManager/${productType}/${_id}`, {
                 method: 'PATCH',
                 body: formDataPayload,
             });
-
+    
             if (response.ok) {
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
-
+    
                 setFormData((prev) => ({
                     ...prev,
                     ...updatedProduct,
                     iconPreview: updatedProduct.icon,
                 }));
-
+    
                 setIconData((prev) => ({
                     ...prev,
                     icon: updatedProduct.icon,
                     iconPreview: updatedProduct.icon,
                     newFiles: []
                 }));
-
+    
                 setVariableData((prev) => ({
                     ...prev,
-                    tableSheet: tableSheetDataArray,
+                    tableSheet: Array.isArray(updatedProduct.tableSheet)
+                        ? updatedProduct.tableSheet.map((value: string, index: number) => ({
+                              index,
+                              value: value,
+                              isOrigin: false,
+                          }))
+                        : prev.tableSheet,
                     variableClass: updatedProduct.variableClass || prev.variableClass,
                     mainKeyString: updatedProduct.mainKeyString || prev.mainKeyString,
                 }));
-
+    
                 dispatch(updateProductManager(updatedProduct));
-                console.log('Product saved successfully!', updatedProduct);
                 toast.success('Product saved successfully!', {
                     position: 'bottom-right',
                     autoClose: 5000,
-                    hideProgressBar: true,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: false,
-                    progress: undefined,
                 });
             } else {
                 const error = await response.json();
                 toast.error(`Error saving product: ${error.message}`, {
                     position: 'bottom-right',
                     autoClose: 5000,
-                    hideProgressBar: true,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: false,
-                    progress: undefined,
                 });
             }
         } catch (error) {
-            console.error('Error saving product:', error);
             toast.error('Failed to save the product. Please try again.');
         }
     };
 
-    useEffect(() => {
-        const fetchProductManager = async () => {
-            const controller = new AbortController();
-            try {
-                const response = await fetch(
-                    `${BASE_URL}/api/productManager/${productManager.productType}/${productManager._id}`,
-                    { signal: controller.signal }
-                );
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Fetched Product Manager:', data);
-                    const icons = Array.isArray(data.icon)
-                        ? data.icon.map((filename: string) =>
-                            `${BASE_URL}/api/files/${encodeURIComponent(filename)}`
-                        )
-                        : [];
-
-                    setFormData({
-                        itemName: data.itemName || '',
-                        productId: data.productId || '',
-                        description: data.description || '',
-                        initialJS: data.initialJS || '',
-                        initialCSS: data.initialCSS || '',
-                        initialHTML: data.initialHTML || '',
-                        label: data.label || '',
-                    });
-                    setIconData({
-                        iconPreview: icons,
-                        icon: data.icon || [],
-                        newFiles: []
-                    });
-                    setVariableData({
-                        tableSheet: data.tablehheet || [],
-                        variableClass: data.variableClass || [],
-                        mainKeyString: data.mainKeyString || [],
-                    });
-                } else {
-                    console.error('Failed to fetch product manager data');
-                }
-            } catch (error) {
-                if (controller.signal.aborted) {
-                    console.log('Fetch aborted');
-                } else {
-                    console.error('Error fetching product manager:', error);
-                }
-            }
-            return () => controller.abort();
-        };
-
-        fetchProductManager();
-    }, [productManager.productType, productManager._id]);
+    const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
     return (
         <div className={styles.container}>
@@ -241,22 +177,19 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 </div>
             </div>
             <VariableManager
+                productManager={productManager}
                 variableData={variableData}
                 setVariableData={setVariableData}
             />
             {showPropertyInterfaces && (
                 <div className={styles.propertyInterfacesContainer}>
-                    {showPropertyInterfaces && (
-                        <div className={styles.propertyInterfacesContainer}>
-                            <PropertyInterfaceTable
-                                productManager={productManager}
-                                formData={formData}
-                                setFormData={setFormData}
-                                iconData={iconData}
-                                setIconData={setIconData}
-                            />
-                        </div>
-                    )}
+                    <PropertyInterfaceTable
+                        productManager={productManager}
+                        formData={formData}
+                        setFormData={setFormData}
+                        iconData={iconData}
+                        setIconData={setIconData}
+                    />
                 </div>
             )}
             <div className={styles.divider} />

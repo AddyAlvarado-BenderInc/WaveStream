@@ -1,26 +1,39 @@
-import { useState, useEffect } from "react";
-import { tableSheetData } from "../../../../types/productManager";
+import { useState } from "react";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
-interface TableProps {
-    variableData: [];
-    variableClassSheet: string[];
-    originAssignment: (key: string) => void;
-    submitVariableData: (object: tableSheetData[]) => void;
+interface tableSheetData {
+    index: number;
+    value: string;
+    isOrigin: boolean;
 }
 
-// TODO: will have to refactor this component to accept object of tableSheetData
-const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originAssignment, submitVariableData }) => {
+interface TableProps {
+    productManagerID: any;
+    variableData: tableSheetData[];
+    originAssignment: (key: string) => void;
+    submitVariableData: (values: tableSheetData[]) => void;
+}
+
+const Table: React.FC<TableProps> = ({ productManagerID, variableData, originAssignment, submitVariableData }) => {
     const [localClassKeyInput, setLocalClassKeyInput] = useState<string>('');
-    const [addedClassKeys, setAddedClassKeys] = useState<string[]>([]);
-    const [headerOrigin, setHeaderOrigin] = useState("");
-    const [permanentOrigin, setPermanentOrigin] = useState("");
+    const [addedClassKeys, setAddedClassKeys] = useState<tableSheetData[]>([]);
+    const [headerOrigin, setHeaderOrigin] = useState<string>("");
+    const [permanentOrigin, setPermanentOrigin] = useState<string>("");
+
+    const classKeyInputObjects = addedClassKeys.length > 0 ? addedClassKeys : variableData;
+    console.log("Class Key Input Objects:", classKeyInputObjects);
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setLocalClassKeyInput(event.target.value);
     };
+
+    const duplicate = classKeyInputObjects.some(keyObj => keyObj.value === localClassKeyInput.trim());
+    if (duplicate) {
+        toast.error('Class key already exists');
+        return;
+    }
 
     const handleImportHeaderSheet = async () => {
         try {
@@ -35,12 +48,15 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                 reader.onload = (event) => {
                     const csvData = event.target?.result;
                     if (csvData) {
-                        const rows = (csvData as string)
-                            .split('\n')
-                            .filter(row => row.trim());
+                        const rows = (csvData as string).split('\n').filter(row => row.trim());
                         if (rows.length > 0) {
-                            const classKeys = rows[0].split(',').map(key => key.trim());
-                            setAddedClassKeys(classKeys);
+                            const classKeyObjects = rows[0].split(',').map((key, idx) => ({
+                                index: idx,
+                                value: key.trim(),
+                                isOrigin: false,
+                            }));
+                            setAddedClassKeys(classKeyObjects);
+                            submitVariableData(classKeyObjects);
                             setLocalClassKeyInput('');
                         } else {
                             toast.error('The uploaded CSV file is empty or invalid.');
@@ -60,7 +76,6 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
         if (permanentOrigin) {
             return null;
         }
-
         if (headerOrigin !== key) {
             setHeaderOrigin(key);
         }
@@ -73,32 +88,67 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
             );
             if (confirmation) {
                 setPermanentOrigin(key);
+                const updatedKeys = classKeyInputObjects.map((entry) =>
+                    entry.value === key ? { ...entry, isOrigin: true } : { ...entry, isOrigin: false }
+                );
+                submitVariableData(updatedKeys);
                 originAssignment(key);
+                setAddedClassKeys(updatedKeys);
             }
         }
     };
 
-    const handleDeleteKey = (key: string) => {
-        setAddedClassKeys(addedClassKeys.filter(k => k !== key));
+    const handleDeleteKey = async (classKey: string) => {
+        const updatedKeys = classKeyInputObjects.filter(k => k.value !== classKey);
+
+        try {
+            const response = await fetch(`/api/productManager/${productManagerID.productType}/${productManagerID._id}?field=${encodeURIComponent(classKey)}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                setAddedClassKeys(updatedKeys);
+            } else {
+                const errorData = await response.json();
+                toast.error(`Error deleting class key: ${errorData.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting class key:', error);
+            toast.error('Error deleting class key');
+        }
+    };
+
+    const handleDeleteAllKeys = async () => {
+        try {
+            const response = await fetch(`/api/productManager/${productManagerID.productType}/${productManagerID._id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                setAddedClassKeys([]);
+                setHeaderOrigin("");
+            } else {
+                const errorData = await response.json();
+                toast.error(`Error deleting all class keys: ${errorData.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error deleting all class keys:', error);
+            toast.error('Error deleting all class keys');
+        }
     };
 
     const handleEditKey = (key: string, newValue: string) => {
-        setAddedClassKeys((prevKeys) =>
-            prevKeys.map((k) => (k === key ? newValue : k))
+        const updatedKeys = classKeyInputObjects.map((entry) =>
+            entry.value === key ? { ...entry, value: newValue } : entry
         );
-    };
-
-    // TODO: Will have variable sheet data entered here
-    const handleVariableRows = (row: string[]) => {
-        if (row.length === 0) {
-            return null;
-        }
-        const filteredMap = row.map(([key, value]) => {
-
-        })
-        return (
-            <td></td>
-        )
+        setAddedClassKeys(updatedKeys);
+        submitVariableData(updatedKeys);
     };
 
     return (
@@ -126,8 +176,14 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                                         toast.error('Please enter a valid class key');
                                         return;
                                     }
-                                    setAddedClassKeys([...addedClassKeys, localClassKeyInput]);
-                                    console.log('Local Class Key:', localClassKeyInput);
+                                    const newKey: tableSheetData = {
+                                        index: classKeyInputObjects.length,
+                                        value: localClassKeyInput.trim(),
+                                        isOrigin: false,
+                                    };
+                                    const updatedKeys = [...classKeyInputObjects, newKey];
+                                    setAddedClassKeys(updatedKeys);
+                                    submitVariableData(updatedKeys);
                                     setLocalClassKeyInput('');
                                 }}
                                 className={styles.addButton}
@@ -138,6 +194,8 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                                 type="button"
                                 onClick={() => {
                                     setAddedClassKeys([]);
+                                    submitVariableData([]);
+                                    // handleDeleteAllKeys();
                                 }}
                                 className={styles.deleteButton}
                             >
@@ -188,17 +246,18 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            {addedClassKeys.map((key, index) => (
-                                <ClassKey
-                                    variableData={variableData}
-                                    key={index}
-                                    input={key}
-                                    onDelete={handleDeleteKey}
-                                    onEdit={handleEditKey}
-                                    originAssignment={handleHeaderOrigin}
-                                    permanentOrigin={permanentOrigin}
-                                    headerOrigin={headerOrigin}
-                                />
+                            {classKeyInputObjects.map((keyObj) => (
+                                <>
+                                    <ClassKey
+                                        key={keyObj.index}
+                                        input={keyObj.value}
+                                        onDelete={handleDeleteKey}
+                                        onEdit={handleEditKey}
+                                        originAssignment={handleHeaderOrigin}
+                                        permanentOrigin={permanentOrigin}
+                                        headerOrigin={headerOrigin}
+                                    />
+                                </>
                             ))}
                         </tr>
                     </thead>
@@ -206,7 +265,7 @@ const Table: React.FC<TableProps> = ({ variableData, variableClassSheet, originA
                     </tbody>
                 </table>
             </div>
-            {addedClassKeys.length === 0 && (
+            {classKeyInputObjects.length === 0 && (
                 <em>No Data Found</em>
             )}
             <ToastContainer />
@@ -221,8 +280,7 @@ const ClassKey: React.FC<{
     originAssignment: (key: string) => void;
     permanentOrigin: string;
     headerOrigin: string;
-    variableData: string[];
-}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin, variableData }) => {
+}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(input);
 
@@ -230,18 +288,6 @@ const ClassKey: React.FC<{
         e.preventDefault();
         onEdit(input, editValue);
         setIsEditing(false);
-    };
-
-    const handleVariableRows = () => {
-        if (!variableData.length) return null;
-
-        return variableData.map((row, index) => (
-            <tr key={index}>
-                {row.split(',').map((cell, idx) => (
-                    <th key={idx}>{cell.trim()}</th>
-                ))}
-            </tr>
-        ));
     };
 
     return (
@@ -255,7 +301,7 @@ const ClassKey: React.FC<{
             {
                 headerOrigin === input ?
                     <div className={styles.headerOriginDisplay}>
-                        {headerOrigin.replace(headerOrigin, "ORIGIN")}
+                        ORIGIN
                     </div>
                     : ''}
             <div className={styles.classKeyContainer}>
@@ -275,10 +321,8 @@ const ClassKey: React.FC<{
                     </form>
                 ) : (
                     <>
-                        {handleVariableRows() || input}
-                        <div
-                            className={styles.keyButtons}
-                        >
+                        <span>{input}</span>
+                        <div className={styles.keyButtons}>
                             {!permanentOrigin ? (
                                 <button
                                     onClick={(e) => {
@@ -293,7 +337,7 @@ const ClassKey: React.FC<{
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onDelete(input)
+                                    onDelete(input);
                                 }}
                                 className={styles.deleteKeyButton}
                             >

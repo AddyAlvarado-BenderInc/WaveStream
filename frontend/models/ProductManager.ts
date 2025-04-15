@@ -53,7 +53,14 @@ const ProductManagerSchema = new mongoose.Schema({
 },
   iconPreview: { type: [String], default: [] },
   label: { type: String, default: '' },
-  tableSheet: { type: Object, default: []},
+  tableSheet: { 
+    type: [Object], 
+    default: [],
+    validate: {
+        validator: (value: object[]) => value.every(v => typeof v === 'object'),
+        message: 'Invalid tableSheet format'
+    }
+  },
   mainKeyString: { type: [String], default: [] },
 });
 

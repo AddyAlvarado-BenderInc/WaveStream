@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Providers } from "./providers";
-import store from "@/store/store";
 import AuthProvider from "./auth";
 import "./globals.css";
 

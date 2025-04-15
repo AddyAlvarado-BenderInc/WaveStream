@@ -19,16 +19,15 @@ interface VariableDataState {
 }
 
 interface VariableManagerProps {
-    variableData: any;
+    productManager: any;
+    variableData: VariableDataState;
     setVariableData: React.Dispatch<React.SetStateAction<VariableDataState>>;
 }
 
-const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVariableData }) => {
+const VariableManager: React.FC<VariableManagerProps> = ({ productManager, variableData, setVariableData }) => {
     const [parameterizationOpen, setParameterizationOpen] = useState(false);
     const [parameterizationData, setParameterizationData] = useState<object | null>(null);
-    const [variableClassSheet, setVariableClassSheet] = useState<string[]>([]);
     const [originAssignment, setOriginAssignment] = useState("");
-    const [variableOriginAssignment, setVariableOriginAssignment] = useState("");
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
 
     const dispatch = useDispatch();
@@ -62,11 +61,15 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
             mainKeyString: data.mainKeyString ?? prevState.mainKeyString,
         }));
     };
-
+    
     const handleSendToSheet = (object: Record<string, any>) => {
 
     }
 
+    const handleMakeVariableClassOrigin = () => {
+
+    }
+    
     const handleDeleteVariableClass = (id: number) => {
         dispatch(deleteVariableClassArray(id));
     };
@@ -75,11 +78,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
         dispatch(clearAllVariableClassArray());
     };
 
-    const handleMakeVariableClassOrigin = () => {
-
-    }
-
-    // This function is used to update the variable class array in the Redux store but it needs to reopen the parameterization tab
+    
     const handleEditVariableClass = (name: string, id: number, variableData: string[]) => {
         dispatch(updateVariableClassArray({ name, index: id, variableData }));
     }
@@ -173,8 +172,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
             )}
             <div className={styles.tableContainer}>
                 <Table
-                    variableData={variableData}
-                    variableClassSheet={variableClassSheet}
+                    productManagerID={productManager}
+                    variableData={variableData.tableSheet}
                     originAssignment={handleOriginAssignment}
                     submitVariableData={handleSubmitTableData}
                 />
