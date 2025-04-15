@@ -141,7 +141,7 @@
 }
 
 .name-modal h1 {
-  color: var(--button-secondary-hover);
+  color: var(--button-primary-hover);
 }
 
 .name-modal input {
@@ -173,7 +173,7 @@
 }
 
 .modal-content {
-  color: var(--button-secondary-hover);
+  color: invert;
 }
 
 .parameterization-details {

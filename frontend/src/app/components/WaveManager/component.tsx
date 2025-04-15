@@ -9,6 +9,7 @@ import { BASE_URL } from '../../config';
 import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { set } from 'mongoose';
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
@@ -22,6 +23,7 @@ interface WaveManagerProps {
 
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
+    const [noInitialData, setNoInitialData] = useState(false);
     const [formData, setFormData] = useState({
         itemName: productManager.itemName || '',
         productId: productManager.productId || '',
@@ -77,7 +79,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     formDataPayload.append('tableSheet', item.value);
                     formDataPayload.append('tableSheet', item.isOrigin.valueOf().toString());
                 });
-            };
+            } else { 
+                toast.error('Cannot Save Data without Initializing TableSheet');
+                setNoInitialData(true);
+            }
     
             if (variableData.mainKeyString && variableData.mainKeyString.length > 0) {
                 formDataPayload.append('mainKeyString', JSON.stringify(variableData.mainKeyString));
@@ -149,10 +154,15 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 });
             } else {
                 const error = await response.json();
-                toast.error(`Error saving product: ${error.message}`, {
-                    position: 'bottom-right',
-                    autoClose: 5000,
-                });
+                if (noInitialData) {
+                    setNoInitialData(false);
+                    return;
+                } else {
+                    toast.error(`Error saving product: ${error.message}`, {
+                        position: 'bottom-right',
+                        autoClose: 5000,
+                    });
+                }
             }
         } catch (error) {
             toast.error('Failed to save the product. Please try again.');

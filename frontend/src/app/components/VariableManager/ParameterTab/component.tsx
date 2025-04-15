@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import './style.css';
 
 interface VariableDataState {
-    mainKeyString: [string, any][];
+    mainKeyString: [string, any];
 }
 
 interface ParameterizationTabProps {
@@ -60,7 +60,6 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         const mainKeyString = Object.entries(object)
             .filter(([key, value]) => key !== 'task' && key !== 'type' && value);
         console.log('Main Key String: ', mainKeyString);
-        saveMainKeyString({ mainKeyString });
 
         const transformedParams = param.map((p) => ({
             id: p.id,
@@ -457,6 +456,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
 
         console.log("Generated Payload:", JSON.stringify(payload, null, 2));
         dispatch(addVariableClassArray(payload));
+        onClose();
     };
 
     const handleCreateName = (name: string) => {

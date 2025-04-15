@@ -81,46 +81,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         resolve(null);
                     });
                 });
-
+            
                 try {
+                    const query = productType ? { _id: id, productType } : { _id: id };
+                    const productManager = await ProductManager.findOne(query);
+            
+                    if (!productManager) {
+                        return res.status(404).json({ error: 'Product manager not found' });
+                    }
+            
                     const uploadedFiles = (req as any).files || [];
                     const existingIcons = Array.isArray(req.body.icons) ? req.body.icons : [];
-
-                    const tableSheetKeys: { index: number; value: string; isOrigin: boolean }[] = [];
-                    if (Array.isArray(req.body.tableSheet)) {
-                        for (let i = 0; i < req.body.tableSheet.length; i += 3) {
-                            const index = parseInt(req.body.tableSheet[i], 10);
-                            const value = req.body.tableSheet[i + 1];
-                            const isOrigin = req.body.tableSheet[i + 2] === 'true';
-
-                            if (!isNaN(index)) {
-                                tableSheetKeys.push({ index, value, isOrigin });
-                            }
-                        }
-                    } else {
-                        console.error('Invalid tableSheet format:', req.body.tableSheet);
-                        return res.status(400).json({ error: 'Invalid tableSheet format' });
-                    }
-
+            
                     const newIcons = await Promise.all(
                         uploadedFiles.map(async (file: Express.Multer.File) => {
                             const bucket = await getGridFSBucket();
                             const filename = file.originalname;
-
+            
                             const existingFiles = await bucket.find({
                                 filename,
                                 'metadata.productId': id,
                             }).toArray();
-
+            
                             if (existingFiles.length > 0) {
                                 await Promise.all(existingFiles.map((f) => bucket.delete(f._id)));
                             }
-
+            
                             const uploadStream = bucket.openUploadStream(filename, {
                                 contentType: file.mimetype,
                                 metadata: { productId: id },
                             });
-
+            
                             await new Promise<void>((resolve, reject) => {
                                 Readable.from(file.buffer)
                                     .pipe(uploadStream)
@@ -130,16 +121,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             return filename;
                         })
                     );
-
-                    console.log('Uploaded files count:', uploadedFiles.length);
-                    console.log('New icons:', newIcons);
-
+            
                     const allIcons = [...existingIcons, ...newIcons];
-                    console.log('All icons:', allIcons);
-
+                    
                     const formFields = req.body ? JSON.parse(JSON.stringify(req.body)) : {};
-                    console.log("Form fields:", formFields);
-
+                    
+                    let updateData: Record<string, any> = {};
+                    
                     const allowedFields = [
                         'itemName',
                         'displayAs',
@@ -157,21 +145,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         'runManager',
                         'variableClass',
                     ];
-
-                    for (let i = 0; i < req.body.tableSheet.length; i += 3) {
-                        tableSheetKeys.push({
-                            index: parseInt(req.body.tableSheet[i], 10),
-                            value: req.body.tableSheet[i + 1],
-                            isOrigin: req.body.tableSheet[i + 2] === 'true'
-                        });
-                    };
-
-                    const updatedTableSheet = tableSheetKeys.map((entry, index) => ({
-                        index: entry.index ?? index,
-                        value: entry.value || 'null',
-                        isOrigin: Boolean(entry.isOrigin),
-                    }));
-
+            
                     const sanitizedData = Object.keys(formFields).reduce((acc, key) => {
                         const value = formFields[key];
                         if (allowedFields.includes(key)) {
@@ -179,59 +153,176 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         }
                         return acc;
                     }, {} as Record<string, any>);
-
-                    const updateData = {
-                        ...sanitizedData,
-                        tableSheet: updatedTableSheet,
-                        icon: allIcons,
-                        iconPreview: allIcons.map(filename =>
-                            `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
-                        )
-                    };
-
+            
                     const { initialHTML = '', initialCSS = '', initialJS = '' } = sanitizedData;
                     if (initialHTML || initialCSS || initialJS) {
                         sanitizedData.description = `
-                        <html>
-                            <head>
-                                <style>${initialCSS}</style>
-                            </head>
-                            <body>
-                                ${initialHTML}
-                                <script>${initialJS}</script>
-                            </body>
-                        </html>
-                    `.trim();
+                            <html>
+                                <head>
+                                    <style>${initialCSS}</style>
+                                </head>
+                                <body>
+                                    ${initialHTML}
+                                    <script>${initialJS}</script>
+                                </body>
+                            </html>
+                        `.trim();
                     }
-
-                    if (!Object.keys(sanitizedData).length) {
+            
+                    if (Object.keys(sanitizedData).length > 0) {
+                        updateData = { ...updateData, ...sanitizedData };
+                    }
+            
+                    if (allIcons.length > 0 || uploadedFiles.length > 0) {
+                        updateData.icon = allIcons;
+                        updateData.iconPreview = allIcons.map(filename =>
+                            `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                        );
+                    }
+            
+                    if (Array.isArray(req.body.tableSheet) && req.body.tableSheet.length > 0) {
+                        const tableSheetKeys: { index: number; value: string; isOrigin: boolean }[] = [];
+                        
+                        for (let i = 0; i < req.body.tableSheet.length; i += 3) {
+                            const index = parseInt(req.body.tableSheet[i], 10);
+                            const value = req.body.tableSheet[i + 1];
+                            const isOrigin = req.body.tableSheet[i + 2] === 'true';
+            
+                            if (!isNaN(index)) {
+                                tableSheetKeys.push({ index, value, isOrigin });
+                            }
+                        }
+            
+                        const existingTableSheet = productManager.tableSheet || [];
+                        const newOriginKey = tableSheetKeys.find((key: any) => key.isOrigin === true);
+                        const existingOriginKey = existingTableSheet.find((key: any) => key.isOrigin === true);
+            
+                        const keysToDelete = existingTableSheet.filter((dbKey: any) => {
+                            return !tableSheetKeys.some((frontendKey: any) => frontendKey.value === dbKey.value);
+                        });
+            
+                        const keysToAdd = tableSheetKeys.filter((frontendKey: any) => {
+                            return !existingTableSheet.some((dbKey: any) => dbKey.value === frontendKey.value);
+                        });
+            
+                        const keysToUpdate = tableSheetKeys.filter((frontendKey: any) => {
+                            const matchingDbKey = existingTableSheet.find((dbKey: any) => dbKey.value === frontendKey.value);
+                            if (matchingDbKey) {
+                                const indexChanged = matchingDbKey.index !== frontendKey.index;
+            
+                                const originChanged =
+                                    (frontendKey.isOrigin === true && matchingDbKey.isOrigin !== true) ||
+                                    (frontendKey.isOrigin === false && matchingDbKey.isOrigin === true);
+            
+                                return indexChanged || originChanged;
+                            }
+                            return false;
+                        });
+            
+                        let originHasChanged = false;
+            
+                        if (newOriginKey) {
+                            if (!existingOriginKey) {
+                                console.log(`New origin assigned: ${newOriginKey.value}`);
+                                originHasChanged = true;
+                            } else if (existingOriginKey.value !== newOriginKey.value) {
+                                console.log(`Origin changed from ${existingOriginKey.value} to ${newOriginKey.value}`);
+                                originHasChanged = true;
+                            }
+                        } else if (existingOriginKey) {
+                            console.log(`Origin removed: ${existingOriginKey.value}`);
+                            originHasChanged = true;
+                        }
+            
+                        if (keysToDelete.length > 0 || keysToAdd.length > 0 || keysToUpdate.length > 0 || originHasChanged) {
+                            let finalTableSheet = [];
+            
+                            if (originHasChanged) {
+                                const existingKeysToKeep = existingTableSheet
+                                    .filter((dbKey: any) => !keysToDelete.some((key: any) => key.value === dbKey.value))
+                                    .map((dbKey: any) => ({
+                                        ...dbKey,
+                                        isOrigin: false
+                                    }));
+            
+                                const newAndUpdatedKeys = [...keysToAdd, ...keysToUpdate];
+            
+                                finalTableSheet = [...existingKeysToKeep, ...newAndUpdatedKeys];
+            
+                                if (newOriginKey) {
+                                    finalTableSheet = finalTableSheet.map((key: any) =>
+                                        key.value === newOriginKey.value
+                                            ? { ...key, isOrigin: true }
+                                            : { ...key, isOrigin: false }
+                                    );
+                                }
+                            } else {
+                                finalTableSheet = [
+                                    ...existingTableSheet.filter((dbKey: any) =>
+                                        !keysToDelete.some((key: any) => key.value === dbKey.value) &&
+                                        !keysToUpdate.some((key: any) => key.value === dbKey.value)
+                                    ),
+                                    ...keysToAdd,
+                                    ...keysToUpdate.map((frontendKey: any) => {
+                                        const dbKey = existingTableSheet.find((key: any) => key.value === frontendKey.value);
+                                        return {
+                                            index: frontendKey.index,
+                                            value: frontendKey.value,
+                                            isOrigin: frontendKey.isOrigin
+                                        };
+                                    })
+                                ];
+                            }
+            
+                            const uniqueValues = new Set();
+                            const uniqueTableSheet = finalTableSheet.filter((key: any) => {
+                                if (uniqueValues.has(key.value)) {
+                                    return false;
+                                }
+                                uniqueValues.add(key.value);
+                                return true;
+                            });
+            
+                            updateData.tableSheet = uniqueTableSheet;
+            
+                            console.log('Keys to delete:', keysToDelete);
+                            console.log('Keys to add:', keysToAdd);
+                            console.log('Keys to update:', keysToUpdate);
+                            console.log('Origin has changed:', originHasChanged);
+                        } else {
+                            console.log('No changes detected in tableSheet');
+                        }
+                    }
+                    
+                    if (Object.keys(updateData).length === 0) {
                         return res.status(400).json({ error: 'No valid fields provided for update' });
                     }
-
-                    const query = productType ? { _id: id, productType } : { _id: id };
+            
                     const updatedManager = await ProductManager.findOneAndUpdate(
                         query,
                         { $set: updateData },
                         { new: true }
                     );
-
+            
                     if (!updatedManager) {
                         return res.status(404).json({ error: 'Product manager not found' });
                     }
-
+            
                     res.status(200).json({
                         ...updatedManager.toObject(),
                         icon: allIcons.map(filename => ({
                             filename,
                             url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         })),
-                        iconPreview: allIcons.map(id =>
-                            `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(__filename)}`
-                        )
+                        iconPreview: allIcons.map(filename => ({
+                            filename,
+                            url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                        })),
+                        message: 'Product manager updated successfully'
                     });
                 } catch (error) {
-                    console.error('Error processing uploaded files:', error);
-                    res.status(500).json({ error: 'Error processing uploaded files' });
+                    console.error('Error processing PATCH request:', error);
+                    res.status(500).json({ error: 'Error processing PATCH request' });
                 }
                 break;
             }
@@ -250,30 +341,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     await Promise.all(files.map(file => bucket.delete(file._id)));
                 }
 
-                let updatedTableSheet;
-
-                if (field && typeof field === 'string' && field.trim() !== '') {
-                    updatedTableSheet = productManager.tableSheet.filter(
-                        (classKey: { value: string }) => classKey.value !== field
-                    );
-                } else {
-                    updatedTableSheet = [];
-                }
-
-                const result = await ProductManager.updateOne(query, { $set: { tableSheet: updatedTableSheet } });
-                
-                if (result.modifiedCount > 0) {
-                    res.status(200).json({
-                        message: field
-                            ? `Class key "${field}" deleted successfully`
-                            : 'All class keys deleted successfully',
-                    });
-                } else {
-                    res.status(400).json({
-                        error: 'Failed to update the tableSheet. Please try again.',
-                    });
-                }
-                
                 await ProductManager.deleteOne(query);
 
                 res.status(200).json({ message: 'Product manager deleted successfully' });

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -21,6 +21,15 @@ const Table: React.FC<TableProps> = ({ productManagerID, variableData, originAss
     const [addedClassKeys, setAddedClassKeys] = useState<tableSheetData[]>([]);
     const [headerOrigin, setHeaderOrigin] = useState<string>("");
     const [permanentOrigin, setPermanentOrigin] = useState<string>("");
+
+    useEffect(() => {
+        const originKey = variableData.find(key => key.isOrigin);
+        
+        if (originKey) {
+            setPermanentOrigin(originKey.value);
+            originAssignment(originKey.value);
+        }
+    }, [variableData]);
 
     const classKeyInputObjects = addedClassKeys.length > 0 ? addedClassKeys : variableData;
     console.log("Class Key Input Objects:", classKeyInputObjects);
@@ -98,49 +107,10 @@ const Table: React.FC<TableProps> = ({ productManagerID, variableData, originAss
         }
     };
 
-    const handleDeleteKey = async (classKey: string) => {
-        const updatedKeys = classKeyInputObjects.filter(k => k.value !== classKey);
-
-        try {
-            const response = await fetch(`/api/productManager/${productManagerID.productType}/${productManagerID._id}?field=${encodeURIComponent(classKey)}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                setAddedClassKeys(updatedKeys);
-            } else {
-                const errorData = await response.json();
-                toast.error(`Error deleting class key: ${errorData.error || 'Unknown error'}`);
-            }
-        } catch (error) {
-            console.error('Error deleting class key:', error);
-            toast.error('Error deleting class key');
-        }
-    };
-
-    const handleDeleteAllKeys = async () => {
-        try {
-            const response = await fetch(`/api/productManager/${productManagerID.productType}/${productManagerID._id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                setAddedClassKeys([]);
-                setHeaderOrigin("");
-            } else {
-                const errorData = await response.json();
-                toast.error(`Error deleting all class keys: ${errorData.error || 'Unknown error'}`);
-            }
-        } catch (error) {
-            console.error('Error deleting all class keys:', error);
-            toast.error('Error deleting all class keys');
-        }
+    const handleDeleteKey = (key: string) => {
+        const updatedKeys = classKeyInputObjects.filter((entry) => entry.value !== key);
+        setAddedClassKeys(updatedKeys);
+        submitVariableData(updatedKeys);
     };
 
     const handleEditKey = (key: string, newValue: string) => {
@@ -195,7 +165,6 @@ const Table: React.FC<TableProps> = ({ productManagerID, variableData, originAss
                                 onClick={() => {
                                     setAddedClassKeys([]);
                                     submitVariableData([]);
-                                    // handleDeleteAllKeys();
                                 }}
                                 className={styles.deleteButton}
                             >
