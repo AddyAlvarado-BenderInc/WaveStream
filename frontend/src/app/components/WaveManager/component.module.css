@@ -49,3 +49,10 @@
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
 }
+
+.saveButtonDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #cccccc;
+  color: #666666;
+}

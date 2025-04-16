@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
 
+// This file verifies the connnection between our code and the MongoDB database, it's a singleton used in the whole app
+// Will later refactor with C# to run a faster connection in the backend as well as a better connection to the database
+
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/productManagement';
 
 if (!MONGO_URI) {

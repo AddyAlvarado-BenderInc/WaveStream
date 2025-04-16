@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/app/store/store';
 import { updateProductManager } from "../../store/productManagerSlice";
@@ -9,7 +9,23 @@ import { BASE_URL } from '../../config';
 import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { set } from 'mongoose';
+import { isEqual } from 'lodash';
+
+interface FormDataState {
+    itemName: string;
+    productId: string;
+    description: string;
+    initialJS: string;
+    initialCSS: string;
+    initialHTML: string;
+    label: string;
+}
+
+interface IconDataState {
+    icon: IconData[];
+    iconPreview: IconData[];
+    newFiles: File[];
+}
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
@@ -23,47 +39,147 @@ interface WaveManagerProps {
 
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
-    const [noInitialData, setNoInitialData] = useState(false);
-    const [formData, setFormData] = useState({
-        itemName: productManager.itemName || '',
-        productId: productManager.productId || '',
-        description: productManager.description,
-        initialJS: productManager.initialJS || '',
-        initialCSS: productManager.initialCSS || '',
-        initialHTML: productManager.initialHTML || '',
-        label: productManager.label || '',
-    });
-    const [iconData, setIconData] = useState({
-        icon: (productManager.icon || []).map((icon: IconData) => ({
-            filename: icon?.filename,
-            url: `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename)}`
-        })),
-        iconPreview: (productManager.iconPreview || []).map((icon: IconData) => ({
-            filename: icon?.filename,
-            url: `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename)}`
-        })),
-        newFiles: [] as File[]
-    });
-    const [variableData, setVariableData] = useState<VariableDataState>({
-        tableSheet: Array.isArray(productManager.tableSheet)
-            ? productManager.tableSheet.map((value, index) => ({
-                  index,
-                  value: value.value,
-                  isOrigin: false,
-              }))
-            : [],
-        variableClass: productManager.variableClass || [],
-        mainKeyString: productManager.mainKeyString || [],
+
+    const [originalData, setOriginalData] = useState({
+        formData: {
+            itemName: productManager.itemName || '',
+            productId: productManager.productId || '',
+            description: productManager.description || '',
+            initialJS: productManager.initialJS || '',
+            initialCSS: productManager.initialCSS || '',
+            initialHTML: productManager.initialHTML || '',
+            label: productManager.label || '',
+        } as FormDataState,
+        iconData: {
+            icon: (productManager.icon || []).map((icon: IconData) => ({
+                filename: icon?.filename || '',
+                url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
+            })),
+            iconPreview: (productManager.iconPreview || []).map((icon: IconData) => ({
+                filename: icon?.filename || '',
+                url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
+            })),
+            newFiles: [] as File[]
+        } as IconDataState,
+        variableData: {
+            tableSheet: Array.isArray(productManager.tableSheet)
+                ? productManager.tableSheet.map((value, index) => ({
+                    index,
+                    value: value.value || '',
+                    isOrigin: Boolean(value.isOrigin),
+                }))
+                : [],
+            variableClass: productManager.variableClass || [],
+            mainKeyString: productManager.mainKeyString || [],
+        } as VariableDataState
     });
 
+    const [formData, setFormData] = useState<FormDataState>({ ...originalData.formData });
+    const [iconData, setIconData] = useState<IconDataState>({ ...originalData.iconData });
+    const [variableData, setVariableData] = useState<VariableDataState>({ ...originalData.variableData });
+
+    const [hasChanges, setHasChanges] = useState(false);
+    const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
+
+    const checkForChanges = useCallback(() => {
+        const normalizeTableSheet = (tableSheet: tableSheetData[]) => {
+            return tableSheet.map(item => ({
+                value: item.value,
+                isOrigin: item.isOrigin
+            }));
+        };
+
+        const formDataChanged = !isEqual(formData, originalData.formData);
+        const iconDataChanged = iconData.newFiles.length > 0 ||
+            !isEqual(iconData.icon.map(i => i.filename), originalData.iconData.icon.map(i => i.filename));
+        const tableSheetChanged = !isEqual(
+            normalizeTableSheet(variableData.tableSheet),
+            normalizeTableSheet(originalData.variableData.tableSheet)
+        );
+        const variableClassChanged = !isEqual(variableData.variableClass, originalData.variableData.variableClass);
+        const mainKeyStringChanged = !isEqual(variableData.mainKeyString, originalData.variableData.mainKeyString);
+
+        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged ||
+            variableClassChanged || mainKeyStringChanged;
+
+        setHasChanges(dataChanged);
+
+        if (dataChanged) {
+            console.log('Changes detected:', {
+                formDataChanged,
+                iconDataChanged,
+                tableSheetChanged,
+                variableClassChanged,
+                mainKeyStringChanged
+            });
+        }
+    }, [formData, iconData, variableData, originalData]);
+
+    useEffect(() => {
+        checkForChanges();
+    }, [formData, iconData, variableData, checkForChanges]);
+
+    const updateOriginalData = () => {
+        setOriginalData({
+            formData: { ...formData },
+            iconData: {
+                icon: [...iconData.icon],
+                iconPreview: [...iconData.iconPreview],
+                newFiles: []
+            },
+            variableData: {
+                tableSheet: [...variableData.tableSheet],
+                variableClass: [...variableData.variableClass],
+                mainKeyString: [...variableData.mainKeyString]
+            }
+        });
+        setHasChanges(false);
+    };
+
     const handleSave = async () => {
+        if (!hasChanges) {
+            toast.info('No changes to save', {
+                position: 'bottom-right',
+                autoClose: 3000,
+            });
+            return;
+        }
+
         try {
             const { productType, _id } = productManager;
             const formDataPayload = new FormData();
-    
+
+            if (variableData.tableSheet.length > 0) {
+                console.log("Sending tableSheet data:", variableData.tableSheet.length, "items");
+                variableData.tableSheet.forEach((item) => {
+                    formDataPayload.append('tableSheet', item.index.toString());
+                    formDataPayload.append('tableSheet', item.value);
+                    formDataPayload.append('tableSheet', item.isOrigin.valueOf().toString());
+                });
+            } else {
+                console.error("WARNING: tableSheet is empty! Checking if this is intentional...");
+
+                const previousTableSheetSize = originalData.variableData.tableSheet.length;
+                if (previousTableSheetSize > 0) {
+                    console.error("CRITICAL: Attempting to send empty tableSheet when we had data before. Using original data instead.");
+                    originalData.variableData.tableSheet.forEach((item) => {
+                        formDataPayload.append('tableSheet', item.index.toString());
+                        formDataPayload.append('tableSheet', item.value);
+                        formDataPayload.append('tableSheet', item.isOrigin.valueOf().toString());
+                    });
+
+                    toast.warn("Prevented potential data loss. Please check your changes carefully.", {
+                        position: 'bottom-right',
+                        autoClose: 5000,
+                    });
+                } else {
+                    console.log("Empty tableSheet appears to be intentional.");
+                }
+            }
+
             Object.entries(formData).forEach(([key, value]) => {
                 if (key === 'icon' || key === 'newFiles' || key === 'iconPreview') return;
-    
+
                 if (value !== null && value !== undefined) {
                     if (Array.isArray(value)) {
                         formDataPayload.append(key, JSON.stringify(value));
@@ -72,27 +188,27 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     }
                 }
             });
-    
+
             if (Array.isArray(variableData.tableSheet) && variableData.tableSheet.length > 0) {
+                console.log("Sending tableSheet data:", variableData.tableSheet.length, "items");
                 variableData.tableSheet.forEach((item) => {
                     formDataPayload.append('tableSheet', item.index.toString());
                     formDataPayload.append('tableSheet', item.value);
                     formDataPayload.append('tableSheet', item.isOrigin.valueOf().toString());
                 });
-            } else { 
-                toast.error('Cannot Save Data without Initializing TableSheet');
-                setNoInitialData(true);
+            } else {
+                console.error("WARNING: tableSheet is empty or not an array!");
             }
-    
+
             if (variableData.mainKeyString && variableData.mainKeyString.length > 0) {
                 formDataPayload.append('mainKeyString', JSON.stringify(variableData.mainKeyString));
             } else {
                 formDataPayload.append('mainKeyString', JSON.stringify([]));
             }
-    
+
             variableData.variableClass.forEach(([key, value]) => {
                 if (key === 'variable' || key === 'name' || key === 'value') return;
-    
+
                 if (value !== null && value !== undefined) {
                     if (Array.isArray(value)) {
                         formDataPayload.append(key, JSON.stringify(value));
@@ -101,75 +217,119 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     }
                 }
             });
-    
+
             iconData.icon.forEach(icon => {
                 formDataPayload.append('icons', icon.filename);
             });
-    
+
             iconData.newFiles.forEach(file => {
                 formDataPayload.append('files', file);
             });
-    
+
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
-    
+
             const response = await fetch(`/api/productManager/${productType}/${_id}`, {
                 method: 'PATCH',
                 body: formDataPayload,
             });
-    
+
             if (response.ok) {
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
-    
+
+                console.log('Server returned tableSheet:', updatedProduct.tableSheet);
+
+                const shouldPreventReload = !updatedProduct.tableSheet || updatedProduct.tableSheet.length === 0;
+                if (shouldPreventReload) {
+                    console.warn('Server returned empty tableSheet, keeping current state to prevent data loss');
+                    toast.warn('Warning: Server returned incomplete data. Your changes were saved but please refresh the page.');
+                    return;
+                };
+
                 setFormData((prev) => ({
                     ...prev,
                     ...updatedProduct,
                     iconPreview: updatedProduct.icon,
                 }));
-    
+
                 setIconData((prev) => ({
                     ...prev,
                     icon: updatedProduct.icon,
                     iconPreview: updatedProduct.icon,
                     newFiles: []
                 }));
-    
-                setVariableData((prev) => ({
-                    ...prev,
-                    tableSheet: Array.isArray(updatedProduct.tableSheet)
-                        ? updatedProduct.tableSheet.map((value: string, index: number) => ({
-                              index,
-                              value: value,
-                              isOrigin: false,
-                          }))
-                        : prev.tableSheet,
-                    variableClass: updatedProduct.variableClass || prev.variableClass,
-                    mainKeyString: updatedProduct.mainKeyString || prev.mainKeyString,
-                }));
-    
-                dispatch(updateProductManager(updatedProduct));
+
+                setVariableData((prev) => {
+                    console.log('Updating tableSheet from:', prev.tableSheet.length, 'items');
+                    console.log('To:', updatedProduct.tableSheet?.length || 0, 'items');
+                    return {
+                        ...prev,
+                        tableSheet: Array.isArray(updatedProduct.tableSheet) && updatedProduct.tableSheet.length > 0
+                            ? updatedProduct.tableSheet.map((item: any, index: number) => {
+                                if (typeof item === 'object' && item !== null) {
+                                    return {
+                                        index: item.index || index,
+                                        value: item.value || '',
+                                        isOrigin: item.isOrigin === true,
+                                    };
+                                } else {
+                                    return {
+                                        index,
+                                        value: String(item),
+                                        isOrigin: false,
+                                    };
+                                }
+                            })
+                            : prev.tableSheet,
+                        variableClass: updatedProduct.variableClass || prev.variableClass,
+                        mainKeyString: updatedProduct.mainKeyString || prev.mainKeyString,
+                    };
+                });
+
+                if (hasChanges) {
+                    console.log('Updating original data references');
+
+                    dispatch(updateProductManager(updatedProduct));
+
+                    setOriginalData({
+                        formData: { ...formData },
+                        iconData: {
+                            icon: JSON.parse(JSON.stringify(iconData.icon)),
+                            iconPreview: JSON.parse(JSON.stringify(iconData.iconPreview)),
+                            newFiles: []
+                        },
+                        variableData: {
+                            tableSheet: Array.isArray(updatedProduct.tableSheet) && updatedProduct.tableSheet.length > 0
+                                ? JSON.parse(JSON.stringify(updatedProduct.tableSheet.map((item: any, index: number) => ({
+                                    index: item.index || index,
+                                    value: item.value || '',
+                                    isOrigin: item.isOrigin === true,
+                                }))))
+                                : JSON.parse(JSON.stringify(variableData.tableSheet)),
+                            variableClass: JSON.parse(JSON.stringify(variableData.variableClass)),
+                            mainKeyString: JSON.parse(JSON.stringify(variableData.mainKeyString))
+                        }
+                    });
+
+                    setHasChanges(false);
+                }
+
                 toast.success('Product saved successfully!', {
                     position: 'bottom-right',
                     autoClose: 5000,
                 });
             } else {
                 const error = await response.json();
-                if (noInitialData) {
-                    setNoInitialData(false);
-                    return;
-                } else {
-                    toast.error(`Error saving product: ${error.message}`, {
-                        position: 'bottom-right',
-                        autoClose: 5000,
-                    });
-                }
+                toast.error(`Error saving product: ${error.message}`, {
+                    position: 'bottom-right',
+                    autoClose: 5000,
+                });
             }
         } catch (error) {
+            console.error('Save error:', error);
             toast.error('Failed to save the product. Please try again.');
         }
     };
-
-    const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
     return (
         <div className={styles.container}>
@@ -181,8 +341,13 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     >
                         {showPropertyInterfaces ? 'Close Property Interface' : 'Open Property Interface'}
                     </button>
-                    <button className={styles.saveButton} onClick={handleSave}>
-                        Save
+                    <button
+                        className={`${styles.saveButton} ${!hasChanges ? styles.saveButtonDisabled : ''}`}
+                        onClick={handleSave}
+                        disabled={!hasChanges}
+                        title={!hasChanges ? 'No changes to save' : 'Save changes'}
+                    >
+                        Save {hasChanges ? '*' : ''}
                     </button>
                 </div>
             </div>

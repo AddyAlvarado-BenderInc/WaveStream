@@ -289,11 +289,12 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
             {originAssignment && (
                 <div className={styles.formContainer}>
                     <VariableClass
-                        variableData={variableData}
+                        variableData={variableData.variableClass}
                         onSave={(parameterizationData) => handleOpenParameterizationTab(parameterizationData)}
                     />
                     {parameterizationData && parameterizationOpen && (
                         <ParameterizationTab
+                            variableData={variableData.mainKeyString}
                             saveMainKeyString={handleSaveMainKeyString}
                             variableClass={parameterizationData}
                             onClose={handleCloseParameterizationTab}

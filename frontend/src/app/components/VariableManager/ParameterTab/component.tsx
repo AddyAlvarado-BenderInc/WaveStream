@@ -12,6 +12,7 @@ interface VariableDataState {
 }
 
 interface ParameterizationTabProps {
+    variableData: Record <string, any>;
     saveMainKeyString: (object: VariableDataState) => void;
     variableClass: object;
     onClose: () => void;
@@ -31,7 +32,7 @@ interface BundlizedParameters {
     addedParameter: string;
 }
 
-const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose, saveMainKeyString }) => {
+const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose, saveMainKeyString, variableData }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const [intVar, setIntVar] = useState<string[]>([]);

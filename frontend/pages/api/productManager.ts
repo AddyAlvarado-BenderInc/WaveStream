@@ -3,6 +3,9 @@ import connectToDatabase from '../../lib/mongodb';
 import Counter from '../../models/Counter';
 import ProductManager from '../../models/ProductManager';
 
+// This file is an API route that handles requests related to the ProductManager model. It both GETS and POSTs data to the database
+// in regards to the ProductManager model. It also handles the creation of a unique ID for each new product manager entry by using a counter.
+
 async function getNextSequence(name: string) {
     const totalCount = await ProductManager.countDocuments();
     if (totalCount === 0) {

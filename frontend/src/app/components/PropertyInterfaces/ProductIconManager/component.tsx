@@ -179,7 +179,7 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
                             </div>
                         </div>
                         <div className={styles.imageInfo}>
-                            <FileNameWithTooltip filename={allImages[currentIndex].split('/').pop() || ""} />
+                            <FileNameWithTooltip filename={allImages[currentIndex]} />
                         </div>
                         <div className={styles.pagination}>
                             {allImages.map((_, index) => (

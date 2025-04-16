@@ -25,25 +25,42 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
 
     useEffect(() => {
         const originKey = variableData.find(key => key.isOrigin);
+        const duplicate = classKeyInputObjects.some(keyObj => keyObj.value === localClassKeyInput.trim());
 
         if (originKey) {
             setPermanentOrigin(originKey.value);
             originAssignment(originKey.value);
-        }
+        };
+        
+        if (duplicate) {
+            toast.error('Class key already exists');
+            return;
+        };
     }, [variableData]);
 
-    const classKeyInputObjects = addedClassKeys.length > 0 ? addedClassKeys : variableData;
+    const processTableSheet = (data: any[]): tableSheetData[] => {
+        return data.map((item, index) => {
+            if (typeof item === 'object' && item !== null) {
+                return {
+                    index: typeof item.index === 'number' ? item.index : index,
+                    value: typeof item.value === 'string' ? item.value : String(item.value || ""),
+                    isOrigin: Boolean(item.isOrigin)
+                };
+            }
+            return {
+                index,
+                value: String(item || ""),
+                isOrigin: false
+            };
+        });
+    };
+
+    const classKeyInputObjects = addedClassKeys.length > 0 ? addedClassKeys : processTableSheet(variableData);
     console.log("Class Key Input Objects:", classKeyInputObjects);
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setLocalClassKeyInput(event.target.value);
     };
-
-    const duplicate = classKeyInputObjects.some(keyObj => keyObj.value === localClassKeyInput.trim());
-    if (duplicate) {
-        toast.error('Class key already exists');
-        return;
-    }
 
     const handleImportHeaderSheet = async () => {
         try {
@@ -236,17 +253,15 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                     <thead>
                         <tr>
                             {classKeyInputObjects.map((keyObj) => (
-                                <>
-                                    <ClassKey
-                                        key={keyObj.index}
-                                        input={keyObj.value}
-                                        onDelete={handleDeleteKey}
-                                        onEdit={handleEditKey}
-                                        originAssignment={handleHeaderOrigin}
-                                        permanentOrigin={permanentOrigin}
-                                        headerOrigin={headerOrigin}
-                                    />
-                                </>
+                                <ClassKey
+                                    key={keyObj.index}
+                                    input={keyObj.value}
+                                    onDelete={handleDeleteKey}
+                                    onEdit={handleEditKey}
+                                    originAssignment={handleHeaderOrigin}
+                                    permanentOrigin={permanentOrigin}
+                                    headerOrigin={headerOrigin}
+                                />
                             ))}
                         </tr>
                     </thead>
