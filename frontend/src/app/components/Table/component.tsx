@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -15,13 +15,18 @@ interface TableProps {
     variableData: tableSheetData[];
     originAssignment: (key: string) => void;
     submitVariableData: (values: tableSheetData[]) => void;
+    areRowsPopulated: (value: boolean) => void;
+    setVariableClassData: (data: Record<string, any>) => void;
 }
 
-const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variableData, originAssignment, submitVariableData }) => {
+const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variableData, originAssignment, submitVariableData, areRowsPopulated, setVariableClassData }) => {
     const [localClassKeyInput, setLocalClassKeyInput] = useState<string>('');
     const [addedClassKeys, setAddedClassKeys] = useState<tableSheetData[]>([]);
     const [headerOrigin, setHeaderOrigin] = useState<string>("");
     const [permanentOrigin, setPermanentOrigin] = useState<string>("");
+
+    const [zoomLevel, setZoomLevel] = useState<number>(100);
+    const tableContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const originKey = variableData.find(key => key.isOrigin);
@@ -31,12 +36,22 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
             setPermanentOrigin(originKey.value);
             originAssignment(originKey.value);
         };
-        
+
         if (duplicate) {
             toast.error('Class key already exists');
             return;
         };
     }, [variableData]);
+
+    useEffect(() => {
+        if (tableContainerRef.current) {
+            tableContainerRef.current.style.transform = `scale(${zoomLevel / 100})`;
+            tableContainerRef.current.style.transformOrigin = 'top left';
+        }
+        if (Object.keys(variableRowData).length === 0) {
+            areRowsPopulated(false);
+        }
+    }, [zoomLevel]);
 
     const processTableSheet = (data: any[]): tableSheetData[] => {
         return data.map((item, index) => {
@@ -56,10 +71,25 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
     };
 
     const classKeyInputObjects = addedClassKeys.length > 0 ? addedClassKeys : processTableSheet(variableData);
-    console.log("Class Key Input Objects:", classKeyInputObjects);
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setLocalClassKeyInput(event.target.value);
+    };
+
+    const handleZoomIn = () => {
+        setZoomLevel(prev => Math.min(prev + 10, 200));
+    };
+
+    const handleZoomOut = () => {
+        setZoomLevel(prev => Math.max(prev - 10, 50));
+    };
+
+    const handleZoomReset = () => {
+        setZoomLevel(100);
+    };
+
+    const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setZoomLevel(Number(e.target.value));
     };
 
     const handleImportHeaderSheet = async () => {
@@ -139,30 +169,108 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
         submitVariableData(updatedKeys);
     };
 
-    const displayVariableData = (variableData: Record<string, any>, selectedClassKey: string) => {
-        const cellData = variableData[selectedClassKey];
-        let cellValue = '';
-        if (cellData) {
-            if (typeof cellData === 'string') {
-                cellValue = cellData;
-            } else if (Array.isArray(cellData)) {
-                cellValue = cellData.join(', ');
-            } else if (typeof cellData === 'object' && cellData !== null) {
-                cellValue = cellData.name || JSON.stringify(cellData);
+    const handleDeleteCell = (key: string, rowIndex: number) => {
+        setVariableClassData((prevData: any) => {
+            const updatedData = { ...prevData };
+
+            const dataKey = `${key}_row_${rowIndex}`;
+
+            if (updatedData[dataKey]) {
+                delete updatedData[dataKey];
+                console.log(`Deleted row-specific data for ${key} at row ${rowIndex}`);
             }
-        }
-        return cellValue;
+            else if (rowIndex === 0 && updatedData[key]) {
+                delete updatedData[key];
+                console.log(`Deleted column data for ${key}`);
+            }
+
+            return updatedData;
+        });
+
+        toast.success(`Data deleted for ${key} at row ${rowIndex}`);
     };
 
-    const handleDeleteCell = () => {
+    const handleEditCell = (key: string, rowIndex: number, currentValue: string) => {
+        const newValue = prompt("Edit cell value:", currentValue);
 
+        if (newValue !== null) {
+            setVariableClassData((prevData: any) => {
+                const updatedData = { ...prevData };
+
+                const dataKey = `${key}_row_${rowIndex}`;
+
+                if (updatedData[dataKey]) {
+                    updatedData[dataKey] = {
+                        ...updatedData[dataKey],
+                        value: newValue,
+                        __rowIndex: rowIndex
+                    };
+                }
+                else if (rowIndex === 0 && updatedData[key]) {
+                    updatedData[dataKey] = {
+                        ...updatedData[key],
+                        value: newValue,
+                        __rowIndex: rowIndex
+                    };
+                }
+                else {
+                    updatedData[dataKey] = {
+                        value: newValue,
+                        __rowIndex: rowIndex
+                    };
+                }
+
+                return updatedData;
+            });
+
+            toast.success(`Updated data for ${key} at row ${rowIndex}`);
+        }
     };
 
     return (
         <div className={styles.wavekeyTable}>
             <div className={styles.header}>
                 <h2>Table</h2>
+
+                <div className={styles.zoomControls}>
+                    <button
+                        onClick={handleZoomOut}
+                        className={styles.zoomButton}
+                        title="Zoom Out"
+                    >
+                        <span>-</span>
+                    </button>
+
+                    <div className={styles.zoomDisplay}>
+                        <input
+                            type="range"
+                            min="50"
+                            max="200"
+                            value={zoomLevel}
+                            onChange={handleZoomChange}
+                            className={styles.zoomSlider}
+                        />
+                        <span>{zoomLevel}%</span>
+                    </div>
+
+                    <button
+                        onClick={handleZoomIn}
+                        className={styles.zoomButton}
+                        title="Zoom In"
+                    >
+                        <span>+</span>
+                    </button>
+
+                    <button
+                        onClick={handleZoomReset}
+                        className={styles.zoomResetButton}
+                        title="Reset Zoom"
+                    >
+                        <span>Reset</span>
+                    </button>
+                </div>
             </div>
+
             <form>
                 {!permanentOrigin && (
                     <input
@@ -191,6 +299,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                     const updatedKeys = [...classKeyInputObjects, newKey];
                                     setAddedClassKeys(updatedKeys);
                                     submitVariableData(updatedKeys);
+                                    areRowsPopulated(true);
                                     setLocalClassKeyInput('');
                                 }}
                                 className={styles.addButton}
@@ -203,6 +312,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                             onClick={() => {
                                 setAddedClassKeys([]);
                                 submitVariableData([]);
+                                areRowsPopulated(false);
                             }}
                             className={styles.deleteButton}
                         >
@@ -248,99 +358,184 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                     )}
                 </div>
             </form>
-            <div className={styles.wavekeyTableForm}>
-                <table className={styles.table}>
-                    <thead>
-                        <tr>
-                            {classKeyInputObjects.map((keyObj) => (
-                                <ClassKey
-                                    key={keyObj.index}
-                                    input={keyObj.value}
-                                    onDelete={handleDeleteKey}
-                                    onEdit={handleEditKey}
-                                    originAssignment={handleHeaderOrigin}
-                                    permanentOrigin={permanentOrigin}
-                                    headerOrigin={headerOrigin}
-                                />
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Object.keys(variableRowData).length > 0 ? (
-                            (() => {
-                                let maxArrayLength = 1;
 
-                                Object.keys(variableRowData).forEach(key => {
-                                    const data = variableRowData[key];
-                                    if (Array.isArray(data)) {
-                                        maxArrayLength = Math.max(maxArrayLength, data.length);
-                                    }
-                                });
+            <div className={styles.tableOverflowContainer}>
+                <div
+                    ref={tableContainerRef}
+                    className={styles.wavekeyTableForm}
+                    style={{
+                        transform: `scale(${zoomLevel / 100})`,
+                        transformOrigin: 'top left'
+                    }}
+                >
+                    <table className={styles.table}>
+                        <thead>
+                            <tr>
+                                {classKeyInputObjects.map((keyObj) => (
+                                    <ClassKey
+                                        key={keyObj.index}
+                                        input={keyObj.value}
+                                        onDelete={handleDeleteKey}
+                                        onEdit={handleEditKey}
+                                        originAssignment={handleHeaderOrigin}
+                                        permanentOrigin={permanentOrigin}
+                                        headerOrigin={headerOrigin}
+                                    />
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {Object.keys(variableRowData).length > 0 ? (
+                                (() => {
+                                    let maxArrayLength = 1;
+                                    let rowDataMap = new Map();
 
-                                return Array.from({ length: maxArrayLength }).map((_, rowIndex) => (
-                                    <tr key={`row-${rowIndex}`}>
-                                        {classKeyInputObjects.map((keyObj) => {
-                                            const cellData = variableRowData?.[keyObj.value];
-                                            let cellValue = '';
+                                    Object.keys(variableRowData).forEach(key => {
+                                        const rowMatch = key.match(/^(.+)_row_(\d+)$/);
 
-                                            if (cellData) {
-                                                if (typeof cellData === 'string') {
-                                                    cellValue = rowIndex === 0 ? cellData : '';
-                                                } else if (Array.isArray(cellData)) {
-                                                    cellValue = rowIndex < cellData.length ?
-                                                        (typeof cellData[rowIndex] === 'object' ?
-                                                            JSON.stringify(cellData[rowIndex]) :
-                                                            String(cellData[rowIndex])) : '';
-                                                } else if (typeof cellData === 'object' && cellData !== null) {
-                                                    cellValue = rowIndex === 0 ?
-                                                        (cellData.name || JSON.stringify(cellData)) : '';
-                                                }
+                                        if (rowMatch) {
+                                            const [_, baseKey, rowIndex] = rowMatch;
+                                            const rowNum = parseInt(rowIndex, 10);
+
+                                            if (!rowDataMap.has(rowNum)) {
+                                                rowDataMap.set(rowNum, new Map());
                                             }
 
-                                            return (
-                                                <td
-                                                    key={`${keyObj.index}-${rowIndex}`}
-                                                    className={`${styles.tableCell} ${keyObj.value === selectedClassKey ? styles.tableCell : ''}`}
-                                                >
-                                                    <div className={styles.tableContainer}>
-                                                        {cellValue}
-                                                        {cellValue && (
+                                            rowDataMap.get(rowNum).set(baseKey, variableRowData[key]);
+
+                                            maxArrayLength = Math.max(maxArrayLength, rowNum + 1);
+                                        } else {
+                                            const data = variableRowData[key];
+                                            if (Array.isArray(data)) {
+                                                maxArrayLength = Math.max(maxArrayLength, data.length);
+                                            }
+                                        }
+                                    });
+
+                                    // Define the getCellValue function here, before using it
+                                    const getCellValue = (
+                                        keyObj: { index: number; value: string; isOrigin: boolean },
+                                        rowIndex: number,
+                                        rowDataMap: Map<number, Map<string, any>>,
+                                        variableRowData: Record<string, any>
+                                    ): string => {
+                                        // Check if we have row-specific data in the map
+                                        const rowSpecificData = rowDataMap.has(rowIndex) ?
+                                            rowDataMap.get(rowIndex)?.get(keyObj.value) : undefined;
+
+                                        // Get column data (only for arrays or when we're in row 0)
+                                        let columnData: any = undefined;
+                                        const baseColumnData = variableRowData[keyObj.value];
+
+                                        if (baseColumnData !== undefined) {
+                                            if (Array.isArray(baseColumnData)) {
+                                                // For arrays, we want to show the specific element for this row
+                                                columnData = rowIndex < baseColumnData.length ? baseColumnData[rowIndex] : undefined;
+                                            } else if (rowIndex === 0) {
+                                                // For non-arrays, only show in row 0
+                                                columnData = baseColumnData;
+                                            }
+                                        }
+
+                                        // Prioritize row-specific data over column data
+                                        const cellData = rowSpecificData !== undefined ? rowSpecificData : columnData;
+
+                                        let cellValue = '';
+
+                                        if (cellData !== undefined && cellData !== null) {
+                                            if (typeof cellData === 'object' && cellData !== null && '__rowIndex' in cellData) {
+                                                // Handle row-specific data structure
+                                                const { __rowIndex, ...actualData } = cellData;
+
+                                                if (Object.keys(actualData).length === 0) {
+                                                    // Empty object, leave cellValue empty
+                                                } else if (Object.keys(actualData).length === 1) {
+                                                    const singleValue = Object.values(actualData)[0];
+                                                    cellValue = typeof singleValue === 'object' && singleValue !== null
+                                                        ? JSON.stringify(singleValue)
+                                                        : String(singleValue ?? '');
+                                                } else {
+                                                    cellValue = JSON.stringify(actualData);
+                                                }
+                                            } else if (typeof cellData === 'string') {
+                                                // String data - show directly
+                                                cellValue = cellData;
+                                            } else if (Array.isArray(cellData)) {
+                                                // Array data - show appropriate element for this row index
+                                                cellValue = rowIndex < cellData.length ?
+                                                    (typeof cellData[rowIndex] === 'object' && cellData[rowIndex] !== null ?
+                                                        JSON.stringify(cellData[rowIndex]) :
+                                                        String(cellData[rowIndex] ?? '')) : '';
+                                            } else if (typeof cellData === 'object' && cellData !== null) {
+                                                // Object data - properly format
+                                                cellValue = (cellData.name as string | undefined) || JSON.stringify(cellData);
+                                            } else {
+                                                // Any other type - convert to string
+                                                cellValue = String(cellData);
+                                            }
+                                        }
+
+                                        return cellValue;
+                                    };
+
+                                    areRowsPopulated(true);
+
+                                    return Array.from({ length: maxArrayLength }).map((_, rowIndex) => (
+                                        <tr key={`row-${rowIndex}`}>
+                                            {classKeyInputObjects.map((keyObj) => {
+                                                // Use the getCellValue function here
+                                                const cellValue = getCellValue(keyObj, rowIndex, rowDataMap, variableRowData);
+
+                                                return (
+                                                    <td
+                                                        key={`${keyObj.index}-${rowIndex}`}
+                                                        className={`${styles.tableCell} ${keyObj.value === selectedClassKey ? styles.tableCell : ''}`}
+                                                    >
+                                                        <div className={styles.tableContainer}>
+                                                            {cellValue}
                                                             <div className={styles.cellButtons}>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleDeleteCell();
-                                                                    }}
-                                                                    className={styles.cellDelete}
-                                                                >
-                                                                    &times;
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                    }}
-                                                                    className={styles.cellDelete}
-                                                                >
-                                                                    Edit
-                                                                </button>
+                                                                {cellValue && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleDeleteCell(keyObj.value, rowIndex);
+                                                                            }}
+                                                                            className={styles.cellDelete}
+                                                                            title="Delete cell data"
+                                                                        >
+                                                                            &times;
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleEditCell(keyObj.value, rowIndex, cellValue);
+                                                                            }}
+                                                                            className={styles.cellEdit}
+                                                                            title="Edit cell data"
+                                                                        >
+                                                                            Edit
+                                                                        </button>
+                                                                    </>
+                                                                )}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                ));
-                            })()
-                        ) : (
-                            <tr>
-                                <td colSpan={classKeyInputObjects.length} className={styles.emptyRow}>
-                                    No data available
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                                                        </div>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ));
+                                })()
+                            ) : (
+                                <tr>
+                                    <td colSpan={classKeyInputObjects.length} className={styles.emptyRow}>
+                                        No data available
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <ToastContainer />
         </div>

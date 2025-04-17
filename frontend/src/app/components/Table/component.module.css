@@ -151,7 +151,7 @@
   padding: 0;
 }
 
-.wavekeyTableForm {
+/* .wavekeyTableForm {
   overflow-x: auto;
   max-width: 100vw;
   position: relative;
@@ -183,6 +183,81 @@
   .wavekeyTableForm {
     scroll-behavior: smooth;
   }
+} */
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.zoomButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: inherit;
+  border: 1px solid var(--button-primary-hover);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: 0.2s ease-in-out;
+}
+
+.zoomButton:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.zoomDisplay {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.zoomSlider {
+  width: 80px;
+}
+
+.zoomResetButton {
+  padding: 5px 10px;
+  background-color: inherit;
+  border: 1px solid var(--button-primary-hover);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: 0.2s ease-in-out;
+}
+
+.zoomResetButton:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.tableOverflowContainer {
+  width: 100%;
+  overflow: auto;
+  position: relative;
+}
+
+.wavekeyTableForm {
+  min-width: 100%;
+  transform-origin: center;
+  transition: transform 0.2s ease;
+}
+
+.table {
+  min-width: 100%;
 }
 
 .wavekeyTable form {
@@ -284,4 +359,55 @@
   margin: 5px;
   border-radius: 5px;
   text-align: center;
+}
+
+.cellButtons {
+  display: none;
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  background: var(--gray-alpha-200);
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.tableContainer {
+  position: relative;
+  min-height: 28px;
+  padding: 4px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.tableContainer:hover .cellButtons {
+  display: flex;
+}
+
+.cellAction, .cellDelete, .cellEdit {
+  padding: 2px 4px;
+  border: 1px solid var(--button-primary-hover);
+  border-radius: 3px;
+  background: var(--button-secondary-hover);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.cellAction:hover, .cellDelete:hover, .cellEdit:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.cellDelete {
+  background-color: var(--button-secondary-hover);
+  color: var(--button-primary-hover);
+}
+
+.cellEdit {
+  background-color: var(--button-secondary-hover);
+  color: var(--button-primary-hover);
 }

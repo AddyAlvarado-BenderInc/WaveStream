@@ -9,6 +9,11 @@ export interface tableSheetData {
     isOrigin: boolean;
 }
 
+export interface mainKeyString {
+    type: string;
+    value: string;
+}
+
 export interface ProductManager {
     _id: string;
     name: string;
@@ -36,5 +41,5 @@ export interface ProductManager {
     [key: string]: any;
     tableSheet: tableSheetData[];
     variableClass: string[];
-    mainKeyString: [string, any][];
+    mainKeyString: mainKeyString[];
 }

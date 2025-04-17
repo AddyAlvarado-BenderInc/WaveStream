@@ -62,8 +62,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }))
                     : [];
 
+                const mainKeyString = Array.isArray(productManager.mainKeyString)
+                    ? productManager.mainKeyString.map((value: any, index: number) => ({
+                        index,
+                        type: value?.type || "null",
+                        value: value?.value || "null",
+                    }))
+                    : [];
+
                 const enhancedResponse = {
                     ...productManager,
+                    mainKeyString,
                     tableSheet,
                     icon: productManager.icon.map(filename => ({
                         filename,
@@ -148,7 +157,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         'initialJS',
                         'label',
                         'runManager',
-                        'variableClass',
                     ];
 
                     const sanitizedData = Object.keys(formFields).reduce((acc, key) => {
@@ -236,17 +244,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                             const normalizeKeyForComparison = (key: any): { value: string, isOrigin: boolean } => {
                                 if (!key) return { value: "", isOrigin: false };
-                                
+
                                 if (typeof key === 'string') {
                                     return { value: key, isOrigin: false };
                                 }
-                                
+
                                 if (typeof key === 'object') {
                                     const value = key.value || key.name || key.key || '';
                                     const isOrigin = Boolean(key.isOrigin);
                                     return { value, isOrigin };
                                 }
-                                
+
                                 return { value: String(key), isOrigin: false };
                             };
 
@@ -309,16 +317,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 if (!arr1 && !arr2) return true;
                                 if (!arr1 || !arr2) return false;
                                 if (arr1.length !== arr2.length) return false;
-                                
+
                                 const set1 = new Set(arr1.map(getComparisonSignature));
                                 const set2 = new Set(arr2.map(getComparisonSignature));
-                                
+
                                 if (set1.size !== set2.size) return false;
-                                
+
                                 for (const signature of set1) {
                                     if (!set2.has(signature)) return false;
                                 }
-                                
+
                                 return true;
                             }
 
@@ -395,7 +403,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                     if (keysToDelete.length > 0 && keysToAdd.length === 0 && keysToUpdate.length === 0) {
                                         console.error("CRITICAL WARNING: About to delete all keys with no replacements");
                                         console.error("This looks like a data loss scenario, aborting operation");
-                                        
+
                                         return res.status(400).json({
                                             error: "Prevented potential data loss. Attempted to delete all keys without replacement."
                                         })

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/app/store/store';
 import { updateProductManager } from "../../store/productManagerSlice";
-import { ProductManager, IconData, tableSheetData } from '../../../../types/productManager';
+import { ProductManager, IconData, tableSheetData, mainKeyString } from '../../../../types/productManager';
 import VariableManager from '../VariableManager/component';
 import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import { BASE_URL } from '../../config';
@@ -29,8 +29,6 @@ interface IconDataState {
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
-    variableClass: string[];
-    mainKeyString: [string, any][];
 }
 
 interface WaveManagerProps {
@@ -68,9 +66,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     value: value.value || '',
                     isOrigin: Boolean(value.isOrigin),
                 }))
-                : [],
-            variableClass: productManager.variableClass || [],
-            mainKeyString: productManager.mainKeyString || [],
+                : []
         } as VariableDataState
     });
 
@@ -96,11 +92,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeTableSheet(variableData.tableSheet),
             normalizeTableSheet(originalData.variableData.tableSheet)
         );
-        const variableClassChanged = !isEqual(variableData.variableClass, originalData.variableData.variableClass);
-        const mainKeyStringChanged = !isEqual(variableData.mainKeyString, originalData.variableData.mainKeyString);
 
-        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged ||
-            variableClassChanged || mainKeyStringChanged;
+        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged;
 
         setHasChanges(dataChanged);
 
@@ -109,8 +102,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 formDataChanged,
                 iconDataChanged,
                 tableSheetChanged,
-                variableClassChanged,
-                mainKeyStringChanged
             });
         }
     }, [formData, iconData, variableData, originalData]);
@@ -118,23 +109,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     useEffect(() => {
         checkForChanges();
     }, [formData, iconData, variableData, checkForChanges]);
-
-    const updateOriginalData = () => {
-        setOriginalData({
-            formData: { ...formData },
-            iconData: {
-                icon: [...iconData.icon],
-                iconPreview: [...iconData.iconPreview],
-                newFiles: []
-            },
-            variableData: {
-                tableSheet: [...variableData.tableSheet],
-                variableClass: [...variableData.variableClass],
-                mainKeyString: [...variableData.mainKeyString]
-            }
-        });
-        setHasChanges(false);
-    };
 
     const handleSave = async () => {
         if (!hasChanges) {
@@ -200,24 +174,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 console.error("WARNING: tableSheet is empty or not an array!");
             }
 
-            if (variableData.mainKeyString && variableData.mainKeyString.length > 0) {
-                formDataPayload.append('mainKeyString', JSON.stringify(variableData.mainKeyString));
-            } else {
-                formDataPayload.append('mainKeyString', JSON.stringify([]));
-            }
-
-            variableData.variableClass.forEach(([key, value]) => {
-                if (key === 'variable' || key === 'name' || key === 'value') return;
-
-                if (value !== null && value !== undefined) {
-                    if (Array.isArray(value)) {
-                        formDataPayload.append(key, JSON.stringify(value));
-                    } else {
-                        formDataPayload.append(key, value);
-                    }
-                }
-            });
-
             iconData.icon.forEach(icon => {
                 formDataPayload.append('icons', icon.filename);
             });
@@ -281,8 +237,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 }
                             })
                             : prev.tableSheet,
-                        variableClass: updatedProduct.variableClass || prev.variableClass,
-                        mainKeyString: updatedProduct.mainKeyString || prev.mainKeyString,
                     };
                 });
 
@@ -305,9 +259,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                     value: item.value || '',
                                     isOrigin: item.isOrigin === true,
                                 }))))
-                                : JSON.parse(JSON.stringify(variableData.tableSheet)),
-                            variableClass: JSON.parse(JSON.stringify(variableData.variableClass)),
-                            mainKeyString: JSON.parse(JSON.stringify(variableData.mainKeyString))
+                                : JSON.parse(JSON.stringify(variableData.tableSheet))
                         }
                     });
 
@@ -352,7 +304,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 </div>
             </div>
             <VariableManager
-                productManager={productManager}
                 variableData={variableData}
                 setVariableData={setVariableData}
             />

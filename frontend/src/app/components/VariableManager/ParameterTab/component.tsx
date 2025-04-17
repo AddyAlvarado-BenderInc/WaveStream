@@ -6,14 +6,13 @@ import { ToastContainer, toast } from 'react-toastify';
 import { RootState } from '@/app/store/store';
 import 'react-toastify/dist/ReactToastify.css';
 import './style.css';
+import { mainKeyString } from '../../../../../types/productManager';
 
 interface VariableDataState {
-    mainKeyString: [string, any];
+    mainKeyString: mainKeyString[];
 }
 
 interface ParameterizationTabProps {
-    variableData: Record <string, any>;
-    saveMainKeyString: (object: VariableDataState) => void;
     variableClass: object;
     onClose: () => void;
 }
@@ -32,7 +31,7 @@ interface BundlizedParameters {
     addedParameter: string;
 }
 
-const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose, saveMainKeyString, variableData }) => {
+const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const [intVar, setIntVar] = useState<string[]>([]);
@@ -50,6 +49,11 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
 
     const dispatch = useDispatch();
 
+    // TODO: this save function will handle the fetch to the mainKeyString database
+    const saveMainKeyString = (payload: { mainKeyString: mainKeyString[] }) => {
+        const { mainKeyString } = payload;
+    };
+
     const handleSaveVariableClass = (object: Object, param: BundlizedParameters[]) => {
         if (!object) {
             toast.error('Key String is empty');
@@ -58,9 +62,15 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         toast.success('Key String saved successfully');
         dispatch(setVariableClass(object));
 
-        const mainKeyString = Object.entries(object)
-            .filter(([key, value]) => key !== 'task' && key !== 'type' && value);
+        const mainKeyString: mainKeyString[] = Object.entries(object)
+            .filter(([key, value]) => key !== 'task' && key !== 'type' && value)
+            .map(([key, value]) => ({
+                type: key,
+                value: value.toString(),
+            }));
         console.log('Main Key String: ', mainKeyString);
+        
+        saveMainKeyString({ mainKeyString });
 
         const transformedParams = param.map((p) => ({
             id: p.id,

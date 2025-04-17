@@ -5,7 +5,7 @@ import {
     deleteVariableClassArray,
     updateVariableClassArray
 } from '@/app/store/productManagerSlice';
-import { tableSheetData } from '../../../../types/productManager';
+import { mainKeyString, tableSheetData } from '../../../../types/productManager';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
 import { RootState } from '@/app/store/store';
 import { useSelector, useDispatch } from 'react-redux';
@@ -16,24 +16,23 @@ import 'react-toastify/dist/ReactToastify.css';
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
-    variableClass: string[];
-    mainKeyString: [string, any][];
 }
 
 interface VariableManagerProps {
-    productManager: any;
     variableData: VariableDataState;
     setVariableData: React.Dispatch<React.SetStateAction<VariableDataState>>;
 }
 
-const VariableManager: React.FC<VariableManagerProps> = ({ productManager, variableData, setVariableData }) => {
+const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVariableData }) => {
     const [parameterizationOpen, setParameterizationOpen] = useState(false);
     const [parameterizationData, setParameterizationData] = useState<object | null>(null);
     const [originAssignment, setOriginAssignment] = useState("");
     const [sendToSheetModal, setSendToSheetModal] = useState(false);
     const [selectedClassKey, setSelectedClassKey] = useState<string>('');
     const [variableClassData, setVariableClassData] = useState<Record<string, any>>([]);
+    const [rowsPopulated, setRowsPopulated] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
+    let [addOrSend, setAddOrSend] = useState<string>('send');
 
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
 
@@ -62,19 +61,12 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
         setParameterizationOpen(false);
     };
 
-    const handleSaveMainKeyString = (data: Partial<VariableDataState>) => {
-        setVariableData((prevState) => ({
-            ...prevState,
-            mainKeyString: data.mainKeyString ?? prevState.mainKeyString,
-        }));
-    };
-
     const handleSendToSheet = (object: Record<string, any>, selectedKey: string) => {
         if (!selectedKey) {
             toast.error('Please select a class key');
             return;
         }
-
+    
         let variableClassData: object;
         if (object.variableData) {
             variableClassData = object.variableData;
@@ -83,30 +75,136 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
         } else {
             variableClassData = object;
         }
-
-        console.log(`Sending data to sheet with key: ${selectedKey}`, variableClassData);
-
-
+    
         const selectedKeyObject = variableData.tableSheet.find(item => item.value === selectedKey);
-
+    
         if (!selectedKeyObject) {
             toast.error('Selected class key not found');
             return;
         }
-
+        
         setVariableClassData(prevData => {
             const updatedData = { ...prevData };
-            updatedData[selectedKey] = variableClassData;
-
-            console.log("Updated variable class data:", updatedData);
+            
+            // Handle different data structure types
+            if (Array.isArray(variableClassData)) {
+                // Convert array to row-specific entries
+                variableClassData.forEach((item, index) => {
+                    updatedData[`${selectedKey}_row_${index}`] = {
+                        value: item,
+                        __rowIndex: index
+                    };
+                });
+            } else if (typeof variableClassData === 'object' && variableClassData !== null) {
+                // Check if object already has row structure (from ParameterizationTab)
+                if (Object.keys(variableClassData).some(key => key.startsWith('row_'))) {
+                    // Already has row structure - maintain it with proper key naming
+                    Object.entries(variableClassData).forEach(([rowKey, value]) => {
+                        const rowIndex = rowKey.replace('row_', '');
+                        updatedData[`${selectedKey}_row_${rowIndex}`] = {
+                            ...(typeof value === 'object' ? value : { value }),
+                            __rowIndex: parseInt(rowIndex)
+                        };
+                    });
+                } else {
+                    // No row structure - add as row 0
+                    updatedData[`${selectedKey}_row_0`] = {
+                        ...(Object.keys(variableClassData).length === 1 ? 
+                            { value: Object.values(variableClassData)[0] } : 
+                            variableClassData),
+                        __rowIndex: 0
+                    };
+                }
+            } else {
+                // Primitive value - add as row 0
+                updatedData[`${selectedKey}_row_0`] = {
+                    value: variableClassData,
+                    __rowIndex: 0
+                };
+            }
+            
             return updatedData;
-        })
-
-        console.log("Variable class data sent to sheet:", variableClassData);
+        });
+        
         toast.success(`Data sent to sheet with key: ${selectedKey}`);
     };
 
-    const modalOptions = (key: number, object: Record<string, any>, newVariableData: object) => {
+    const handleAddToSheet = (object: Record<string, any>, selectedKey: string) => {
+        if (!selectedKey) {
+            toast.error('Please select a class key');
+            return;
+        }
+        
+        let dataToAdd: object;
+        if (object.variableData) {
+            dataToAdd = object.variableData;
+        } else if (Array.isArray(object)) {
+            dataToAdd = object;
+        } else {
+            dataToAdd = object;
+        }
+        
+        const selectedKeyObject = variableData.tableSheet.find(item => item.value === selectedKey);
+        
+        if (!selectedKeyObject) {
+            toast.error('Selected class key not found');
+            return;
+        }
+        
+        setVariableClassData(prevData => {
+            const updatedData = { ...prevData };
+            
+            // Find the next available row index for this key
+            let nextRowIndex = 0;
+            Object.keys(updatedData).forEach(key => {
+                if (key.startsWith(`${selectedKey}_row_`)) {
+                    const rowNum = parseInt(key.replace(`${selectedKey}_row_`, ''));
+                    nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+                }
+            });
+            
+            // Handle different data structures when adding
+            if (Array.isArray(dataToAdd)) {
+                dataToAdd.forEach((item, index) => {
+                    updatedData[`${selectedKey}_row_${nextRowIndex + index}`] = {
+                        value: item,
+                        __rowIndex: nextRowIndex + index
+                    };
+                });
+            } else if (typeof dataToAdd === 'object' && dataToAdd !== null) {
+                // Check if object already has row structure
+                if (Object.keys(dataToAdd).some(key => key.startsWith('row_'))) {
+                    Object.entries(dataToAdd).forEach(([rowKey, value]) => {
+                        const rowIndex = parseInt(rowKey.replace('row_', ''));
+                        updatedData[`${selectedKey}_row_${nextRowIndex + rowIndex}`] = {
+                            ...(typeof value === 'object' ? value : { value }),
+                            __rowIndex: nextRowIndex + rowIndex
+                        };
+                    });
+                } else {
+                    // No row structure - add as next available row
+                    updatedData[`${selectedKey}_row_${nextRowIndex}`] = {
+                        ...(Object.keys(dataToAdd).length === 1 ? 
+                            { value: Object.values(dataToAdd)[0] } : 
+                            dataToAdd),
+                        __rowIndex: nextRowIndex
+                    };
+                }
+            } else {
+                // Primitive value - add as next available row
+                updatedData[`${selectedKey}_row_${nextRowIndex}`] = {
+                    value: dataToAdd,
+                    __rowIndex: nextRowIndex
+                };
+            }
+            
+            return updatedData;
+        });
+        
+        toast.success(`Data added to existing sheet with key: ${selectedKey}`);
+    };
+
+    const modalOptions = (key: number, object: Record<string, any>, newVariableData: object, addOrSend: string) => {
         let name = "";
 
         if (Array.isArray(object)) {
@@ -137,6 +235,43 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
                 return value[1];
             });
 
+        const dataInstanceId = `data_instance_${key}_${Date.now()}`;
+
+        const prepareDataForOperation = () => {
+            let preparedData: Record <string, any>;
+
+            if (newVariableData && typeof newVariableData === 'object') {
+                if ('variableData' in newVariableData) {
+                    const variableData = (newVariableData as any).variableData;
+
+                    if (Array.isArray(variableData)) {
+                        preparedData = {};
+                        variableData.forEach((item, index) => {
+                            preparedData[`${dataInstanceId}_row_${index}`] = {
+                                value: item,
+                                __rowIndex: index,
+                                _dataInstanceId: `${dataInstanceId}_row_${index}`
+                            };
+                        });
+                        return preparedData;
+                    } else {
+                        return {
+                            ...variableData,
+                            _dataInstanceId: dataInstanceId
+                        };
+                    }
+                } else {
+                    const processed = { ...newVariableData,  dataInstanceId: dataInstanceId };
+                    return processed;
+                }
+            }
+
+            return {
+                value: newVariableData,
+                _dataInstanceId: dataInstanceId
+            };
+        };
+
         return (
             <div className={styles.modal}>
                 <div className={styles.modalContent}>
@@ -144,7 +279,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
                     <div className={styles.modalPayload}>
                         <div className={styles.payloadContainer}>
                             <h5>Payload</h5>
-                            <DisplayVariableClass 
+                            <DisplayVariableClass
                                 object={filteredObject}
                             />
                         </div>
@@ -169,37 +304,60 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
                             ))}
                         </select>
                         <div className={styles.modalButtons}>
-                            <button
-                                type='button'
-                                className={styles.submitButton}
-                                disabled={!selectedClassKey}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    handleSendToSheet(newVariableData, selectedClassKey);
-                                    setSendToSheetModal(false);
-                                }}
-                            >
-                                Send
-                            </button>
-                            <button
-                                type='button'
-                                className={styles.submitButton}
-                                disabled={!selectedClassKey}
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    handleSendToSheet(newVariableData, selectedClassKey);
-                                    handleDeleteVariableClass(key);
-                                    console.log("Deleted variable class with key:", key);
-                                    setSendToSheetModal(false);
-                                }}
-                            >
-                                Send & Delete
-                            </button>
+                            {addOrSend === 'add' ? (
+                                <button
+                                    type='button'
+                                    className={styles.submitButton}
+                                    disabled={!selectedClassKey}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        // Use prepared data with unique instance ID
+                                        const preparedData = prepareDataForOperation();
+                                        handleAddToSheet(preparedData, selectedClassKey);
+                                        setSendToSheetModal(false);
+                                    }}
+                                >
+                                    Add
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        type='button'
+                                        className={styles.submitButton}
+                                        disabled={!selectedClassKey}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            // Use prepared data with unique instance ID
+                                            const preparedData = prepareDataForOperation();
+                                            handleSendToSheet(preparedData, selectedClassKey);
+                                            setSendToSheetModal(false);
+                                        }}
+                                    >
+                                        Send
+                                    </button>
+                                    <button
+                                        type='button'
+                                        className={styles.submitButton}
+                                        disabled={!selectedClassKey}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            // Use prepared data with unique instance ID
+                                            const preparedData = prepareDataForOperation();
+                                            handleSendToSheet(preparedData, selectedClassKey);
+                                            handleDeleteVariableClass(key);
+                                            console.log("Deleted variable class with key:", key);
+                                            setSendToSheetModal(false);
+                                        }}
+                                    >
+                                        Send & Delete
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </form>
                 </div>
             </div>
-        )
+        );
     };
 
     const handleDeleteVariableClass = (id: number) => {
@@ -217,7 +375,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
 
     const displayVariableClass = (object: Record<string, any>) => {
         const itemsPerPage = 5;
-        
+
         const entries = Object.entries(object);
         const totalPages = Math.ceil(entries.length / itemsPerPage);
 
@@ -259,19 +417,19 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
                 </div>
                 {entries.length > itemsPerPage && (
                     <div className={styles.paginationControls}>
-                        <button 
+                        <button
                             onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                             disabled={currentPage === 0}
                             className={styles.pageButton}
                         >
                             &lt; Prev
                         </button>
-                        
+
                         <span className={styles.pageIndicator}>
                             Page {currentPage + 1} of {totalPages}
                         </span>
-                        
-                        <button 
+
+                        <button
                             onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
                             disabled={currentPage === totalPages - 1}
                             className={styles.pageButton}
@@ -289,13 +447,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
             {originAssignment && (
                 <div className={styles.formContainer}>
                     <VariableClass
-                        variableData={variableData.variableClass}
                         onSave={(parameterizationData) => handleOpenParameterizationTab(parameterizationData)}
                     />
                     {parameterizationData && parameterizationOpen && (
                         <ParameterizationTab
-                            variableData={variableData.mainKeyString}
-                            saveMainKeyString={handleSaveMainKeyString}
                             variableClass={parameterizationData}
                             onClose={handleCloseParameterizationTab}
                         />
@@ -307,11 +462,25 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
                                     <div className={styles.variableClassContent}>
                                         {displayVariableClass(variableClassValue)}
                                         <div className={styles.buttonContainer}>
+                                            {rowsPopulated && (
+                                                <button
+                                                    className={styles.deleteButton}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        setSendToSheetModal(true);
+                                                        setAddOrSend('add');
+                                                    }}
+                                                    title={`Delete ${variableClassKey}`}
+                                                >
+                                                    Add To Sheet
+                                                </button>
+                                            )}
                                             <button
                                                 className={styles.deleteButton}
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     setSendToSheetModal(true);
+                                                    setAddOrSend('send');
                                                 }}
                                                 title={`Delete ${variableClassKey}`}
                                             >
@@ -349,7 +518,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
                                             }}
                                         >
                                             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                                                {modalOptions(index, variableClassValue.variableData, variableClassValue.variableData)}
+                                                {modalOptions(index, variableClassValue.variableData, variableClassValue.variableData, addOrSend)}
                                             </div>
                                         </div>
                                     )}
@@ -372,11 +541,13 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
             )}
             <div className={styles.tableContainer}>
                 <Table
+                    setVariableClassData={setVariableClassData}
                     variableRowData={variableClassData}
                     selectedClassKey={selectedClassKey}
                     variableData={variableData.tableSheet}
                     originAssignment={handleOriginAssignment}
                     submitVariableData={handleSubmitTableData}
+                    areRowsPopulated={setRowsPopulated}
                 />
             </div>
             <ToastContainer />
@@ -384,70 +555,71 @@ const VariableManager: React.FC<VariableManagerProps> = ({ productManager, varia
     )
 }
 
-const DisplayVariableClass: React.FC<{ 
-    object: Record<string, any> }> = 
+const DisplayVariableClass: React.FC<{
+    object: Record<string, any>
+}> =
     ({ object }) => {
-    const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 10;
-    
-    const entries = Object.entries(object);
-    const totalPages = Math.ceil(entries.length / itemsPerPage);
-    
-    const currentEntries = entries.slice(
-        currentPage * itemsPerPage,
-        (currentPage + 1) * itemsPerPage
-    );
-    
-    const filteredEntries = currentEntries.map(([key, value], index) => {
-        let displayValue: string;
+        const [currentPage, setCurrentPage] = useState(0);
+        const itemsPerPage = 10;
 
-        if (Array.isArray(value)) {
-            displayValue = value.join(", ");
-        } else if (typeof value === "object" && value !== null) {
-            displayValue = JSON.stringify(value);
-        } else if (key === "name" && value === "") {
-            displayValue = "No Name";
-        } else {
-            displayValue = value.toString();
-        }
+        const entries = Object.entries(object);
+        const totalPages = Math.ceil(entries.length / itemsPerPage);
+
+        const currentEntries = entries.slice(
+            currentPage * itemsPerPage,
+            (currentPage + 1) * itemsPerPage
+        );
+
+        const filteredEntries = currentEntries.map(([key, value], index) => {
+            let displayValue: string;
+
+            if (Array.isArray(value)) {
+                displayValue = value.join(", ");
+            } else if (typeof value === "object" && value !== null) {
+                displayValue = JSON.stringify(value);
+            } else if (key === "name" && value === "") {
+                displayValue = "No Name";
+            } else {
+                displayValue = value.toString();
+            }
+
+            return (
+                <div key={`${currentPage}-${index}`} className={styles.variableClassItem}>
+                    <span className={styles.variableValue}>
+                        <span style={{ fontSize: "10pt" }}>{displayValue}</span>
+                    </span>
+                </div>
+            );
+        });
 
         return (
-            <div key={`${currentPage}-${index}`} className={styles.variableClassItem}>
-                <span className={styles.variableValue}>
-                    <span style={{ fontSize: "10pt" }}>{displayValue}</span>
-                </span>
+            <div className={styles.variableClassContainer}>
+                <div className={styles.variableItems}>
+                    {filteredEntries}
+                </div>
+                {entries.length > itemsPerPage && (
+                    <div className={styles.paginationControls}>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                            disabled={currentPage === 0}
+                            className={styles.pageButton}
+                        >
+                            &lt; Prev
+                        </button>
+                        <span className={styles.pageIndicator}>
+                            Page {currentPage + 1} of {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                            disabled={currentPage === totalPages - 1}
+                            className={styles.pageButton}
+                        >
+                            Next &gt;
+                        </button>
+                    </div>
+                )}
             </div>
         );
-    });
-
-    return (
-        <div className={styles.variableClassContainer}>
-            <div className={styles.variableItems}>
-                {filteredEntries}
-            </div>
-            {entries.length > itemsPerPage && (
-                <div className={styles.paginationControls}>
-                    <button 
-                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                        disabled={currentPage === 0}
-                        className={styles.pageButton}
-                    >
-                        &lt; Prev
-                    </button>
-                    <span className={styles.pageIndicator}>
-                        Page {currentPage + 1} of {totalPages}
-                    </span>
-                    <button 
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                        disabled={currentPage === totalPages - 1}
-                        className={styles.pageButton}
-                    >
-                        Next &gt;
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-};
+    };
 
 export default VariableManager;

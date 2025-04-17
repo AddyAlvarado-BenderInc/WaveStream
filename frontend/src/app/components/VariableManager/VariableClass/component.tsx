@@ -16,14 +16,12 @@ interface VariableClasses {
 }
 
 interface variableClassProps {
-    variableData: object;
     onSave?: (variableClasses: VariableClasses) => void;
 }
 
-const VariableClass: React.FC<variableClassProps> = ({ onSave, variableData }) => {
+const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     const [MKSType, setMKSType] = useState<string>('StringMKS');
     const [IntVar, setIntVar] = useState<string[]>([]);
-    const [loadStringsModal, setLoadStringsModal] = useState(false);
     const dispatch = useDispatch();
 
 
@@ -94,7 +92,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, variableData }) =
 
     const loadVariableClasses = (e: React.FormEvent) => {
         e.preventDefault();
-        setLoadStringsModal(true);
     };
 
     const handleEscapeSequence = (text: string) => {
