@@ -12,10 +12,12 @@ const initialManagerState: ProductManagerState = {
 
 interface VariableState {
   variableClassArray: Array<{
+    dataId: number;
     variableData: Record<string, {
+      dataId: number;
       value: string;
-      }>;
-  }>
+      } | null>;
+  } | null | undefined>
   variableClass: {};
   stringInput: string;
   textareaInput: string;
@@ -27,6 +29,7 @@ interface VariableClass {
   name: string;
   dataLength: number;
   variableData: Record<string, {
+    dataId: number;
     value: string;
   }>;
 }
@@ -87,7 +90,7 @@ const variableSlice = createSlice({
     clearAllVariableClassArray: (state) => {
       state.variableClassArray = [];
     },
-    deleteVariableClassArray: (state, action: PayloadAction<number>) => {
+    deleteVariableClassArray: (state, action: PayloadAction<number | null | undefined>) => {
       state.variableClassArray = state.variableClassArray.filter((_, index) => index !== action.payload);
     },
     setVariableClass: (state, action: PayloadAction<Object>) => {

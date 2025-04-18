@@ -31,6 +31,8 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
     useEffect(() => {
         const originKey = variableData.find(key => key.isOrigin);
         const duplicate = classKeyInputObjects.some(keyObj => keyObj.value === localClassKeyInput.trim());
+        const hasData = Object.keys(variableRowData).length > 0;
+        areRowsPopulated(hasData);
 
         if (originKey) {
             setPermanentOrigin(originKey.value);
@@ -41,7 +43,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
             toast.error('Class key already exists');
             return;
         };
-    }, [variableData]);
+    }, [variableData, areRowsPopulated]);
 
     useEffect(() => {
         if (tableContainerRef.current) {
@@ -494,8 +496,6 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
 
                                         return cellValue;
                                     };
-
-                                    areRowsPopulated(true);
 
                                     return Array.from({ length: maxArrayLength }).map((_, rowIndex) => (
                                         <tr key={`row-${rowIndex}`}>

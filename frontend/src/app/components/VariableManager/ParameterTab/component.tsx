@@ -46,6 +46,7 @@ interface VariablePayload {
     name: string;
     dataLength: number;
     variableData: Record<string, {
+        dataId: number;
         value: string;
     }>;
 }
@@ -403,9 +404,12 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             name: localVariableName,
             dataLength,
             variableData: variableData.reduce((acc, value, index) => {
-                acc[index.toString()] = { value: value };
+                acc[index.toString()] = { 
+                    dataId: dataId,
+                    value: value 
+                };
                 return acc;
-            }, {} as Record<string, { value: string; }>),
+            }, {} as Record<string, { dataId: number, value: string; }>),
         };
 
         console.log("Generated Payload:", JSON.stringify(payload, null, 2));
