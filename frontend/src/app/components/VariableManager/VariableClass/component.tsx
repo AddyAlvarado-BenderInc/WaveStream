@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setTaskName, setTaskType } from "@/app/store/productManagerSlice"
+import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { ToastContainer, toast } from 'react-toastify';
 import styles from './component.module.css';
@@ -22,8 +21,17 @@ interface variableClassProps {
 const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     const [MKSType, setMKSType] = useState<string>('StringMKS');
     const [IntVar, setIntVar] = useState<string[]>([]);
-    const dispatch = useDispatch();
 
+    useEffect(() => {
+        setLocalString('');
+        setLocalTextarea('');
+        setLocalInteger('');
+        setLocalIntegerResult(null);
+        setLocalEscapeSequence('');
+        setLocalFile('');
+        setLocalIntegerError('');
+        setIntVar([]);
+    }, [MKSType]);
 
     const { stringInput, textareaInput, integerInput } = useSelector(
         (state: RootState) => state.variables
@@ -252,74 +260,95 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     const configureVariables = (e?: React.FormEvent) => {
         e?.preventDefault();
 
-        const variableData: Record<string, any> = {
-            StringMKS: { stringInput: localString },
-            IntegerMKS: { integerInput: localInteger.toString() },
-            TextareaMKS: { textareaInput: localTextarea },
-            EscapeSequenceMKS: { escapeSequence: localEscapeSequence },
-            LinkedMKS: { linkedInput: localFile },
-        };
-
-        const selectedData = variableData[MKSType] || { stringInput: localString };
-
-        const hasValidInput = Object.values(selectedData).some(value => value !== "" && value !== false);
-        if (!hasValidInput) {
-            toast.error("Please fill in at least one field!");
-            return;
-        }
-
         const typeMappings: Record<string, { task: string; type: string }> = {
             StringMKS: { task: "Text Line", type: "String" },
             IntegerMKS: { task: "Number", type: "Integer" },
             TextareaMKS: { task: "Description", type: "Textarea" },
-            EscapeSequenceMKS: { task: "Special Instructions", type: "EscapeSequence" },
-            LinkedMKS: { task: "File Upload", type: "Linked" },
+            EscapeSequenceMKS: { task: "Escape Sequence", type: "String" },
+            LinkedMKS: { task: "Linked Media", type: "String" },
         };
 
         const { task, type } = typeMappings[MKSType] || { task: "Text Line", type: "String" };
-        dispatch(setTaskName(task));
-        dispatch(setTaskType(type));
+
+        let dataToSend: Partial<VariableClasses> = { task, type };
+
+        switch (MKSType) {
+            case 'StringMKS':
+                if (!localString) {
+                    toast.error("Please fill in the input field!");
+                    return;
+                }
+                dataToSend.stringInput = localString;
+                break;
+            case 'IntegerMKS':
+                if (!localInteger) {
+                    toast.error("Please fill in the input field!");
+                    return;
+                }
+                dataToSend.integerInput = localInteger.toString();
+                break;
+            case 'TextareaMKS':
+                if (!localTextarea) {
+                    toast.error("Please fill in the input field!");
+                    return;
+                }
+                dataToSend.textareaInput = localTextarea;
+                break;
+            case 'EscapeSequenceMKS':
+                if (!localEscapeSequence) {
+                    toast.error("Please fill in the input field!");
+                    return;
+                }
+                dataToSend.stringInput = localEscapeSequence;
+                break;
+            case 'LinkedMKS':
+                if (!localFile) {
+                    toast.error("Please fill in the input field!");
+                    return;
+                }
+                dataToSend.stringInput = localFile;
+                break;
+            default:
+                if (!localString) {
+                    toast.error("Please fill in the input field!");
+                    return;
+                }
+                dataToSend.stringInput = localString;
+        }
+
 
         if (onSave) {
-            onSave({
-                stringInput: localString,
-                textareaInput: localTextarea,
-                integerInput: localInteger.toString(),
-                task: task,
-                type: type,
-            })
-        };
+            onSave(dataToSend as VariableClasses);
+        }
     };
 
     {
         return (
-            <>
-                <div className={styles.variableClassContainer}>
-                    <div className={styles.variableClassForm}>
-                        <form>
-                            <div className={styles.MKSContainer}>
-                                {selectMKSType(MKSType)}
+            <div className={styles.variableClassContainer}>
+                <div className={styles.variableClassForm}>
+                    <form>
+                        <div className={styles.MKSContainer}>
+                            {selectMKSType(MKSType)}
+                        </div>
+                        <div className={styles.configurationTools}>
+                            <div className={styles.buttonContainer}>
+                                <button type='submit' onClick={configureVariables}>Configure</button>
+                                <button type='submit' onClick={(e) => { handleClear(e) }}>Clear</button>
+                                <button type='submit' onClick={(e) => { loadVariableClasses(e) }}>Load</button>
                             </div>
-                            <div className={styles.configurationTools}>
-                                <div className={styles.buttonContainer}>
-                                    <button type='submit' onClick={configureVariables}>Configure</button>
-                                    <button type='submit' onClick={(e) => { handleClear(e) }}>Clear</button>
-                                    <button type='submit' onClick={(e) => { loadVariableClasses(e) }}>Load</button>
-                                </div>
-                                <select
-                                    value={MKSType}
-                                    onChange={(e) => setMKSType(e.target.value)}>
-                                    <option value='StringMKS'>Single Line</option>
-                                    <option value='IntegerMKS'>Number</option>
-                                    <option value='TextareaMKS'>Description</option>
-                                    <option value='LinkedMKS'>Linked Media</option>
-                                </select>
-                            </div>
-                        </form>
-                    </div>
-                    <ToastContainer />
+                            <select
+                                value={MKSType}
+                                onChange={(e) => setMKSType(e.target.value)}>
+                                <option value='StringMKS'>Single Line</option>
+                                <option value='IntegerMKS'>Number</option>
+                                <option value='TextareaMKS'>Description</option>
+                                <option value='LinkedMKS'>Linked Media</option>
+                            </select>
+                        </div>
+                    </form>
                 </div>
-            </>
+                <ToastContainer />
+            </div>
         );
     };
 };

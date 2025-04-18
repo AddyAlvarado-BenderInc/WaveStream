@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import VariableClass from '../VariableManager/VariableClass/component';
 import {
     clearAllVariableClassArray,
-    deleteVariableClassArray,
-    updateVariableClassArray
+    deleteVariableClassArray
 } from '@/app/store/productManagerSlice';
 import { mainKeyString, tableSheetData } from '../../../../types/productManager';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
@@ -29,12 +28,19 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
     const [originAssignment, setOriginAssignment] = useState("");
     const [sendToSheetModal, setSendToSheetModal] = useState(false);
     const [selectedClassKey, setSelectedClassKey] = useState<string>('');
+    const [variableClassIdentifier, setVariableClassIdentifier] = useState<number>(0);
     const [variableClassData, setVariableClassData] = useState<Record<string, any>>([]);
     const [rowsPopulated, setRowsPopulated] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     let [addOrSend, setAddOrSend] = useState<string>('send');
 
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
+    console.log("Global Variable Class", globalVariableClass);
+    console.log("Variable Class Identifier", variableClassIdentifier);
+
+    const handleIdentifier = (id: number) => {
+        setVariableClassIdentifier(id);
+    };
 
     const dispatch = useDispatch();
 
@@ -61,80 +67,12 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
         setParameterizationOpen(false);
     };
 
-    const handleSendToSheet = (object: Record<string, any>, selectedKey: string) => {
+    const handleSendToSheet = (object: Record<string, any>, selectedKey: string, id: number) => {
         if (!selectedKey) {
             toast.error('Please select a class key');
             return;
         }
-    
-        let variableClassData: object;
-        if (object.variableData) {
-            variableClassData = object.variableData;
-        } else if (Array.isArray(object)) {
-            variableClassData = object;
-        } else {
-            variableClassData = object;
-        }
-    
-        const selectedKeyObject = variableData.tableSheet.find(item => item.value === selectedKey);
-    
-        if (!selectedKeyObject) {
-            toast.error('Selected class key not found');
-            return;
-        }
-        
-        setVariableClassData(prevData => {
-            const updatedData = { ...prevData };
-            
-            // Handle different data structure types
-            if (Array.isArray(variableClassData)) {
-                // Convert array to row-specific entries
-                variableClassData.forEach((item, index) => {
-                    updatedData[`${selectedKey}_row_${index}`] = {
-                        value: item,
-                        __rowIndex: index
-                    };
-                });
-            } else if (typeof variableClassData === 'object' && variableClassData !== null) {
-                // Check if object already has row structure (from ParameterizationTab)
-                if (Object.keys(variableClassData).some(key => key.startsWith('row_'))) {
-                    // Already has row structure - maintain it with proper key naming
-                    Object.entries(variableClassData).forEach(([rowKey, value]) => {
-                        const rowIndex = rowKey.replace('row_', '');
-                        updatedData[`${selectedKey}_row_${rowIndex}`] = {
-                            ...(typeof value === 'object' ? value : { value }),
-                            __rowIndex: parseInt(rowIndex)
-                        };
-                    });
-                } else {
-                    // No row structure - add as row 0
-                    updatedData[`${selectedKey}_row_0`] = {
-                        ...(Object.keys(variableClassData).length === 1 ? 
-                            { value: Object.values(variableClassData)[0] } : 
-                            variableClassData),
-                        __rowIndex: 0
-                    };
-                }
-            } else {
-                // Primitive value - add as row 0
-                updatedData[`${selectedKey}_row_0`] = {
-                    value: variableClassData,
-                    __rowIndex: 0
-                };
-            }
-            
-            return updatedData;
-        });
-        
-        toast.success(`Data sent to sheet with key: ${selectedKey}`);
-    };
 
-    const handleAddToSheet = (object: Record<string, any>, selectedKey: string) => {
-        if (!selectedKey) {
-            toast.error('Please select a class key');
-            return;
-        }
-        
         let dataToAdd: object;
         if (object.variableData) {
             dataToAdd = object.variableData;
@@ -143,18 +81,17 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
         } else {
             dataToAdd = object;
         }
-        
+
         const selectedKeyObject = variableData.tableSheet.find(item => item.value === selectedKey);
-        
+
         if (!selectedKeyObject) {
             toast.error('Selected class key not found');
             return;
         }
-        
+
         setVariableClassData(prevData => {
             const updatedData = { ...prevData };
-            
-            // Find the next available row index for this key
+
             let nextRowIndex = 0;
             Object.keys(updatedData).forEach(key => {
                 if (key.startsWith(`${selectedKey}_row_`)) {
@@ -162,8 +99,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                     nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
                 }
             });
-            
-            // Handle different data structures when adding
+
             if (Array.isArray(dataToAdd)) {
                 dataToAdd.forEach((item, index) => {
                     updatedData[`${selectedKey}_row_${nextRowIndex + index}`] = {
@@ -171,40 +107,15 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                         __rowIndex: nextRowIndex + index
                     };
                 });
-            } else if (typeof dataToAdd === 'object' && dataToAdd !== null) {
-                // Check if object already has row structure
-                if (Object.keys(dataToAdd).some(key => key.startsWith('row_'))) {
-                    Object.entries(dataToAdd).forEach(([rowKey, value]) => {
-                        const rowIndex = parseInt(rowKey.replace('row_', ''));
-                        updatedData[`${selectedKey}_row_${nextRowIndex + rowIndex}`] = {
-                            ...(typeof value === 'object' ? value : { value }),
-                            __rowIndex: nextRowIndex + rowIndex
-                        };
-                    });
-                } else {
-                    // No row structure - add as next available row
-                    updatedData[`${selectedKey}_row_${nextRowIndex}`] = {
-                        ...(Object.keys(dataToAdd).length === 1 ? 
-                            { value: Object.values(dataToAdd)[0] } : 
-                            dataToAdd),
-                        __rowIndex: nextRowIndex
-                    };
-                }
-            } else {
-                // Primitive value - add as next available row
-                updatedData[`${selectedKey}_row_${nextRowIndex}`] = {
-                    value: dataToAdd,
-                    __rowIndex: nextRowIndex
-                };
-            }
-            
+            } 
+            console.log("Updated Data", updatedData);
             return updatedData;
         });
-        
+
         toast.success(`Data added to existing sheet with key: ${selectedKey}`);
     };
 
-    const modalOptions = (key: number, object: Record<string, any>, newVariableData: object, addOrSend: string) => {
+    const modalOptions = (key: number, object: Record<string, any>) => {
         let name = "";
 
         if (Array.isArray(object)) {
@@ -234,43 +145,6 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
             .map((value) => {
                 return value[1];
             });
-
-        const dataInstanceId = `data_instance_${key}_${Date.now()}`;
-
-        const prepareDataForOperation = () => {
-            let preparedData: Record <string, any>;
-
-            if (newVariableData && typeof newVariableData === 'object') {
-                if ('variableData' in newVariableData) {
-                    const variableData = (newVariableData as any).variableData;
-
-                    if (Array.isArray(variableData)) {
-                        preparedData = {};
-                        variableData.forEach((item, index) => {
-                            preparedData[`${dataInstanceId}_row_${index}`] = {
-                                value: item,
-                                __rowIndex: index,
-                                _dataInstanceId: `${dataInstanceId}_row_${index}`
-                            };
-                        });
-                        return preparedData;
-                    } else {
-                        return {
-                            ...variableData,
-                            _dataInstanceId: dataInstanceId
-                        };
-                    }
-                } else {
-                    const processed = { ...newVariableData,  dataInstanceId: dataInstanceId };
-                    return processed;
-                }
-            }
-
-            return {
-                value: newVariableData,
-                _dataInstanceId: dataInstanceId
-            };
-        };
 
         return (
             <div className={styles.modal}>
@@ -304,55 +178,33 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                             ))}
                         </select>
                         <div className={styles.modalButtons}>
-                            {addOrSend === 'add' ? (
                                 <button
                                     type='button'
                                     className={styles.submitButton}
                                     disabled={!selectedClassKey}
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        // Use prepared data with unique instance ID
-                                        const preparedData = prepareDataForOperation();
-                                        handleAddToSheet(preparedData, selectedClassKey);
+                                        handleSendToSheet(object, selectedClassKey, variableClassIdentifier);
                                         setSendToSheetModal(false);
                                     }}
                                 >
-                                    Add
+                                    Send
                                 </button>
-                            ) : (
-                                <>
-                                    <button
-                                        type='button'
-                                        className={styles.submitButton}
-                                        disabled={!selectedClassKey}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            // Use prepared data with unique instance ID
-                                            const preparedData = prepareDataForOperation();
-                                            handleSendToSheet(preparedData, selectedClassKey);
-                                            setSendToSheetModal(false);
-                                        }}
-                                    >
-                                        Send
-                                    </button>
-                                    <button
-                                        type='button'
-                                        className={styles.submitButton}
-                                        disabled={!selectedClassKey}
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            // Use prepared data with unique instance ID
-                                            const preparedData = prepareDataForOperation();
-                                            handleSendToSheet(preparedData, selectedClassKey);
-                                            handleDeleteVariableClass(key);
-                                            console.log("Deleted variable class with key:", key);
-                                            setSendToSheetModal(false);
-                                        }}
-                                    >
-                                        Send & Delete
-                                    </button>
-                                </>
-                            )}
+                                <button
+                                    type='button'
+                                    className={styles.submitButton}
+                                    disabled={!selectedClassKey}
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleDeleteVariableClass(key);
+                                        setVariableClassIdentifier(-1);
+                                        handleSendToSheet(object, selectedClassKey, variableClassIdentifier);
+                                        console.log("Deleted variable class with key:", key);
+                                        setSendToSheetModal(false);
+                                    }}
+                                >
+                                    Send & Delete
+                                </button>
                         </div>
                     </form>
                 </div>
@@ -368,39 +220,50 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
         dispatch(clearAllVariableClassArray());
     };
 
-
-    const handleEditVariableClass = (id: number) => {
+    const handleEditVariableClass = (object: Record<string, any>) => {
         // Need to reinitialize parameterization details
     }
 
     const displayVariableClass = (object: Record<string, any>) => {
         const itemsPerPage = 5;
 
-        const entries = Object.entries(object);
-        const totalPages = Math.ceil(entries.length / itemsPerPage);
+        const displayableEntries = Object.entries(object);
+        const totalPages = Math.ceil(displayableEntries.length / itemsPerPage);
 
-        const currentEntries = entries.slice(
+        const currentEntries = displayableEntries.slice(
             currentPage * itemsPerPage,
             (currentPage + 1) * itemsPerPage
         );
 
-        const filteredEntries = Object.entries(object).map(([key, value], index) => {
+        const filteredEntries = currentEntries.map(([key, value], index) => {
             let displayValue: string;
-
-            if (Array.isArray(value)) {
-                displayValue = value.join(", ");
-            } else if (typeof value === "object" && value !== null) {
-                displayValue = JSON.stringify(value);
-            } else if (key === "name" && value === "") {
-                displayValue = "No Name";
-            } else {
-                displayValue = value.toString();
-            }
-
             const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
 
+            if (key === 'variableData' && typeof value === 'object' && value !== null) {
+                const innerValues = Object.values(value);
+                if (innerValues.length > 0 && innerValues.every(item => typeof item === 'object' && item !== null && 'value' in item)) {
+                    displayValue = innerValues.map(item => (item as { value: string }).value).join(", ");
+                } else {
+                    displayValue = JSON.stringify(value);
+                }
+            } else if (key === 'dataLength' && typeof value === 'number') {
+                 displayValue = value.toString();
+            } else if (key === 'dataId' && typeof value === 'number') {
+                 displayValue = value.toString();
+            } else if (key === 'name' && (value === "" || value === null || value === undefined)) {
+                 displayValue = "No Name";
+            } else if (typeof value === 'object' && value !== null) {
+                 displayValue = JSON.stringify(value);
+            } else {
+                 displayValue = value !== null && value !== undefined ? value.toString() : "";
+            }
+
+            if (displayValue === "" && key !== 'name') {
+                return null;
+            }
+
             return (
-                <div key={`${currentPage}-${index}`} className={styles.variableClassItem}>
+                <div key={`${currentPage}-${key}-${index}`} className={styles.variableClassItem}>
                     <span className={styles.variableValue}>
                         <b>{capitalizedKey}</b>
                         <br />
@@ -408,14 +271,14 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                     </span>
                 </div>
             );
-        });
+        }).filter(Boolean);
 
         return (
             <div className={styles.variableClassContainer}>
                 <div className={styles.variableItems}>
-                    {filteredEntries}
+                    {filteredEntries.length > 0 ? filteredEntries : <span className={styles.noData}>No Data</span>}
                 </div>
-                {entries.length > itemsPerPage && (
+                {displayableEntries.length > itemsPerPage && (
                     <div className={styles.paginationControls}>
                         <button
                             onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
@@ -455,44 +318,32 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                             onClose={handleCloseParameterizationTab}
                         />
                     )}
-                    {Object.keys(globalVariableClass).length > 0 && (
+                    {globalVariableClass.length > 0 && (
                         <div className={styles.variableClassList}>
-                            {Object.entries(globalVariableClass).map(([variableClassKey, variableClassValue], index) => (
-                                <div key={variableClassKey} className={styles.variableClassRow}>
+                            {globalVariableClass.map((currentVariableClassData, index) => {
+                                return (
+                                <div key={index} className={styles.variableClassRow + `_row_${index}`}>
                                     <div className={styles.variableClassContent}>
-                                        {displayVariableClass(variableClassValue)}
+                                        {displayVariableClass(currentVariableClassData)}
                                         <div className={styles.buttonContainer}>
-                                            {rowsPopulated && (
-                                                <button
-                                                    className={styles.deleteButton}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setSendToSheetModal(true);
-                                                        setAddOrSend('add');
-                                                    }}
-                                                    title={`Delete ${variableClassKey}`}
-                                                >
-                                                    Add To Sheet
-                                                </button>
-                                            )}
                                             <button
                                                 className={styles.deleteButton}
                                                 onClick={(e) => {
                                                     e.preventDefault();
+                                                    setVariableClassIdentifier(index);
                                                     setSendToSheetModal(true);
                                                     setAddOrSend('send');
                                                 }}
-                                                title={`Delete ${variableClassKey}`}
-                                            >
+                                                title={`Send to Sheet`}
+                                                >
                                                 Send To Sheet
                                             </button>
                                             <button
                                                 className={styles.deleteButton}
                                                 onClick={(e) => {
                                                     e.preventDefault();
-                                                    handleEditVariableClass(index);
                                                 }}
-                                                title={`Delete ${variableClassKey}`}
+                                                title={`Edit`}
                                             >
                                                 Edit
                                             </button>
@@ -501,8 +352,9 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                                                 onClick={(e) => {
                                                     e.preventDefault();
                                                     handleDeleteVariableClass(index);
+                                                    setVariableClassIdentifier(-1);
                                                 }}
-                                                title={`Delete ${variableClassKey}`}
+                                                title={`Delete`}
                                             >
                                                 Delete
                                             </button>
@@ -518,18 +370,19 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                                             }}
                                         >
                                             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                                                {modalOptions(index, variableClassValue.variableData, variableClassValue.variableData, addOrSend)}
+                                                {modalOptions(index, currentVariableClassData.variableData )}
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                            ))}
+                            )})}
                             <div className={styles.actionButtons}>
                                 <button
                                     className={styles.deleteAllButton}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         handleClearAllVariableClass();
+                                        setVariableClassIdentifier(0);
                                     }}
                                 >Delete All
                                 </button>

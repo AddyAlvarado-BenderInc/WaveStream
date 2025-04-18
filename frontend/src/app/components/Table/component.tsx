@@ -48,7 +48,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
             tableContainerRef.current.style.transform = `scale(${zoomLevel / 100})`;
             tableContainerRef.current.style.transformOrigin = 'top left';
         }
-        if (Object.keys(variableRowData).length === 0) {
+        if (Object.keys(variableRowData).length < 0) {
             areRowsPopulated(false);
         }
     }, [zoomLevel]);
@@ -227,6 +227,16 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
         }
     };
 
+    // Will fetch the data from the backend and delete the whole data
+    const handleDeleteTableData = () => {
+        const confirmation = window.confirm(
+            `CAUTION: This will permanently delete all data in the table. Are you sure you want to proceed?`
+        );
+        if (confirmation) {
+
+        }
+    };
+
     return (
         <div className={styles.wavekeyTable}>
             <div className={styles.header}>
@@ -282,8 +292,8 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                     />
                 )}
                 <div className={styles.rowContainer}>
-                    <div className={styles.classKeyButtons}>
-                        {!permanentOrigin && (
+                    {!permanentOrigin ? (
+                        <div className={styles.classKeyButtons}>
                             <button
                                 type="button"
                                 onClick={() => {
@@ -306,29 +316,48 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                             >
                                 Add Class Key
                             </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setAddedClassKeys([]);
-                                submitVariableData([]);
-                                areRowsPopulated(false);
-                            }}
-                            className={styles.deleteButton}
-                        >
-                            Delete All Class Keys
-                        </button>
-                        <label>
-                            <div className={styles.uploadButton}>Upload Header Sheet</div>
-                            <input
-                                id="class-key-upload"
-                                type="file"
-                                accept=".csv"
-                                onChange={handleImportHeaderSheet}
-                                className={styles.fileInput}
-                            />
-                        </label>
-                    </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setAddedClassKeys([]);
+                                    submitVariableData([]);
+                                    areRowsPopulated(false);
+                                }}
+                                className={styles.deleteButton}
+                            >
+                                Delete All Class Keys
+                            </button>
+                            <label>
+                                <div className={styles.uploadButton}>Upload Header Sheet</div>
+                                <input
+                                    id="class-key-upload"
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={handleImportHeaderSheet}
+                                    className={styles.fileInput}
+                                />
+                            </label>
+                        </div>
+                    ) : (
+                        <div className={styles.originClassKeyButtons}>
+                            <button
+                                type="button"
+                                onClick={handleDeleteTableData}
+                                className={styles.deleteButton}
+                            >
+                                Delete Table
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    areRowsPopulated(false);
+                                }}
+                                className={styles.deleteButton}
+                            >
+                                Clear Table
+                            </button>
+                        </div>
+                    )}
                     {headerOrigin && !permanentOrigin ? (
                         <div className={styles.currentOriginContainer}>
                             <h4>Current Origin {" "}
@@ -412,43 +441,35 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                         }
                                     });
 
-                                    // Define the getCellValue function here, before using it
                                     const getCellValue = (
                                         keyObj: { index: number; value: string; isOrigin: boolean },
                                         rowIndex: number,
                                         rowDataMap: Map<number, Map<string, any>>,
                                         variableRowData: Record<string, any>
                                     ): string => {
-                                        // Check if we have row-specific data in the map
                                         const rowSpecificData = rowDataMap.has(rowIndex) ?
                                             rowDataMap.get(rowIndex)?.get(keyObj.value) : undefined;
 
-                                        // Get column data (only for arrays or when we're in row 0)
                                         let columnData: any = undefined;
                                         const baseColumnData = variableRowData[keyObj.value];
 
                                         if (baseColumnData !== undefined) {
                                             if (Array.isArray(baseColumnData)) {
-                                                // For arrays, we want to show the specific element for this row
                                                 columnData = rowIndex < baseColumnData.length ? baseColumnData[rowIndex] : undefined;
                                             } else if (rowIndex === 0) {
-                                                // For non-arrays, only show in row 0
                                                 columnData = baseColumnData;
                                             }
                                         }
 
-                                        // Prioritize row-specific data over column data
                                         const cellData = rowSpecificData !== undefined ? rowSpecificData : columnData;
 
                                         let cellValue = '';
 
                                         if (cellData !== undefined && cellData !== null) {
                                             if (typeof cellData === 'object' && cellData !== null && '__rowIndex' in cellData) {
-                                                // Handle row-specific data structure
                                                 const { __rowIndex, ...actualData } = cellData;
 
                                                 if (Object.keys(actualData).length === 0) {
-                                                    // Empty object, leave cellValue empty
                                                 } else if (Object.keys(actualData).length === 1) {
                                                     const singleValue = Object.values(actualData)[0];
                                                     cellValue = typeof singleValue === 'object' && singleValue !== null
@@ -458,19 +479,15 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                                     cellValue = JSON.stringify(actualData);
                                                 }
                                             } else if (typeof cellData === 'string') {
-                                                // String data - show directly
                                                 cellValue = cellData;
                                             } else if (Array.isArray(cellData)) {
-                                                // Array data - show appropriate element for this row index
                                                 cellValue = rowIndex < cellData.length ?
                                                     (typeof cellData[rowIndex] === 'object' && cellData[rowIndex] !== null ?
                                                         JSON.stringify(cellData[rowIndex]) :
                                                         String(cellData[rowIndex] ?? '')) : '';
                                             } else if (typeof cellData === 'object' && cellData !== null) {
-                                                // Object data - properly format
                                                 cellValue = (cellData.name as string | undefined) || JSON.stringify(cellData);
                                             } else {
-                                                // Any other type - convert to string
                                                 cellValue = String(cellData);
                                             }
                                         }
@@ -483,7 +500,6 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                     return Array.from({ length: maxArrayLength }).map((_, rowIndex) => (
                                         <tr key={`row-${rowIndex}`}>
                                             {classKeyInputObjects.map((keyObj) => {
-                                                // Use the getCellValue function here
                                                 const cellValue = getCellValue(keyObj, rowIndex, rowDataMap, variableRowData);
 
                                                 return (

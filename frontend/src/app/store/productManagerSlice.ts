@@ -12,18 +12,23 @@ const initialManagerState: ProductManagerState = {
 
 interface VariableState {
   variableClassArray: Array<{
-    variableData: string[],
+    variableData: Record<string, {
+      value: string;
+      }>;
   }>
-  variableClass: Object;
+  variableClass: {};
   stringInput: string;
   textareaInput: string;
   integerInput: string;
 }
 
 interface VariableClass {
+  dataId: number;
   name: string;
-  index: number;
-  variableData: string[];
+  dataLength: number;
+  variableData: Record<string, {
+    value: string;
+  }>;
 }
 
 const initialState: VariableState = {
@@ -85,12 +90,6 @@ const variableSlice = createSlice({
     deleteVariableClassArray: (state, action: PayloadAction<number>) => {
       state.variableClassArray = state.variableClassArray.filter((_, index) => index !== action.payload);
     },
-    updateVariableClassArray: (state, action: PayloadAction<VariableClass>) => {
-      const { index, variableData } = action.payload;
-      if (state.variableClassArray[index]) {
-        state.variableClassArray[index].variableData = variableData;
-      }
-    },
     setVariableClass: (state, action: PayloadAction<Object>) => {
       state.variableClass = action.payload;
     },
@@ -144,6 +143,10 @@ const parameterSlice = createSlice({
     }[]>) => {
       state.parameterBundle = action.payload;
     },
+    clearAllParameters: (state) => {
+      state.parameters = [];
+      console.log("Cleared all parameters from Redux store.");
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(clearParameter, (state, action) => {
@@ -158,7 +161,6 @@ export const {
   addVariableClassArray,
   clearAllVariableClassArray,
   deleteVariableClassArray,
-  updateVariableClassArray,
   setVariableClass,
   setStringInput,
   setTextareaInput,
@@ -167,7 +169,7 @@ export const {
 } = variableSlice.actions;
 
 export const { setTaskName, setTaskType } = typeTaskSlice.actions;
-export const { addParameter, setParameterBundle } = parameterSlice.actions;
+export const { addParameter, setParameterBundle, clearAllParameters } = parameterSlice.actions;
 export const clearParameter = createAction<number | undefined>('parameters/clear');
 export const { updateProductManager } = productManagerSlice.actions;
 

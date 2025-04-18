@@ -1,5 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { addParameter, clearParameter, setVariableClass, addVariableClassArray, setParameterBundle } from '@/app/store/productManagerSlice';
+import {
+    addParameter,
+    clearParameter,
+    setVariableClass,
+    addVariableClassArray,
+    setParameterBundle,
+    clearAllParameters
+} from '@/app/store/productManagerSlice';
+import {
+    cleanedInputValues,
+    displayOnlyType,
+    displayOnlyValue,
+    generateCombinations,
+    handleCreateName,
+} from './VariableUtility/utility';
 import ParameterModal from '../ParameterModal/component';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
@@ -7,10 +21,6 @@ import { RootState } from '@/app/store/store';
 import 'react-toastify/dist/ReactToastify.css';
 import './style.css';
 import { mainKeyString } from '../../../../../types/productManager';
-
-interface VariableDataState {
-    mainKeyString: mainKeyString[];
-}
 
 interface ParameterizationTabProps {
     variableClass: object;
@@ -30,6 +40,25 @@ interface BundlizedParameters {
     parameterName: string;
     addedParameter: string;
 }
+
+interface VariablePayload {
+    dataId: number;
+    name: string;
+    dataLength: number;
+    variableData: Record<string, {
+        value: string;
+    }>;
+}
+
+interface VariableClasses {
+    stringInput: string;
+    textareaInput: string;
+    integerInput: string;
+    task: string;
+    type: string;
+}
+
+let variableID = 1;
 
 const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -54,155 +83,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         const { mainKeyString } = payload;
     };
 
-    const handleSaveVariableClass = (object: Object, param: BundlizedParameters[]) => {
-        if (!object) {
-            toast.error('Key String is empty');
-            return;
-        }
-        toast.success('Key String saved successfully');
-        dispatch(setVariableClass(object));
-
-        const mainKeyString: mainKeyString[] = Object.entries(object)
-            .filter(([key, value]) => key !== 'task' && key !== 'type' && value)
-            .map(([key, value]) => ({
-                type: key,
-                value: value.toString(),
-            }));
-        console.log('Main Key String: ', mainKeyString);
-        
-        saveMainKeyString({ mainKeyString });
-
-        const transformedParams = param.map((p) => ({
-            id: p.id,
-            variable: p.variable,
-            parameterName: p.parameterName,
-            addedParameter: p.addedParameter,
-        }));
-
-        dispatch(setParameterBundle(transformedParams));
-    };
-
-
-    const cleanedInputValues = (object: any) => {
-        if (!object || typeof object !== 'object') {
-            return { value: '', detectVariables: [] };
-        }
-
-        const taskValue = object.task || '';
-        const typeValue = object.type || '';
-
-        const taskToKeys: Record<string, string[]> = {
-            'Text Line': ['stringInput'],
-            'Number': ['integerInput'],
-            'Description': ['textareaInput'],
-            'Special Instructions': ['escapeSequence'],
-            'File Upload': ['linkedInput'],
-        };
-
-        const allowedKeys = taskToKeys[taskValue] || [];
-
-        const filteredEntries = Object.entries(object)
-            .filter(([key, value]) => {
-                if (key === 'task' || key === 'type') return false;
-                const isKeyAllowed = allowedKeys.includes(key);
-                const isValueValid = value !== "" && value !== "0" && value !== false;
-                return isKeyAllowed && isValueValid;
-            });
-
-        let value = `${taskValue}\n${typeValue}`;
-
-        if (filteredEntries.length > 0) {
-            const filteredObject = Object.fromEntries(filteredEntries);
-            const otherValues = JSON.stringify(filteredObject, null, 2)
-                .replace(/[{},"]/g, '')
-                .trim();
-
-            value += `\n\n${otherValues}`;
-        }
-
-        const inputNames = ['stringInput', 'integerInput', 'textareaInput', 'escapeSequence', 'linkedInput'];
-        inputNames.forEach(name => {
-            value = value.replace(new RegExp(`${name}:\\s?`, 'g'), '');
-        });
-
-        const detectVariables = value.match(/\%\w+/g) || [];
-        return { value, detectVariables };
-    };
-
     const { value, detectVariables } = cleanedInputValues(variableClass);
-
-    const displayOnlyType = (value: string) => {
-        const allowedKeys = [
-            'Text Line',
-            'Number',
-            'Description',
-            'Special Instructions',
-            'File Upload',
-            'String',
-            'Integer',
-            'Textarea',
-            'EscapeSequence',
-            'Linked'
-        ];
-
-        const keyPattern = new RegExp(
-            `\\b(${allowedKeys.join('|')})\\b`,
-            'gi'
-        );
-
-        const filteredParts = value
-            .split(keyPattern)
-            .filter(part => {
-                const isAllowed = part && allowedKeys.includes(part.trim());
-                return isAllowed;
-            });
-
-        return filteredParts.length > 0
-            ? `${filteredParts[0]}${filteredParts.slice(1).map((p, i) =>
-                i === 0 ? ` | ${p}` : ` ${p}`).join('')}`
-            : '';
-    };
-
-    const displayOnlyValue = (value: string) => {
-        const removeKeys = [
-            'Text Line',
-            'Number',
-            'Description',
-            'Special Instructions',
-            'File Upload',
-            'String',
-            'Integer',
-            'Textarea',
-            'EscapeSequence',
-            'Linked'
-        ];
-        const keyPattern = new RegExp(
-            `\\b(${removeKeys.join('|')})\\b`,
-            'gi'
-        );
-
-        const filteredParts = value
-            .split(keyPattern)
-            .filter(part => {
-                const isAllowed = part && removeKeys.includes(part.trim());
-                return !isAllowed;
-            });
-        return filteredParts;
-    };
-
-    // TODO: will work on later, use integerOptions as an argument
-    const handleIntegerOptions = (value: string) => {
-        switch (value) {
-            case 'All':
-                break;
-            case 'Increment':
-                break;
-            case 'Range':
-                break;
-            default:
-                break;
-        };
-    };
 
     const displayIntegerVariables = (value: object) => {
         const cleanValue = cleanedInputValues(value).value;
@@ -414,65 +295,122 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
     }, [detectVariables]);
 
-    const generateCombinations = (groupedParams: Record<string, string[]>) => {
-        const keys = Object.keys(groupedParams);
-        const values = keys.map((key) => groupedParams[key]);
-        const combinations = cartesianProduct(values);
-
-        return combinations.map((combo) => {
-            const result: Record<string, string> = {};
-            keys.forEach((key, index) => {
-                result[key] = combo[index];
-            });
-            return result;
-        });
+    const handleCloseCleanup = () => {
+        dispatch(clearAllParameters());
+        onClose();
+        setSelectedInterpolatedVariables(null);
+        setLocalParameter({ parameterName: '', addedParameter: '' });
+        setAddedParameters([]);
+        setIntVar([]);
     };
 
-    const cartesianProduct = (arrays: string[][]): string[][] => {
-        return arrays.reduce(
-            (acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])),
-            [[]] as string[][]
-        );
+    // TODO: Will work on later once the handleAddVariable function is working
+    const handleSaveVariableClass = (object: Object, param: BundlizedParameters[]) => {
+        if (!object) {
+            toast.error('Key String is empty');
+            return;
+        }
+        toast.success('Key String saved successfully');
+        dispatch(setVariableClass(object));
+
+        const mainKeyString: mainKeyString[] = Object.entries(object)
+            .filter(([key, value]) => key !== 'task' && key !== 'type' && value)
+            .map(([key, value]) => ({
+                type: key,
+                value: value.toString(),
+            }));
+        console.log('Main Key String: ', mainKeyString);
+
+        saveMainKeyString({ mainKeyString });
+
+        const transformedParams = param.map((p) => ({
+            id: p.id,
+            variable: p.variable,
+            parameterName: p.parameterName,
+            addedParameter: p.addedParameter,
+        }));
+
+        dispatch(setParameterBundle(transformedParams));
     };
 
     const handleAddVariable = (object: object, param: BundlizedParameters[]) => {
-        const { stringInput } = object as Record<string, string>;
+        let inputString = "";
+        const { task, type, stringInput, textareaInput, integerInput } = object as VariableClasses;
 
-        const groupedParams = param.reduce((acc, item) => {
-            if (!acc[item.variable]) {
-                acc[item.variable] = [];
+        if (type === "String" && task === "Text Line" || type === "Linked") {
+            inputString = stringInput || "";
+        } else if (type === "Textarea" && task === "Description") {
+            inputString = textareaInput || "";
+        } else if (type === "Integer" && task === "Number") {
+            inputString = integerInput || "";
+        } else if (type === "EscapeSequence" && task === "Special Instructions") {
+            inputString = stringInput || "";
+        }
+
+        console.log('handleAddVariable - stringInput ', stringInput);
+        console.log('handleAddVariable - globalParameterBundle (param): ', JSON.stringify(param, null, 2));
+
+        const detectedVars = inputString.match(/\%\{(.*?)\}/g)?.map(v => v.replace(/[%{}]/g, '')) || [];
+        console.log("handleAddVariable - Detected variables in input:", detectedVars);
+
+        const relevantParamsExist = detectedVars.length > 0 && detectedVars.every(v => param.some(p => p.variable === v));
+        console.log("handleAddVariable - Relevant parameters exist:", relevantParamsExist);
+
+        let variableData: string[] = [];
+        let dataLength = 0;
+
+        if (detectedVars.length > 0 && relevantParamsExist && param.length > 0) {
+            console.log("handleAddVariable - Running COMBINATION logic.");
+
+            const groupedParams = param.reduce((acc, item) => {
+                if (detectedVars.includes(item.variable)) {
+                    if (!acc[item.variable]) {
+                        acc[item.variable] = [];
+                    }
+                    acc[item.variable].push(item.addedParameter);
+                }
+                return acc;
+            }, {} as Record<string, string[]>);
+
+            if (Object.keys(groupedParams).length === 0) {
+                console.log("handleAddVariable - No relevant grouped params, treating as single item.");
+                variableData = [inputString];
+            } else {
+                const variables = Object.keys(groupedParams);
+                const combinations = generateCombinations(groupedParams);
+                console.log("handleAddVariable - Generated Combinations:", JSON.stringify(combinations, null, 2));
+
+                variableData = combinations.map(combo => {
+                    let result = inputString;
+                    variables.forEach((variable) => {
+                        const regex = new RegExp(`\\%\\{${variable}\\}`, 'g');
+                        result = result.replace(regex, combo[variable]);
+                    });
+                    return result;
+                });
             }
-            acc[item.variable].push(item.addedParameter);
-            return acc;
-        }, {} as Record<string, string[]>);
 
-        const variables = Object.keys(groupedParams);
-        const combinations = generateCombinations(groupedParams);
+        } else {
+            console.log("handleAddVariable - Running SINGLE item logic.");
+            variableData = [inputString];
+        }
 
-        const variableData = combinations.map((combo) => {
-            let result = stringInput;
-            variables.forEach((variable) => {
-                result = result.replace(`%{${variable}}`, combo[variable]);
-            });
-            return result;
-        });
+        dataLength = variableData.length;
+        const dataId = variableID++;
 
-        const index = variableData.length;
-
-        const payload = {
+        const payload: VariablePayload = {
+            dataId,
             name: localVariableName,
-            index,
-            variableData,
+            dataLength,
+            variableData: variableData.reduce((acc, value, index) => {
+                acc[index.toString()] = { value: value };
+                return acc;
+            }, {} as Record<string, { value: string; }>),
         };
 
         console.log("Generated Payload:", JSON.stringify(payload, null, 2));
         dispatch(addVariableClassArray(payload));
         onClose();
-    };
-
-    const handleCreateName = (name: string) => {
-        const cleanedName = name.replace(/[^a-zA-Z0-9]/g, '');
-        return cleanedName;
     };
 
     return (
@@ -483,6 +421,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                     onClick={(e) => {
                         e.stopPropagation();
                         onClose();
+                        handleCloseCleanup();
                         setSelectedInterpolatedVariables(null);
                         setLocalParameter({ parameterName: '', addedParameter: '' });
                         setAddedParameters([]);
@@ -539,7 +478,10 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                             Save Key String
                         </button>
                         <button className='send-to-sheet-button'
-                            onClick={() => { handleAddVariable(variableClass, globalParameterBundle) }}>
+                            onClick={() => {
+                                handleAddVariable(variableClass, globalParameterBundle);
+                                handleCloseCleanup();
+                            }}>
                             Add Variable
                         </button>
                         <div className="parameterization-details">
