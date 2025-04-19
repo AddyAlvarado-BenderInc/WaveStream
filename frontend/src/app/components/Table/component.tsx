@@ -14,12 +14,12 @@ interface TableProps {
     selectedClassKey: string;
     variableData: tableSheetData[];
     originAssignment: (key: string) => void;
-    submitVariableData: (values: tableSheetData[]) => void;
+    submitTableData: (values: tableSheetData[]) => void;
     areRowsPopulated: (value: boolean) => void;
     setVariableClassData: (data: Record<string, any>) => void;
 }
 
-const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variableData, originAssignment, submitVariableData, areRowsPopulated, setVariableClassData }) => {
+const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variableData, originAssignment, submitTableData, areRowsPopulated, setVariableClassData }) => {
     const [localClassKeyInput, setLocalClassKeyInput] = useState<string>('');
     const [addedClassKeys, setAddedClassKeys] = useState<tableSheetData[]>([]);
     const [headerOrigin, setHeaderOrigin] = useState<string>("");
@@ -115,7 +115,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                 isOrigin: false,
                             }));
                             setAddedClassKeys(classKeyObjects);
-                            submitVariableData(classKeyObjects);
+                            submitTableData(classKeyObjects);
                             setLocalClassKeyInput('');
                         } else {
                             toast.error('The uploaded CSV file is empty or invalid.');
@@ -131,7 +131,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
         }
     };
 
-    const handleHeaderOrigin = (key: string) => {
+    const handleHeaderOriginKey = (key: string) => {
         if (permanentOrigin) {
             return null;
         }
@@ -140,7 +140,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
         }
     };
 
-    const handlePermanentOrigin = (key: string) => {
+    const handlePermanentOriginKey = (key: string) => {
         if (headerOrigin === key && !permanentOrigin) {
             const confirmation = window.confirm(
                 `Are you sure you want to set "${key}" as the permanent origin?\nMake sure that this class key has a wide range of variable classes`
@@ -150,7 +150,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                 const updatedKeys = classKeyInputObjects.map((entry) =>
                     entry.value === key ? { ...entry, isOrigin: true } : { ...entry, isOrigin: false }
                 );
-                submitVariableData(updatedKeys);
+                submitTableData(updatedKeys);
                 originAssignment(key);
                 setAddedClassKeys(updatedKeys);
             }
@@ -160,7 +160,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
     const handleDeleteKey = (key: string) => {
         const updatedKeys = classKeyInputObjects.filter((entry) => entry.value !== key);
         setAddedClassKeys(updatedKeys);
-        submitVariableData(updatedKeys);
+        submitTableData(updatedKeys);
     };
 
     const handleEditKey = (key: string, newValue: string) => {
@@ -168,7 +168,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
             entry.value === key ? { ...entry, value: newValue } : entry
         );
         setAddedClassKeys(updatedKeys);
-        submitVariableData(updatedKeys);
+        submitTableData(updatedKeys);
     };
 
     const handleDeleteCell = (key: string, rowIndex: number) => {
@@ -186,10 +186,21 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                 console.log(`Deleted column data for ${key}`);
             }
 
+            submitTableData(updatedData);
             return updatedData;
         });
 
         toast.success(`Data deleted for ${key} at row ${rowIndex}`);
+    };
+
+    const handleClearAllCells = () => {
+        const confirmation = window.confirm(
+            `Are you sure you want to delete all row data in the table?`
+        );
+        if (confirmation) {
+            setVariableClassData({});
+            toast.success('All data cleared');
+        }
     };
 
     const handleEditCell = (key: string, rowIndex: number, currentValue: string) => {
@@ -229,13 +240,19 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
         }
     };
 
-    // Will fetch the data from the backend and delete the whole data
+    // Will fetch the data from the backend and delete the whole data, will work on later
     const handleDeleteTableData = () => {
         const confirmation = window.confirm(
             `CAUTION: This will permanently delete all data in the table. Are you sure you want to proceed?`
         );
         if (confirmation) {
-
+            // just a placeholder for the route
+            fetch('/api/deleteTableData', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
         }
     };
 
@@ -310,7 +327,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                     };
                                     const updatedKeys = [...classKeyInputObjects, newKey];
                                     setAddedClassKeys(updatedKeys);
-                                    submitVariableData(updatedKeys);
+                                    submitTableData(updatedKeys);
                                     areRowsPopulated(true);
                                     setLocalClassKeyInput('');
                                 }}
@@ -322,7 +339,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                 type="button"
                                 onClick={() => {
                                     setAddedClassKeys([]);
-                                    submitVariableData([]);
+                                    submitTableData([]);
                                     areRowsPopulated(false);
                                 }}
                                 className={styles.deleteButton}
@@ -353,6 +370,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                 type="button"
                                 onClick={() => {
                                     areRowsPopulated(false);
+                                    handleClearAllCells();
                                 }}
                                 className={styles.deleteButton}
                             >
@@ -370,7 +388,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handlePermanentOrigin(headerOrigin);
+                                    handlePermanentOriginKey(headerOrigin);
                                 }}
                             >
                                 Set As Origin
@@ -408,7 +426,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                         input={keyObj.value}
                                         onDelete={handleDeleteKey}
                                         onEdit={handleEditKey}
-                                        originAssignment={handleHeaderOrigin}
+                                        originAssignment={handleHeaderOriginKey}
                                         permanentOrigin={permanentOrigin}
                                         headerOrigin={headerOrigin}
                                     />

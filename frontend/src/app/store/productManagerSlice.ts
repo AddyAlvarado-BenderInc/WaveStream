@@ -67,6 +67,10 @@ const initialParameterState: ParameterState = {
   parameterBundle: Object
 };
 
+interface TableCellData {
+  
+}
+
 const productManagerSlice = createSlice({
   name: 'productManager',
   initialState: initialManagerState,

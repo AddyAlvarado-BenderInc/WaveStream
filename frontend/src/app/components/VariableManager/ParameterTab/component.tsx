@@ -510,6 +510,12 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                         Load
                                     </button>
                                     <button className='configure-button'
+                                        onClick={() => {
+                                            alert('Select functionality will allow users to choose from the list of parameters that are already saved in the product manager. This will allow users to select a parameter and apply it to the current variable as long as the variableClass is present in the manager. This will also allow users to select multiple parameters and apply them to the current variable.');
+                                        }}>
+                                        Select
+                                    </button>
+                                    <button className='configure-button'
                                         onClick={() => setSelectedInterpolatedVariables(null)}
                                     >
                                         Close

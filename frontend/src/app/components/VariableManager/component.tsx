@@ -155,6 +155,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
             //         }
             //     }
             // }
+            // Commented out for now because I'm afraid of the compiler throwing errors but saving for later because it might be important to reference
         };
 
         const valuesToDisplay = Object.values(object).map(item => item?.value);
@@ -422,7 +423,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                     selectedClassKey={selectedClassKey}
                     variableData={variableData.tableSheet}
                     originAssignment={handleOriginAssignment}
-                    submitVariableData={handleSubmitTableData}
+                    submitTableData={handleSubmitTableData}
                     areRowsPopulated={setRowsPopulated}
                 />
             </div>
