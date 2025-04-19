@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ATcmpaXCWL8=",
+  "dgSpecHash": "9YyvaTbcXuc=",
   "success": true,
-  "projectFilePath": "C:\\Users\\mardo\\OneDrive\\Desktop\\product-management-app\\product-management-app-1\\backend\\backend.csproj",
+  "projectFilePath": "C:\\Users\\mardo\\OneDrive\\Desktop\\waveKeyApp\\product-management-app\\backend\\backend.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\mardo\\.nuget\\packages\\dotenv.net\\3.2.1\\dotenv.net.3.2.1.nupkg.sha512",
     "C:\\Users\\mardo\\.nuget\\packages\\microsoft.aspnetcore.hosting\\2.3.0\\microsoft.aspnetcore.hosting.2.3.0.nupkg.sha512",

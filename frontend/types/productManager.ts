@@ -9,6 +9,11 @@ export interface tableSheetData {
     isOrigin: boolean;
 }
 
+export interface tableCellData {
+    index: number;
+    value: string;
+}
+
 export interface mainKeyString {
     type: string;
     value: string;

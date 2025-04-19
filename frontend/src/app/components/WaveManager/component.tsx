@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/app/store/store';
 import { updateProductManager } from "../../store/productManagerSlice";
-import { ProductManager, IconData, tableSheetData, mainKeyString } from '../../../../types/productManager';
+import { ProductManager, IconData, tableSheetData, tableCellData } from '../../../../types/productManager';
 import VariableManager from '../VariableManager/component';
 import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import { BASE_URL } from '../../config';
@@ -31,9 +31,12 @@ interface VariableDataState {
     tableSheet: tableSheetData[];
 }
 
+type VariableRowDataState = Record<string, tableCellData>;
+
 interface WaveManagerProps {
     productManager: ProductManager;
 }
+
 
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
@@ -67,13 +70,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     isOrigin: Boolean(value.isOrigin),
                 }))
                 : []
-        } as VariableDataState
+        } as VariableDataState,
+        variableRowData: {} as VariableRowDataState
     });
 
     const [formData, setFormData] = useState<FormDataState>({ ...originalData.formData });
     const [iconData, setIconData] = useState<IconDataState>({ ...originalData.iconData });
     const [variableData, setVariableData] = useState<VariableDataState>({ ...originalData.variableData });
-
+    const [variableRowData, setVariableRowData] = useState<VariableRowDataState>({ ...originalData.variableRowData });
     const [hasChanges, setHasChanges] = useState(false);
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
@@ -92,8 +96,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeTableSheet(variableData.tableSheet),
             normalizeTableSheet(originalData.variableData.tableSheet)
         );
+        const variableRowDataChanged =!isEqual(variableRowData, originalData.variableRowData);
 
-        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged;
+        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged;
 
         setHasChanges(dataChanged);
 
@@ -102,6 +107,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 formDataChanged,
                 iconDataChanged,
                 tableSheetChanged,
+                variableRowDataChanged,
             });
         }
     }, [formData, iconData, variableData, originalData]);
@@ -150,6 +156,21 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     console.log("Empty tableSheet appears to be intentional.");
                 }
             }
+
+            if (Object.keys(variableRowData).length > 0) {
+                console.log("Sending variableRowData data:", Object.keys(variableRowData).length, "items");
+                Object.entries(variableRowData).forEach(([key, value]) => {
+                    if (key === 'index') {
+                        formDataPayload.append('rowData', value.index.toString());
+                    }
+                    if (key === 'value') {
+                        formDataPayload.append('rowData', value.toString());
+                    } else {
+                        console.log("No row data to send (variableRowData is empty).");
+                        formDataPayload.append('rowData', JSON.stringify({}));
+                    }
+                })
+            };
 
             Object.entries(formData).forEach(([key, value]) => {
                 if (key === 'icon' || key === 'newFiles' || key === 'iconPreview') return;
@@ -240,6 +261,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     };
                 });
 
+                setVariableRowData((prev) => {
+                    const serverRowData = updatedProduct.rowData;
+                    if (serverRowData && typeof serverRowData === 'object') {
+                        console.log('Updating variableRowData from server response:', Object.keys(serverRowData).length, 'items');
+                        return serverRowData;
+                   } else {
+                        console.warn('Server did not return valid rowData, keeping existing state.');
+                        return prev;
+                   }
+                });
+
                 if (hasChanges) {
                     console.log('Updating original data references');
 
@@ -260,7 +292,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                     isOrigin: item.isOrigin === true,
                                 }))))
                                 : JSON.parse(JSON.stringify(variableData.tableSheet))
-                        }
+                        },
+                        variableRowData: updatedProduct.rowData && typeof updatedProduct.rowData === 'object'
+                            ? JSON.parse(JSON.stringify(updatedProduct.rowData))
+                            : JSON.parse(JSON.stringify(variableRowData))
                     });
 
                     setHasChanges(false);
@@ -306,6 +341,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             <VariableManager
                 variableData={variableData}
                 setVariableData={setVariableData}
+                setVariableRowData={setVariableRowData}
+                variableRowData={variableRowData}
             />
             {showPropertyInterfaces && (
                 <div className={styles.propertyInterfacesContainer}>

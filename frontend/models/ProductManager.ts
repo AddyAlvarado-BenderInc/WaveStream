@@ -22,6 +22,7 @@ export interface IProductManager extends Document {
   iconPreview: string[];
   label: string;
   tableSheet: object;
+  tableCellData: object;
   mainKeyString: string[];
 }
 
@@ -54,6 +55,14 @@ const ProductManagerSchema = new mongoose.Schema({
   iconPreview: { type: [String], default: [] },
   label: { type: String, default: '' },
   tableSheet: { 
+    type: [Object], 
+    default: [],
+    validate: {
+        validator: (value: object[]) => value.every(v => typeof v === 'object'),
+        message: 'Invalid tableSheet format'
+    }
+  },
+  tableCellData: { 
     type: [Object], 
     default: [],
     validate: {

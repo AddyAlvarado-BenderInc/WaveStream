@@ -4,7 +4,7 @@ import {
     clearAllVariableClassArray,
     deleteVariableClassArray,
 } from '@/app/store/productManagerSlice';
-import { mainKeyString, tableSheetData } from '../../../../types/productManager';
+import { mainKeyString, tableSheetData, tableCellData } from '../../../../types/productManager';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
 import { RootState } from '@/app/store/store';
 import { useSelector, useDispatch } from 'react-redux';
@@ -17,21 +17,27 @@ interface VariableDataState {
     tableSheet: tableSheetData[];
 }
 
+type VariableRowDataState = Record <string, tableCellData>;
+
 interface VariableManagerProps {
     variableData: VariableDataState;
     setVariableData: React.Dispatch<React.SetStateAction<VariableDataState>>;
+    variableRowData: VariableRowDataState;
+    setVariableRowData: React.Dispatch<React.SetStateAction<VariableRowDataState>>;
 }
 
-type TableCellData = { value: string; __rowIndex: number };
-
-const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVariableData }) => {
+const VariableManager: React.FC<VariableManagerProps> = ({
+     variableData, 
+     setVariableData,
+     variableRowData,
+     setVariableRowData, 
+    }) => {
     const [parameterizationOpen, setParameterizationOpen] = useState(false);
     const [parameterizationData, setParameterizationData] = useState<object | null>(null);
     const [originAssignment, setOriginAssignment] = useState("");
     const [sendToSheetModal, setSendToSheetModal] = useState(false);
     const [selectedClassKey, setSelectedClassKey] = useState<string>('');
     const [variableClassIdentifier, setVariableClassIdentifier] = useState<number | null | undefined>(null);
-    const [variableClassData, setVariableClassData] = useState<Record<string, TableCellData>>({});
     const [rowsPopulated, setRowsPopulated] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     let [addOrSend, setAddOrSend] = useState<string>('send');
@@ -39,6 +45,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
 
     const dispatch = useDispatch();
+
+    React.useEffect(() => {
+        setRowsPopulated(Object.keys(variableRowData).length > 0);
+    }, [variableRowData]);
 
     const handleOpenParameterizationTab = (variableClasses: object) => {
         console.log('Open Parameterization Tab', variableClasses);
@@ -67,7 +77,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
         if (variableClassIdentifier === null) {
             return null;
         }
-        return globalVariableClass.find(item => item?.dataId === variableClassIdentifier ?? null);
+        return globalVariableClass.find(item => item?.dataId === variableClassIdentifier);
     }, [variableClassIdentifier, globalVariableClass]);
 
     const handleSendToSheet = (
@@ -94,7 +104,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
             return;
         }
 
-        setVariableClassData(prevData => {
+        setVariableRowData(prevData => {
             const updatedData = { ...prevData };
 
             let nextRowIndex = 0;
@@ -114,8 +124,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
                 dataToAdd.forEach((itemValue, index) => {
                     const newRowKey = `${selectedKey}_row_${nextRowIndex + index}`;
                     updatedData[newRowKey] = {
+                        index: nextRowIndex + index,
                         value: itemValue || "",
-                        __rowIndex: nextRowIndex + index
                     };
                     console.log(`Adding to sheet state: Key=${newRowKey}, Value=${itemValue}, RowIndex=${nextRowIndex + index}`);
                 });
@@ -418,8 +428,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({ variableData, setVari
             )}
             <div className={styles.tableContainer}>
                 <Table
-                    setVariableClassData={setVariableClassData}
-                    variableRowData={variableClassData}
+                    setVariableClassData={setVariableRowData}
+                    variableRowData={variableRowData}
                     selectedClassKey={selectedClassKey}
                     variableData={variableData.tableSheet}
                     originAssignment={handleOriginAssignment}
