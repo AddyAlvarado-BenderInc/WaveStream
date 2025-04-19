@@ -462,7 +462,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                     });
 
                                     const getCellValue = (
-                                        keyObj: { index: number; value: string; isOrigin: boolean },
+                                        keyObj: { index: number; value: string; },
                                         rowIndex: number,
                                         rowDataMap: Map<number, Map<string, any>>,
                                         variableRowData: Record<string, any>
@@ -482,6 +482,10 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                         }
 
                                         const cellData = rowSpecificData !== undefined ? rowSpecificData : columnData;
+
+                                        if (cellData && typeof cellData === 'object' && 'index' in cellData && 'value' in cellData) {
+                                            return cellData.value;
+                                        }
 
                                         let cellValue = '';
 

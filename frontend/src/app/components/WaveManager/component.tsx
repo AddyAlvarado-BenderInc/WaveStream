@@ -37,6 +37,11 @@ interface WaveManagerProps {
     productManager: ProductManager;
 }
 
+interface VariableRowDataSheetState {
+    variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
+    selectedKey: string,
+    id: number | null | undefined
+}
 
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
@@ -88,6 +93,11 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 isOrigin: item.isOrigin
             }));
         };
+        const normalizeVariableRowData = (variableRowData: VariableRowDataState): { value: string }[] => {
+            return Object.keys(variableRowData).map(item => ({
+                value: item,
+            }));
+        };
 
         const formDataChanged = !isEqual(formData, originalData.formData);
         const iconDataChanged = iconData.newFiles.length > 0 ||
@@ -96,7 +106,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeTableSheet(variableData.tableSheet),
             normalizeTableSheet(originalData.variableData.tableSheet)
         );
-        const variableRowDataChanged =!isEqual(variableRowData, originalData.variableRowData);
+        const variableRowDataChanged =!isEqual(
+            normalizeVariableRowData(variableRowData), 
+            normalizeVariableRowData(originalData.variableRowData)
+        );
 
         const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged;
 
@@ -110,11 +123,11 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 variableRowDataChanged,
             });
         }
-    }, [formData, iconData, variableData, originalData]);
+    }, [formData, iconData, variableData, originalData, variableRowData]);
 
     useEffect(() => {
         checkForChanges();
-    }, [formData, iconData, variableData, checkForChanges]);
+    }, [formData, iconData, variableData, variableRowData, checkForChanges]);
 
     const handleSave = async () => {
         if (!hasChanges) {
@@ -159,18 +172,13 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
             if (Object.keys(variableRowData).length > 0) {
                 console.log("Sending variableRowData data:", Object.keys(variableRowData).length, "items");
-                Object.entries(variableRowData).forEach(([key, value]) => {
-                    if (key === 'index') {
-                        formDataPayload.append('rowData', value.index.toString());
-                    }
-                    if (key === 'value') {
-                        formDataPayload.append('rowData', value.toString());
-                    } else {
-                        console.log("No row data to send (variableRowData is empty).");
-                        formDataPayload.append('rowData', JSON.stringify({}));
-                    }
-                })
-            };
+                Object.entries(variableRowData).forEach(([_, rowItem]) => {
+                    formDataPayload.append('tableCellData', rowItem.index.toString());
+                    formDataPayload.append('tableCellData', rowItem.value);
+                });
+            } else {
+                console.log("No cell data to send.");
+            }
 
             Object.entries(formData).forEach(([key, value]) => {
                 if (key === 'icon' || key === 'newFiles' || key === 'iconPreview') return;
@@ -258,19 +266,80 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 }
                             })
                             : prev.tableSheet,
-                    };
-                });
+                        };
+                    });
+                                        
+                    setVariableRowData((prev) => {
+                        const serverRowData = updatedProduct.tableCellData;
+                        if (!serverRowData || typeof serverRowData !== 'object') {
+                            console.warn('Server did not return valid rowData, keeping existing state.');
+                            return prev;
+                        }
+                    
+                        const updatedData = { ...prev };
+                        
+                        Object.entries(serverRowData).forEach(([key, value]) => {
+                            let nextRowIndex = 0;
+                            Object.keys(updatedData).forEach(existingKey => {
+                                const match = existingKey.match(/^(.+)_row_(\d+)$/);
+                                if (match) {
+                                    const baseKey = match[1];
+                                    const rowNum = parseInt(match[2], 10);
+                                    if (baseKey === key && !isNaN(rowNum)) {
+                                        nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+                                    }
+                                }
+                            });
+                    
+                            // const newRowKey = `${key}_row_${nextRowIndex}`;
+                            
+                            // updatedData[newRowKey] = {
+                            //     index: nextRowIndex,
+                            //     value: typeof value === 'string' ? value : JSON.stringify(value)
+                            // };
+                    
+                            // console.log(`Adding to state: Key=${newRowKey}, Value=${value}, RowIndex=${nextRowIndex}`);
+                        });
+                    
+                        console.log('Updated variableRowData:', updatedData);
+                        return updatedData;
+                    });
 
-                setVariableRowData((prev) => {
-                    const serverRowData = updatedProduct.rowData;
-                    if (serverRowData && typeof serverRowData === 'object') {
-                        console.log('Updating variableRowData from server response:', Object.keys(serverRowData).length, 'items');
+                    /* 
+                    setVariableRowData(prevData => {
+                        const serverRowData = { ...prevData };
+            
+                        let nextRowIndex = 0;
+                        Object.keys(serverRowData).forEach(key => {
+                            const match = key.match(/^(.+)_row_(\d+)$/);
+                            if (match) {
+                                const baseKey = match[1];
+                                const rowNum = parseInt(match[2], 10);
+                                if (baseKey === selectedKey && !isNaN(rowNum)) {
+                                   nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+                                }
+                            }
+                        });
+                        console.log(`Next available row index for key "${selectedKey}" is ${nextRowIndex}`);
+            
+                        if (dataToAdd.length > 0) {
+                            dataToAdd.forEach((itemValue, index) => {
+                                const newRowKey = `${selectedKey}_row_${nextRowIndex + index}`;
+                                serverRowData[newRowKey] = {
+                                    index: nextRowIndex + index,
+                                    value: itemValue || "",
+                                };
+                                console.log(`Adding to sheet state: Key=${newRowKey}, Value=${itemValue}, RowIndex=${nextRowIndex + index}`);
+                            });
+                         } else {
+                             console.warn("No data values found in variableDataRecord to add to the sheet.");
+                         }
+            
+                        console.log("Updated variableClassData state:", serverRowData);
                         return serverRowData;
-                   } else {
-                        console.warn('Server did not return valid rowData, keeping existing state.');
-                        return prev;
-                   }
-                });
+                     }); 
+                     
+                     */
 
                 if (hasChanges) {
                     console.log('Updating original data references');

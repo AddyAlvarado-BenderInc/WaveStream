@@ -347,7 +347,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                             {globalVariableClass.map((currentVariableClassData) => {
                                 const variableClassDataId = currentVariableClassData?.dataId;
                                 const variableClassData = currentVariableClassData?.variableData || {};
-                                console.log(`MAP: Rendering item ID=${variableClassDataId}`, currentVariableClassData?.variableData);
+                                console.log(`MAP: Rendering item ID=${variableClassDataId} at ${Date.now()}`, currentVariableClassData?.variableData);
                                 console.log("Variable Class Data ID", variableClassDataId);
                                 if (sendToSheetModal && variableClassIdentifier === variableClassDataId) {
                                     console.log(`MAP: Modal condition TRUE for ID=${variableClassDataId}, preparing to call modalOptions with:`, variableClassData);

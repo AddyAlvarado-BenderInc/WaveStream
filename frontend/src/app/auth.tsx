@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import styles from "./auth.module.css";
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -13,7 +15,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const checkAuth = async () => {
       if (pathname === "/login") {
         setLoading(false);
-        return; 
+        return;
       }
 
       try {
@@ -36,7 +38,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }, [pathname, router]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className={styles.loadingScreeen}>
+        <DotLottieReact
+          src="https://lottie.host/3d2b9ce7-6ec0-4df8-9943-e859f6d84850/cwahzJ2gow.lottie"
+          loop
+          autoplay
+        />
+      </div>
+    );
   }
 
   return <>{isAuthenticated || pathname === "/login" ? children : null}</>;

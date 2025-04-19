@@ -62,6 +62,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }))
                     : [];
 
+                const processTableCellData = (data: any) => {
+                    if (!data) return [];
+
+                    if (Array.isArray(data)) {
+                        return data.map((item: any) => {
+                            if (item && typeof item === 'object' && 'index' in item && 'value' in item) {
+                                return {
+                                    index: typeof item.index === 'number' ? item.index : 0,
+                                    value: item.value?.toString() || "null"
+                                };
+                            }
+
+                            if (typeof item === 'string' || typeof item === 'number') {
+                                return {
+                                    index: 0,
+                                    value: item.toString()
+                                };
+                            }
+
+                            if (item?.value && typeof item.value === 'object') {
+                                return {
+                                    index: typeof item.index === 'number' ? item.index : 0,
+                                    value: JSON.stringify(item.value)
+                                };
+                            }
+
+                            return {
+                                index: 0,
+                                value: "null"
+                            };
+                        });
+                    }
+
+                    return [];
+                };
+
+                const tableCellData = processTableCellData(productManager.tableCellData);
+
                 const mainKeyString = Array.isArray(productManager.mainKeyString)
                     ? productManager.mainKeyString.map((value: any, index: number) => ({
                         index,
@@ -74,6 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     ...productManager,
                     mainKeyString,
                     tableSheet,
+                    tableCellData,
                     icon: productManager.icon.map(filename => ({
                         filename,
                         url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
@@ -191,6 +230,164 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         updateData.iconPreview = allIcons.map(filename =>
                             `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         );
+                    }
+
+                    if (Array.isArray(req.body.tableCellData)) {
+                        if (req.body.tableCellData.length === 0) {
+                            console.log("Empty tableCellData received, skipping update");
+                        } else {
+                            const tableCellDataItems: { index: number; value: string; }[] = [];
+
+                            for (let i = 0; i < req.body.tableCellData.length; i += 2) {
+                                const index = parseInt(req.body.tableCellData[i], 10);
+                                const value = req.body.tableCellData[i + 1];
+
+                                if (!isNaN(index)) {
+                                    tableCellDataItems.push({ index, value });
+                                }
+                            }
+
+                            let existingTableCellData = productManager.tableCellData || [];
+
+                            existingTableCellData = existingTableCellData.map((item: any, idx: number) => {
+                                if (typeof item === 'string') {
+                                    return { index: idx + 1, value: item };
+                                } else if (typeof item === 'object') {
+                                    return item;
+                                } else {
+                                    return { index: idx + 1, value: String(item) };
+                                }
+                            });
+
+                            const normalizeData = (data: any): { index: number, value: string } => {
+                                if (!data) return { index: -1, value: "" };
+
+                                if (typeof data === 'string') {
+                                    return { index: -1, value: data };
+                                }
+
+                                if (typeof data === 'object') {
+                                    const value = data.value || data.name || '';
+                                    const index = typeof data.index === 'number' ? data.index : -1;
+
+                                    return { index, value };
+                                }
+
+                                return { index: -1, value: String(data) };
+                            };
+
+                            const getComparisonSignature = (data: any): string => {
+                                const normalized = normalizeData(data);
+                                return normalized.value;
+                            };
+
+                            const normalizedExistingData = existingTableCellData.map(normalizeData);
+                            const normalizedNewData = tableCellDataItems.map(normalizeData);
+
+                            const existingDataSet = new Set(normalizedExistingData.map((d: any) => d.value));
+                            const newDataSet = new Set(normalizedNewData.map(d => d.value));
+
+                            const dataToDelete = normalizedExistingData.filter((dbData: any) =>
+                                !newDataSet.has(dbData.value)
+                            );
+
+                            const dataToAdd = normalizedNewData.filter(newData =>
+                                !existingDataSet.has(newData.value)
+                            );
+
+                            const dataToUpdate: any = [];
+                            for (const newData of normalizedNewData) {
+                                if (!existingDataSet.has(newData.value)) continue;
+
+                                const dbData = normalizedExistingData.find((d: any) => d.value === newData.value);
+                                if (!dbData) continue;
+
+                                const valueDiffers = newData.value !== dbData.value;
+
+                                if (valueDiffers) {
+                                    dataToUpdate.push({
+                                        ...newData,
+                                        previousIndex: dbData.index
+                                    });
+                                }
+                            }
+
+                            function areArraysEquivalent(arr1: any[], arr2: any[]): boolean {
+                                if (!arr1 && !arr2) return true;
+                                if (!arr1 || !arr2) return false;
+                                if (arr1.length !== arr2.length) return false;
+
+                                const set1 = new Set(arr1.map(getComparisonSignature));
+                                const set2 = new Set(arr2.map(getComparisonSignature));
+
+                                if (set1.size !== set2.size) return false;
+
+                                for (const signature of set1) {
+                                    if (!set2.has(signature)) return false;
+                                }
+
+                                return true;
+                            }
+
+                            const arraysEquivalent = areArraysEquivalent(existingTableCellData, tableCellDataItems);
+
+                            if (arraysEquivalent) {
+                                console.log("TableCellData arrays are equivalent, no changes needed");
+                            } else {
+                                console.log("TableCellData arrays not equivalent - detailed comparison:");
+                                console.log("Database data:", existingTableCellData.map((data: any) => ({
+                                    ...normalizeData(data),
+                                    signature: getComparisonSignature(data)
+                                })));
+                                console.log("Frontend data:", tableCellDataItems.map(data => ({
+                                    ...normalizeData(data),
+                                    signature: getComparisonSignature(data)
+                                })));
+
+                                const hasDataChanges = dataToDelete.length > 0 || dataToAdd.length > 0 || dataToUpdate.length > 0;
+
+                                if (hasDataChanges) {
+                                    if (dataToDelete.length > 0 && dataToAdd.length === 0 && dataToUpdate.length === 0) {
+                                        console.error("CRITICAL WARNING: About to delete all cell data with no replacements");
+                                        console.error("This looks like a data loss scenario, aborting operation");
+
+                                        return res.status(400).json({
+                                            error: "Prevented potential data loss. Attempted to delete all cell data without replacement."
+                                        });
+                                    }
+
+                                    const existingDataToKeep = existingTableCellData.filter((dbData: any) =>
+                                        !dataToDelete.some((data: any) => data.value === dbData.value) &&
+                                        !dataToUpdate.some((data: any) => data.value === dbData.value)
+                                    );
+
+                                    const updatedData = dataToUpdate.map((newData: any) => ({
+                                        index: newData.index,
+                                        value: newData.value
+                                    }));
+
+                                    const finalTableCellData = [...existingDataToKeep, ...dataToAdd, ...updatedData];
+
+                                    const uniqueValues = new Set();
+                                    const uniqueTableCellData = finalTableCellData.filter((data: any) => {
+                                        if (uniqueValues.has(data.value)) {
+                                            return false;
+                                        }
+                                        uniqueValues.add(data.value);
+                                        return true;
+                                    });
+
+                                    updateData.tableCellData = uniqueTableCellData;
+
+                                    console.log('Cell data to delete:', dataToDelete);
+                                    console.log('Cell data to add:', dataToAdd);
+                                    console.log('Cell data to update:', dataToUpdate);
+                                    console.log('Has cell data changes:', hasDataChanges);
+                                }
+                            }
+                        }
+                    } else {
+                        console.log('No changes detected in tableCellData');
                     }
 
                     if (Array.isArray(req.body.tableSheet)) {
