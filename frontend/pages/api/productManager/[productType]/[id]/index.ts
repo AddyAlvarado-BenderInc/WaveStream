@@ -254,9 +254,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         );
                     }
 
+                    // TODO: There's a population bug where if the user clicks on the save button and there's no changes made,
+                    // and the data is restored unintentionally, causing the productManager to reload without recent user input data
                     if (Array.isArray(req.body.tableCellData)) {
                         if (req.body.tableCellData.length === 0) {
-                            console.log("Empty tableCellData received, skipping update");
+                            updateData.tableCellData = [];
+                            console.log("Clearing tableCellData as requested");
                         } else {
                             const tableCellDataItems: { index: number; value: string; classKey: string }[] = [];
 

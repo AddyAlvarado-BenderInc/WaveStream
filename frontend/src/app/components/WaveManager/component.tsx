@@ -227,7 +227,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
 
             console.log('Current variableRowData:', variableRowData);
-console.log('FormData tableCellData:', Array.from(formDataPayload.getAll('tableCellData')));
+            console.log('FormData tableCellData:', Array.from(formDataPayload.getAll('tableCellData')));
 
             const response = await fetch(`/api/productManager/${productType}/${_id}`, {
                 method: 'PATCH',
@@ -368,7 +368,7 @@ console.log('FormData tableCellData:', Array.from(formDataPayload.getAll('tableC
     };
 
     const handleExport = async () => {
-        alert('Export functionality is not implemented yet.\nThis feature will export all table data to a chose file. Exportable files will either be in CSV, JSON, or XML format, based on your chosen format.');
+        alert('Export functionality is not implemented yet.\nThis feature will export all table data to a chose file. Exportable files will either be in CSV or JSON format, based on your chosen format.');
     };
 
     return (
