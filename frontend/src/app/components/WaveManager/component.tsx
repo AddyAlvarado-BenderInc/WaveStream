@@ -313,39 +313,53 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
                 if (hasChanges) {
                     console.log('Updating original data references');
-
                     dispatch(updateProductManager(updatedProduct));
 
-                    setOriginalData({
-                        formData: { ...formData },
+                    const newOriginalData = {
+                        formData: {
+                            itemName: updatedProduct.itemName || '',
+                            productId: updatedProduct.productId || '',
+                            description: updatedProduct.description || '',
+                            initialJS: updatedProduct.initialJS || '',
+                            initialCSS: updatedProduct.initialCSS || '',
+                            initialHTML: updatedProduct.initialHTML || '',
+                            label: updatedProduct.label || '',
+                        },
                         iconData: {
-                            icon: JSON.parse(JSON.stringify(iconData.icon)),
-                            iconPreview: JSON.parse(JSON.stringify(iconData.iconPreview)),
+                            icon: (updatedProduct.icon || []).map((icon: IconData) => ({
+                                filename: icon?.filename || '',
+                                url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
+                            })),
+                            iconPreview: (updatedProduct.iconPreview || updatedProduct.icon || []).map((icon: IconData) => ({
+                                filename: icon?.filename || '',
+                                url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
+                            })),
                             newFiles: []
                         },
                         variableData: {
-                            tableSheet: Array.isArray(updatedProduct.tableSheet) && updatedProduct.tableSheet.length > 0
-                                ? JSON.parse(JSON.stringify(updatedProduct.tableSheet.map((item: any, index: number) => ({
-                                    index: item.index || index,
-                                    value: item.value || '',
-                                    isOrigin: item.isOrigin === true,
-                                }))))
-                                : JSON.parse(JSON.stringify(variableData.tableSheet))
+                            tableSheet: Array.isArray(updatedProduct.tableSheet)
+                                ? updatedProduct.tableSheet.map((value: any, index: number) => ({
+                                    index: value.index ?? index,
+                                    value: value.value || '',
+                                    isOrigin: Boolean(value.isOrigin),
+                                }))
+                                : []
                         },
                         variableRowData: updatedProduct.tableCellData
                             ? updatedProduct.tableCellData.reduce((acc: VariableRowDataState, item: any) => {
-                                if (item && typeof item === 'object') {
+                                if (item && typeof item === 'object' && item.classKey != null && item.index != null) {
                                     const key = `${item.classKey}_row_${item.index}`;
                                     acc[key] = {
                                         classKey: item.classKey,
                                         index: item.index,
-                                        value: item.value
+                                        value: item.value || ''
                                     };
                                 }
                                 return acc;
                             }, {})
                             : {}
-                    });
+                    };
+                    setOriginalData(newOriginalData);
 
                     setHasChanges(false);
                 }

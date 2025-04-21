@@ -261,16 +261,37 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         );
 
         const filteredEntries = currentEntries.map(([key, value], index) => {
-            let displayValue: string;
+            let displayValue: React.ReactNode;
             const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
 
             if (key === 'variableData' && typeof value === 'object' && value !== null) {
                 const innerValues = Object.values(value);
                 if (innerValues.length > 0 && innerValues.every(item => typeof item === 'object' && item !== null && 'value' in item)) {
-                    displayValue = innerValues.map(item => (item as { value: string }).value).join(", ");
+                    const joinedValues = innerValues.map(item => (item as { value: string }).value).join(", ");
+                    if (joinedValues.length > 100) {
+                        return (
+                        <div style={{ maxHeight: '100px', overflowY: 'auto' , padding: '4px', whiteSpace: 'normal', wordBreak: 'break-word', marginRight: '35px' }}>
+                             {joinedValues}
+                         </div>
+                    ) 
                 } else {
-                    displayValue = JSON.stringify(value);
+                    displayValue = joinedValues;
                 }
+            } else {
+                 displayValue = (
+                     <pre style={{
+                         maxHeight: '100px',
+                         overflowY: 'auto', 
+                         border: '1px solid #eee',
+                         padding: '4px',
+                         margin: 0,
+                         whiteSpace: 'pre-wrap', 
+                         wordBreak: 'break-word' 
+                     }}>
+                         {JSON.stringify(value, null, 2)}
+                     </pre>
+                 );
+            }
             } else if (key === 'dataLength' && typeof value === 'number') {
                  displayValue = value.toString();
             } else if (key === 'dataId' && typeof value === 'number') {
@@ -278,7 +299,19 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             } else if (key === 'name' && (value === "" || value === null || value === undefined)) {
                  displayValue = "No Name";
             } else if (typeof value === 'object' && value !== null) {
-                 displayValue = JSON.stringify(value);
+                displayValue = (
+                    <pre style={{
+                        maxHeight: '100px',
+                        overflowY: 'auto', 
+                        border: '1px solid #eee',
+                        padding: '4px',
+                        margin: 0, 
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
+                    }}>
+                        {JSON.stringify(value, null, 2)}
+                    </pre>
+                );
             } else {
                  displayValue = value !== null && value !== undefined ? value.toString() : "";
             }

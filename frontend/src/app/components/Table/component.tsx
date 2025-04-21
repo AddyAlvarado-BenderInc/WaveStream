@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { tableCellData } from "../../../../types/productManager";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,8 +10,10 @@ interface tableSheetData {
     isOrigin: boolean;
 }
 
+type VariableRowDataState = Record <string, tableCellData>;
+
 interface TableProps {
-    variableRowData: Record<string, any>;
+    variableRowData: VariableRowDataState;
     selectedClassKey: string;
     variableData: tableSheetData[];
     originAssignment: (key: string) => void;
@@ -46,6 +49,8 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
     }, [variableData, areRowsPopulated]);
 
     useEffect(() => {
+        console.log('variableRowData updated: ', variableRowData);
+
         if (tableContainerRef.current) {
             tableContainerRef.current.style.transform = `scale(${zoomLevel / 100})`;
             tableContainerRef.current.style.transformOrigin = 'top left';
@@ -186,7 +191,6 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                 console.log(`Deleted column data for ${key}`);
             }
 
-            submitTableData(updatedData);
             return updatedData;
         });
 
@@ -199,7 +203,6 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
         );
         if (confirmation) {
             setVariableClassData({});
-            toast.success('All data cleared');
         }
     };
 
@@ -241,13 +244,13 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
     };
 
     // Will fetch the data from the backend and delete the whole data, will work on later
-    const handleDeleteTableData = () => {
+    const  handleDeleteTableData = async () => {
         const confirmation = window.confirm(
             `CAUTION: This will permanently delete all data in the table. Are you sure you want to proceed?`
         );
         if (confirmation) {
             // just a placeholder for the route
-            fetch('/api/deleteTableData', {
+            const response = await fetch('/api/deleteTableData', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -259,8 +262,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
     return (
         <div className={styles.wavekeyTable}>
             <div className={styles.header}>
-                <h2>Table</h2>
-
+                <h2>Table | <span style={{fontWeight: "10", fontSize: "12pt"}}>{`${Object.keys(variableRowData).length} total queries`}</span></h2>
                 <div className={styles.zoomControls}>
                     <button
                         onClick={handleZoomOut}
@@ -465,7 +467,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                         keyObj: { index: number; value: string; },
                                         rowIndex: number,
                                         rowDataMap: Map<number, Map<string, any>>,
-                                        variableRowData: Record<string, any>
+                                        variableRowData: VariableRowDataState
                                     ): string => {
                                         const rowSpecificData = rowDataMap.has(rowIndex) ?
                                             rowDataMap.get(rowIndex)?.get(keyObj.value) : undefined;

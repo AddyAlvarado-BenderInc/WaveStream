@@ -95,7 +95,7 @@ const variableSlice = createSlice({
       state.variableClassArray = [];
     },
     deleteVariableClassArray: (state, action: PayloadAction<number | null | undefined>) => {
-      state.variableClassArray = state.variableClassArray.filter((_, index) => index !== action.payload);
+      state.variableClassArray = state.variableClassArray.filter((id) => id?.dataId !== action.payload);
     },
     setVariableClass: (state, action: PayloadAction<Object>) => {
       state.variableClass = action.payload;

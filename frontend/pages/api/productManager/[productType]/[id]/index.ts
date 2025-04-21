@@ -6,6 +6,7 @@ import { cleanOrphanedFiles } from '../../../../../lib/fileCleanup';
 import { Readable } from 'stream';
 import { getGridFSBucket } from '../../../../../lib/gridFSBucket';
 import multer from 'multer';
+import { isEqual } from 'lodash';
 
 // This file defines the API route for handling product manager data. It's centralized for better organization and maintainability.
 // It handles GET, PATCH, and DELETE requests for product managers and confines the "save" logic to this file as the single source of truth.
@@ -62,57 +63,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }))
                     : [];
 
-                    const processTableCellData = (data: any) => {
-                        if (!data) return [];
-                
-                        if (Array.isArray(data)) {
-                            return data.map((item: any) => {
-                                if (item && 
-                                    typeof item === 'object' && 
-                                    'index' in item && 
-                                    'value' in item && 
-                                    'classKey' in item) {
-                                    return {
-                                        index: typeof item.index === 'number' ? item.index : 0,
-                                        classKey: item.classKey?.toString() || "null",
-                                        value: item.value?.toString() || "null"
-                                    };
-                                }
-                
-                                if (typeof item === 'string' || typeof item === 'number') {
-                                    console.warn(`Converting legacy data format for item: ${item}`);
-                                    return {
-                                        index: 0,
-                                        classKey: "legacy",
-                                        value: item.toString()
-                                    };
-                                }
-                
-                                if (item?.value && typeof item.value === 'object') {
-                                    return {
-                                        index: typeof item.index === 'number' ? item.index : 0,
-                                        classKey: item.classKey?.toString() || "null",
-                                        value: JSON.stringify(item.value)
-                                    };
-                                }
-                
-                                console.warn('Invalid tableCellData item:', item);
+                const processTableCellData = (data: any) => {
+                    if (!data) return [];
+
+                    if (Array.isArray(data)) {
+                        return data.map((item: any) => {
+                            if (item &&
+                                typeof item === 'object' &&
+                                'index' in item &&
+                                'value' in item &&
+                                'classKey' in item) {
+                                return {
+                                    index: typeof item.index === 'number' ? item.index : 0,
+                                    classKey: item.classKey?.toString() || "null",
+                                    value: item.value?.toString() || "null"
+                                };
+                            }
+
+                            if (typeof item === 'string' || typeof item === 'number') {
+                                console.warn(`Converting legacy data format for item: ${item}`);
                                 return {
                                     index: 0,
-                                    classKey: "invalid",
-                                    value: "null"
+                                    classKey: "legacy",
+                                    value: item.toString()
                                 };
-                            }).filter((item: any) => 
-                                item && 
-                                typeof item.index === 'number' && 
-                                typeof item.classKey === 'string' && 
-                                typeof item.value === 'string'
-                            );
-                        }
-                
-                        console.warn('tableCellData is not an array:', data);
-                        return [];
-                    };
+                            }
+
+                            if (item?.value && typeof item.value === 'object') {
+                                return {
+                                    index: typeof item.index === 'number' ? item.index : 0,
+                                    classKey: item.classKey?.toString() || "null",
+                                    value: JSON.stringify(item.value)
+                                };
+                            }
+
+                            console.warn('Invalid tableCellData item:', item);
+                            return {
+                                index: 0,
+                                classKey: "invalid",
+                                value: "null"
+                            };
+                        }).filter((item: any) =>
+                            item &&
+                            typeof item.index === 'number' &&
+                            typeof item.classKey === 'string' &&
+                            typeof item.value === 'string'
+                        );
+                    }
+
+                    console.warn('tableCellData is not an array:', data);
+                    return [];
+                };
 
                 const tableCellData = processTableCellData(productManager.tableCellData);
 
@@ -254,22 +255,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         );
                     }
 
-                    // TODO: There's a population bug where if the user clicks on the save button and there's no changes made,
-                    // and the data is restored unintentionally, causing the productManager to reload without recent user input data
-                    if (Array.isArray(req.body.tableCellData)) {
-                        if (req.body.tableCellData.length === 0) {
+                    // TODO: There's a population bug where if the user clicks on the save button and cells are empty,
+                    // the data is restored unintentionally, causing the productManager to reload the cells with the latest previous data
+
+                    let tableCellDataFromBody = req.body.tableCellData;
+
+                    if (tableCellDataFromBody === undefined) {
+                        console.log("tableCellData field was absent, treating as intentional clear.");
+                        tableCellDataFromBody = [];
+                    }
+
+                    if (tableCellDataFromBody) {
+                        if (tableCellDataFromBody.length === 0) {
                             updateData.tableCellData = [];
-                            console.log("Clearing tableCellData as requested");
+                            console.log("Clearing tableCellData as requested (field was empty or absent)");
                         } else {
                             const tableCellDataItems: { index: number; value: string; classKey: string }[] = [];
+                            if (tableCellDataFromBody.length === 1 && tableCellDataFromBody[0] === '[]') {
+                                console.warn("Received legacy '[]' string marker, treating as empty.");
+                                updateData.tableCellData = [];
+                            } else if (tableCellDataFromBody.length % 3 !== 0) {
+                                console.error("Received tableCellData with incorrect number of items, expected triplets. Skipping update.", tableCellDataFromBody);
+                                res.status(400).json({ error: 'Malformed tableCellData' });
+                            } else {
+                                for (let i = 0; i < req.body.tableCellData.length; i += 3) {
+                                    const classKey = req.body.tableCellData[i + 1];
+                                    const index = parseInt(req.body.tableCellData[i], 10);
+                                    const value = req.body.tableCellData[i + 2];
 
-                            for (let i = 0; i < req.body.tableCellData.length; i += 3) {
-                                const classKey = req.body.tableCellData[i + 1];
-                                const index = parseInt(req.body.tableCellData[i], 10);
-                                const value = req.body.tableCellData[i + 2];
-
-                                if (!isNaN(index)) {
-                                    tableCellDataItems.push({ index, value, classKey });
+                                    if (!isNaN(index)) {
+                                        tableCellDataItems.push({ index, value, classKey });
+                                    }
                                 }
                             }
 
@@ -286,7 +302,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             });
 
                             const normalizeData = (data: any): { classKey: string, index: number, value: string } => {
-                                if (!data) return { classKey:"", index: -1, value: "" };
+                                if (!data) return { classKey: "", index: -1, value: "" };
 
                                 if (typeof data === 'string') {
                                     return { classKey: data, index: -1, value: data };
@@ -312,22 +328,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             const normalizedNewData = tableCellDataItems.map(normalizeData);
 
                             const existingDataSet = new Set(normalizedExistingData.map(getComparisonSignature));
-                            const newDataSet = new Set(normalizedNewData.map(d => d.value));
+                            const newDataSetSignatures = new Set(normalizedNewData.map(getComparisonSignature));
 
                             const dataToDelete = normalizedExistingData.filter((dbData: any) =>
-                                !newDataSet.has(dbData.value)
+                                !newDataSetSignatures.has(getComparisonSignature(dbData))
                             );
 
                             const dataToAdd = normalizedNewData.filter(newData =>
-                                !existingDataSet.has(newData.value)
+                                !existingDataSet.has(getComparisonSignature(newData))
                             );
 
                             const dataToUpdate: any = [];
+                            const updatedSignatures = new Set<string>();
                             for (const newData of normalizedNewData) {
+                                const newDataSignature = getComparisonSignature(newData);
                                 if (!existingDataSet.has(newData.value)) continue;
 
-                                const dbData = normalizedExistingData.find((d: any) => d.value === newData.value);
-                                if (!dbData) continue;
+                                const dbData = normalizedExistingData.find((d: any) => getComparisonSignature(d) === newDataSignature);
+
+                                if (dbData) {
+                                    if (!isEqual(normalizeData(dbData), normalizeData(newData))) {
+                                        if (!updatedSignatures.has(newDataSignature)) {
+                                            dataToUpdate.push({ ...newData });
+                                            updatedSignatures.add(newDataSignature);
+                                        }
+                                    }
+                                }
 
                                 const valueDiffers = newData.value !== dbData.value;
 
@@ -374,25 +400,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 const hasDataChanges = dataToDelete.length > 0 || dataToAdd.length > 0 || dataToUpdate.length > 0;
 
                                 if (hasDataChanges) {
-                                    const existingDataToKeep = existingTableCellData.filter((dbData: any) =>
-                                        !dataToDelete.some((data: any) => data.value === dbData.value) &&
-                                        !dataToUpdate.some((data: any) => data.value === dbData.value)
-                                    );
+                                    const dataToDeleteSignatures = new Set(dataToDelete.map(getComparisonSignature));
+                                    const dataToUpdateSignatures = new Set(dataToUpdate.map(getComparisonSignature));
+                                    const existingDataToKeep = existingTableCellData.filter((dbItem: any) => {
+                                        const signature = getComparisonSignature(dbItem);
+                                        return !dataToDeleteSignatures.has(signature) && !dataToUpdateSignatures.has(signature);
+                                    });
 
-                                    const updatedData = dataToUpdate.map((newData: any) => ({
-                                        classKey: newData.classKey,
-                                        index: newData.index,
-                                        value: newData.value
+                                    const updatedItemsForFinalArray = dataToUpdate.map((newDataItem: any) => ({
+                                        classKey: newDataItem.classKey,
+                                        index: newDataItem.index,
+                                        value: newDataItem.value
                                     }));
 
-                                    const finalTableCellData = [...existingDataToKeep, ...dataToAdd, ...updatedData];
+                                    const finalTableCellData = [...existingDataToKeep, ...dataToAdd, ...updatedItemsForFinalArray];
 
                                     const uniqueSignatures = new Set();
                                     const uniqueTableCellData = finalTableCellData.filter((data: any) => {
                                         const signature = getComparisonSignature(data);
-                                        if (uniqueSignatures.has(signature)) {
-                                            return false;
-                                        }
+                                        if (uniqueSignatures.has(signature)) return false;
                                         uniqueSignatures.add(signature);
                                         return true;
                                     });
