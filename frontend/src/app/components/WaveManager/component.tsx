@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/app/store/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/app/store/store';
 import { updateProductManager } from "../../store/productManagerSlice";
 import { ProductManager, IconData, tableSheetData, tableCellData } from '../../../../types/productManager';
 import VariableManager from '../VariableManager/component';
@@ -27,6 +27,16 @@ interface IconDataState {
     newFiles: File[];
 }
 
+interface VariableClassArray {
+    dataId: number;
+    name: string;
+    dataLength: number;
+    variableData: Record<string, {
+        dataId: number;
+        value: string;
+    }>;
+}
+
 interface VariableDataState {
     tableSheet: tableSheetData[];
 }
@@ -39,9 +49,12 @@ interface WaveManagerProps {
 
 let saveClicked = 0;
 
+
+// TODO: need to work on saving data for variableClassArrays and then fixing the edit functionality for the variableManager component
+
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
-    const [approvedTableCellClear , setApprovedTableCellClear] = useState(false);
+    const [approvedTableCellClear, setApprovedTableCellClear] = useState(false);
     const [approvedTableSheetClear, setApprovedTableSheetClear] = useState(false);
     const [originalData, setOriginalData] = useState({
         formData: {
@@ -85,7 +98,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 }
                 return acc;
             }, {})
-            : {}
+            : {},
     });
 
     const [formData, setFormData] = useState<FormDataState>({ ...originalData.formData });
@@ -94,6 +107,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [variableRowData, setVariableRowData] = useState<VariableRowDataState>({ ...originalData.variableRowData });
     const [hasChanges, setHasChanges] = useState(false);
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
+    const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
 
     const checkForChanges = useCallback(() => {
         const normalizeTableSheet = (tableSheet: tableSheetData[]) => {
@@ -107,6 +121,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 value: item,
             }));
         };
+        const normalizeVariableClassArray = (variableClassArray: VariableClassArray): { dataId: number; name: string; dataLength: number, variableData: Record<string, { dataId: number, value: string } | null> }[] => {
+            return Object.entries(variableClassArray).map((item: any) => ({
+                dataId: item.dataId,
+                name: item.name,
+                dataLength: item.dataLength,
+                variableData: item.variableData.map((data: { dataId: number; value: string }) => ({
+                    dataId: data.dataId,
+                    value: data.value
+                }))
+            }));
+        }
 
         const formDataChanged = !isEqual(formData, originalData.formData);
         const iconDataChanged = iconData.newFiles.length > 0 ||
@@ -119,6 +144,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeVariableRowData(variableRowData),
             normalizeVariableRowData(originalData.variableRowData)
         );
+        // const variableClassArrayChanged = !isEqual(
+        //     normalizeVariableClassArray(globalVariableClass),
+        //     normalizeVariableClassArray(originalData.variableClassArray)
+        // );
 
         const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged;
 
@@ -146,7 +175,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             });
             return;
         }
-        
+
         if (saveClicked > 0) {
             return;
         };
@@ -230,6 +259,13 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             iconData.newFiles.forEach(file => {
                 formDataPayload.append('files', file);
             });
+
+            if (Array.isArray(globalVariableClass) && globalVariableClass.length > 0) {
+                console.log("Sending globalVariableClass data:", globalVariableClass.length, "items");
+                formDataPayload.append('globalVariableClassData', JSON.stringify(globalVariableClass));
+            } else {
+                console.log("No globalVariableClass data to send.");
+            }
 
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
 
@@ -435,8 +471,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
         const headers = variableData.tableSheet.map(item => item.value);
         if (headers.length === 0 && format === "CSV") {
-             toast.error('Cannot export CSV without headers.', { position: 'bottom-right' });
-             return;
+            toast.error('Cannot export CSV without headers.', { position: 'bottom-right' });
+            return;
         }
 
         let maxRowIndex = -1;
@@ -496,6 +532,58 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
     };
 
+    // Can take code from ento app for this
+    const handleRun = async () => {
+        const hasHeaders = variableData.tableSheet.length > 0;
+        const hasCellData = Object.keys(variableRowData).length > 0;
+        const { productType, _id } = productManager;
+        
+        if (!hasHeaders && !hasCellData) {
+            toast.info('No data to run', {
+                position: 'bottom-right',
+                autoClose: 3000,
+            });
+            return;
+        }
+
+        const confirmation = window.confirm(
+            `You are going to run the automation for ${productManager.name}. Are you sure?`
+        );
+        
+        if (!confirmation) {
+            return;
+        }
+        
+        // Can decide to fetch code from C# code (/backend/services/Program.cs) or from javascript (/backend/services/Program.js)
+        // Below is just for demonstration purposes
+        const response = await fetch(`/backend/automation`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                productId: productManager._id,
+                variableRowData,
+                variableData,
+            }),
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log('Run result:', result);
+            toast.success('Automation run successfully!', {
+                position: 'bottom-right',
+                autoClose: 5000,
+            });
+        } else {
+            const error = await response.json();
+            toast.error(`Error running automation: ${error.message}`, {
+                position: 'bottom-right',
+                autoClose: 5000,
+            });
+        }
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -522,6 +610,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             title="Export table data as CSV or JSON"
                         >
                             Export
+                        </button>
+                        <button
+                            className={`${styles.runButton} ${(variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0) ? styles.runButtonDisabled : ''}`}
+                            onClick={handleRun}
+                            disabled={variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0}
+                            title="Run Automation"
+                        >
+                            Run
                         </button>
                     </div>
                 </div>

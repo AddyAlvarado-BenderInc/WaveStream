@@ -46,6 +46,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     const [variableClassIdentifier, setVariableClassIdentifier] = useState<number | null | undefined>(null);
     const [rowsPopulated, setRowsPopulated] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
+    const [hideButton, setHideButton] = useState(false);
     let [addOrSend, setAddOrSend] = useState<string>('send');
 
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
@@ -369,6 +370,13 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         );
     };
 
+    const handleHideVariableClass = () => {
+        setHideButton(true);
+        if (hideButton) {
+            setHideButton(false);
+        }
+    }
+
     return (
         <>
             {originAssignment && (
@@ -384,6 +392,17 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     )}
                     {globalVariableClass.length > 0 && (
                         <div className={styles.variableClassList}>
+                            <div className={styles.hideButtonContainer}>
+                                <button 
+                                    className={styles.hideButton}
+                                    onClick={handleHideVariableClass}
+                                    title={`hide`}
+                                    >
+                                    hide
+                                </button>
+                            </div>
+                            {!hideButton && (
+                                <>
                             {globalVariableClass.map((currentVariableClassData) => {
                                 const variableClassDataId = currentVariableClassData?.dataId;
                                 const variableClassData = currentVariableClassData?.variableData || {};
@@ -459,9 +478,11 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                         handleClearAllVariableClass();
                                         setVariableClassIdentifier(0);
                                     }}
-                                >Delete All
+                                    >Delete All
                                 </button>
                             </div>
+                            </>
+                        )}
                         </div>
                     )}
 

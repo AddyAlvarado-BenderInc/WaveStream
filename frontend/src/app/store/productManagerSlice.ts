@@ -13,10 +13,12 @@ const initialManagerState: ProductManagerState = {
 interface VariableState {
   variableClassArray: Array<{
     dataId: number;
+    name: string;
+    dataLength: number;
     variableData: Record<string, {
       dataId: number;
       value: string;
-      } | null>;
+    } | null>;
   } | null | undefined>
   variableClass: {};
   stringInput: string;
@@ -66,10 +68,6 @@ const initialParameterState: ParameterState = {
   parameters: [],
   parameterBundle: Object
 };
-
-interface TableCellData {
-  
-}
 
 const productManagerSlice = createSlice({
   name: 'productManager',

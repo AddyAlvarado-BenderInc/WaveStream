@@ -35,7 +35,7 @@
     width: 100%;
 }
 
-.saveButton, .propertyInterfacesButton, .exportButton {
+.saveButton, .propertyInterfacesButton, .exportButton, .runButton {
     margin-right: 5px;
     padding: 10px 20px;
     cursor: pointer;
@@ -45,12 +45,12 @@
     transition: 0.3s ease-out;
 }
 
-.saveButton:hover, .propertyInterfacesButton:hover, .exportButton:hover {
+.saveButton:hover, .propertyInterfacesButton:hover, .exportButton:hover, .runButton:hover {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
 }
 
-.saveButtonDisabled, .exportButtonDisabled {
+.saveButtonDisabled, .exportButtonDisabled, .runButtonDisabled {
   opacity: 0.6;
   cursor: not-allowed;
   background-color: #cccccc;

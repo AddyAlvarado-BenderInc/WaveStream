@@ -228,3 +228,22 @@
   margin: 0 10px;
   font-size: 16px;
 }
+
+.hideButtonContainer {
+  display: flex;
+  align-items: center;
+}
+
+.hideButton {
+  font-size: 12pt;
+  background-color: transparent;
+  color: var(--gray-alpha-200);
+  border: none;
+  cursor: pointer;
+  transition: 0.3s ease;
+  position: absolute;
+}
+
+.hideButton:hover {
+  color: var(--button-primary-hover);
+}

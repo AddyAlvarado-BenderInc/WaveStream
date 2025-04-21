@@ -20,6 +20,16 @@ export interface mainKeyString {
     value: string;
 }
 
+export interface variableClassArray {
+    dataId: number;
+    name: string;
+    dataLength: number;
+    variableData: Record<string, {
+        dataId: number;
+        value: string;
+    }>;
+}
+
 export interface ProductManager {
     _id: string;
     name: string;
@@ -48,5 +58,6 @@ export interface ProductManager {
     tableSheet: tableSheetData[];
     tableCellData: tableCellData[];
     variableClass: string[];
+    variabelClassArray: variableClassArray;
     mainKeyString: mainKeyString[];
 }
