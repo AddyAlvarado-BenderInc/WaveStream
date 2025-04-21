@@ -124,6 +124,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                 dataToAdd.forEach((itemValue, index) => {
                     const newRowKey = `${selectedKey}_row_${nextRowIndex + index}`;
                     updatedData[newRowKey] = {
+                        classKey: selectedClassKey,
                         index: nextRowIndex + index,
                         value: itemValue || "",
                     };

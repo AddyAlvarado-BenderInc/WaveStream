@@ -62,43 +62,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }))
                     : [];
 
-                const processTableCellData = (data: any) => {
-                    if (!data) return [];
-
-                    if (Array.isArray(data)) {
-                        return data.map((item: any) => {
-                            if (item && typeof item === 'object' && 'index' in item && 'value' in item) {
-                                return {
-                                    index: typeof item.index === 'number' ? item.index : 0,
-                                    value: item.value?.toString() || "null"
-                                };
-                            }
-
-                            if (typeof item === 'string' || typeof item === 'number') {
+                    const processTableCellData = (data: any) => {
+                        if (!data) return [];
+                
+                        if (Array.isArray(data)) {
+                            return data.map((item: any) => {
+                                if (item && 
+                                    typeof item === 'object' && 
+                                    'index' in item && 
+                                    'value' in item && 
+                                    'classKey' in item) {
+                                    return {
+                                        index: typeof item.index === 'number' ? item.index : 0,
+                                        classKey: item.classKey?.toString() || "null",
+                                        value: item.value?.toString() || "null"
+                                    };
+                                }
+                
+                                if (typeof item === 'string' || typeof item === 'number') {
+                                    console.warn(`Converting legacy data format for item: ${item}`);
+                                    return {
+                                        index: 0,
+                                        classKey: "legacy",
+                                        value: item.toString()
+                                    };
+                                }
+                
+                                if (item?.value && typeof item.value === 'object') {
+                                    return {
+                                        index: typeof item.index === 'number' ? item.index : 0,
+                                        classKey: item.classKey?.toString() || "null",
+                                        value: JSON.stringify(item.value)
+                                    };
+                                }
+                
+                                console.warn('Invalid tableCellData item:', item);
                                 return {
                                     index: 0,
-                                    value: item.toString()
+                                    classKey: "invalid",
+                                    value: "null"
                                 };
-                            }
-
-                            if (item?.value && typeof item.value === 'object') {
-                                return {
-                                    index: typeof item.index === 'number' ? item.index : 0,
-                                    value: JSON.stringify(item.value)
-                                };
-                            }
-
-                            return {
-                                index: 0,
-                                value: "null"
-                            };
-                        });
-                    }
-
-                    return [];
-                };
+                            }).filter((item: any) => 
+                                item && 
+                                typeof item.index === 'number' && 
+                                typeof item.classKey === 'string' && 
+                                typeof item.value === 'string'
+                            );
+                        }
+                
+                        console.warn('tableCellData is not an array:', data);
+                        return [];
+                    };
 
                 const tableCellData = processTableCellData(productManager.tableCellData);
+
+                console.log('Processed tableCellData:', {
+                    original: productManager.tableCellData,
+                    processed: tableCellData,
+                    count: tableCellData.length
+                });
 
                 const mainKeyString = Array.isArray(productManager.mainKeyString)
                     ? productManager.mainKeyString.map((value: any, index: number) => ({
@@ -236,14 +258,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         if (req.body.tableCellData.length === 0) {
                             console.log("Empty tableCellData received, skipping update");
                         } else {
-                            const tableCellDataItems: { index: number; value: string; }[] = [];
+                            const tableCellDataItems: { index: number; value: string; classKey: string }[] = [];
 
-                            for (let i = 0; i < req.body.tableCellData.length; i += 2) {
+                            for (let i = 0; i < req.body.tableCellData.length; i += 3) {
+                                const classKey = req.body.tableCellData[i + 1];
                                 const index = parseInt(req.body.tableCellData[i], 10);
-                                const value = req.body.tableCellData[i + 1];
+                                const value = req.body.tableCellData[i + 2];
 
                                 if (!isNaN(index)) {
-                                    tableCellDataItems.push({ index, value });
+                                    tableCellDataItems.push({ index, value, classKey });
                                 }
                             }
 
@@ -251,40 +274,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                             existingTableCellData = existingTableCellData.map((item: any, idx: number) => {
                                 if (typeof item === 'string') {
-                                    return { index: idx + 1, value: item };
+                                    return { classKey: item, index: idx + 1, value: item };
                                 } else if (typeof item === 'object') {
                                     return item;
                                 } else {
-                                    return { index: idx + 1, value: String(item) };
+                                    return { classKey: String(item), index: idx + 1, value: String(item) };
                                 }
                             });
 
-                            const normalizeData = (data: any): { index: number, value: string } => {
-                                if (!data) return { index: -1, value: "" };
+                            const normalizeData = (data: any): { classKey: string, index: number, value: string } => {
+                                if (!data) return { classKey:"", index: -1, value: "" };
 
                                 if (typeof data === 'string') {
-                                    return { index: -1, value: data };
+                                    return { classKey: data, index: -1, value: data };
                                 }
 
                                 if (typeof data === 'object') {
+                                    const classKey = data.classKey || data.name || '';
                                     const value = data.value || data.name || '';
                                     const index = typeof data.index === 'number' ? data.index : -1;
 
-                                    return { index, value };
+                                    return { classKey, index, value };
                                 }
 
-                                return { index: -1, value: String(data) };
+                                return { classKey: String(data), index: -1, value: String(data) };
                             };
 
                             const getComparisonSignature = (data: any): string => {
                                 const normalized = normalizeData(data);
-                                return normalized.value;
+                                return `${normalized.classKey}|${normalized.index}|${normalized.value}`;
                             };
 
                             const normalizedExistingData = existingTableCellData.map(normalizeData);
                             const normalizedNewData = tableCellDataItems.map(normalizeData);
 
-                            const existingDataSet = new Set(normalizedExistingData.map((d: any) => d.value));
+                            const existingDataSet = new Set(normalizedExistingData.map(getComparisonSignature));
                             const newDataSet = new Set(normalizedNewData.map(d => d.value));
 
                             const dataToDelete = normalizedExistingData.filter((dbData: any) =>
@@ -347,33 +371,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 const hasDataChanges = dataToDelete.length > 0 || dataToAdd.length > 0 || dataToUpdate.length > 0;
 
                                 if (hasDataChanges) {
-                                    if (dataToDelete.length > 0 && dataToAdd.length === 0 && dataToUpdate.length === 0) {
-                                        console.error("CRITICAL WARNING: About to delete all cell data with no replacements");
-                                        console.error("This looks like a data loss scenario, aborting operation");
-
-                                        return res.status(400).json({
-                                            error: "Prevented potential data loss. Attempted to delete all cell data without replacement."
-                                        });
-                                    }
-
                                     const existingDataToKeep = existingTableCellData.filter((dbData: any) =>
                                         !dataToDelete.some((data: any) => data.value === dbData.value) &&
                                         !dataToUpdate.some((data: any) => data.value === dbData.value)
                                     );
 
                                     const updatedData = dataToUpdate.map((newData: any) => ({
+                                        classKey: newData.classKey,
                                         index: newData.index,
                                         value: newData.value
                                     }));
 
                                     const finalTableCellData = [...existingDataToKeep, ...dataToAdd, ...updatedData];
 
-                                    const uniqueValues = new Set();
+                                    const uniqueSignatures = new Set();
                                     const uniqueTableCellData = finalTableCellData.filter((data: any) => {
-                                        if (uniqueValues.has(data.value)) {
+                                        const signature = getComparisonSignature(data);
+                                        if (uniqueSignatures.has(signature)) {
                                             return false;
                                         }
-                                        uniqueValues.add(data.value);
+                                        uniqueSignatures.add(signature);
                                         return true;
                                     });
 

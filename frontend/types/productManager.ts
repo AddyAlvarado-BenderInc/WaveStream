@@ -10,6 +10,7 @@ export interface tableSheetData {
 }
 
 export interface tableCellData {
+    classKey: string;
     index: number;
     value: string;
 }
@@ -45,6 +46,7 @@ export interface ProductManager {
     targetValue: string;
     [key: string]: any;
     tableSheet: tableSheetData[];
+    tableCellData: tableCellData[];
     variableClass: string[];
     mainKeyString: mainKeyString[];
 }

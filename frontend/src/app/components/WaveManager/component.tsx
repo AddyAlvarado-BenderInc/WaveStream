@@ -76,7 +76,19 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 }))
                 : []
         } as VariableDataState,
-        variableRowData: {} as VariableRowDataState
+        variableRowData: productManager.tableCellData
+            ? productManager.tableCellData.reduce((acc: VariableRowDataState, item: any) => {
+                if (item && typeof item === 'object') {
+                    const key = `${item.classKey}_row_${item.index}`;
+                    acc[key] = {
+                        classKey: item.classKey,
+                        index: item.index,
+                        value: item.value
+                    };
+                }
+                return acc;
+            }, {})
+            : {}
     });
 
     const [formData, setFormData] = useState<FormDataState>({ ...originalData.formData });
@@ -106,8 +118,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeTableSheet(variableData.tableSheet),
             normalizeTableSheet(originalData.variableData.tableSheet)
         );
-        const variableRowDataChanged =!isEqual(
-            normalizeVariableRowData(variableRowData), 
+        const variableRowDataChanged = !isEqual(
+            normalizeVariableRowData(variableRowData),
             normalizeVariableRowData(originalData.variableRowData)
         );
 
@@ -174,6 +186,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 console.log("Sending variableRowData data:", Object.keys(variableRowData).length, "items");
                 Object.entries(variableRowData).forEach(([_, rowItem]) => {
                     formDataPayload.append('tableCellData', rowItem.index.toString());
+                    formDataPayload.append('tableCellData', rowItem.classKey);
                     formDataPayload.append('tableCellData', rowItem.value);
                 });
             } else {
@@ -213,6 +226,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
 
+            console.log('Current variableRowData:', variableRowData);
+console.log('FormData tableCellData:', Array.from(formDataPayload.getAll('tableCellData')));
+
             const response = await fetch(`/api/productManager/${productType}/${_id}`, {
                 method: 'PATCH',
                 body: formDataPayload,
@@ -221,6 +237,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             if (response.ok) {
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
+
+                console.log('Server returned tableCellData:', updatedProduct.tableCellData);
 
                 console.log('Server returned tableSheet:', updatedProduct.tableSheet);
 
@@ -266,80 +284,32 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 }
                             })
                             : prev.tableSheet,
-                        };
-                    });
-                                        
-                    setVariableRowData((prev) => {
-                        const serverRowData = updatedProduct.tableCellData;
-                        if (!serverRowData || typeof serverRowData !== 'object') {
-                            console.warn('Server did not return valid rowData, keeping existing state.');
-                            return prev;
+                    };
+                });
+
+                setVariableRowData((prev) => {
+                    const serverRowData = updatedProduct.tableCellData;
+                    if (!Array.isArray(serverRowData)) {
+                        console.warn('Server did not return valid tableCellData array, keeping existing state.');
+                        return prev;
+                    }
+
+                    const updatedData: VariableRowDataState = {};
+
+                    serverRowData.forEach((item: any) => {
+                        if (item && typeof item === 'object') {
+                            const key = `${item.classKey}_row_${item.index}`;
+                            updatedData[key] = {
+                                classKey: item.classKey,
+                                index: item.index,
+                                value: item.value
+                            };
                         }
-                    
-                        const updatedData = { ...prev };
-                        
-                        Object.entries(serverRowData).forEach(([key, value]) => {
-                            let nextRowIndex = 0;
-                            Object.keys(updatedData).forEach(existingKey => {
-                                const match = existingKey.match(/^(.+)_row_(\d+)$/);
-                                if (match) {
-                                    const baseKey = match[1];
-                                    const rowNum = parseInt(match[2], 10);
-                                    if (baseKey === key && !isNaN(rowNum)) {
-                                        nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
-                                    }
-                                }
-                            });
-                    
-                            // const newRowKey = `${key}_row_${nextRowIndex}`;
-                            
-                            // updatedData[newRowKey] = {
-                            //     index: nextRowIndex,
-                            //     value: typeof value === 'string' ? value : JSON.stringify(value)
-                            // };
-                    
-                            // console.log(`Adding to state: Key=${newRowKey}, Value=${value}, RowIndex=${nextRowIndex}`);
-                        });
-                    
-                        console.log('Updated variableRowData:', updatedData);
-                        return updatedData;
                     });
 
-                    /* 
-                    setVariableRowData(prevData => {
-                        const serverRowData = { ...prevData };
-            
-                        let nextRowIndex = 0;
-                        Object.keys(serverRowData).forEach(key => {
-                            const match = key.match(/^(.+)_row_(\d+)$/);
-                            if (match) {
-                                const baseKey = match[1];
-                                const rowNum = parseInt(match[2], 10);
-                                if (baseKey === selectedKey && !isNaN(rowNum)) {
-                                   nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
-                                }
-                            }
-                        });
-                        console.log(`Next available row index for key "${selectedKey}" is ${nextRowIndex}`);
-            
-                        if (dataToAdd.length > 0) {
-                            dataToAdd.forEach((itemValue, index) => {
-                                const newRowKey = `${selectedKey}_row_${nextRowIndex + index}`;
-                                serverRowData[newRowKey] = {
-                                    index: nextRowIndex + index,
-                                    value: itemValue || "",
-                                };
-                                console.log(`Adding to sheet state: Key=${newRowKey}, Value=${itemValue}, RowIndex=${nextRowIndex + index}`);
-                            });
-                         } else {
-                             console.warn("No data values found in variableDataRecord to add to the sheet.");
-                         }
-            
-                        console.log("Updated variableClassData state:", serverRowData);
-                        return serverRowData;
-                     }); 
-                     
-                     */
+                    console.log('Updated variableRowData:', updatedData);
+                    return updatedData;
+                });
 
                 if (hasChanges) {
                     console.log('Updating original data references');
@@ -362,9 +332,19 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 }))))
                                 : JSON.parse(JSON.stringify(variableData.tableSheet))
                         },
-                        variableRowData: updatedProduct.rowData && typeof updatedProduct.rowData === 'object'
-                            ? JSON.parse(JSON.stringify(updatedProduct.rowData))
-                            : JSON.parse(JSON.stringify(variableRowData))
+                        variableRowData: updatedProduct.tableCellData
+                            ? updatedProduct.tableCellData.reduce((acc: VariableRowDataState, item: any) => {
+                                if (item && typeof item === 'object') {
+                                    const key = `${item.classKey}_row_${item.index}`;
+                                    acc[key] = {
+                                        classKey: item.classKey,
+                                        index: item.index,
+                                        value: item.value
+                                    };
+                                }
+                                return acc;
+                            }, {})
+                            : {}
                     });
 
                     setHasChanges(false);
@@ -387,6 +367,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
     };
 
+    const handleExport = async () => {
+        alert('Export functionality is not implemented yet.\nThis feature will export all table data to a chose file. Exportable files will either be in CSV, JSON, or XML format, based on your chosen format.');
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.header}>
@@ -397,14 +381,24 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     >
                         {showPropertyInterfaces ? 'Close Property Interface' : 'Open Property Interface'}
                     </button>
-                    <button
-                        className={`${styles.saveButton} ${!hasChanges ? styles.saveButtonDisabled : ''}`}
-                        onClick={handleSave}
-                        disabled={!hasChanges}
-                        title={!hasChanges ? 'No changes to save' : 'Save changes'}
-                    >
-                        Save {hasChanges ? '*' : ''}
-                    </button>
+                    <div className={styles.operationButtons}>
+                        <button
+                            className={`${styles.saveButton} ${!hasChanges ? styles.saveButtonDisabled : ''}`}
+                            onClick={handleSave}
+                            disabled={!hasChanges}
+                            title={!hasChanges ? 'No changes to save' : 'Save changes'}
+                        >
+                            Save
+                        </button>
+                        <button
+                            className={styles.exportButton}
+                            onClick={handleExport}
+                            disabled={!variableData && !variableRowData || variableData.tableSheet.length === 0}
+                            title="Export"
+                        >
+                            Export
+                        </button>
+                    </div>
                 </div>
             </div>
             <VariableManager

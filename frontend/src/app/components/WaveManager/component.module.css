@@ -35,7 +35,7 @@
     width: 100%;
 }
 
-.saveButton, .propertyInterfacesButton {
+.saveButton, .propertyInterfacesButton, .exportButton {
     margin-right: 5px;
     padding: 10px 20px;
     cursor: pointer;
@@ -45,7 +45,7 @@
     transition: 0.3s ease-out;
 }
 
-.saveButton:hover, .propertyInterfacesButton:hover {
+.saveButton:hover, .propertyInterfacesButton:hover, .exportButton:hover {
     background-color: var(--button-primary-hover);
     color: var(--button-secondary-hover);
 }
