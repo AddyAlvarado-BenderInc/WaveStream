@@ -37,15 +37,12 @@ interface WaveManagerProps {
     productManager: ProductManager;
 }
 
-interface VariableRowDataSheetState {
-    variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
-    selectedKey: string,
-    id: number | null | undefined
-}
+let saveClicked = 0;
 
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
-
+    const [approvedTableCellClear , setApprovedTableCellClear] = useState(false);
+    const [approvedTableSheetClear, setApprovedTableSheetClear] = useState(false);
     const [originalData, setOriginalData] = useState({
         formData: {
             itemName: productManager.itemName || '',
@@ -149,10 +146,20 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             });
             return;
         }
+        
+        if (saveClicked > 0) {
+            return;
+        };
+        saveClicked++;
 
         try {
             const { productType, _id } = productManager;
             const formDataPayload = new FormData();
+
+            const tableSheetClearApproved = variableData.tableSheet.length === 0 && approvedTableSheetClear;
+            formDataPayload.append('approvedTableSheetClear', tableSheetClearApproved.toString());
+
+            console.log("FormData Payload:", tableSheetClearApproved);
 
             if (variableData.tableSheet.length > 0) {
                 console.log("Sending tableSheet data:", variableData.tableSheet.length, "items");
@@ -165,7 +172,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 console.error("WARNING: tableSheet is empty! Checking if this is intentional...");
 
                 const previousTableSheetSize = originalData.variableData.tableSheet.length;
-                if (previousTableSheetSize > 0) {
+                if (previousTableSheetSize > 0 && !approvedTableSheetClear) {
                     console.error("CRITICAL: Attempting to send empty tableSheet when we had data before. Using original data instead.");
                     originalData.variableData.tableSheet.forEach((item) => {
                         formDataPayload.append('tableSheet', item.index.toString());
@@ -381,8 +388,112 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
     };
 
+    const escapeCsvField = (field: string | number | undefined | null): string => {
+        if (field === undefined || field === null) {
+            return '';
+        }
+        const stringField = String(field);
+        if (stringField.includes(',') || stringField.includes('\n') || stringField.includes('"')) {
+            const escapedField = stringField.replace(/"/g, '""');
+            return `"${escapedField}"`;
+        }
+        return stringField;
+    };
+
+    const triggerDownload = (content: string, filename: string, contentType: string) => {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     const handleExport = async () => {
-        alert('Export functionality is not implemented yet.\nThis feature will export all table data to a chose file. Exportable files will either be in CSV or JSON format, based on your chosen format.');
+        const hasHeaders = variableData.tableSheet.length > 0;
+        const hasCellData = Object.keys(variableRowData).length > 0;
+
+        if (!hasHeaders && !hasCellData) {
+            toast.info('No data to export', {
+                position: 'bottom-right',
+                autoClose: 3000,
+            });
+            return;
+        }
+
+        const format = window.prompt('Enter the format to export (CSV or JSON):', 'csv')?.toUpperCase();
+        if (format !== 'CSV' && format !== 'JSON') {
+            toast.error('Invalid format. Please enter CSV or JSON.', {
+                position: 'bottom-right',
+                autoClose: 3000,
+            });
+            return;
+        }
+
+        const headers = variableData.tableSheet.map(item => item.value);
+        if (headers.length === 0 && format === "CSV") {
+             toast.error('Cannot export CSV without headers.', { position: 'bottom-right' });
+             return;
+        }
+
+        let maxRowIndex = -1;
+        const rowDataMap = new Map<number, Record<string, string>>();
+
+        Object.entries(variableRowData).forEach(([key, cell]) => {
+            const match = key.match(/^(.+)_row_(\d+)$/);
+            if (match) {
+                const [_, classKey, rowIndexStr] = match;
+                const rowIndex = parseInt(rowIndexStr, 10);
+
+                if (!isNaN(rowIndex)) {
+                    maxRowIndex = Math.max(maxRowIndex, rowIndex);
+                    if (!rowDataMap.has(rowIndex)) {
+                        rowDataMap.set(rowIndex, {});
+                    }
+                    rowDataMap.get(rowIndex)![classKey] = cell.value;
+                }
+            }
+        });
+        const numRows = maxRowIndex + 1;
+
+        if (format === 'CSV') {
+            const csvRows: string[] = [];
+
+            csvRows.push(headers.map(escapeCsvField).join(','));
+
+            for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+                const rowMap = rowDataMap.get(rowIndex) || {};
+                const rowValues = headers.map(header => {
+                    const cellValue = rowMap[header] || '';
+                    return escapeCsvField(cellValue);
+                });
+                csvRows.push(rowValues.join(','));
+            }
+
+            const csvContent = csvRows.join('\n');
+
+            triggerDownload(csvContent, `export_${productManager._id || 'data'}.csv`, 'text/csv;charset=utf-8;');
+            toast.success('CSV export started.', { position: 'bottom-right' });
+        } else if (format === 'JSON') {
+            const jsonData: Record<string, string>[] = [];
+
+            for (let i = 0; i < numRows; i++) {
+                const rowObject: Record<string, string> = {};
+                const rowMap = rowDataMap.get(i) || {};
+                headers.forEach(header => {
+                    rowObject[header] = rowMap[header] || "";
+                });
+                jsonData.push(rowObject);
+            }
+
+            const jsonContent = JSON.stringify(jsonData, null, 2);
+
+            triggerDownload(jsonContent, `export_${productManager._id || 'data'}.json`, 'application/json;charset=utf-8;');
+            toast.success('JSON export started.', { position: 'bottom-right' });
+        }
     };
 
     return (
@@ -397,7 +508,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     </button>
                     <div className={styles.operationButtons}>
                         <button
-                            className={`${styles.saveButton} ${!hasChanges ? styles.saveButtonDisabled : ''}`}
+                            className={`${styles.saveButton} ${!hasChanges || saveClicked > 0 ? styles.saveButtonDisabled : ''}`}
                             onClick={handleSave}
                             disabled={!hasChanges}
                             title={!hasChanges ? 'No changes to save' : 'Save changes'}
@@ -405,10 +516,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             Save
                         </button>
                         <button
-                            className={styles.exportButton}
+                            className={`${styles.exportButton} ${(variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0) ? styles.exportButtonDisabled : ''}`}
                             onClick={handleExport}
-                            disabled={!variableData && !variableRowData || variableData.tableSheet.length === 0}
-                            title="Export"
+                            disabled={variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0}
+                            title="Export table data as CSV or JSON"
                         >
                             Export
                         </button>
@@ -416,6 +527,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 </div>
             </div>
             <VariableManager
+                productManager={productManager}
+                setApprovedTableSheetClear={setApprovedTableSheetClear}
+                setApprovedTableCellClear={setApprovedTableCellClear}
                 variableData={variableData}
                 setVariableData={setVariableData}
                 setVariableRowData={setVariableRowData}

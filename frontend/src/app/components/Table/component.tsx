@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { tableCellData } from "../../../../types/productManager";
+import { tableCellData, ProductManager } from "../../../../types/productManager";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,9 +10,12 @@ interface tableSheetData {
     isOrigin: boolean;
 }
 
-type VariableRowDataState = Record <string, tableCellData>;
+type VariableRowDataState = Record<string, tableCellData>;
 
 interface TableProps {
+    productManager: ProductManager;
+    setApprovedTableSheetClear?: (value: boolean) => void;
+    setApprovedTableCellClear?: (value: boolean) => void;
     variableRowData: VariableRowDataState;
     selectedClassKey: string;
     variableData: tableSheetData[];
@@ -22,7 +25,7 @@ interface TableProps {
     setVariableClassData: (data: Record<string, any>) => void;
 }
 
-const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variableData, originAssignment, submitTableData, areRowsPopulated, setVariableClassData }) => {
+const Table: React.FC<TableProps> = ({ productManager, variableRowData, selectedClassKey, variableData, originAssignment, submitTableData, areRowsPopulated, setVariableClassData, setApprovedTableCellClear, setApprovedTableSheetClear }) => {
     const [localClassKeyInput, setLocalClassKeyInput] = useState<string>('');
     const [addedClassKeys, setAddedClassKeys] = useState<tableSheetData[]>([]);
     const [headerOrigin, setHeaderOrigin] = useState<string>("");
@@ -30,6 +33,8 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
 
     const [zoomLevel, setZoomLevel] = useState<number>(100);
     const tableContainerRef = useRef<HTMLDivElement>(null);
+
+    const { productType, _id } = productManager;
 
     useEffect(() => {
         const originKey = variableData.find(key => key.isOrigin);
@@ -243,26 +248,50 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
         }
     };
 
-    // Will fetch the data from the backend and delete the whole data, will work on later
-    const  handleDeleteTableData = async () => {
+    const handleDeleteTableData = async () => {
         const confirmation = window.confirm(
-            `CAUTION: This will permanently delete all data in the table. Are you sure you want to proceed?`
+            `CAUTION: This will permanently delete all table data (headers and cells). Are you sure you want to proceed?`
         );
         if (confirmation) {
-            // just a placeholder for the route
-            const response = await fetch('/api/deleteTableData', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
+            setAddedClassKeys([]);
+            submitTableData([]);
+            setVariableClassData({});
+            setApprovedTableCellClear && setApprovedTableCellClear(true);
+            setApprovedTableSheetClear && setApprovedTableSheetClear(true);
+
+            try {
+                const formDataPayload = new FormData();
+
+                formDataPayload.append('approvedTableSheetClear', 'true');
+                formDataPayload.append('approvedTableCellClear', 'true');
+
+
+                console.log(`Sending PATCH to clear table data for ${productType}/${_id}`);
+                const response = await fetch(`/api/productManager/${productType}/${_id}`, {
+                    method: 'PATCH',
+                    body: formDataPayload,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => response.text());
+                    console.error(`Failed to clear table data on server. Status: ${response.status}`, errorData);
+                    toast.error(`Error clearing table data: ${errorData.error || errorData}`);
+                } else {
+                    const result = await response.json();
+                    console.log("Server successfully cleared table data:", result);
+                    toast.success('Table data cleared successfully.');
                 }
-            })
+            } catch (error) {
+                console.error("Error sending clear table data request:", error);
+                toast.error('An error occurred while trying to clear table data.');
+            }
         }
     };
 
     return (
         <div className={styles.wavekeyTable}>
             <div className={styles.header}>
-                <h2>Table | <span style={{fontWeight: "10", fontSize: "12pt"}}>{`${Object.keys(variableRowData).length} total queries`}</span></h2>
+                <h2>Table | <span style={{ fontWeight: "10", fontSize: "12pt" }}>{`${Object.keys(variableRowData).length} total queries`}</span></h2>
                 <div className={styles.zoomControls}>
                     <button
                         onClick={handleZoomOut}
@@ -343,6 +372,7 @@ const Table: React.FC<TableProps> = ({ variableRowData, selectedClassKey, variab
                                     setAddedClassKeys([]);
                                     submitTableData([]);
                                     areRowsPopulated(false);
+                                    setApprovedTableSheetClear && setApprovedTableSheetClear(true);
                                 }}
                                 className={styles.deleteButton}
                             >

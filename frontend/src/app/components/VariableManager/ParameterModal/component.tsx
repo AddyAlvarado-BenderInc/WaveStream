@@ -21,7 +21,7 @@ const ParameterModal: React.FC<ParameterModalProps> = ({onSave, onCancel, parame
                 <div className="parameter-form">
                     <input
                         type="text"
-                        placeholder="Parameter Name"
+                        placeholder="Parameter Name (optional)"
                         value={parameterName}
                         onChange={(e) => setLocalParameter(prev => ({
                             ...prev,

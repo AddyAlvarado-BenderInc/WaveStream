@@ -255,20 +255,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         );
                     }
 
-                    // TODO: There's a population bug where if the user clicks on the save button and cells are empty,
-                    // the data is restored unintentionally, causing the productManager to reload the cells with the latest previous data
-
                     let tableCellDataFromBody = req.body.tableCellData;
+                    const approvedTableCellClearFlag = req.body.approvedTableCellClear === 'true';
 
                     if (tableCellDataFromBody === undefined) {
-                        console.log("tableCellData field was absent, treating as intentional clear.");
-                        tableCellDataFromBody = [];
+                        if (approvedTableCellClearFlag) {
+                            console.log("tableCellData absent and approvedClear=true. Clearing.");
+                            updateData.tableCellData = [];
+                        } else {
+                            console.log("tableCellData absent but approvedClear=false/absent. Skipping update.");
+                        }
                     }
 
                     if (tableCellDataFromBody) {
                         if (tableCellDataFromBody.length === 0) {
-                            updateData.tableCellData = [];
-                            console.log("Clearing tableCellData as requested (field was empty or absent)");
+                            if (approvedTableCellClearFlag) {
+                                console.log("Empty tableCellData array and approvedClear=true. Clearing.");
+                                updateData.tableCellData = [];
+                            } else {
+                                console.log("Empty tableCellData array but approvedClear=false/absent. Skipping update.");
+                            }
                         } else {
                             const tableCellDataItems: { index: number; value: string; classKey: string }[] = [];
                             if (tableCellDataFromBody.length === 1 && tableCellDataFromBody[0] === '[]') {
@@ -436,19 +442,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         console.log('No changes detected in tableCellData');
                     }
 
-                    if (Array.isArray(req.body.tableSheet)) {
-                        if (req.body.tableSheet.length === 0) {
-                            console.log("Empty tableSheet received, skipping update");
+                    let tableSheetDataFromBody = req.body.tableSheet;
+                    const approvedTableSheetClearFlag = req.body.approvedTableSheetClear === 'true';
+
+                    if (tableSheetDataFromBody === undefined) {
+                        if (approvedTableSheetClearFlag) {
+                            console.log("tableSheet absent and approvedClear=true. Clearing.");
+                            updateData.tableSheet = [];
                         } else {
+                            console.log("tableSheet absent but approvedClear=false/absent. Skipping update.");
+                        }
+                    }
+
+                    if (Array.isArray(tableSheetDataFromBody)) {
+                        if (tableSheetDataFromBody.length === 0) {
+                            if (approvedTableSheetClearFlag) {
+                                console.log("Empty tableSheet AND approvedClear=true. Clearing tableSheet.");
+                                updateData.tableSheet = [];
+                            } else {
+                                console.log("Empty tableSheet but approvedClear is false or absent. Skipping tableSheet update to prevent potential data loss.");
+                            }
+                        } else {
+                            console.log("tableSheet received with data. Processing diff.");
                             const tableSheetKeys: { index: number; value: string; isOrigin: boolean }[] = [];
 
-                            for (let i = 0; i < req.body.tableSheet.length; i += 3) {
-                                const index = parseInt(req.body.tableSheet[i], 10);
-                                const value = req.body.tableSheet[i + 1];
-                                const isOrigin = req.body.tableSheet[i + 2] === 'true';
+                            if (tableSheetDataFromBody.length % 3 !== 0) {
+                                console.error("Received tableSheet with incorrect number of items, expected triplets. Skipping update.", tableSheetDataFromBody);
+                            } else {
+                                for (let i = 0; i < req.body.tableSheet.length; i += 3) {
+                                    const index = parseInt(req.body.tableSheet[i], 10);
+                                    const value = req.body.tableSheet[i + 1];
+                                    const isOrigin = req.body.tableSheet[i + 2] === 'true';
 
-                                if (!isNaN(index)) {
-                                    tableSheetKeys.push({ index, value, isOrigin });
+                                    if (!isNaN(index)) {
+                                        tableSheetKeys.push({ index, value, isOrigin });
+                                    }
                                 }
                             }
 

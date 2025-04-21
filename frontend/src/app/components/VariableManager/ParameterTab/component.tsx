@@ -139,15 +139,15 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     };
 
     const handleParameterSave = () => {
-        if (!selectedInterpolatedVariables || !localParameter.parameterName || !localParameter.addedParameter) {
-            alert('Please fill all fields');
+        if (!selectedInterpolatedVariables || !localParameter.addedParameter) {
+            alert('Please enter a parameter value.');
             return;
         }
 
         dispatch(addParameter({
             id: Date.now(),
             variable: selectedInterpolatedVariables,
-            parameterName: localParameter.parameterName,
+            parameterName: localParameter.parameterName ? localParameter.parameterName : localParameter.addedParameter,
             addedParameter: localParameter.addedParameter,
         }));
 
@@ -169,7 +169,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             return [...prev, {
                 id: Date.now(),
                 variable: selectedInterpolatedVariables,
-                name: localParameter.parameterName,
+                name: localParameter.parameterName ? localParameter.parameterName : localParameter.addedParameter,
                 value: localParameter.addedParameter
             }];
         });
