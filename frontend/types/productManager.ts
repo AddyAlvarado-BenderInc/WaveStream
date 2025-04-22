@@ -27,7 +27,7 @@ export interface variableClassArray {
     variableData: Record<string, {
         dataId: number;
         value: string;
-    }>;
+    } | null>;
 }
 
 export interface ProductManager {

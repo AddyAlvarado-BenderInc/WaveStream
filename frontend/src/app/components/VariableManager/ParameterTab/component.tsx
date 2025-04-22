@@ -59,8 +59,6 @@ interface VariableClasses {
     type: string;
 }
 
-let variableID = 1;
-
 const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -397,15 +395,15 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
 
         dataLength = variableData.length;
-        const dataId = variableID++;
+        const uniqueDataId = Date.now();
 
         const payload: VariablePayload = {
-            dataId,
+            dataId: uniqueDataId,
             name: localVariableName,
             dataLength,
             variableData: variableData.reduce((acc, value, index) => {
                 acc[index.toString()] = { 
-                    dataId: dataId,
+                    dataId: uniqueDataId,
                     value: value 
                 };
                 return acc;

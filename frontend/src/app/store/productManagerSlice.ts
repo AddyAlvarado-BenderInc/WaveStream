@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
 import { toast } from 'react-toastify';
-import { ProductManager } from '../../../types/productManager';
+import { ProductManager, variableClassArray } from '../../../types/productManager';
 
 interface ProductManagerState {
   productManagers: ProductManager[];
@@ -20,7 +20,7 @@ interface VariableState {
       value: string;
     } | null>;
   } | null | undefined>
-  variableClass: {};
+  variableClass: Record<string, any> | null;
   stringInput: string;
   textareaInput: string;
   integerInput: string;
@@ -33,12 +33,14 @@ interface VariableClass {
   variableData: Record<string, {
     dataId: number;
     value: string;
-  }>;
+  } | null>;
 }
+
+type VariableClassArrayState = Array<variableClassArray | null | undefined>;
 
 const initialState: VariableState = {
   variableClassArray: [],
-  variableClass: Object,
+  variableClass: null,
   stringInput: "",
   textareaInput: "",
   integerInput: "",
@@ -54,19 +56,21 @@ const initialTypeTask: TaskState = {
   taskType: "",
 }
 
+interface ParameterItems {
+  id: number;
+  variable: string;
+  parameterName: string;
+  addedParameter: string;
+}
+
 interface ParameterState {
-  parameters: Array<{
-    id: number;
-    variable: string;
-    parameterName: string;
-    addedParameter: string;
-  }>;
-  parameterBundle: Object;
+  parameters: Array<ParameterItems>;
+  parameterBundle: Record<string, any> | null;
 }
 
 const initialParameterState: ParameterState = {
   parameters: [],
-  parameterBundle: Object
+  parameterBundle: null
 };
 
 const productManagerSlice = createSlice({
@@ -94,6 +98,14 @@ const variableSlice = createSlice({
     },
     deleteVariableClassArray: (state, action: PayloadAction<number | null | undefined>) => {
       state.variableClassArray = state.variableClassArray.filter((id) => id?.dataId !== action.payload);
+    },
+    setVariableClassArray: (state, action: PayloadAction<VariableClassArrayState>) => {
+      try {
+        state.variableClassArray = action.payload;
+      } catch (e) {
+        console.error("Payload for setVariableClassArray is non-serializable:", action.payload, e);
+        toast.error("Failed to update variable class data due to internal error.");
+      }
     },
     setVariableClass: (state, action: PayloadAction<Object>) => {
       state.variableClass = action.payload;
@@ -132,20 +144,10 @@ const parameterSlice = createSlice({
   name: "parameter",
   initialState: initialParameterState,
   reducers: {
-    addParameter: (state, action: PayloadAction<{
-      id: number;
-      variable: string;
-      parameterName: string;
-      addedParameter: string;
-    }>) => {
+    addParameter: (state, action: PayloadAction<ParameterItems>) => {
       state.parameters.push(action.payload);
     },
-    setParameterBundle: (state, action: PayloadAction<{
-      id: number;
-      variable: string;
-      parameterName: string;
-      addedParameter: string;
-    }[]>) => {
+    setParameterBundle: (state, action: PayloadAction<Record<string, any> | null>) => {
       state.parameterBundle = action.payload;
     },
     clearAllParameters: (state) => {
@@ -170,7 +172,8 @@ export const {
   setStringInput,
   setTextareaInput,
   setIntegerInput,
-  clearAllInputs
+  clearAllInputs,
+  setVariableClassArray,
 } = variableSlice.actions;
 
 export const { setTaskName, setTaskType } = typeTaskSlice.actions;

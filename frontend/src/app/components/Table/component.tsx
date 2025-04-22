@@ -209,6 +209,8 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
         );
         if (confirmation) {
             setVariableClassData({});
+            setApprovedTableCellClear && setApprovedTableCellClear(true);
+            console.log(`Cleared all cell data for ${productType}/${_id}`);
         }
     };
 

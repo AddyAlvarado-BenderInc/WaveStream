@@ -6,12 +6,11 @@ import { cleanOrphanedFiles } from '../../../../../lib/fileCleanup';
 import { Readable } from 'stream';
 import { getGridFSBucket } from '../../../../../lib/gridFSBucket';
 import multer from 'multer';
-import { isEqual } from 'lodash';
+import { has, isEqual } from 'lodash';
 
 // This file defines the API route for handling product manager data. It's centralized for better organization and maintainability.
 // It handles GET, PATCH, and DELETE requests for product managers and confines the "save" logic to this file as the single source of truth.
 // Only exceptions are made for the upload logic, which is handled by multer, and the file cleanup logic, which is handled by a separate utility function.
-// And lastly for loaded data which have their own files.
 
 export interface NextApiRequestWithFiles extends NextApiRequest {
     files?: Express.Multer.File[];
@@ -123,6 +122,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     count: tableCellData.length
                 });
 
+                const processGlobalVariableClassData = (data: any[] | undefined): any[] => {
+                    if (!Array.isArray(data)) {
+                        console.log('Original globalVariableClassData is not an array or undefined, returning [].');
+                        return [];
+                    }
+                    return data.map((item, index) => {
+                        if (typeof item !== 'object' || item === null) {
+                            console.warn(`Invalid item found in globalVariableClassData at index ${index}:`, item);
+                            return { dataId: -1, name: 'invalid', dataLength: 0, variableData: {} };
+                        }
+                        const variableDataFromDB = item.variableData;
+
+                        return {
+                            dataId: item.dataId ?? -1,
+                            name: item.name ?? "null",
+                            dataLength: item.dataLength ?? 0,
+                            variableData: (typeof variableDataFromDB === 'object' && variableDataFromDB !== null)
+                                ? variableDataFromDB
+                                : {}
+                        };
+                    }).filter(item => item.dataId !== -1);
+                };
+
+                const globalVariableClassData = processGlobalVariableClassData(productManager.globalVariableClassData);
+
+                console.log('Processed globalVariableClassData:', {
+                    original: productManager.globalVariableClassData,
+                    processed: globalVariableClassData,
+                    count: globalVariableClassData.length
+                });
+
                 const mainKeyString = Array.isArray(productManager.mainKeyString)
                     ? productManager.mainKeyString.map((value: any, index: number) => ({
                         index,
@@ -136,6 +166,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     mainKeyString,
                     tableSheet,
                     tableCellData,
+                    globalVariableClassData,
                     icon: productManager.icon.map(filename => ({
                         filename,
                         url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
@@ -719,6 +750,118 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         console.log('No changes detected in tableSheet');
                     }
 
+                    const approvedVariableClassClearFlag = formFields.approvedGlobalVariableClassClear === 'true';
+                    let incomingVariableClassData: any[] | undefined = undefined;
+                    let variableClassParseError = false;
+
+                    const rawGlobalVariableClassData = formFields.globalVariableClassData;
+
+                    console.log('Backend PATCH: Received raw globalVariableClassData:', rawGlobalVariableClassData);
+                    console.log('Backend PATCH: Type of raw globalVariableClassData:', typeof rawGlobalVariableClassData);
+                    if (Array.isArray(rawGlobalVariableClassData)) {
+                        console.log('Backend PATCH: Received as array of length:', rawGlobalVariableClassData.length);
+                        console.log('Backend PATCH: First element:', rawGlobalVariableClassData[0]);
+                    }
+
+                    if (rawGlobalVariableClassData !== undefined && typeof rawGlobalVariableClassData === 'string') {
+                        try {
+                            const parsedData = JSON.parse(rawGlobalVariableClassData);
+                            if (Array.isArray(parsedData)) {
+                                incomingVariableClassData = parsedData.map((item: any, index: number) => {
+                                    if (typeof item === 'object' && item !== null &&
+                                        typeof item.dataId === 'number' &&
+                                        typeof item.name === 'string' &&
+                                        typeof item.dataLength === 'number' &&
+                                        typeof item.variableData === 'object' && item.variableData !== null) {
+
+                                        return item;
+                                    } else {
+                                        console.warn(`Invalid item structure in globalVariableClassData at index ${index}. Skipping item. Item:`, item);
+                                        variableClassParseError = true;
+                                        return null;
+                                    }
+                                }).filter(item => item !== null);
+
+                                if (variableClassParseError) {
+                                    console.warn("Found invalid items during globalVariableClassData parsing. Update for this field will be skipped.");
+                                    incomingVariableClassData = undefined;
+                                } else if (incomingVariableClassData.length > 0) {
+                                    console.log(`Successfully parsed ${incomingVariableClassData.length} globalVariableClassData items.`);
+                                } else {
+                                    console.log("Successfully parsed globalVariableClassData as an empty array.");
+                                }
+                            } else {
+                                console.error("Parsed globalVariableClassData is not an array. Skipping update for this field.");
+                                variableClassParseError = true;
+                            }
+                        } catch (jsonParseError) {
+                            console.error("Failed to parse globalVariableClassData JSON string:", jsonParseError);
+                            variableClassParseError = true;
+                        }
+                    } else if (rawGlobalVariableClassData !== undefined) {
+                        console.error(`Unexpected type for globalVariableClassData: ${typeof rawGlobalVariableClassData}. Expected a JSON string. Skipping update for this field.`);
+                        variableClassParseError = true;
+                    } else {
+                        console.log("globalVariableClassData field is absent from the request.");
+                    }
+
+                    if (incomingVariableClassData) {
+                        console.log(">>> DEBUG: Backend parsed incomingVariableClassData:", JSON.stringify(incomingVariableClassData, null, 2));
+                    }
+
+                    if (!variableClassParseError) {
+
+                        const ensureArray = (data: any): any[] => {
+                            if (Array.isArray(data)) {
+
+                                return data.filter(item => item && typeof item === 'object');
+                            }
+                            return [];
+                        };
+
+                        const existingVariableClassData = ensureArray(productManager.globalVariableClassData);
+
+                        let variableClassChanged = false;
+                        let finalVariableClassData: any[] = existingVariableClassData;
+
+                        if (incomingVariableClassData === undefined) {
+                            if (approvedVariableClassClearFlag && existingVariableClassData.length > 0) {
+                                finalVariableClassData = [];
+                                variableClassChanged = true;
+                                console.log("globalVariableClassData absent and approvedClear=true. Clearing.");
+                            } else {
+                                console.log("globalVariableClassData absent and approvedClear=false/absent. No change.");
+                            }
+                        } else {
+                            const currentIncomingVariableClassData = ensureArray(incomingVariableClassData);
+                            const sortById = (a: any, b: any) => (a?.dataId ?? 0) - (b?.dataId ?? 0);
+
+                            const sortedExisting = [...existingVariableClassData].sort(sortById);
+                            const sortedIncoming = [...currentIncomingVariableClassData].sort(sortById);
+
+
+                            if (!isEqual(sortedExisting, sortedIncoming)) {
+
+                                finalVariableClassData = currentIncomingVariableClassData;
+                                variableClassChanged = true;
+                                console.log(`Changes detected in globalVariableClassData. Updating.`);
+                            } else {
+                                console.log("No changes detected in globalVariableClassData.");
+                            }
+                        }
+
+                        if (variableClassChanged) {
+                            updateData.globalVariableClassData = finalVariableClassData;
+                        }
+
+                        if (variableClassChanged) {
+                            updateData.globalVariableClassData = finalVariableClassData;
+                            console.log(">>> DEBUG: Backend updateData.globalVariableClassData BEFORE save:", JSON.stringify(updateData.globalVariableClassData, null, 2));
+                        }
+                    } else {
+                        console.warn("Skipping globalVariableClassData update due to previous parsing or validation errors.");
+                    }
+
                     if (Object.keys(updateData).length === 0) {
                         return res.status(400).json({ error: 'No valid fields provided for update' });
                     }
@@ -743,6 +886,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             filename,
                             url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         })),
+                        globalVariableClassData: Array.isArray(productManager.globalVariableClassData) ? productManager.globalVariableClassData : [],
                         message: 'Product manager updated successfully'
                     });
                 } catch (error) {

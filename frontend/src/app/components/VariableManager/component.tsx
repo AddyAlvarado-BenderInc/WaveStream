@@ -158,23 +158,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                 const match = firstValue.match(/^([^\s]+)/);
                 name = match ? match[1] : "";
             }
-        } else if (object && typeof object === 'object') {
-            // if (object.value) {
-            //     name = object.name.value;
-            // } else {
-            //     const values = Object.values(object.value);
-            //     for (const value of values) {
-            //         if (typeof value === 'string' && value !== '') {
-            //             const match = value.match(/^([^\s]+)/);
-            //             if (match) {
-            //                 name = match[1];
-            //                 break;
-            //             }
-            //         }
-            //     }
-            // }
-            // Commented out for now because I'm afraid of the compiler throwing errors but saving for later because it might be important to reference
-        };
+        }
 
         const valuesToDisplay = Object.values(object).map(item => item?.value);
 

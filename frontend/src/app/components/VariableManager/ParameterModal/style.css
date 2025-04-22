@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -35,4 +35,21 @@
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
+}
+
+.parameter-modal-actions button {
+    padding: 8px 16px;
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
+    border: 1px solid var(--button-primary-hover);
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.parameter-modal-actions button:hover {
+    background-color: var(--button-secondary-hover);
+    border: 1px solid var(--button-primary-hover);
+    color: var(--button-primary-hover);
 }

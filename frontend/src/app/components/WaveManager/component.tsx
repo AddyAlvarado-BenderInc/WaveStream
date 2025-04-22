@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/app/store/store';
-import { updateProductManager } from "../../store/productManagerSlice";
-import { ProductManager, IconData, tableSheetData, tableCellData } from '../../../../types/productManager';
+import { clearAllVariableClassArray, setVariableClassArray, addVariableClassArray } from "../../store/productManagerSlice";
+import { ProductManager, IconData, tableSheetData, tableCellData, variableClassArray } from '../../../../types/productManager';
 import VariableManager from '../VariableManager/component';
 import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import { BASE_URL } from '../../config';
@@ -34,8 +34,10 @@ interface VariableClassArray {
     variableData: Record<string, {
         dataId: number;
         value: string;
-    }>;
+    } | null>;
 }
+
+type VariableClassArrayState = Array<variableClassArray | null | undefined>;
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
@@ -44,61 +46,135 @@ interface VariableDataState {
 type VariableRowDataState = Record<string, tableCellData>;
 
 interface WaveManagerProps {
-    productManager: ProductManager;
+    productManager: ProductManager & { globalVariableClass?: VariableClassArray };
+}
+
+interface OriginalData {
+    formData: FormDataState;
+    iconData: IconDataState;
+    variableData: VariableDataState;
+    variableRowData: VariableRowDataState;
+    variableClassArray: VariableClassArrayState;
 }
 
 let saveClicked = 0;
-
-
-// TODO: need to work on saving data for variableClassArrays and then fixing the edit functionality for the variableManager component
 
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const dispatch = useDispatch<AppDispatch>();
     const [approvedTableCellClear, setApprovedTableCellClear] = useState(false);
     const [approvedTableSheetClear, setApprovedTableSheetClear] = useState(false);
-    const [originalData, setOriginalData] = useState({
-        formData: {
-            itemName: productManager.itemName || '',
-            productId: productManager.productId || '',
-            description: productManager.description || '',
-            initialJS: productManager.initialJS || '',
-            initialCSS: productManager.initialCSS || '',
-            initialHTML: productManager.initialHTML || '',
-            label: productManager.label || '',
-        } as FormDataState,
-        iconData: {
-            icon: (productManager.icon || []).map((icon: IconData) => ({
-                filename: icon?.filename || '',
-                url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
-            })),
-            iconPreview: (productManager.iconPreview || []).map((icon: IconData) => ({
-                filename: icon?.filename || '',
-                url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
-            })),
-            newFiles: [] as File[]
-        } as IconDataState,
-        variableData: {
-            tableSheet: Array.isArray(productManager.tableSheet)
-                ? productManager.tableSheet.map((value, index) => ({
-                    index,
-                    value: value.value || '',
-                    isOrigin: Boolean(value.isOrigin),
-                }))
-                : []
-        } as VariableDataState,
-        variableRowData: productManager.tableCellData
-            ? productManager.tableCellData.reduce((acc: VariableRowDataState, item: any) => {
-                if (item && typeof item === 'object') {
+
+    useEffect(() => {
+        console.log("WaveManager: Initializing/Syncing Redux state for globalVariableClassData");
+        const parseAndClone = (data: any): VariableClassArrayState => {
+            if (Array.isArray(data)) {
+                try {
+                    console.log("Cloning existing array:", data);
+                    return JSON.parse(JSON.stringify(data));
+                } catch (e) {
+                    console.error("Failed to clone existing array:", e);
+                    return [];
+                }
+            }
+            if (typeof data === 'string') {
+                try {
+                    const parsed = JSON.parse(data);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    console.error("Failed to parse variableClassArray string for Redux init:", e);
+                    return [];
+                }
+            }
+            console.warn("Unexpected format for globalVariableClassData:", data);
+            return [];
+        };
+
+        const initialVariableClassData = parseAndClone(productManager.globalVariableClassData);
+
+        dispatch(setVariableClassArray(initialVariableClassData));
+
+        setOriginalData(prevOriginal => ({
+            ...prevOriginal,
+            variableClassArray: initialVariableClassData
+        }));
+
+    }, [productManager.globalVariableClassData, dispatch]);
+
+    const [originalData, setOriginalData] = useState<OriginalData>(() => {
+        const parseVariableClassArray = (data: any): VariableClassArrayState => {
+            if (Array.isArray(data)) {
+                return data;
+            }
+            if (typeof data === 'string') {
+                try {
+                    const parsed = JSON.parse(data);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    console.error("Failed to parse variableClassArray string:", e);
+                    return [];
+                }
+            }
+            return [];
+        };
+
+        const normalizeTableCellData = (data: any): VariableRowDataState => {
+            if (!Array.isArray(data)) return {};
+            return data.reduce((acc: VariableRowDataState, item: any) => {
+                if (item && typeof item === 'object' && item.classKey != null && item.index != null) {
                     const key = `${item.classKey}_row_${item.index}`;
                     acc[key] = {
                         classKey: item.classKey,
                         index: item.index,
-                        value: item.value
+                        value: item.value || ''
                     };
                 }
                 return acc;
-            }, {})
-            : {},
+            }, {});
+        };
+
+        const normalizeTableSheet = (data: any): tableSheetData[] => {
+            if (!Array.isArray(data)) return [];
+            return data.map((item: any, index: number) => {
+                if (typeof item === 'object' && item !== null) {
+                    return {
+                        index: item.index ?? index,
+                        value: item.value || '',
+                        isOrigin: item.isOrigin === true,
+                    };
+                } else {
+                    console.warn(`Unexpected tableSheet item format at index ${index}:`, item);
+                    return { index, value: String(item), isOrigin: false };
+                }
+            });
+        };
+
+        return {
+            formData: {
+                itemName: productManager.itemName || '',
+                productId: productManager.productId || '',
+                description: productManager.description || '',
+                initialJS: productManager.initialJS || '',
+                initialCSS: productManager.initialCSS || '',
+                initialHTML: productManager.initialHTML || '',
+                label: productManager.label || '',
+            },
+            iconData: {
+                icon: (productManager.icon || []).map((icon: IconData) => ({
+                    filename: icon?.filename || '',
+                    url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
+                })),
+                iconPreview: (productManager.iconPreview || productManager.icon || []).map((icon: IconData) => ({
+                    filename: icon?.filename || '',
+                    url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
+                })),
+                newFiles: []
+            },
+            variableData: {
+                tableSheet: normalizeTableSheet(productManager.tableSheet)
+            },
+            variableRowData: normalizeTableCellData(productManager.tableCellData),
+            variableClassArray: parseVariableClassArray(productManager.globalVariableClassData)
+        };
     });
 
     const [formData, setFormData] = useState<FormDataState>({ ...originalData.formData });
@@ -107,49 +183,61 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [variableRowData, setVariableRowData] = useState<VariableRowDataState>({ ...originalData.variableRowData });
     const [hasChanges, setHasChanges] = useState(false);
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
+
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
 
     const checkForChanges = useCallback(() => {
-        const normalizeTableSheet = (tableSheet: tableSheetData[]) => {
+        const normalizeTableSheetForCompare = (tableSheet: tableSheetData[]) => {
             return tableSheet.map(item => ({
                 value: item.value,
                 isOrigin: item.isOrigin
-            }));
+            })).sort((a, b) => (a.value + a.isOrigin).localeCompare(b.value + b.isOrigin));
         };
-        const normalizeVariableRowData = (variableRowData: VariableRowDataState): { value: string }[] => {
-            return Object.keys(variableRowData).map(item => ({
-                value: item,
-            }));
+
+        const normalizeVariableRowDataForCompare = (data: VariableRowDataState): Array<{ classKey: string, index: number, value: string }> => {
+            return Object.values(data).sort((a, b) => `${a.classKey}_${a.index}`.localeCompare(`${b.classKey}_${b.index}`));
         };
-        const normalizeVariableClassArray = (variableClassArray: VariableClassArray): { dataId: number; name: string; dataLength: number, variableData: Record<string, { dataId: number, value: string } | null> }[] => {
-            return Object.entries(variableClassArray).map((item: any) => ({
-                dataId: item.dataId,
-                name: item.name,
-                dataLength: item.dataLength,
-                variableData: item.variableData.map((data: { dataId: number; value: string }) => ({
-                    dataId: data.dataId,
-                    value: data.value
-                }))
-            }));
-        }
+
+        const normalizeVariableClassArrayForCompare = (arr: VariableClassArrayState): VariableClassArray[] => {
+            return arr
+                .filter((item): item is VariableClassArray => item != null && item !== undefined)
+                .map(item => {
+                    const safeVariableData = (item.variableData && typeof item.variableData === 'object')
+                        ? item.variableData
+                        : {};
+                    return {
+                        ...item,
+                        variableData: Object.entries(safeVariableData)
+                            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+                            .reduce((acc, [key, value]) => {
+                                acc[key] = value;
+                                return acc;
+                            }, {} as typeof item.variableData)
+                    };
+                })
+                .sort((a, b) => a.dataId - b.dataId);
+        };
 
         const formDataChanged = !isEqual(formData, originalData.formData);
         const iconDataChanged = iconData.newFiles.length > 0 ||
-            !isEqual(iconData.icon.map(i => i.filename), originalData.iconData.icon.map(i => i.filename));
-        const tableSheetChanged = !isEqual(
-            normalizeTableSheet(variableData.tableSheet),
-            normalizeTableSheet(originalData.variableData.tableSheet)
-        );
-        const variableRowDataChanged = !isEqual(
-            normalizeVariableRowData(variableRowData),
-            normalizeVariableRowData(originalData.variableRowData)
-        );
-        // const variableClassArrayChanged = !isEqual(
-        //     normalizeVariableClassArray(globalVariableClass),
-        //     normalizeVariableClassArray(originalData.variableClassArray)
-        // );
+            !isEqual(iconData.icon.map(i => i.filename).sort(), originalData.iconData.icon.map(i => i.filename).sort());
 
-        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged;
+        const tableSheetChanged = !isEqual(
+            normalizeTableSheetForCompare(variableData.tableSheet),
+            normalizeTableSheetForCompare(originalData.variableData.tableSheet)
+        );
+
+        const variableRowDataChanged = !isEqual(
+            normalizeVariableRowDataForCompare(variableRowData),
+            normalizeVariableRowDataForCompare(originalData.variableRowData)
+        );
+
+        const variableClassArrayChanged = !isEqual(
+            normalizeVariableClassArrayForCompare(globalVariableClass),
+            normalizeVariableClassArrayForCompare(originalData.variableClassArray)
+        );
+
+        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged || variableClassArrayChanged; // Add variableClassArrayChanged
 
         setHasChanges(dataChanged);
 
@@ -159,13 +247,18 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 iconDataChanged,
                 tableSheetChanged,
                 variableRowDataChanged,
+                variableClassArrayChanged,
             });
+            if (variableClassArrayChanged) {
+                console.log('Original VariableClassArray:', normalizeVariableClassArrayForCompare(originalData.variableClassArray));
+                console.log('Current VariableClassArray:', normalizeVariableClassArrayForCompare(globalVariableClass));
+            }
         }
-    }, [formData, iconData, variableData, originalData, variableRowData]);
+    }, [formData, iconData, variableData, variableRowData, globalVariableClass, originalData]);
 
     useEffect(() => {
         checkForChanges();
-    }, [formData, iconData, variableData, variableRowData, checkForChanges]);
+    }, [checkForChanges]);
 
     const handleSave = async () => {
         if (!hasChanges) {
@@ -218,7 +311,11 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 }
             }
 
-            if (Object.keys(variableRowData).length > 0) {
+            if (Object.keys(variableRowData).length > 0 || approvedTableCellClear) {
+                if (approvedTableCellClear) {
+                    console.log("Sending approvedTableCellClear flag");
+                    formDataPayload.append('approvedTableCellClear', approvedTableCellClear.toString());
+                }
                 console.log("Sending variableRowData data:", Object.keys(variableRowData).length, "items");
                 Object.entries(variableRowData).forEach(([_, rowItem]) => {
                     formDataPayload.append('tableCellData', rowItem.index.toString());
@@ -261,11 +358,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             });
 
             if (Array.isArray(globalVariableClass) && globalVariableClass.length > 0) {
-                console.log("Sending globalVariableClass data:", globalVariableClass.length, "items");
+                console.log("Sending globalVariableClass data array:", globalVariableClass.length, "items");
                 formDataPayload.append('globalVariableClassData', JSON.stringify(globalVariableClass));
             } else {
-                console.log("No globalVariableClass data to send.");
-            }
+                console.log("No globalVariableClass data to send, sending empty array string.");
+                formDataPayload.append('globalVariableClassData', '[]');
+            };
 
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
 
@@ -278,6 +376,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             });
 
             if (response.ok) {
+                const confirmReload = window.confirm('Product saved successfully! Do you want to refresh the page?');
+                if (confirmReload) {
+                    window.location.reload();
+                    toast.success('Product saved successfully! You can continue working.');
+                } else {
+                    toast.info('Page needs reloading to reflect changes.');
+                    return;
+                }
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
 
@@ -356,7 +462,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
                 if (hasChanges) {
                     console.log('Updating original data references');
-                    dispatch(updateProductManager(updatedProduct));
+                    dispatch(setVariableClassArray(updatedProduct));
 
                     const newOriginalData = {
                         formData: {
@@ -400,10 +506,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 }
                                 return acc;
                             }, {})
-                            : {}
+                            : {},
+                        variableClassArray: Array.isArray(updatedProduct.globalVariableClassData)
+                            ? updatedProduct.globalVariableClassData
+                            : []
                     };
                     setOriginalData(newOriginalData);
-
+                    if (updatedProduct.globalVariableClassData) {
+                        dispatch(setVariableClassArray(updatedProduct.globalVariableClassData));
+                    } else {
+                        dispatch(setVariableClassArray([]));
+                    }
                     setHasChanges(false);
                 }
 
@@ -412,6 +525,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     autoClose: 5000,
                 });
             } else {
+                saveClicked = 0;
                 const error = await response.json();
                 toast.error(`Error saving product: ${error.message}`, {
                     position: 'bottom-right',
@@ -419,6 +533,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 });
             }
         } catch (error) {
+            saveClicked = 0;
             console.error('Save error:', error);
             toast.error('Failed to save the product. Please try again.');
         }
@@ -511,7 +626,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
             const csvContent = csvRows.join('\n');
 
-            triggerDownload(csvContent, `export_${productManager._id || 'data'}.csv`, 'text/csv;charset=utf-8;');
+            triggerDownload(csvContent, `export_${productManager._id || 'data'}_${productManager.name}.csv`, 'text/csv;charset=utf-8;');
             toast.success('CSV export started.', { position: 'bottom-right' });
         } else if (format === 'JSON') {
             const jsonData: Record<string, string>[] = [];
@@ -527,7 +642,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
             const jsonContent = JSON.stringify(jsonData, null, 2);
 
-            triggerDownload(jsonContent, `export_${productManager._id || 'data'}.json`, 'application/json;charset=utf-8;');
+            triggerDownload(jsonContent, `export_${productManager._id || 'data'}_${productManager.name}.json`, 'application/json;charset=utf-8;');
             toast.success('JSON export started.', { position: 'bottom-right' });
         }
     };
@@ -537,7 +652,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         const hasHeaders = variableData.tableSheet.length > 0;
         const hasCellData = Object.keys(variableRowData).length > 0;
         const { productType, _id } = productManager;
-        
+
         if (!hasHeaders && !hasCellData) {
             toast.info('No data to run', {
                 position: 'bottom-right',
@@ -547,14 +662,15 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
 
         const confirmation = window.confirm(
-            `You are going to run the automation for ${productManager.name}. Are you sure?`
+            `You are going to run the automation for ${productManager._id}_${productManager.name}. Are you sure?`
         );
-        
+
         if (!confirmation) {
             return;
         }
-        
-        // Can decide to fetch code from C# code (/backend/services/Program.cs) or from javascript (/backend/services/Program.js)
+
+        // Can decide to fetch code from C# code (/backend/services/Program.cs) (requires JSON data format)
+        // or from javascript (/backend/services/Program.js) (requires CSV data format)
         // Below is just for demonstration purposes
         const response = await fetch(`/backend/automation`, {
             method: 'POST',

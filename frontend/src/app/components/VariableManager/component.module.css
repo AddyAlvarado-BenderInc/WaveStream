@@ -156,7 +156,7 @@
   padding: 8px 16px;
   background-color: var(--button-primary-hover);
   color: var(--button-secondary-hover);
-  border: none;
+  border: 1px solid var(--button-primary-hover);
   border-radius: 4px;
   cursor: pointer;
   margin-top: 10px;
