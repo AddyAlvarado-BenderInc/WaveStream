@@ -199,8 +199,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
 
             return updatedData;
         });
-
-        toast.success(`Data deleted for ${key} at row ${rowIndex}`);
     };
 
     const handleClearAllCells = () => {
@@ -246,8 +244,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
 
                 return updatedData;
             });
-
-            toast.success(`Updated data for ${key} at row ${rowIndex}`);
         }
     };
 
@@ -261,7 +257,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             setVariableClassData({});
             setApprovedTableCellClear && setApprovedTableCellClear(true);
             setApprovedTableSheetClear && setApprovedTableSheetClear(true);
-
             try {
                 const formDataPayload = new FormData();
 
@@ -305,7 +300,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                 <h2
                     onClick={(e) => handleDisplayTable(e)}
                 >
-                    Table | <span style={{ fontWeight: "10", fontSize: "12pt" }}>{`${Object.keys(variableRowData).length} total queries`}</span>
+                    Table | <span style={{ fontWeight: "10", fontSize: "12pt" }}>{`${Object.keys(variableRowData).length} total queries`} | {hideTable ? "Show" : "Hide"}</span>
                 </h2>
                 {!hideTable && (
                     <div className={styles.zoomControls}>

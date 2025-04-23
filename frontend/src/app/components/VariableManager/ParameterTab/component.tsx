@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     addParameter,
     clearParameter,
     setVariableClass,
     addVariableClassArray,
     setParameterBundle,
-    clearAllParameters
+    clearAllParameters,
+    deleteVariableClassArray
 } from '@/app/store/productManagerSlice';
 import {
     cleanedInputValues,
@@ -25,6 +26,9 @@ import { mainKeyString } from '../../../../../types/productManager';
 interface ParameterizationTabProps {
     variableClass: object;
     onClose: () => void;
+    editingItemId?: number | null;
+    initialName?: string | null;
+    initialParams?: BundlizedParameters[] | null;
 }
 
 interface AddedParameter {
@@ -59,21 +63,39 @@ interface VariableClasses {
     type: string;
 }
 
-const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose }) => {
+const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose, initialName, initialParams, editingItemId }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const [intVar, setIntVar] = useState<string[]>([]);
     const [selectedInterpolatedVariables, setSelectedInterpolatedVariables] = useState<string | null>(null);
     const [showParameterModal, setShowParameterModal] = useState(false);
     const [integerOptions, setIntegerOptions] = useState<string | null>(null);
-    const [addedParameters, setAddedParameters] = useState<AddedParameter[]>([]);
-    const [openNameModal, setOpenNameModal] = useState(false);
-    const [localVariableName, setLocalVariableName] = useState<string>('');
+    const [addedParameters, setAddedParameters] = useState<AddedParameter[]>(() => {
+        if (initialParams && initialParams.length > 0) {
+            return initialParams.map(p => ({
+                id: p.id, 
+                variable: p.variable,
+                name: p.parameterName,
+                value: p.addedParameter
+            }));
+        }
+        return [];
+    });
+    const [openNameModal, setOpenNameModal] = useState(!!editingItemId);
+    const [localVariableName, setLocalVariableName] = useState<string>(initialName || '');
     const [localParameter, setLocalParameter] = useState({
         parameterName: '',
         addedParameter: ''
     });
     const globalParameterBundle = useSelector((state: RootState) => state.parameter.parameters);
+    const currentVariableClassArray = useSelector((state: RootState) => state.variables.variableClassArray);
+
+    useEffect(() => {
+        if (editingItemId && initialName) {
+            setLocalVariableName(initialName);
+            setOpenNameModal(true);
+        }
+    }, [editingItemId, initialName]);
 
     const dispatch = useDispatch();
 
@@ -209,6 +231,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                 <th>Name</th>
                                 <th>Value</th>
                                 <th>Action</th>
+                                <th>Tags</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -249,6 +272,15 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                             }}
                                         >
                                             Delete
+                                        </button>
+                                    </td>
+                                    <td className='parameter-tags'>
+                                        <button 
+                                            className='tag-button' 
+                                            onClick={() => {
+                                                alert('Tag functionality will allow users to add tags to the parameter. This will help in organizing and categorizing parameters based off of the existing values in the configured parameters, ensuring some values will only pair with similarly tagged values while untagged values will be considered universally pairable.');
+                                                }}>
+                                                    tag
                                         </button>
                                     </td>
                                 </tr>
@@ -395,7 +427,14 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
 
         dataLength = variableData.length;
-        const uniqueDataId = Date.now();
+        const maxId = currentVariableClassArray.reduce((max, item) => {
+            const currentId = (item && typeof item.dataId === 'number') ? item.dataId : 0;
+            if (editingItemId && currentId === editingItemId) {
+                return max;
+            }
+            return Math.max(max, currentId);
+        }, 0);
+        const uniqueDataId = maxId + 1;
 
         const payload: VariablePayload = {
             dataId: uniqueDataId,
@@ -410,6 +449,12 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             }, {} as Record<string, { dataId: number, value: string; }>),
         };
 
+        if (editingItemId !== null && editingItemId !== undefined) {
+            console.log(`Editing: Deleting old item with ID ${editingItemId}`);
+            dispatch(deleteVariableClassArray(editingItemId));
+        }
+        
+        console.log(`Adding item with new ID ${uniqueDataId}`);
         console.log("Generated Payload:", JSON.stringify(payload, null, 2));
         dispatch(addVariableClassArray(payload));
         onClose();
@@ -461,9 +506,9 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                         </form>
                     </div>
                 )}
-                {openNameModal && (
+                {( openNameModal || editingItemId ) && (
                     <div className='modalContent'>
-                        <h2>Parameterization Details</h2>
+                        <h2>{editingItemId ? 'Edit Parameterization' : 'Parameterization Details'}</h2>
                         <div>{displayOnlyType(value)}</div>
                         <h3>{localVariableName}</h3>
                         <div>
@@ -484,7 +529,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                 handleAddVariable(variableClass, globalParameterBundle);
                                 handleCloseCleanup();
                             }}>
-                            Add Variable
+                            { editingItemId ? 'Update Variable' : 'Add Variable' }
                         </button>
                         <div className="parameterization-details">
                             {addedParameters.length > 0 && renderAddedParameters()}
@@ -497,7 +542,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                     </button>
                                     <button className='configure-button'
                                         onClick={() => {
-                                            alert('Save functionality will save the parameters of the specified variable to the database and allow users to load it later. If the variable is already saved in the database it will be updated, but paramter names will be in conflict with the existing ones and prompt the user to either ignore or overwrite. Please make sure to use unique parameter names.');
+                                            alert('Save functionality will save the parameters of the specified variable to the database and allow users to load it later. If the variable is already saved in the database it will be updated, but parameter names with similar values will be in conflict with the existing ones and prompt the user to either ignore or overwrite.');
                                         }}>
                                         Save
                                     </button>

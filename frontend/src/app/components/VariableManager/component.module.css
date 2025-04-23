@@ -232,9 +232,18 @@
 .hideButtonContainer {
   display: flex;
   align-items: center;
+  padding: 10px;
+}
+
+.hideButton h2 {
+  margin-right: 5px;
+  font-weight: 500;
+  font-size: 16pt;
 }
 
 .hideButton {
+  display: flex;
+  align-items: center;
   font-size: 12pt;
   background-color: transparent;
   color: var(--gray-alpha-200);

@@ -193,17 +193,31 @@
 }
 
 .added-parameters {
-  margin-top: 20px;
   padding-top: 15px;
 }
 
+.added-parameters h4 {
+  margin-bottom: 10px;
+  padding: 0;
+  /* container-type: size; 
+  container-name: parameter-context; */
+}
+
 .parameter-item {
+  position: sticky;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
-  height: 100%;
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
+  transition: transform 0.2s ease-in-out;
+  transform-origin: top left;
+}
+
+@container parameter-context (min-height: 501px) {
+  .parameter-item {
+    transform: scale(0.9);
+  }
 }
 
 .parameter-item thead {
@@ -211,6 +225,7 @@
   font-weight: bold;
   background-color: #f0f0f0;
   font-size: 14pt;
+  position: sticky;
 }
 
 .parameter-item th {

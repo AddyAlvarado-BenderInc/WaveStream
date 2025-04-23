@@ -3,8 +3,9 @@ import VariableClass from '../VariableManager/VariableClass/component';
 import {
     clearAllVariableClassArray,
     deleteVariableClassArray,
+    addVariableClassArray,
 } from '@/app/store/productManagerSlice';
-import { tableSheetData, tableCellData, ProductManager } from '../../../../types/productManager';
+import { tableSheetData, tableCellData, ProductManager, variableClassArray as VariableClassPayload } from '../../../../types/productManager';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
 import { RootState } from '@/app/store/store';
 import { useSelector, useDispatch } from 'react-redux';
@@ -47,6 +48,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     const [rowsPopulated, setRowsPopulated] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [hideButton, setHideButton] = useState(false);
+    const [editingItemId, setEditingItemId] = useState<number | null>(null);
+    const [editPrefillData, setEditPrefillData] = useState<{ name: string, params: any[] } | null>(null);
     let [addOrSend, setAddOrSend] = useState<string>('send');
 
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
@@ -61,6 +64,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         console.log('Open Parameterization Tab', variableClasses);
         setParameterizationData(variableClasses);
         setParameterizationOpen(true);
+        setEditingItemId(null);
+        setEditPrefillData(null);
     };
 
     const handleSubmitTableData = (tableSheetData: tableSheetData[]) => {
@@ -78,6 +83,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({
 
     const handleCloseParameterizationTab = () => {
         setParameterizationOpen(false);
+        setEditingItemId(null);
+        setEditPrefillData(null);
     };
 
     const itemForModal = useMemo(() => {
@@ -233,11 +240,20 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const handleClearAllVariableClass = () => {
-        dispatch(clearAllVariableClassArray());
+        window.confirm("Are you sure you want to delete all variable classes?")
+            ? dispatch(clearAllVariableClassArray())
+            : toast.error("Deletion cancelled.");
     };
 
-    const handleEditVariableClass = (object: Record<string, any>) => {
-        // Need to reinitialize parameterization details
+    const handleEditVariableClass = ( itemToEdit: VariableClassPayload | null | undefined ) => {
+        if (!itemToEdit) {
+            toast.error("No item to edit");
+            return;
+        }
+        setParameterizationData({ name: itemToEdit.name }); // Pass minimal data for potential prefill
+        setEditPrefillData({ name: itemToEdit.name, params: [] }); // Store minimal data for ParameterizationTab prefill
+        setEditingItemId(itemToEdit.dataId); // Set the ID being edited
+        setParameterizationOpen(true);
     }
 
     const displayVariableClass = (object: Record<string, any>) => {
@@ -372,101 +388,106 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                         <ParameterizationTab
                             variableClass={parameterizationData}
                             onClose={handleCloseParameterizationTab}
+                            editingItemId={editingItemId}
+                            initialName={editPrefillData?.name}
+                            initialParams={editPrefillData?.params}
                         />
                     )}
                     {globalVariableClass.length > 0 && (
                         <div className={styles.variableClassList}>
                             <div className={styles.hideButtonContainer}>
-                                <button 
+                                <button
                                     className={styles.hideButton}
                                     onClick={handleHideVariableClass}
                                     title={`hide`}
-                                    >
-                                    hide
+                                >
+                                    <h2>VariableClass | </h2>
+                                    <span>{globalVariableClass.length} total rows | {hideButton ? "Show" : "Hide"}</span>
                                 </button>
                             </div>
                             {!hideButton && (
                                 <>
-                            {globalVariableClass.map((currentVariableClassData) => {
-                                const variableClassDataId = currentVariableClassData?.dataId;
-                                const variableClassData = currentVariableClassData?.variableData || {};
-                                console.log(`MAP: Rendering item ID=${variableClassDataId} at ${Date.now()}`, currentVariableClassData?.variableData);
-                                console.log("Variable Class Data ID", variableClassDataId);
-                                if (sendToSheetModal && variableClassIdentifier === variableClassDataId) {
-                                    console.log(`MAP: Modal condition TRUE for ID=${variableClassDataId}, preparing to call modalOptions with:`, variableClassData);
-                                }
-                                return (
-                                    <div key={variableClassDataId} className={styles.variableClassRow + `_row_${variableClassDataId}`}>
-                                        <div className={styles.variableClassContent}>
-                                            {displayVariableClass(currentVariableClassData || [])}
-                                            <div className={styles.buttonContainer}>
-                                                <button
-                                                    className={styles.deleteButton}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        setVariableClassIdentifier(variableClassDataId);
-                                                        setSendToSheetModal(true);
-                                                        setAddOrSend('send');
-                                                    }}
-                                                    title={`Send to Sheet`}
-                                                >
-                                                    Send To Sheet
-                                                </button>
-                                                <button
-                                                    className={styles.deleteButton}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                    }}
-                                                    title={`Edit`}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    className={styles.deleteButton}
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        handleDeleteVariableClass(variableClassDataId);
-                                                        if (variableClassIdentifier === variableClassDataId) {
-                                                            setVariableClassIdentifier(null);
-                                                        }
-                                                    }}
-                                                    title={`Delete`}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                        {sendToSheetModal && itemForModal && (
-                                            <div
-                                                className={styles.modalOverlay}
-                                                onClick={(e) => {
-                                                    if (e.target === e.currentTarget) {
-                                                        setSendToSheetModal(false);
-                                                        setVariableClassIdentifier(null);
-                                                    }
-                                                }}
-                                            >
-                                                <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                                                    {modalOptions(itemForModal.dataId, itemForModal.variableData)}
+                                    {globalVariableClass.map((currentVariableClassData) => {
+                                        const variableClassDataId = currentVariableClassData?.dataId;
+                                        const variableClassData = currentVariableClassData?.variableData || {};
+                                        console.log(`MAP: Rendering item ID=${variableClassDataId} at ${Date.now()}`, currentVariableClassData?.variableData);
+                                        console.log("Variable Class Data ID", variableClassDataId);
+                                        if (sendToSheetModal && variableClassIdentifier === variableClassDataId) {
+                                            console.log(`MAP: Modal condition TRUE for ID=${variableClassDataId}, preparing to call modalOptions with:`, variableClassData);
+                                        }
+                                        return (
+                                            <div key={variableClassDataId} className={styles.variableClassRow + `_row_${variableClassDataId}`}>
+                                                <div className={styles.variableClassContent}>
+                                                    {displayVariableClass(currentVariableClassData || [])}
+                                                    <div className={styles.buttonContainer}>
+                                                        <button
+                                                            className={styles.deleteButton}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setVariableClassIdentifier(variableClassDataId);
+                                                                setSendToSheetModal(true);
+                                                                setAddOrSend('send');
+                                                            }}
+                                                            title={`Send to Sheet`}
+                                                        >
+                                                            Send To Sheet
+                                                        </button>
+                                                        <button
+                                                            className={styles.deleteButton}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleEditVariableClass(currentVariableClassData);
+                                                            }}
+                                                            title={`Edit Class`}
+                                                        >
+                                                            Edit Class
+                                                        </button>
+                                                        <button
+                                                            className={styles.deleteButton}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleDeleteVariableClass(variableClassDataId);
+                                                                if (variableClassIdentifier === variableClassDataId) {
+                                                                    setVariableClassIdentifier(null);
+                                                                }
+                                                            }}
+                                                            title={`Delete`}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
                                                 </div>
+                                                {sendToSheetModal && itemForModal && (
+                                                    <div
+                                                        className={styles.modalOverlay}
+                                                        onClick={(e) => {
+                                                            if (e.target === e.currentTarget) {
+                                                                setSendToSheetModal(false);
+                                                                setVariableClassIdentifier(null);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                                                            {modalOptions(itemForModal.dataId, itemForModal.variableData)}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        )
+                                    })}
+                                    <div className={styles.actionButtons}>
+                                        <button
+                                            className={styles.deleteAllButton}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleClearAllVariableClass();
+                                                setVariableClassIdentifier(0);
+                                            }}
+                                        >Delete All
+                                        </button>
                                     </div>
-                                )
-                            })}
-                            <div className={styles.actionButtons}>
-                                <button
-                                    className={styles.deleteAllButton}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleClearAllVariableClass();
-                                        setVariableClassIdentifier(0);
-                                    }}
-                                    >Delete All
-                                </button>
-                            </div>
-                            </>
-                        )}
+                                </>
+                            )}
                         </div>
                     )}
 

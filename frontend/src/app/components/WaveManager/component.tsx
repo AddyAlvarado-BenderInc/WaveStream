@@ -379,9 +379,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 const confirmReload = window.confirm('Product saved successfully! Do you want to refresh the page?');
                 if (confirmReload) {
                     window.location.reload();
-                    toast.success('Product saved successfully! You can continue working.');
                 } else {
-                    toast.info('Page needs reloading to reflect changes.');
+                    toast.info('Page needs reloading for further saves to work properly');
+                    setHasChanges(false);
                     return;
                 }
                 const updatedProduct = await response.json();
