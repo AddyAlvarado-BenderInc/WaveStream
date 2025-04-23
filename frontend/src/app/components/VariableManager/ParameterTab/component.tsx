@@ -16,6 +16,7 @@ import {
     handleCreateName,
 } from './VariableUtility/utility';
 import ParameterModal from '../ParameterModal/component';
+import { variableClassArray } from '../../../../../types/productManager';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import { RootState } from '@/app/store/store';
@@ -29,6 +30,15 @@ interface ParameterizationTabProps {
     editingItemId?: number | null;
     initialName?: string | null;
     initialParams?: BundlizedParameters[] | null;
+    variableClassArray?: Array<{
+        dataId: number;
+        name: string;
+        dataLength: number;
+        variableData: Record<string, {
+            dataId: number;
+            value: string;
+        } | null>;
+    } | null | undefined>
 }
 
 interface AddedParameter {
@@ -63,17 +73,19 @@ interface VariableClasses {
     type: string;
 }
 
-const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose, initialName, initialParams, editingItemId }) => {
+const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass, onClose, initialName, initialParams, editingItemId, variableClassArray }) => {
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const [intVar, setIntVar] = useState<string[]>([]);
     const [selectedInterpolatedVariables, setSelectedInterpolatedVariables] = useState<string | null>(null);
     const [showParameterModal, setShowParameterModal] = useState(false);
     const [integerOptions, setIntegerOptions] = useState<string | null>(null);
+    const [selectVariables, setSelectVariables] = useState<boolean>(false);
+    const [selectModalValue, setSelectModalValue] = useState<string>('');
     const [addedParameters, setAddedParameters] = useState<AddedParameter[]>(() => {
         if (initialParams && initialParams.length > 0) {
             return initialParams.map(p => ({
-                id: p.id, 
+                id: p.id,
                 variable: p.variable,
                 name: p.parameterName,
                 value: p.addedParameter
@@ -98,11 +110,6 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     }, [editingItemId, initialName]);
 
     const dispatch = useDispatch();
-
-    // TODO: this save function will handle the fetch to the mainKeyString database
-    const saveMainKeyString = (payload: { mainKeyString: mainKeyString[] }) => {
-        const { mainKeyString } = payload;
-    };
 
     const { value, detectVariables } = cleanedInputValues(variableClass);
 
@@ -158,7 +165,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         setSelectedInterpolatedVariables(value);
     };
 
-    const handleParameterSave = () => {
+    const handleAddParameterVariable = () => {
         if (!selectedInterpolatedVariables || !localParameter.addedParameter) {
             alert('Please enter a parameter value.');
             return;
@@ -275,12 +282,12 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                         </button>
                                     </td>
                                     <td className='parameter-tags'>
-                                        <button 
-                                            className='tag-button' 
+                                        <button
+                                            className='tag-button'
                                             onClick={() => {
                                                 alert('Tag functionality will allow users to add tags to the parameter. This will help in organizing and categorizing parameters based off of the existing values in the configured parameters, ensuring some values will only pair with similarly tagged values while untagged values will be considered universally pairable.');
-                                                }}>
-                                                    tag
+                                            }}>
+                                            tag
                                         </button>
                                     </td>
                                 </tr>
@@ -352,8 +359,6 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             }));
         console.log('Main Key String: ', mainKeyString);
 
-        saveMainKeyString({ mainKeyString });
-
         const transformedParams = param.map((p) => ({
             id: p.id,
             variable: p.variable,
@@ -378,51 +383,69 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             inputString = stringInput || "";
         }
 
-        console.log('handleAddVariable - stringInput ', stringInput);
-        console.log('handleAddVariable - globalParameterBundle (param): ', JSON.stringify(param, null, 2));
+        else if (stringInput) {
+             inputString = stringInput;
+        }
+
+        console.log('handleAddVariable - Determined Input String:', inputString);
+        console.log('handleAddVariable - Parameters Received (param):', JSON.stringify(param, null, 2));
+
 
         const detectedVars = inputString.match(/\%\{(.*?)\}/g)?.map(v => v.replace(/[%{}]/g, '')) || [];
-        console.log("handleAddVariable - Detected variables in input:", detectedVars);
+        console.log("handleAddVariable - Detected variables in inputString:", detectedVars);
 
-        const relevantParamsExist = detectedVars.length > 0 && detectedVars.every(v => param.some(p => p.variable === v));
+        const relevantParams = addedParameters.filter(p => detectedVars.includes(p.variable));
+        const relevantParamsExist = detectedVars.length > 0 && relevantParams.length > 0;
+        console.log("handleAddVariable - Relevant parameters from state:", JSON.stringify(relevantParams, null, 2));
         console.log("handleAddVariable - Relevant parameters exist:", relevantParamsExist);
 
-        let variableData: string[] = [];
+        let variableData: string[] = []; 
         let dataLength = 0;
 
-        if (detectedVars.length > 0 && relevantParamsExist && param.length > 0) {
+        if (detectedVars.length > 0 && relevantParamsExist) {
             console.log("handleAddVariable - Running COMBINATION logic.");
-
-            const groupedParams = param.reduce((acc, item) => {
-                if (detectedVars.includes(item.variable)) {
-                    if (!acc[item.variable]) {
-                        acc[item.variable] = [];
-                    }
-                    acc[item.variable].push(item.addedParameter);
+            const groupedParams = relevantParams.reduce((acc, item) => {
+                if (!acc[item.variable]) {
+                    acc[item.variable] = [];
                 }
+                acc[item.variable].push(item.value);
                 return acc;
             }, {} as Record<string, string[]>);
+            console.log("handleAddVariable - Grouped Relevant Params:", JSON.stringify(groupedParams, null, 2));
 
-            if (Object.keys(groupedParams).length === 0) {
-                console.log("handleAddVariable - No relevant grouped params, treating as single item.");
-                variableData = [inputString];
+            const hasValuesForAllDetectedVars = detectedVars.every(v => groupedParams[v] && groupedParams[v].length > 0);
+
+            if (!hasValuesForAllDetectedVars) {
+                 console.warn("handleAddVariable - Missing parameter values for some detected variables. Treating as single item.", groupedParams);
+                 variableData = [inputString];
             } else {
-                const variables = Object.keys(groupedParams);
                 const combinations = generateCombinations(groupedParams);
                 console.log("handleAddVariable - Generated Combinations:", JSON.stringify(combinations, null, 2));
 
-                variableData = combinations.map(combo => {
-                    let result = inputString;
-                    variables.forEach((variable) => {
-                        const regex = new RegExp(`\\%\\{${variable}\\}`, 'g');
-                        result = result.replace(regex, combo[variable]);
+                if (!combinations || combinations.length === 0) {
+                     console.warn("handleAddVariable - generateCombinations returned empty or invalid result. Treating as single item.");
+                     variableData = [inputString];
+                } else {
+                    variableData = combinations.map(combo => {
+                        let result = inputString;
+                        detectedVars.forEach((variableKey) => {
+                            if (combo.hasOwnProperty(variableKey)) {
+                                const replacementValue = combo[variableKey];
+                                const regex = new RegExp(String.raw`\%\{${variableKey}\}`, 'g');
+                                console.log(`---> Replacing '%{${variableKey}}' with '${replacementValue}' in: '${result}'`);
+                                result = result.replace(regex, replacementValue);
+                                console.log(`---> Result after replace: '${result}'`);
+                            } else {
+                                console.warn(`---> Combo object missing expected key: ${variableKey}`, combo);
+                            }
+                        });
+                        return result;
                     });
-                    return result;
-                });
+                     console.log("handleAddVariable - Final Generated variableData array:", variableData);
+                }
             }
-
         } else {
-            console.log("handleAddVariable - Running SINGLE item logic.");
+            console.log("handleAddVariable - Running SINGLE item logic (no vars or no params).");
             variableData = [inputString];
         }
 
@@ -441,9 +464,9 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             name: localVariableName,
             dataLength,
             variableData: variableData.reduce((acc, value, index) => {
-                acc[index.toString()] = { 
+                acc[index.toString()] = {
                     dataId: uniqueDataId,
-                    value: value 
+                    value: value
                 };
                 return acc;
             }, {} as Record<string, { dataId: number, value: string; }>),
@@ -453,12 +476,147 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             console.log(`Editing: Deleting old item with ID ${editingItemId}`);
             dispatch(deleteVariableClassArray(editingItemId));
         }
-        
-        console.log(`Adding item with new ID ${uniqueDataId}`);
-        console.log("Generated Payload:", JSON.stringify(payload, null, 2));
+        console.log(`Dispatching addVariableClassArray with ID ${uniqueDataId}`);
+        console.log("Final Payload:", JSON.stringify(payload, null, 2));
         dispatch(addVariableClassArray(payload));
         onClose();
     };
+
+    // TODO: Need to implement the save functionality
+    const handleVariableSave = async (id: number, item: Record<string, any>): Promise<void> => {
+        alert('Save functionality will save the parameters of the specified variable to the database and allow users to load it later. If the variable is already saved in the database it will be updated, but parameter names with similar values will be in conflict with the existing ones and prompt the user to either ignore or overwrite.');
+        const uniqueId = id * Date.now();
+        const idString = uniqueId.toString();
+        const response = await fetch('http://localhost:3000/api/productManager/interpolatedVariables', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                id: idString,
+                item: item,
+            }),
+        });
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Save successful:', data);
+            toast.success('Variable saved successfully!');
+        } else {
+            const error = await response.json();
+            console.error('Save failed:', error);
+            toast.error('Failed to save variable.');
+        }
+    };
+
+    // TODO: Need to implement the load functionality
+    const handleVariableLoad = () => {
+        alert('Load functionality will grab relevant data (via variable) from the database and allow users to update the parameterization');
+        try {
+            const response = fetch('http://localhost:3000/api/productManager/interpolatedVariables', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+        } catch (error) {
+            console.error('Load failed:', error);
+            toast.error('Failed to load variable.');
+        } finally {
+            console.log('Load completed');
+        }
+    };
+
+    // TODO: this function will display the loaded variables
+    const displayLoadedVariables = () => {
+
+    };
+
+    const handleVariableSelect = (selectedValue: string) => {
+        console.log(`Handling selection for: ${selectedValue}`);
+
+        if (!selectedInterpolatedVariables) {
+            toast.warn('Please select a placeholder (like %{item}) to configure before adding parameters.');
+            return;
+        }
+
+        if (!selectedValue) {
+            console.warn('No selected value provided.');
+            toast.warn('Please select a variable.');
+            return;
+        }
+
+        const selectedItem = currentVariableClassArray.find(item => item?.name === selectedValue);
+
+        if (!selectedItem) {
+            console.warn(`Could not find item in currentVariableClassArray with name: ${selectedValue}`);
+            toast.error(`Selected variable "${selectedValue}" not found.`);
+            return;
+        }
+
+        const variableData = selectedItem.variableData;
+
+        if (variableData && typeof variableData === 'object') {
+            const extractedValues = Object.values(variableData)
+                .map(valueObj => valueObj?.value)
+                .filter((value): value is string => typeof value === 'string');
+
+            console.log('Extracted Values to Add:', extractedValues);
+
+            if (extractedValues.length === 0) {
+                toast.info(`No values found in the selected variable "${selectedValue}".`);
+                return;
+            }
+
+            const firstValue = extractedValues[0];
+            setLocalParameter({
+                parameterName: firstValue,
+                addedParameter: firstValue
+            });
+
+            const newParametersToAdd: AddedParameter[] = extractedValues.map((valueStr) => ({
+                id: Date.now() + Math.random(),
+                variable: selectedInterpolatedVariables,
+                name: valueStr,
+                value: valueStr
+            }));
+
+            setAddedParameters(prevParams => {
+                const existingSignatures = new Set(prevParams.map(p => `${p.variable}|${p.name}|${p.value}`));
+                const uniqueNewParams = newParametersToAdd.filter(newP => !existingSignatures.has(`${newP.variable}|${newP.name}|${newP.value}`));
+
+                if (uniqueNewParams.length === 0) {
+                    toast.info(`Values from "${selectedValue}" are already present for %{${selectedInterpolatedVariables}}.`);
+                    return prevParams;
+                }
+                return [...prevParams, ...uniqueNewParams];
+            });
+
+        } else {
+            console.warn(`Variable data object not found or invalid for the selected item: ${selectedValue}`);
+            toast.warn(`Data structure issue for ${selectedValue}.`);
+        }
+    };
+
+    // TODO: this save function will handle the fetch to the mainKeyString database
+    const saveMainKeyString = (payload: { mainKeyString: mainKeyString[] }) => {
+        const { mainKeyString } = payload;
+        const response = fetch('http://localhost:3000/api/productManager/mainKeyString', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                mainKeyString: mainKeyString,
+            }),
+        });
+    };
+
 
     return (
         <div className="modal-overlay">
@@ -506,7 +664,55 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                         </form>
                     </div>
                 )}
-                {( openNameModal || editingItemId ) && (
+                {selectVariables && (
+                    <div className="select-variable-modal">
+                        <h1>Select Variables</h1>
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                if (!selectModalValue) {
+                                    toast.warn('Please select a variable.');
+                                    return;
+                                }
+                                handleVariableSelect(selectModalValue);
+                                setSelectVariables(false);
+                                setSelectModalValue('');
+                            }}
+                        >
+                            <select
+                                value={selectModalValue}
+                                onChange={(e) => setSelectModalValue(e.target.value)}
+                                required
+                            >
+                                <option value="" disabled>-- Select a variable --</option>
+                                {Array.isArray(variableClassArray) && variableClassArray.map((item) => (
+                                    item ? (
+                                        <option key={item.dataId} value={item.name}>
+                                            {item.name}
+                                        </option>
+                                    ) : null
+                                ))}
+                            </select>
+                            <div className="modal-buttons">
+                                <button type="submit" className="select-button">
+                                    Select
+                                </button>
+                                <button
+                                    type="button"
+                                    className="close-button"
+                                    onClick={() => {
+                                        setSelectVariables(false);
+                                        setSelectModalValue('');
+                                    }}
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+                <div className={selectVariables ? `tool-modals-overlay` : `tool-modals-overlay-no-select`} />
+                {(openNameModal || editingItemId) && (
                     <div className='modalContent'>
                         <h2>{editingItemId ? 'Edit Parameterization' : 'Parameterization Details'}</h2>
                         <div>{displayOnlyType(value)}</div>
@@ -529,7 +735,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                 handleAddVariable(variableClass, globalParameterBundle);
                                 handleCloseCleanup();
                             }}>
-                            { editingItemId ? 'Update Variable' : 'Add Variable' }
+                            {editingItemId ? 'Update Variable' : 'Add Variable'}
                         </button>
                         <div className="parameterization-details">
                             {addedParameters.length > 0 && renderAddedParameters()}
@@ -542,19 +748,19 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                     </button>
                                     <button className='configure-button'
                                         onClick={() => {
-                                            alert('Save functionality will save the parameters of the specified variable to the database and allow users to load it later. If the variable is already saved in the database it will be updated, but parameter names with similar values will be in conflict with the existing ones and prompt the user to either ignore or overwrite.');
+                                            handleVariableSave(0, {});
                                         }}>
                                         Save
                                     </button>
                                     <button className='configure-button'
                                         onClick={() => {
-                                            alert('Load functionality will grab relevant data (via variable) from the database and allow users to update the parameterization');
+                                            handleVariableLoad();
                                         }}>
                                         Load
                                     </button>
                                     <button className='configure-button'
                                         onClick={() => {
-                                            alert('Select functionality will allow users to choose from the list of parameters that are already saved in the product manager. This will allow users to select a parameter and apply it to the current variable as long as the variableClass is present in the manager. This will also allow users to select multiple parameters and apply them to the current variable.');
+                                            setSelectVariables(true);
                                         }}>
                                         Select
                                     </button>
@@ -570,7 +776,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 )}
                 {showParameterModal && (
                     <ParameterModal
-                        onSave={handleParameterSave}
+                        onSave={handleAddParameterVariable}
                         onCancel={() => {
                             clearParameter();
                             setShowParameterModal(false);
@@ -581,6 +787,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                         intVarValue={selectedInterpolatedVariables || ''}
                     />
                 )}
+
             </div>
             <ToastContainer />
         </div>

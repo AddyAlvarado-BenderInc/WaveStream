@@ -651,7 +651,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const handleRun = async () => {
         const hasHeaders = variableData.tableSheet.length > 0;
         const hasCellData = Object.keys(variableRowData).length > 0;
-        const { productType, _id } = productManager;
+        const cellOrigin = Object.values(variableData).some(cell => cell.isOrigin);
+        
 
         if (!hasHeaders && !hasCellData) {
             toast.info('No data to run', {

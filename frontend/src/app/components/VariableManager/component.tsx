@@ -155,6 +155,18 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         toast.success(`Data sent to sheet under key: ${selectedKey}`);
     };
 
+    // TODO: Send composite essentially allows the user to send objects to the sheet, delimited by tabs on CSV export and made 
+    // as an array field in the JSON export/run automation, for when a field in the automation needs multiple values. 
+    // This is a placeholder for now, but the implementation will be similar to handleSendToSheet.
+    const handleSendComposite = ( 
+        variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
+        selectedKey: string,
+        id: number | null | undefined
+    ) => {
+        alert("'Send As Composite' is not yet implemented. Sending as normal send to sheet.");
+        alert("Send composite essentially allows the user to send objects to the sheet, delimited by tabs on CSV export and made as an array field in the JSON export/run automation, for when a field in the automation needs multiple values. This is a placeholder for now, but the implementation will be similar to handleSendToSheet.");
+    };
+
     const modalOptions = (key: number | null | undefined, object: Record<string, { dataId: number, value: string } | null>) => {
         console.log(`MODALOPTIONS: Received ID=${key}, Data=`, object);
         let name = "";
@@ -219,6 +231,19 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                 disabled={!selectedClassKey}
                                 onClick={(e) => {
                                     e.preventDefault();
+                                    handleSendComposite(object, selectedClassKey, variableClassIdentifier);
+                                    handleSendToSheet(object, selectedClassKey, variableClassIdentifier);
+                                    setSendToSheetModal(false);
+                                }}
+                            >
+                                Send As Composite
+                            </button>
+                            <button
+                                type='button'
+                                className={styles.submitButton}
+                                disabled={!selectedClassKey}
+                                onClick={(e) => {
+                                    e.preventDefault();
                                     handleDeleteVariableClass(key);
                                     setVariableClassIdentifier(-1);
                                     handleSendToSheet(object, selectedClassKey, variableClassIdentifier);
@@ -245,16 +270,16 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             : toast.error("Deletion cancelled.");
     };
 
-    const handleEditVariableClass = ( itemToEdit: VariableClassPayload | null | undefined ) => {
+    /* const handleEditVariableClass = ( itemToEdit: VariableClassPayload | null | undefined ) => {
         if (!itemToEdit) {
             toast.error("No item to edit");
             return;
         }
-        setParameterizationData({ name: itemToEdit.name }); // Pass minimal data for potential prefill
-        setEditPrefillData({ name: itemToEdit.name, params: [] }); // Store minimal data for ParameterizationTab prefill
-        setEditingItemId(itemToEdit.dataId); // Set the ID being edited
+        setParameterizationData({ name: itemToEdit.name });
+        setEditPrefillData({ name: itemToEdit.name, params: [] });
+        setEditingItemId(itemToEdit.dataId);
         setParameterizationOpen(true);
-    }
+    } */
 
     const displayVariableClass = (object: Record<string, any>) => {
         const itemsPerPage = 5;
@@ -386,6 +411,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     />
                     {parameterizationData && parameterizationOpen && (
                         <ParameterizationTab
+                            variableClassArray={globalVariableClass}
                             variableClass={parameterizationData}
                             onClose={handleCloseParameterizationTab}
                             editingItemId={editingItemId}
@@ -432,7 +458,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                                         >
                                                             Send To Sheet
                                                         </button>
-                                                        <button
+                                                        {/* Decided that adding the edit button is probably not worth the trouble 
+                                                            because I could just work on saving params and mks in database. Maybe
+                                                            I'll reconsider this again in the future. */}
+                                                        {/* <button
                                                             className={styles.deleteButton}
                                                             onClick={(e) => {
                                                                 e.preventDefault();
@@ -441,7 +470,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                                             title={`Edit Class`}
                                                         >
                                                             Edit Class
-                                                        </button>
+                                                        </button> */}
                                                         <button
                                                             className={styles.deleteButton}
                                                             onClick={(e) => {
