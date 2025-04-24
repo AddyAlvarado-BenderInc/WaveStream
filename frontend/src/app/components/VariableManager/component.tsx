@@ -88,10 +88,11 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const itemForModal = useMemo(() => {
-        if (variableClassIdentifier === null) {
+        if (variableClassIdentifier === null || variableClassIdentifier === undefined) {
             return null;
         }
-        return globalVariableClass.find(item => item?.dataId === variableClassIdentifier);
+        const sourceArray = Array.isArray(globalVariableClass) ? globalVariableClass : [];
+        return sourceArray.find(item => item?.dataId === variableClassIdentifier);
     }, [variableClassIdentifier, globalVariableClass]);
 
     const handleSendToSheet = (
@@ -141,28 +142,77 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                         classKey: selectedClassKey,
                         index: nextRowIndex + index,
                         value: itemValue || "",
+                        isComposite: false,
                     };
                     console.log(`Adding to sheet state: Key=${newRowKey}, Value=${itemValue}, RowIndex=${nextRowIndex + index}`);
                 });
             } else {
                 console.warn("No data values found in variableDataRecord to add to the sheet.");
             }
-
             console.log("Updated variableClassData state:", updatedData);
             return updatedData;
         });
+        setSendToSheetModal(false);
+        setVariableClassIdentifier(null);
     };
 
-    // TODO: Send composite essentially allows the user to send objects to the sheet, delimited by tabs on CSV export and made 
-    // as an array field in the JSON export/run automation, for when a field in the automation needs multiple values. 
-    // This is a placeholder for now, but the implementation will be similar to handleSendToSheet.
     const handleSendComposite = (
         variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
         selectedKey: string,
         id: number | null | undefined
     ) => {
-        alert("'Send As Composite' is not yet implemented. Sending as normal send to sheet.");
-        alert("Send composite essentially allows the user to send objects to the sheet, delimited by tabs on CSV export and made as an array field in the JSON export/run automation, for when a field in the automation needs multiple values. This is a placeholder for now, but the implementation will be similar to handleSendToSheet.");
+        console.log(`handleSendComposite: Received ID=${id}, Key=${selectedKey}, Data=`, variableDataRecord);
+        if (!selectedKey) {
+            toast.error('Please select a class key for the composite');
+            return;
+        }
+        if (id === null || id === undefined) {
+            toast.error('Invalid source item ID for composite');
+            return;
+        }
+
+        const compositeValues: string[] = Object.values(variableDataRecord)
+            .filter(item => item !== null && item.value !== undefined && item.value !== null)
+            .map(item => item!.value);
+
+        if (compositeValues.length === 0) {
+            toast.warn("No data values found in the source to create a composite.");
+            return;
+        }
+
+        setVariableRowData(prevData => {
+            const updatedData = { ...prevData };
+
+            let nextRowIndex = 0;
+            Object.keys(updatedData).forEach(key => {
+                const match = key.match(/^(.+)_row_(\d+)$/);
+                if (match) {
+                    const baseKey = match[1];
+                    const rowNum = parseInt(match[2], 10);
+                    if (baseKey === selectedKey && !isNaN(rowNum)) {
+                        nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+                    }
+                }
+            });
+            console.log(`Next available row index for composite key "${selectedKey}" is ${nextRowIndex}`);
+
+            const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
+
+            updatedData[newRowKey] = {
+                classKey: selectedKey,
+                index: nextRowIndex,
+                value: compositeValues,
+                isComposite: true,
+            };
+            console.log(`Adding composite to sheet state: Key=${newRowKey}, Values=${JSON.stringify(compositeValues)}, RowIndex=${nextRowIndex}`);
+
+            console.log("Updated variableRowData state (after composite add):", updatedData);
+            return updatedData;
+        });
+
+        setSendToSheetModal(false);
+        setVariableClassIdentifier(null);
+        toast.success(`Composite data added under key "${selectedKey}"`);
     };
 
     const modalOptions = (key: number | null | undefined, object: Record<string, { dataId: number, value: string } | null>) => {
@@ -177,7 +227,9 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             }
         }
 
-        const valuesToDisplay = Object.values(object).map(item => item?.value);
+        const valuesToDisplay = object && typeof object === 'object'
+        ? Object.values(object).map(item => item?.value)
+        : [];
 
         return (
             <div className={styles.modal}>
@@ -230,8 +282,6 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                 onClick={(e) => {
                                     e.preventDefault();
                                     handleSendComposite(object, selectedClassKey, variableClassIdentifier);
-                                    handleSendToSheet(object, selectedClassKey, variableClassIdentifier);
-                                    setSendToSheetModal(false);
                                 }}
                             >
                                 Send As Composite

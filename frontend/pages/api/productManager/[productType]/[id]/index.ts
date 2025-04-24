@@ -22,6 +22,13 @@ export const config = {
     },
 };
 
+interface TableCellDataFrontend {
+    classKey: string;
+    index: number;
+    value: string | string[];
+    isComposite: boolean;
+}
+
 const upload = multer({ storage: multer.memoryStorage() }).any();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -62,58 +69,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }))
                     : [];
 
-                const processTableCellData = (data: any) => {
-                    if (!data) return [];
-
-                    if (Array.isArray(data)) {
-                        return data.map((item: any) => {
-                            if (item &&
-                                typeof item === 'object' &&
-                                'index' in item &&
-                                'value' in item &&
-                                'classKey' in item) {
-                                return {
-                                    index: typeof item.index === 'number' ? item.index : 0,
-                                    classKey: item.classKey?.toString() || "null",
-                                    value: item.value?.toString() || "null"
-                                };
-                            }
-
-                            if (typeof item === 'string' || typeof item === 'number') {
-                                console.warn(`Converting legacy data format for item: ${item}`);
-                                return {
-                                    index: 0,
-                                    classKey: "legacy",
-                                    value: item.toString()
-                                };
-                            }
-
-                            if (item?.value && typeof item.value === 'object') {
-                                return {
-                                    index: typeof item.index === 'number' ? item.index : 0,
-                                    classKey: item.classKey?.toString() || "null",
-                                    value: JSON.stringify(item.value)
-                                };
-                            }
-
-                            console.warn('Invalid tableCellData item:', item);
-                            return {
-                                index: 0,
-                                classKey: "invalid",
-                                value: "null"
-                            };
-                        }).filter((item: any) =>
-                            item &&
-                            typeof item.index === 'number' &&
-                            typeof item.classKey === 'string' &&
-                            typeof item.value === 'string'
-                        );
+                const processTableCellData = (data: any): TableCellDataFrontend[] => {
+                    if (!Array.isArray(data)) {
+                        console.warn('GET: tableCellData is not an array:', data);
+                        return [];
                     }
-
-                    console.warn('tableCellData is not an array:', data);
-                    return [];
+                    return data.map((item: any): TableCellDataFrontend | null => {
+                        if (item && typeof item === 'object' &&
+                            typeof item.classKey === 'string' &&
+                            typeof item.index === 'number' &&
+                            item.value !== undefined &&
+                            typeof item.isComposite === 'boolean') {
+                            return {
+                                classKey: item.classKey,
+                                index: item.index,
+                                value: item.value,
+                                isComposite: item.isComposite,
+                            };
+                        } else {
+                            console.warn('GET: Invalid tableCellData item structure from DB:', item);
+                            return null;
+                        }
+                    }).filter((item): item is TableCellDataFrontend => item !== null);
                 };
-
                 const tableCellData = processTableCellData(productManager.tableCellData);
 
                 console.log('Processed tableCellData:', {
@@ -289,6 +267,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     let tableCellDataFromBody = req.body.tableCellData;
                     const approvedTableCellClearFlag = req.body.approvedTableCellClear === 'true';
 
+                    interface ProcessedCellData {
+                        index: number;
+                        classKey: string;
+                        value: string | string[];
+                        isComposite: boolean;
+                    }
+
+                    let incomingTableCellDataItems: ProcessedCellData[] | undefined = undefined;
+                    let processingError = false;
+
                     if (tableCellDataFromBody === undefined) {
                         if (approvedTableCellClearFlag) {
                             console.log("tableCellData absent and approvedClear=true. Clearing.");
@@ -296,181 +284,132 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         } else {
                             console.log("tableCellData absent but approvedClear=false/absent. Skipping update.");
                         }
+                    } else if (!Array.isArray(tableCellDataFromBody)) {
+                        console.error("Received tableCellData is not an array. Skipping update.", tableCellDataFromBody);
+                        processingError = true;
+                    } else if (tableCellDataFromBody.length === 0) {
+                        if (approvedTableCellClearFlag) {
+                            console.log("Empty tableCellData array and approvedClear=true. Clearing.");
+                            updateData.tableCellData = [];
+                        } else {
+                            console.log("Empty tableCellData array but approvedClear=false/absent. Skipping update.");
+                        }
+                    } else if (tableCellDataFromBody.length === 1 && tableCellDataFromBody[0] === '[]') {
+                        console.warn("Received legacy '[]' string marker, treating as empty.");
+                        updateData.tableCellData = [];
+                    } else if (tableCellDataFromBody.length % 4 !== 0) { 
+                        console.error(`Received tableCellData with incorrect number of items (${tableCellDataFromBody.length}), expected quadruplets (index, key, value, isComposite). Skipping update.`, tableCellDataFromBody);
+                        processingError = true;
+                    } else {
+                        const processedItems: ProcessedCellData[] = [];
+                        for (let i = 0; i < tableCellDataFromBody.length; i += 4) {
+                            const indexStr = tableCellDataFromBody[i];
+                            const classKey = tableCellDataFromBody[i + 1];
+                            const valueStr = tableCellDataFromBody[i + 2];
+                            const isCompositeStr = tableCellDataFromBody[i + 3];
+
+                            const index = parseInt(indexStr, 10);
+                            const isComposite = isCompositeStr === 'true';
+
+                            if (isNaN(index) || typeof classKey !== 'string' || typeof valueStr !== 'string' || typeof isCompositeStr !== 'string') {
+                                console.warn(`Malformed item at index ${i / 4}. Skipping.`, { indexStr, classKey, valueStr, isCompositeStr });
+                                processingError = true;
+                                continue;
+                            }
+
+                            let finalValue: string | string[] = valueStr;
+                            if (isComposite) {
+                                try {
+                                    const parsedArray = JSON.parse(valueStr);
+                                    if (Array.isArray(parsedArray)) {
+                                        finalValue = parsedArray.map(String);
+                                    } else {
+                                        console.warn(`Composite value for ${classKey}[${index}] is not a valid JSON array, storing as string:`, valueStr);
+                                    }
+                                } catch (e) {
+                                    console.warn(`Failed to parse composite value for ${classKey}[${index}] as JSON array, storing as string:`, valueStr, e);
+                                }
+                            }
+
+                            processedItems.push({ index, classKey, value: finalValue, isComposite });
+                        }
+                        incomingTableCellDataItems = processedItems; 
+                        console.log(`Processed ${incomingTableCellDataItems.length} tableCellData items from flat array.`);
                     }
 
-                    if (tableCellDataFromBody) {
-                        if (tableCellDataFromBody.length === 0) {
-                            if (approvedTableCellClearFlag) {
-                                console.log("Empty tableCellData array and approvedClear=true. Clearing.");
-                                updateData.tableCellData = [];
-                            } else {
-                                console.log("Empty tableCellData array but approvedClear=false/absent. Skipping update.");
-                            }
-                        } else {
-                            const tableCellDataItems: { index: number; value: string; classKey: string }[] = [];
-                            if (tableCellDataFromBody.length === 1 && tableCellDataFromBody[0] === '[]') {
-                                console.warn("Received legacy '[]' string marker, treating as empty.");
-                                updateData.tableCellData = [];
-                            } else if (tableCellDataFromBody.length % 3 !== 0) {
-                                console.error("Received tableCellData with incorrect number of items, expected triplets. Skipping update.", tableCellDataFromBody);
-                                res.status(400).json({ error: 'Malformed tableCellData' });
-                            } else {
-                                for (let i = 0; i < req.body.tableCellData.length; i += 3) {
-                                    const classKey = req.body.tableCellData[i + 1];
-                                    const index = parseInt(req.body.tableCellData[i], 10);
-                                    const value = req.body.tableCellData[i + 2];
+                    if (incomingTableCellDataItems && !processingError) {
+                        let existingTableCellData: ProcessedCellData[] = (productManager.tableCellData || []).map((item: any): ProcessedCellData => ({
+                            index: item?.index ?? -1,
+                            classKey: item?.classKey ?? '',
+                            value: item?.value,
+                            isComposite: item?.isComposite ?? false,
+                        })).filter((item: any) => item.index !== -1 && item.classKey !== '');
 
-                                    if (!isNaN(index)) {
-                                        tableCellDataItems.push({ index, value, classKey });
-                                    }
-                                }
-                            }
-
-                            let existingTableCellData = productManager.tableCellData || [];
-
-                            existingTableCellData = existingTableCellData.map((item: any, idx: number) => {
-                                if (typeof item === 'string') {
-                                    return { classKey: item, index: idx + 1, value: item };
-                                } else if (typeof item === 'object') {
-                                    return item;
-                                } else {
-                                    return { classKey: String(item), index: idx + 1, value: String(item) };
-                                }
-                            });
-
-                            const normalizeData = (data: any): { classKey: string, index: number, value: string } => {
-                                if (!data) return { classKey: "", index: -1, value: "" };
-
-                                if (typeof data === 'string') {
-                                    return { classKey: data, index: -1, value: data };
-                                }
-
-                                if (typeof data === 'object') {
-                                    const classKey = data.classKey || data.name || '';
-                                    const value = data.value || data.name || '';
-                                    const index = typeof data.index === 'number' ? data.index : -1;
-
-                                    return { classKey, index, value };
-                                }
-
-                                return { classKey: String(data), index: -1, value: String(data) };
+                        const normalizeData = (data: ProcessedCellData | undefined): ProcessedCellData => {
+                            if (!data) return { classKey: "", index: -1, value: "", isComposite: false };
+                            return {
+                                classKey: data.classKey,
+                                index: data.index,
+                                value: data.value,
+                                isComposite: data.isComposite,
                             };
+                        };
 
-                            const getComparisonSignature = (data: any): string => {
-                                const normalized = normalizeData(data);
-                                return `${normalized.classKey}|${normalized.index}|${normalized.value}`;
-                            };
+                        const getComparisonSignature = (data: ProcessedCellData | undefined): string => {
+                            const normalized = normalizeData(data);
+                            const valueString = Array.isArray(normalized.value)
+                                ? `[${normalized.value.join('||')}]`
+                                : String(normalized.value);
+                            return `${normalized.classKey}|${normalized.index}|${normalized.isComposite}|${valueString}`;
+                        };
 
-                            const normalizedExistingData = existingTableCellData.map(normalizeData);
-                            const normalizedNewData = tableCellDataItems.map(normalizeData);
-
-                            const existingDataSet = new Set(normalizedExistingData.map(getComparisonSignature));
-                            const newDataSetSignatures = new Set(normalizedNewData.map(getComparisonSignature));
-
-                            const dataToDelete = normalizedExistingData.filter((dbData: any) =>
-                                !newDataSetSignatures.has(getComparisonSignature(dbData))
-                            );
-
-                            const dataToAdd = normalizedNewData.filter(newData =>
-                                !existingDataSet.has(getComparisonSignature(newData))
-                            );
-
-                            const dataToUpdate: any = [];
-                            const updatedSignatures = new Set<string>();
-                            for (const newData of normalizedNewData) {
-                                const newDataSignature = getComparisonSignature(newData);
-                                if (!existingDataSet.has(newData.value)) continue;
-
-                                const dbData = normalizedExistingData.find((d: any) => getComparisonSignature(d) === newDataSignature);
-
-                                if (dbData) {
-                                    if (!isEqual(normalizeData(dbData), normalizeData(newData))) {
-                                        if (!updatedSignatures.has(newDataSignature)) {
-                                            dataToUpdate.push({ ...newData });
-                                            updatedSignatures.add(newDataSignature);
-                                        }
-                                    }
-                                }
-
-                                const valueDiffers = newData.value !== dbData.value;
-
-                                if (valueDiffers) {
-                                    dataToUpdate.push({
-                                        ...newData,
-                                        previousIndex: dbData.index
-                                    });
-                                }
+                        const areItemsEqual = (item1: ProcessedCellData, item2: ProcessedCellData): boolean => {
+                            if (item1.classKey !== item2.classKey || item1.index !== item2.index || item1.isComposite !== item2.isComposite) {
+                                return false;
                             }
-
-                            function areArraysEquivalent(arr1: any[], arr2: any[]): boolean {
-                                if (!arr1 && !arr2) return true;
-                                if (!arr1 || !arr2) return false;
-                                if (arr1.length !== arr2.length) return false;
-
-                                const set1 = new Set(arr1.map(getComparisonSignature));
-                                const set2 = new Set(arr2.map(getComparisonSignature));
-
-                                if (set1.size !== set2.size) return false;
-
-                                for (const signature of set1) {
-                                    if (!set2.has(signature)) return false;
+                            if (Array.isArray(item1.value) && Array.isArray(item2.value)) {
+                                if (item1.value.length !== item2.value.length) return false;
+                                for (let i = 0; i < item1.value.length; i++) {
+                                    if (item1.value[i] !== item2.value[i]) return false;
                                 }
-
                                 return true;
                             }
+                            return item1.value === item2.value;
+                        };
 
-                            const arraysEquivalent = areArraysEquivalent(existingTableCellData, tableCellDataItems);
 
-                            if (arraysEquivalent) {
-                                console.log("TableCellData arrays are equivalent, no changes needed");
-                            } else {
-                                console.log("TableCellData arrays not equivalent - detailed comparison:");
-                                console.log("Database data:", existingTableCellData.map((data: any) => ({
-                                    ...normalizeData(data),
-                                    signature: getComparisonSignature(data)
-                                })));
-                                console.log("Frontend data:", tableCellDataItems.map(data => ({
-                                    ...normalizeData(data),
-                                    signature: getComparisonSignature(data)
-                                })));
+                        const existingDataMap = new Map<string, ProcessedCellData>();
+                        existingTableCellData.forEach(item => existingDataMap.set(getComparisonSignature(item), item));
 
-                                const hasDataChanges = dataToDelete.length > 0 || dataToAdd.length > 0 || dataToUpdate.length > 0;
+                        const incomingDataMap = new Map<string, ProcessedCellData>();
+                        incomingTableCellDataItems.forEach(item => incomingDataMap.set(getComparisonSignature(item), item));
 
-                                if (hasDataChanges) {
-                                    const dataToDeleteSignatures = new Set(dataToDelete.map(getComparisonSignature));
-                                    const dataToUpdateSignatures = new Set(dataToUpdate.map(getComparisonSignature));
-                                    const existingDataToKeep = existingTableCellData.filter((dbItem: any) => {
-                                        const signature = getComparisonSignature(dbItem);
-                                        return !dataToDeleteSignatures.has(signature) && !dataToUpdateSignatures.has(signature);
-                                    });
-
-                                    const updatedItemsForFinalArray = dataToUpdate.map((newDataItem: any) => ({
-                                        classKey: newDataItem.classKey,
-                                        index: newDataItem.index,
-                                        value: newDataItem.value
-                                    }));
-
-                                    const finalTableCellData = [...existingDataToKeep, ...dataToAdd, ...updatedItemsForFinalArray];
-
-                                    const uniqueSignatures = new Set();
-                                    const uniqueTableCellData = finalTableCellData.filter((data: any) => {
-                                        const signature = getComparisonSignature(data);
-                                        if (uniqueSignatures.has(signature)) return false;
-                                        uniqueSignatures.add(signature);
-                                        return true;
-                                    });
-
-                                    updateData.tableCellData = uniqueTableCellData;
-
-                                    console.log('Cell data to delete:', dataToDelete);
-                                    console.log('Cell data to add:', dataToAdd);
-                                    console.log('Cell data to update:', dataToUpdate);
-                                    console.log('Has cell data changes:', hasDataChanges);
-                                }
+                        const dataToDelete: ProcessedCellData[] = [];
+                        existingDataMap.forEach((value, key) => {
+                            if (!incomingDataMap.has(key)) {
+                                dataToDelete.push(value);
                             }
+                        });
+
+                        const dataToAdd: ProcessedCellData[] = [];
+                        incomingDataMap.forEach((value, key) => {
+                            if (!existingDataMap.has(key)) {
+                                dataToAdd.push(value);
+                            }
+                        });
+
+                        const hasDataChanges = dataToDelete.length > 0 || dataToAdd.length > 0;
+
+                        if (hasDataChanges) {
+                            console.log(`TableCellData changes detected: ${dataToAdd.length} added, ${dataToDelete.length} deleted.`);
+                            updateData.tableCellData = incomingTableCellDataItems;
+                        } else {
+                            console.log("No effective changes detected in tableCellData after normalization.");
                         }
+                    } else if (!processingError) {
+                        console.log('No incoming tableCellData and clear flag not set. No update.');
                     } else {
-                        console.log('No changes detected in tableCellData');
+                        console.error('Skipping tableCellData update due to processing errors.');
                     }
 
                     let tableSheetDataFromBody = req.body.tableSheet;

@@ -12,7 +12,8 @@ export interface tableSheetData {
 export interface tableCellData {
     classKey: string;
     index: number;
-    value: string;
+    value: string | string[];
+    isComposite: boolean;
 }
 
 export interface mainKeyString {

@@ -125,7 +125,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     acc[key] = {
                         classKey: item.classKey,
                         index: item.index,
-                        value: item.value || ''
+                        value: item.value || '',
+                        isComposite: item.isComposite || false,
                     };
                 }
                 return acc;
@@ -194,7 +195,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             })).sort((a, b) => (a.value + a.isOrigin).localeCompare(b.value + b.isOrigin));
         };
 
-        const normalizeVariableRowDataForCompare = (data: VariableRowDataState): Array<{ classKey: string, index: number, value: string }> => {
+        const normalizeVariableRowDataForCompare = (data: VariableRowDataState): Array<{ classKey: string, index: number, value: string | string[], isComposite: boolean }> => {
             return Object.values(data).sort((a, b) => `${a.classKey}_${a.index}`.localeCompare(`${b.classKey}_${b.index}`));
         };
 
@@ -236,8 +237,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeVariableClassArrayForCompare(globalVariableClass),
             normalizeVariableClassArrayForCompare(originalData.variableClassArray)
         );
-
-        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged || variableClassArrayChanged; // Add variableClassArrayChanged
+        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged || variableClassArrayChanged;
 
         setHasChanges(dataChanged);
 
@@ -318,12 +318,26 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 }
                 console.log("Sending variableRowData data:", Object.keys(variableRowData).length, "items");
                 Object.entries(variableRowData).forEach(([_, rowItem]) => {
-                    formDataPayload.append('tableCellData', rowItem.index.toString());
-                    formDataPayload.append('tableCellData', rowItem.classKey);
-                    formDataPayload.append('tableCellData', rowItem.value);
+                    if (rowItem && typeof rowItem.index === 'number' && typeof rowItem.classKey === 'string' && rowItem.value !== undefined && typeof rowItem.isComposite === 'boolean') {
+                        formDataPayload.append('tableCellData', rowItem.index.toString());
+                        formDataPayload.append('tableCellData', rowItem.classKey);
+
+                        const valueToSend = rowItem.isComposite && Array.isArray(rowItem.value)
+                            ? JSON.stringify(rowItem.value)
+                            : String(rowItem.value ?? '');
+
+                        formDataPayload.append('tableCellData', valueToSend);
+                        formDataPayload.append('tableCellData', rowItem.isComposite.toString());
+                    } else {
+                        console.warn("Skipping invalid rowItem during save:", rowItem);
+                    }
                 });
-            } else {
-                console.log("No cell data to send.");
+            } else if (approvedTableCellClear) {
+                 console.log("Sending approvedTableCellClear flag for empty data.");
+                 formDataPayload.append('approvedTableCellClear','false');
+            }
+             else {
+                console.log("No cell data to send and clear flag not set.");
             }
 
             Object.entries(formData).forEach(([key, value]) => {
@@ -451,7 +465,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             updatedData[key] = {
                                 classKey: item.classKey,
                                 index: item.index,
-                                value: item.value
+                                value: item.value,
+                                isComposite: item.isComposite || false,
                             };
                         }
                     });
@@ -501,7 +516,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                     acc[key] = {
                                         classKey: item.classKey,
                                         index: item.index,
-                                        value: item.value || ''
+                                        value: item.value || '',
+                                        isComposite: item.isComposite || false,
                                     };
                                 }
                                 return acc;
@@ -568,82 +584,81 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         const hasCellData = Object.keys(variableRowData).length > 0;
 
         if (!hasHeaders && !hasCellData) {
-            toast.info('No data to export', {
-                position: 'bottom-right',
-                autoClose: 3000,
-            });
-            return;
+            toast.info('No data to export'); return;
         }
 
-        const format = window.prompt('Enter the format to export (CSV or JSON):', 'csv')?.toUpperCase();
+        const format = window.prompt('Enter export format (CSV or JSON):', 'csv')?.toUpperCase();
         if (format !== 'CSV' && format !== 'JSON') {
-            toast.error('Invalid format. Please enter CSV or JSON.', {
-                position: 'bottom-right',
-                autoClose: 3000,
-            });
-            return;
+            toast.error('Invalid format. Use CSV or JSON.'); return;
         }
 
         const headers = variableData.tableSheet.map(item => item.value);
         if (headers.length === 0 && format === "CSV") {
-            toast.error('Cannot export CSV without headers.', { position: 'bottom-right' });
-            return;
+            toast.error('Cannot export CSV without headers.'); return;
         }
 
         let maxRowIndex = -1;
-        const rowDataMap = new Map<number, Record<string, string>>();
+        const rowDataMap = new Map<number, Record<string, tableCellData>>();
 
         Object.entries(variableRowData).forEach(([key, cell]) => {
-            const match = key.match(/^(.+)_row_(\d+)$/);
-            if (match) {
-                const [_, classKey, rowIndexStr] = match;
-                const rowIndex = parseInt(rowIndexStr, 10);
-
-                if (!isNaN(rowIndex)) {
-                    maxRowIndex = Math.max(maxRowIndex, rowIndex);
-                    if (!rowDataMap.has(rowIndex)) {
-                        rowDataMap.set(rowIndex, {});
-                    }
-                    rowDataMap.get(rowIndex)![classKey] = cell.value;
-                }
+            if (typeof cell.index !== 'number' || typeof cell.classKey !== 'string') {
+                console.warn("Skipping cell with missing index or classKey:", key, cell);
+                return;
             }
+            maxRowIndex = Math.max(maxRowIndex, cell.index);
+            if (!rowDataMap.has(cell.index)) {
+                rowDataMap.set(cell.index, {});
+            }
+            rowDataMap.get(cell.index)![cell.classKey] = cell;
         });
         const numRows = maxRowIndex + 1;
 
+        const formatValueForExport = (cellData: tableCellData | undefined): string => {
+            if (!cellData) {
+                return '';
+            }
+            if (cellData.isComposite && Array.isArray(cellData.value)) {
+                return `COMP: ${cellData.value.join(' [/&/] ')}`;
+            } else if (typeof cellData.value === 'string') {
+                return cellData.value;
+            } else {
+                console.warn("Unexpected cell value type during export:", cellData.value);
+                return JSON.stringify(cellData.value);
+            }
+        };
+
         if (format === 'CSV') {
             const csvRows: string[] = [];
-
             csvRows.push(headers.map(escapeCsvField).join(','));
 
             for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
                 const rowMap = rowDataMap.get(rowIndex) || {};
                 const rowValues = headers.map(header => {
-                    const cellValue = rowMap[header] || '';
-                    return escapeCsvField(cellValue);
+                    const cellData = rowMap[header];
+                    const formattedValue = formatValueForExport(cellData);
+                    return escapeCsvField(formattedValue); 
                 });
                 csvRows.push(rowValues.join(','));
             }
-
             const csvContent = csvRows.join('\n');
+            triggerDownload(csvContent, `export_${productManager._id || 'data'}.csv`, 'text/csv;charset=utf-8;');
+            toast.success('CSV export started.');
 
-            triggerDownload(csvContent, `export_${productManager._id || 'data'}_${productManager.name}.csv`, 'text/csv;charset=utf-8;');
-            toast.success('CSV export started.', { position: 'bottom-right' });
         } else if (format === 'JSON') {
             const jsonData: Record<string, string>[] = [];
 
             for (let i = 0; i < numRows; i++) {
-                const rowObject: Record<string, string> = {};
+                const rowObject: Record<string, string> = {}; 
                 const rowMap = rowDataMap.get(i) || {};
                 headers.forEach(header => {
-                    rowObject[header] = rowMap[header] || "";
+                    const cellData = rowMap[header];
+                    rowObject[header] = formatValueForExport(cellData);
                 });
                 jsonData.push(rowObject);
             }
-
             const jsonContent = JSON.stringify(jsonData, null, 2);
-
-            triggerDownload(jsonContent, `export_${productManager._id || 'data'}_${productManager.name}.json`, 'application/json;charset=utf-8;');
-            toast.success('JSON export started.', { position: 'bottom-right' });
+            triggerDownload(jsonContent, `export_${productManager._id || 'data'}.json`, 'application/json;charset=utf-8;');
+            toast.success('JSON export started.');
         }
     };
 

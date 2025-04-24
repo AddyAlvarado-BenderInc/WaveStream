@@ -399,7 +399,8 @@
 
  .cellAction,
  .cellDelete,
- .cellEdit {
+ .cellEdit,
+ .cellExpand {
    padding: 2px 4px;
    border: 1px solid var(--button-primary-hover);
    border-radius: 3px;
@@ -410,7 +411,8 @@
 
  .cellAction:hover,
  .cellDelete:hover,
- .cellEdit:hover {
+ .cellEdit:hover,
+ .cellExpand:hover {
    background-color: var(--button-primary-hover);
    color: var(--button-secondary-hover);
  }
@@ -428,12 +430,16 @@
  .headerButtonContainer {
    opacity: 0;
    margin: 0;
-   padding: 0;
+   padding: 5px 0;
    transition: opacity 0.2s ease-in-out;
  }
 
  .table .classKeyHeader:hover .headerButtonContainer {
    opacity: 1;
+ }
+
+ .headerButtonContainer button {
+    margin: 0 5px;
  }
 
  tbody tr .hide-default-unavailable-data {
