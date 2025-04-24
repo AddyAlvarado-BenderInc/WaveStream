@@ -54,6 +54,12 @@
   display: block;
 }
 
+.variableClassContainer {
+  height: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
 .variableClassContainer button, .sendToSheetButton, .deleteAllButton, .deleteButton {
   cursor: pointer;
   border: 1px solid var(--button-primary-hover);
@@ -170,6 +176,7 @@
 }
 
 .submitButton:disabled {
+  background-color: transparent;
   border: 1px solid var(--gray-alpha-200);
   color: var(--gray-alpha-200);
   cursor: not-allowed;

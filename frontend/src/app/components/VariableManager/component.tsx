@@ -5,7 +5,7 @@ import {
     deleteVariableClassArray,
     addVariableClassArray,
 } from '@/app/store/productManagerSlice';
-import { tableSheetData, tableCellData, ProductManager, variableClassArray as VariableClassPayload } from '../../../../types/productManager';
+import { tableSheetData, tableCellData, ProductManager } from '../../../../types/productManager';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
 import { RootState } from '@/app/store/store';
 import { useSelector, useDispatch } from 'react-redux';
@@ -151,14 +151,12 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             console.log("Updated variableClassData state:", updatedData);
             return updatedData;
         });
-
-        toast.success(`Data sent to sheet under key: ${selectedKey}`);
     };
 
     // TODO: Send composite essentially allows the user to send objects to the sheet, delimited by tabs on CSV export and made 
     // as an array field in the JSON export/run automation, for when a field in the automation needs multiple values. 
     // This is a placeholder for now, but the implementation will be similar to handleSendToSheet.
-    const handleSendComposite = ( 
+    const handleSendComposite = (
         variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
         selectedKey: string,
         id: number | null | undefined

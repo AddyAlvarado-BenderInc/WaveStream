@@ -32,8 +32,28 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
     const [permanentOrigin, setPermanentOrigin] = useState<string>("");
     const [hideTable, setHideTable] = useState<boolean>(false);
 
+    const [actionModalOpen, setActionModalOpen] = useState<boolean>(false);
+    const [actionTargetCell, setActionTargetCell] = useState<{ key: string; rowIndex: number; value: string } | null>(null);
+    const [currentAction, setCurrentAction] = useState<'extendLength' | 'fillEmpty' | null>(null);
+    const [actionInputValue, setActionInputValue] = useState<string>('');
+
     const [zoomLevel, setZoomLevel] = useState<number>(100);
     const tableContainerRef = useRef<HTMLDivElement>(null);
+
+    const [targetImportColumn, setTargetImportColumn] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    const triggerRowImport = (columnKey: string) => {
+        console.log(`Setting target import column: ${columnKey}`);
+        setTargetImportColumn(columnKey);
+        const fileInput = document.getElementById('row-sheet-upload');
+        if (fileInput) {
+            (fileInput as HTMLInputElement).value = '';
+            fileInput.click();
+        } else {
+            console.error("Could not find file input element #row-sheet-upload");
+        }
+    }
 
     const { productType, _id } = productManager;
 
@@ -142,6 +162,74 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
         }
     };
 
+    const handleImportRowSheet = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!targetImportColumn) {
+            console.error("Import triggered without a target column set.");
+            toast.error("Import error: No target column specified.");
+            return;
+        }
+
+        console.log(`Importing row data for column: ${targetImportColumn}`);
+
+        try {
+            const file = event.target.files?.[0];
+            const fileNameLower = file?.name?.toLowerCase();
+            if (!file || (!fileNameLower?.endsWith('.txt') && !fileNameLower?.endsWith('.csv'))) {
+                toast.warn('Please upload a valid TXT or CSV file.');
+                setTargetImportColumn(null);
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                const fileContent = loadEvent.target?.result;
+                if (fileContent) {
+                    const rows = (fileContent as string).split('\n').map(row => row.trim()).filter(row => row);
+
+                    if (rows.length > 0) {
+                        const updates: VariableRowDataState = {};
+                        rows.forEach((rowValue, rowIndex) => {
+                            const cleanedValue = rowValue;
+
+                            const dataKey = `${targetImportColumn}_row_${rowIndex}`;
+
+                            updates[dataKey] = {
+                                classKey: targetImportColumn,
+                                index: rowIndex,
+                                value: cleanedValue
+                            };
+                        });
+
+                        console.log(`Prepared updates for ${targetImportColumn}:`, updates);
+
+                        setVariableClassData((prevData: VariableRowDataState) => ({
+                            ...prevData,
+                            ...updates
+                        }));
+
+                    } else {
+                        toast.error('The uploaded file is empty or contains only empty rows.');
+                    }
+                } else {
+                    toast.error('Could not read the file content.');
+                }
+                setTargetImportColumn(null);
+                event.target.value = '';
+            };
+            reader.onerror = () => {
+                toast.error('Error reading the file.');
+                setTargetImportColumn(null);
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        } catch (error) {
+            console.error(`Error importing row data for ${targetImportColumn}:`, error);
+            toast.error(`An error occurred during import: ${error}`);
+            setTargetImportColumn(null);
+        }
+    };
+
     const handleHeaderOriginKey = (key: string) => {
         if (permanentOrigin) {
             return null;
@@ -212,7 +300,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
         }
     };
 
-    const handleEditCell = (key: string, rowIndex: number, currentValue: string) => {
+    const handleEditCellValue = (key: string, rowIndex: number, currentValue: string) => {
         const newValue = prompt("Edit cell value:", currentValue);
 
         if (newValue !== null) {
@@ -247,6 +335,187 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
         }
     };
 
+    const getMaxRowIndex = (data: VariableRowDataState): number => {
+        let maxIndex = -1;
+        Object.keys(data).forEach(key => {
+            const rowMatch = key.match(/_row_(\d+)$/);
+            if (rowMatch) {
+                maxIndex = Math.max(maxIndex, parseInt(rowMatch[1], 10));
+            } else if (data[key] !== undefined && data[key] !== null) {
+                 maxIndex = Math.max(maxIndex, 0);
+            }
+        });
+        return maxIndex;
+    };
+
+    const actionExtendLength = () => {
+        if (!actionTargetCell || !actionInputValue) {
+            toast.error("Invalid input for extending length.");
+            return;
+        }
+
+        const lengthToExtend = parseInt(actionInputValue, 10);
+        if (isNaN(lengthToExtend) || lengthToExtend <= 0) {
+            toast.error("Please enter a valid positive number for the length.");
+            return;
+        }
+
+        const { key, rowIndex, value: valueToExtend } = actionTargetCell;
+        const updates: VariableRowDataState = {};
+        let extendedCount = 0;
+
+        for (let i = 1; i <= lengthToExtend; i++) {
+            const targetRowIndex = rowIndex + i;
+            const dataKey = `${key}_row_${targetRowIndex}`;
+
+            updates[dataKey] = {
+                classKey: key,
+                index: targetRowIndex,
+                value: valueToExtend
+            };
+            extendedCount++;
+        }
+
+        if (extendedCount > 0) {
+            setVariableClassData((prevData: VariableRowDataState) => ({
+                ...prevData,
+                ...updates
+            }));
+            toast.success(`Extended "${valueToExtend}" for ${extendedCount} row(s) in column "${key}".`);
+        } else {
+             toast.info("Length specified was zero or invalid.");
+        }
+
+        setActionModalOpen(false);
+        setActionTargetCell(null);
+        setCurrentAction(null);
+        setActionInputValue('');
+    };
+
+    const actionFillEmpty = () => {
+        if (!actionTargetCell) {
+            toast.error("Cannot perform action: Target cell not set.");
+            return;
+        }
+
+        const { key, rowIndex, value: valueToFill } = actionTargetCell;
+        const maxRowIndex = getMaxRowIndex(variableRowData);
+        const updates: VariableRowDataState = {};
+        let filledCount = 0;
+
+        if (maxRowIndex <= rowIndex) {
+             toast.info("No rows below the selected cell to fill.");
+             setActionModalOpen(false);
+             return;
+        }
+
+        for (let i = rowIndex + 1; i <= maxRowIndex; i++) {
+            const dataKey = `${key}_row_${i}`;
+            const baseKeyForRow0 = (i === 0) ? key : undefined;
+
+            const existingData = variableRowData[dataKey];
+            let isCellEmpty = true;
+            if (existingData !== undefined && existingData !== null) {
+                 if (typeof existingData === 'object' && 'value' in existingData) {
+                      if (String(existingData.value ?? '').trim() !== '') {
+                           isCellEmpty = false;
+                      }
+                 } else if (typeof existingData === 'string') {
+                      if (existingData !== '') {
+                           isCellEmpty = false;
+                      }
+                 } else {
+                      isCellEmpty = false;
+                 }
+            }
+
+            if (isCellEmpty) {
+                updates[dataKey] = {
+                    classKey: key,
+                    index: i,
+                    value: valueToFill
+                };
+                filledCount++;
+            }
+        }
+
+        if (filledCount > 0) {
+            setVariableClassData((prevData: VariableRowDataState) => ({
+                ...prevData,
+                ...updates
+            }));
+            toast.success(`Filled ${filledCount} empty cell(s) below in column "${key}" with "${valueToFill}".`);
+        } else {
+            toast.info(`No empty cells found below to fill in column "${key}".`);
+        }
+
+        setActionModalOpen(false);
+        setActionTargetCell(null);
+        setCurrentAction(null);
+        setActionInputValue('');
+    };
+
+    const renderActionModal = () => {
+        if (!actionTargetCell) return null;
+
+        const { key, rowIndex, value } = actionTargetCell;
+
+        if (currentAction === 'extendLength') {
+            return (
+                <div className={styles.actionModal}>
+                    <h3>Extend Length for "{key}" (Row {rowIndex})</h3>
+                    <p>Value: "{value}"</p>
+                    <form onSubmit={(e) => { e.preventDefault(); actionExtendLength(); }} className={styles.actionForm}>
+                        <label>Extend by how many rows?</label>
+                        <input
+                            type="number"
+                            placeholder="Number of rows"
+                            value={actionInputValue}
+                            onChange={(e) => setActionInputValue(e.target.value)}
+                            min="1"
+                            step="1"
+                            required
+                            autoFocus
+                            className={styles.inputField}
+                        />
+                        <div className={styles.actionModalButtons}>
+                            <button type="submit" className={styles.submitButton}>Extend</button>
+                            <button type="button" onClick={() => setCurrentAction(null)} className={styles.cancelButton}>Back</button>
+                            <button type="button" onClick={() => setActionModalOpen(false)} className={styles.cancelButton}>Cancel All</button>
+                        </div>
+                    </form>
+                </div>
+            );
+        }
+
+        if (currentAction === 'fillEmpty') {
+             return (
+                 <div className={styles.actionModal}>
+                    <h3>Fill Empty Below for "{key}" (Row {rowIndex})</h3>
+                    <p>This will fill all empty cells below Row {rowIndex} in the "{key}" column with the value:</p>
+                    <p><strong>"{value}"</strong></p>
+                    <div className={styles.actionModalButtons}>
+                        <button type="button" onClick={actionFillEmpty} className={styles.submitButton}>Confirm Fill</button>
+                         <button type="button" onClick={() => setCurrentAction(null)} className={styles.cancelButton}>Back</button>
+                         <button type="button" onClick={() => setActionModalOpen(false)} className={styles.cancelButton}>Cancel All</button>
+                    </div>
+                </div>
+             );
+        }
+
+        return (
+            <div className={styles.actionModal}>
+                <h3>Cell Actions for "{key}" (Row {rowIndex})</h3>
+                 <p>Value: "{value}"</p>
+                <div className={styles.actionModalButtons}>
+                    <button onClick={() => setCurrentAction('extendLength')}>Extend Value Down...</button>
+                    <button onClick={() => setCurrentAction('fillEmpty')}>Fill Empty Cells Below</button>
+                    <button onClick={() => setActionModalOpen(false)}>Close</button>
+                </div>
+            </div>
+        );
+    };
+
     const handleDeleteTableData = async () => {
         const confirmation = window.confirm(
             `CAUTION: This will permanently delete all table data (headers and cells). Are you sure you want to proceed?`
@@ -277,7 +546,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                 } else {
                     const result = await response.json();
                     console.log("Server successfully cleared table data:", result);
-                    toast.success('Table data cleared successfully.');
                 }
             } catch (error) {
                 console.error("Error sending clear table data request:", error);
@@ -341,9 +609,22 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                     </div>
                 )}
             </div>
+            {actionModalOpen && (
+                <div className={styles.actionModalOverlay}>
+                    {renderActionModal()}
+                </div>
+            )}
             {!hideTable && (
                 <div className={styles.tableDisplay + `${hideTable ? styles.closeTableDisplay : styles.openTableDisplay}`}>
                     <form>
+                        <input
+                            id="row-sheet-upload"
+                            type="file"
+                            accept=".txt,text/plain,.csv,text/csv"
+                            onChange={handleImportRowSheet}
+                            className={styles.fileInput}
+                            style={{ display: 'none' }}
+                        />
                         {!permanentOrigin && (
                             <input
                                 type="text"
@@ -464,6 +745,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                             <table className={styles.table}>
                                 <thead>
                                     <tr>
+                                        <th className={styles.rowNumberHeader}>#</th>
                                         {classKeyInputObjects.map((keyObj) => (
                                             <ClassKey
                                                 key={keyObj.index}
@@ -473,6 +755,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                 originAssignment={handleHeaderOriginKey}
                                                 permanentOrigin={permanentOrigin}
                                                 headerOrigin={headerOrigin}
+                                                onTriggerImport={triggerRowImport}
                                             />
                                         ))}
                                     </tr>
@@ -565,13 +848,15 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
 
                                             return Array.from({ length: maxArrayLength }).map((_, rowIndex) => (
                                                 <tr key={`row-${rowIndex}`}>
+                                                    <td className={styles.rowNumberCell}>{rowIndex + 1}</td>
                                                     {classKeyInputObjects.map((keyObj) => {
                                                         const cellValue = getCellValue(keyObj, rowIndex, rowDataMap, variableRowData);
 
                                                         return (
                                                             <td
                                                                 key={`${keyObj.index}-${rowIndex}`}
-                                                                className={`${styles.tableCell} ${keyObj.value === selectedClassKey ? styles.tableCell : ''}`}
+                                                                className={styles.tableCell}
+                                                                id={`${keyObj.value}-${rowIndex}`}
                                                             >
                                                                 <div className={styles.tableContainer}>
                                                                     {cellValue}
@@ -591,12 +876,25 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                                                 <button
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
-                                                                                        handleEditCell(keyObj.value, rowIndex, cellValue);
+                                                                                        handleEditCellValue(keyObj.value, rowIndex, cellValue);
                                                                                     }}
                                                                                     className={styles.cellEdit}
                                                                                     title="Edit cell data"
                                                                                 >
                                                                                     Edit
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setActionTargetCell({ key: keyObj.value, rowIndex, value: cellValue });
+                                                                                        setCurrentAction(null);
+                                                                                        setActionInputValue('');
+                                                                                        setActionModalOpen(true);
+                                                                                    }}
+                                                                                    className={styles.cellAction}
+                                                                                    title="Perform action on cell data"
+                                                                                >
+                                                                                    Action
                                                                                 </button>
                                                                             </>
                                                                         )}
@@ -609,7 +907,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                             ));
                                         })()
                                     ) : (
-                                        <tr>
+                                        <tr className={Object.keys(variableData).length > 0 ? 'show-default-unavailable-data' : 'hide-default-unavailable-data'}>
                                             <td colSpan={classKeyInputObjects.length} className={styles.emptyRow}>
                                                 No data available
                                             </td>
@@ -633,7 +931,8 @@ const ClassKey: React.FC<{
     originAssignment: (key: string) => void;
     permanentOrigin: string;
     headerOrigin: string;
-}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin }) => {
+    onTriggerImport: (columnKey: string) => void;
+}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin, onTriggerImport }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(input);
 
@@ -651,12 +950,11 @@ const ClassKey: React.FC<{
                 originAssignment(input);
             }}
         >
-            {
-                headerOrigin === input ?
-                    <div className={styles.headerOriginDisplay}>
-                        ORIGIN
-                    </div>
-                    : ''}
+            {headerOrigin === input ?
+                <div className={styles.headerOriginDisplay}>
+                    ORIGIN
+                </div>
+                : ''}
             <div className={styles.classKeyContainer}>
                 {isEditing ? (
                     <form onSubmit={handleEditSubmit}>
@@ -675,6 +973,20 @@ const ClassKey: React.FC<{
                 ) : (
                     <>
                         <span>{input}</span>
+                        {permanentOrigin && (
+                            <div className={styles.headerButtonContainer}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onTriggerImport(input);
+                                    }}
+                                    className={styles.importKeyButton}
+                                    title={`Import row data for ${input}`}
+                                >
+                                    Import
+                                </button>
+                            </div>
+                        )}
                         <div className={styles.keyButtons}>
                             {!permanentOrigin ? (
                                 <>
