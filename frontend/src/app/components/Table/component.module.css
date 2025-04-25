@@ -197,6 +197,11 @@
    gap: 5px;
  }
 
+ .zoomDisplay span {
+   color: var(--button-primary-hover);
+   font-size: 14px;
+ }
+
  .zoomSlider {
    width: 80px;
  }

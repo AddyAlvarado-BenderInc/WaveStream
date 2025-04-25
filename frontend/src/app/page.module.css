@@ -189,6 +189,7 @@ a.secondary {
   border-radius: 4px;
   padding: 8px 16px;
   background-color: #333333;
+  color: var(--button-primary-hover);
   border: 1px solid var(--gray-alpha-200);
 }
 
