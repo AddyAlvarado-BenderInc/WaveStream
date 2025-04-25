@@ -243,3 +243,18 @@
 .hideButton:hover {
   color: var(--button-primary-hover);
 }
+
+.concatModal {
+  background-color: var(--button-secondary-hover);
+  padding: 20px;
+  border-radius: 5px;
+  position: relative;
+}
+
+.concatSelect {
+  width: 100%;
+  padding: 8px;
+  margin: 10px 0;
+  border-radius: 4px;
+  border: 1px solid var(--button-primary-hover);
+}

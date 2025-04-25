@@ -418,6 +418,7 @@
    padding: 2px 4px;
    border: 1px solid var(--button-primary-hover);
    border-radius: 3px;
+   color: var(--button-primary-hover);
    background: var(--button-secondary-hover);
    font-size: 0.8rem;
    cursor: pointer;

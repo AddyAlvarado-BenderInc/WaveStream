@@ -324,7 +324,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
 
                 if (clearedCount > 0) {
                     console.log(`Cleared ${clearedCount} data points for column ${columnKey}`);
-                    toast.success(`Cleared all data in column "${columnKey}".`);
                 } else {
                     toast.info(`No data found to clear in column "${columnKey}".`);
                 }
@@ -422,8 +421,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                 ...prevData,
                 ...updates
             }));
-            const valueDisplay = isTargetComposite ? "(Composite Data)" : `"${valueToExtend}"`;
-            toast.success(`Extended ${valueDisplay} for ${extendedCount} row(s) in column "${key}".`);
         } else {
             toast.info("Length specified was zero or invalid.");
         }
@@ -484,7 +481,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                 ...updates
             }));
             const valueDisplay = isTargetComposite ? "(Composite Data)" : `"${valueToFill}"`;
-            toast.success(`Filled ${filledCount} empty cell(s) below in column "${key}" with ${valueDisplay}.`);
         } else {
             toast.info(`No empty cells found below to fill in column "${key}".`);
         }
@@ -581,9 +577,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                     const errorData = await response.json().catch(() => response.text());
                     console.error(`Failed to clear table data on server. Status: ${response.status}`, errorData);
                     toast.error(`Error clearing table data: ${errorData.error || errorData}`);
-                } else {
-                    const result = await response.json();
-                    console.log("Server successfully cleared table data:", result);
                 }
             } catch (error) {
                 console.error("Error sending clear table data request:", error);

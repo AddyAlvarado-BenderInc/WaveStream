@@ -48,6 +48,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     const [rowsPopulated, setRowsPopulated] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [hideButton, setHideButton] = useState(false);
+    const [concatModal, setConcatModal] = useState(false);
+    const [concatOption, setConcatOption] = useState<string>('');
     const [hideVariableClass, setHideVariableClass] = useState(false);
     const [editingItemId, setEditingItemId] = useState<number | null>(null);
     const [editPrefillData, setEditPrefillData] = useState<{ name: string, params: any[] } | null>(null);
@@ -216,6 +218,31 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         toast.success(`Composite data added under key "${selectedKey}"`);
     };
 
+    const handleConcatOption = (
+        e: React.MouseEvent<HTMLButtonElement>,
+        object: Record<string, { dataId: number; value: string; } | null>,
+        selectedClassKey: string,
+        variableClassIdentifier: number | null | undefined,
+    ) => {
+        e.preventDefault();
+        if (!concatOption) {
+            alert("Please choose a run option.");
+            return;
+        }
+        handleConcatenateToSheet(object, selectedClassKey, variableClassIdentifier, concatOption);
+    }
+
+    const handleConcatenateToSheet = (
+        variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
+        selectedKey: string,
+        id: number | null | undefined,
+        option: string
+    ) => {
+        console.log("Concatenate to sheet triggered");
+        setConcatModal(false);
+        setSendToSheetModal(false);
+    }
+
     const modalOptions = (key: number | null | undefined, object: Record<string, { dataId: number, value: string } | null>) => {
         console.log(`MODALOPTIONS: Received ID=${key}, Data=`, object);
         let name = "";
@@ -229,8 +256,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         }
 
         const valuesToDisplay = object && typeof object === 'object'
-        ? Object.values(object).map(item => item?.value)
-        : [];
+            ? Object.values(object).map(item => item?.value)
+            : [];
 
         return (
             <div className={styles.modal}>
@@ -282,6 +309,17 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                 disabled={!selectedClassKey}
                                 onClick={(e) => {
                                     e.preventDefault();
+                                    setConcatModal(true);
+                                }}
+                            >
+                                Concat
+                            </button>
+                            <button
+                                type='button'
+                                className={styles.submitButton}
+                                disabled={!selectedClassKey}
+                                onClick={(e) => {
+                                    e.preventDefault();
                                     handleSendComposite(object, selectedClassKey, variableClassIdentifier);
                                 }}
                             >
@@ -303,6 +341,36 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                 Send & Delete
                             </button>
                         </div>
+                        {concatModal && (
+                            <div className={styles.concatModal}>
+                                <h2>Concatenate Options</h2>
+                                <button
+                                    className={styles.closeButton}
+                                    onClick={() => setConcatModal(false)}
+                                >
+                                    &times;
+                                </button>
+                                <form>
+                                    <select
+                                        value={concatOption}
+                                        onChange={(e) => setConcatOption(e.target.value)}
+                                        className={styles.concatSelect}
+                                    >
+                                        <option value="" disabled>-- Select a Concatenate Option --</option>
+                                        <option value="front">Send to Front</option>
+                                        <option value="back">Send to Back</option>
+                                    </select>
+                                    <button
+                                        type='button'
+                                        className={styles.submitButton}
+                                        disabled={!concatOption}
+                                        onClick={(e) => handleConcatOption(e, object, selectedClassKey, variableClassIdentifier)}
+                                    >
+                                        Concatenate
+                                    </button>
+                                </form>
+                            </div>
+                        )}
                     </form>
                 </div>
             </div>
@@ -499,7 +567,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                         }
                                         return (
                                             <div key={variableClassDataId} className={styles.variableClassRow + `_row_${variableClassDataId}`}>
-                                                <div 
+                                                <div
                                                     className={styles.variableClassContent}
                                                     onClick={() => {
                                                         toggleVariableClass();

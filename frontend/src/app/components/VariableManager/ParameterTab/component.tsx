@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     addParameter,
     clearParameter,
@@ -99,6 +99,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         parameterName: '',
         addedParameter: ''
     });
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const globalParameterBundle = useSelector((state: RootState) => state.parameter.parameters);
     const currentVariableClassArray = useSelector((state: RootState) => state.variables.variableClassArray);
 
@@ -541,6 +542,126 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
 
     };
 
+    const handleImportVariables = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+
+        if (!selectedInterpolatedVariables) {
+            toast.warn("Please select a variable placeholder (like %{...}) first before loading parameters.");
+            return;
+        }
+        fileInputRef.current?.click();
+    }
+
+    const parseCsvForImport = (content: string): string[] => {
+        const lines = content.split(/[\r\n]+/).filter(line => line.trim() !== '');
+        if (lines.length < 1) return [];
+        return lines.slice(1).map(line => {
+            const columns = line.split(',');
+            return columns[0]?.trim();
+        }).filter((value): value is string => !!value);
+    };
+
+    const parseTxtForImport = (content: string): string[] => {
+        return content.split(/[\r\n]+/)
+            .map(line => line.trim())
+            .filter(line => line !== '');
+    };
+
+    const parseJsonForImport = (content: string): string[] => {
+        try {
+            const parsed = JSON.parse(content);
+            if (Array.isArray(parsed) && parsed.every(item => typeof item === 'string')) {
+                return parsed.filter(item => item.trim() !== '');
+            } else {
+                throw new Error('JSON structure invalid. Expected an array of strings.');
+            }
+        } catch (e) {
+            console.error("JSON parse error:", e);
+            throw new Error("Invalid JSON format.");
+        }
+    };
+
+    const addImportedParameters = (values: string[], variable: string) => {
+        const newParameters: AddedParameter[] = values.map(valueStr => ({
+            id: Date.now() + Math.random(),
+            variable: variable,
+            name: valueStr,
+            value: valueStr,
+            tags: []
+        }));
+
+        setAddedParameters(prevParams => {
+            const existingSignatures = new Set(prevParams.map(p => `${p.variable}|${p.name}|${p.value}`));
+            const uniqueNewParams = newParameters.filter(newP => !existingSignatures.has(`${newP.variable}|${newP.name}|${newP.value}`));
+
+            if (uniqueNewParams.length === 0) {
+                toast.info(`All imported values for %{${variable}} are already present.`);
+                return prevParams;
+            }
+            return [...prevParams, ...uniqueNewParams];
+        });
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (event.target) {
+            event.target.value = '';
+        }
+
+        if (!file) {
+            return;
+        }
+
+        if (!selectedInterpolatedVariables) {
+            toast.error("Internal error: No variable selected for import.");
+            return;
+        }
+
+        const fileName = file.name.toLowerCase();
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const content = e.target?.result as string;
+            if (content === null || content === undefined) {
+                toast.error("Could not read file content.");
+                return;
+            }
+
+            try {
+                let importedValues: string[] = [];
+
+                if (fileName.endsWith('.csv')) {
+                    importedValues = parseCsvForImport(content);
+                } else if (fileName.endsWith('.txt')) {
+                    importedValues = parseTxtForImport(content);
+                } else if (fileName.endsWith('.json')) {
+                    importedValues = parseJsonForImport(content);
+                } else {
+                    toast.error("Unsupported file type. Please use .csv, .txt, or .json");
+                    return;
+                }
+
+                if (importedValues.length === 0) {
+                    toast.warn("No valid values extracted from the file.");
+                    return;
+                }
+
+                addImportedParameters(importedValues, selectedInterpolatedVariables);
+                toast.success(`Imported ${importedValues.length} parameters for %{${selectedInterpolatedVariables}} from ${file.name}`);
+
+            } catch (error: any) {
+                console.error("Error processing file:", error);
+                toast.error(`Failed to process file: ${error.message || 'Unknown error'}`);
+            }
+        };
+
+        reader.onerror = () => {
+            toast.error("Error reading file.");
+        };
+
+        reader.readAsText(file);
+    };
+
     const handleVariableSelect = (selectedValue: string) => {
         console.log(`Handling selection for: ${selectedValue}`);
 
@@ -730,10 +851,10 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                             }
                         </div>
                         {displayInterpolatedVariables(detectVariables)}
-                        <button className='send-to-sheet-button'
+                        {/* <button className='send-to-sheet-button'
                             onClick={() => { handleSaveVariableClass(variableClass, globalParameterBundle) }}>
                             Save Key String
-                        </button>
+                        </button> */}
                         <button className='send-to-sheet-button'
                             onClick={() => {
                                 handleAddVariable(variableClass, globalParameterBundle);
@@ -751,16 +872,8 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                         Add
                                     </button>
                                     <button className='configure-button'
-                                        onClick={() => {
-                                            handleVariableSave(0, {});
-                                        }}>
-                                        Save
-                                    </button>
-                                    <button className='configure-button'
-                                        onClick={() => {
-                                            handleVariableLoad();
-                                        }}>
-                                        Load
+                                        onClick={handleImportVariables}>
+                                        Import
                                     </button>
                                     <button className='configure-button'
                                         onClick={() => {
@@ -791,7 +904,13 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                         intVarValue={selectedInterpolatedVariables || ''}
                     />
                 )}
-
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept=".csv,.txt,.json"
+                    style={{ display: 'none' }}
+                />
             </div>
             <ToastContainer />
         </div>
