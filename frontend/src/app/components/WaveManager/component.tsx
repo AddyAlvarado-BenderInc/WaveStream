@@ -10,6 +10,7 @@ import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { isEqual } from 'lodash';
+import axios from 'axios';
 
 interface FormDataState {
     itemName: string;
@@ -333,10 +334,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     }
                 });
             } else if (approvedTableCellClear) {
-                 console.log("Sending approvedTableCellClear flag for empty data.");
-                 formDataPayload.append('approvedTableCellClear','false');
+                console.log("Sending approvedTableCellClear flag for empty data.");
+                formDataPayload.append('approvedTableCellClear', 'false');
             }
-             else {
+            else {
                 console.log("No cell data to send and clear flag not set.");
             }
 
@@ -636,7 +637,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 const rowValues = headers.map(header => {
                     const cellData = rowMap[header];
                     const formattedValue = formatValueForExport(cellData);
-                    return escapeCsvField(formattedValue); 
+                    return escapeCsvField(formattedValue);
                 });
                 csvRows.push(rowValues.join(','));
             }
@@ -645,17 +646,33 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             toast.success('CSV export started.');
 
         } else if (format === 'JSON') {
-            const jsonData: Record<string, string>[] = [];
+            type JsonRowObject = Record<string, string | { Composite: string[] }>;
+
+            const jsonData: JsonRowObject[] = [];
 
             for (let i = 0; i < numRows; i++) {
-                const rowObject: Record<string, string> = {}; 
+                const rowObject: JsonRowObject = {};
                 const rowMap = rowDataMap.get(i) || {};
+
                 headers.forEach(header => {
                     const cellData = rowMap[header];
-                    rowObject[header] = formatValueForExport(cellData);
+
+                    if (cellData) {
+                        if (cellData.isComposite && Array.isArray(cellData.value)) {
+                            rowObject[header] = { Composite: cellData.value };
+                        } else if (typeof cellData.value === 'string') {
+                            rowObject[header] = cellData.value;
+                        } else {
+                            console.warn(`Unexpected value type for cell ${header}[${i}] during JSON export:`, cellData.value);
+                            rowObject[header] = "";
+                        }
+                    } else {
+                        rowObject[header] = "";
+                    }
                 });
                 jsonData.push(rowObject);
             }
+
             const jsonContent = JSON.stringify(jsonData, null, 2);
             triggerDownload(jsonContent, `export_${productManager._id || 'data'}.json`, 'application/json;charset=utf-8;');
             toast.success('JSON export started.');
@@ -667,7 +684,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         const hasHeaders = variableData.tableSheet.length > 0;
         const hasCellData = Object.keys(variableRowData).length > 0;
         const cellOrigin = Object.values(variableData).some(cell => cell.isOrigin);
-        
+
 
         if (!hasHeaders && !hasCellData) {
             toast.info('No data to run', {
@@ -688,7 +705,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         // Can decide to fetch code from C# code (/backend/services/Program.cs) (requires JSON data format)
         // or from javascript (/backend/services/Program.js) (requires CSV data format)
         // Below is just for demonstration purposes
-        const response = await fetch(`/backend/automation`, {
+        const response = await axios.post(`http://localhost:5000/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -700,16 +717,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             }),
         });
 
-        if (response.ok) {
-            const result = await response.json();
+        if (response) {
+            const result = await response;
             console.log('Run result:', result);
             toast.success('Automation run successfully!', {
                 position: 'bottom-right',
                 autoClose: 5000,
             });
         } else {
-            const error = await response.json();
-            toast.error(`Error running automation: ${error.message}`, {
+            const error = await response;
+            console.error('Error running automation:', error);
+            toast.error(`Error running automation: ${error}`, {
                 position: 'bottom-right',
                 autoClose: 5000,
             });

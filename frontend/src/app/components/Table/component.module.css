@@ -56,8 +56,24 @@
    justify-content: space-between;
  }
 
+ .inputHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+ }
+
+ .inputHeader span {
+  position: absolute;
+}
+
+.classKeyContainer:hover span {
+  opacity: 0;
+  z-index: -1;
+ }
+
  .classKeyContainer {
    display: flex;
+   flex-direction: column;
    justify-content: space-between;
    align-items: center;
    gap: 0.5rem;

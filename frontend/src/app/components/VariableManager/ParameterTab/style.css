@@ -247,15 +247,56 @@
   padding: 4px 8px;
 }
 
+.parameter-item .action-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
 .parameter-item .action-buttons button {
   padding: 0 10px ;
 }
 
 .action-buttons button.delete-button:hover, 
-.action-buttons button.edit-button:hover {
+.action-buttons button.edit-button:hover,
+.action-buttons button.tag-button:hover {
   cursor: pointer;
   background-color: #f0f0f0;
   color: black;
+}
+
+.parameter-tags-display {
+  max-width: 200px; 
+  white-space: normal;
+  vertical-align: top;
+  font-size: 0.85em;
+  line-height: 1.4;
+}
+
+.tags-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px; 
+  padding-top: 2px;
+}
+
+.action-buttons .tag-button {
+  cursor: pointer;
+  background: none;
+	color: var(--button-primary-hover);
+	border: none;
+	padding: 0 5px;
+	font: inherit;
+  transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+  text-decoration: none;
+  text-wrap: nowrap;
+}
+
+.parameter-item .action-buttons button {
+  padding: 0 5px;
+  margin: 0 2px; 
 }
 
 button.delete-button, button.edit-button {

@@ -285,7 +285,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                         <button
                                             className='tag-button'
                                             onClick={() => {
-                                                alert('Tag functionality will allow users to add tags to the parameter. This will help in organizing and categorizing parameters based off of the existing values in the configured parameters, ensuring some values will only pair with similarly tagged values while untagged values will be considered universally pairable.');
+                                                handleTagging(param.variable);
                                             }}>
                                             tag
                                         </button>
@@ -369,6 +369,10 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         dispatch(setParameterBundle(transformedParams));
     };
 
+    const handleTagging = (tag: string) => {
+        alert('Tagging functionality will allow users to add tags to the parameter. This will help in organizing and categorizing parameters based off of the existing values in the configured parameters, ensuring some values will only pair with similarly tagged values while untagged values will be considered universally pairable.');
+    };
+
     const handleAddVariable = (object: object, param: BundlizedParameters[]) => {
         let inputString = "";
         const { task, type, stringInput, textareaInput, integerInput } = object as VariableClasses;
@@ -384,7 +388,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
 
         else if (stringInput) {
-             inputString = stringInput;
+            inputString = stringInput;
         }
 
         console.log('handleAddVariable - Determined Input String:', inputString);
@@ -399,7 +403,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         console.log("handleAddVariable - Relevant parameters from state:", JSON.stringify(relevantParams, null, 2));
         console.log("handleAddVariable - Relevant parameters exist:", relevantParamsExist);
 
-        let variableData: string[] = []; 
+        let variableData: string[] = [];
         let dataLength = 0;
 
         if (detectedVars.length > 0 && relevantParamsExist) {
@@ -416,15 +420,15 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             const hasValuesForAllDetectedVars = detectedVars.every(v => groupedParams[v] && groupedParams[v].length > 0);
 
             if (!hasValuesForAllDetectedVars) {
-                 console.warn("handleAddVariable - Missing parameter values for some detected variables. Treating as single item.", groupedParams);
-                 variableData = [inputString];
+                console.warn("handleAddVariable - Missing parameter values for some detected variables. Treating as single item.", groupedParams);
+                variableData = [inputString];
             } else {
                 const combinations = generateCombinations(groupedParams);
                 console.log("handleAddVariable - Generated Combinations:", JSON.stringify(combinations, null, 2));
 
                 if (!combinations || combinations.length === 0) {
-                     console.warn("handleAddVariable - generateCombinations returned empty or invalid result. Treating as single item.");
-                     variableData = [inputString];
+                    console.warn("handleAddVariable - generateCombinations returned empty or invalid result. Treating as single item.");
+                    variableData = [inputString];
                 } else {
                     variableData = combinations.map(combo => {
                         let result = inputString;
@@ -441,7 +445,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                         });
                         return result;
                     });
-                     console.log("handleAddVariable - Final Generated variableData array:", variableData);
+                    console.log("handleAddVariable - Final Generated variableData array:", variableData);
                 }
             }
         } else {

@@ -48,6 +48,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     const [rowsPopulated, setRowsPopulated] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [hideButton, setHideButton] = useState(false);
+    const [hideVariableClass, setHideVariableClass] = useState(false);
     const [editingItemId, setEditingItemId] = useState<number | null>(null);
     const [editPrefillData, setEditPrefillData] = useState<{ name: string, params: any[] } | null>(null);
     let [addOrSend, setAddOrSend] = useState<string>('send');
@@ -450,6 +451,13 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         }
     }
 
+    const toggleVariableClass = () => {
+        setHideVariableClass(true);
+        if (hideVariableClass) {
+            setHideVariableClass(false);
+        }
+    };
+
     return (
         <>
             {originAssignment && (
@@ -491,7 +499,12 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                         }
                                         return (
                                             <div key={variableClassDataId} className={styles.variableClassRow + `_row_${variableClassDataId}`}>
-                                                <div className={styles.variableClassContent}>
+                                                <div 
+                                                    className={styles.variableClassContent}
+                                                    onClick={() => {
+                                                        toggleVariableClass();
+                                                    }}
+                                                >
                                                     {displayVariableClass(currentVariableClassData || [])}
                                                     <div className={styles.buttonContainer}>
                                                         <button

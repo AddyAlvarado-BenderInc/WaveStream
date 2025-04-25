@@ -396,30 +396,28 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             return;
         }
 
-        // Get the correct value (string OR array) and isComposite status
         const { key, rowIndex, value: valueToExtend, isComposite: isTargetComposite } = actionTargetCell;
 
         const updates: VariableRowDataState = {};
         let extendedCount = 0;
 
-        console.log(`Action Extend: Extending value (isComposite=${isTargetComposite}):`, valueToExtend); // Debug log
+        console.log(`Action Extend: Extending value (isComposite=${isTargetComposite}):`, valueToExtend);
 
         for (let i = 1; i <= lengthToExtend; i++) {
             const targetRowIndex = rowIndex + i;
             const dataKey = `${key}_row_${targetRowIndex}`;
 
-            // CORRECTLY create the new cell data, preserving value type and isComposite flag
             updates[dataKey] = {
                 classKey: key,
                 index: targetRowIndex,
-                value: valueToExtend,           // Use the original value (string OR array)
-                isComposite: isTargetComposite, // Use the original isComposite status
+                value: valueToExtend,
+                isComposite: isTargetComposite,
             };
             extendedCount++;
         }
 
         if (extendedCount > 0) {
-            console.log(`Action Extend: Applying updates:`, updates); // Debug log
+            console.log(`Action Extend: Applying updates:`, updates);
             setVariableClassData((prevData: VariableRowDataState) => ({
                 ...prevData,
                 ...updates
@@ -430,7 +428,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             toast.info("Length specified was zero or invalid.");
         }
 
-        // Close modal and reset state
         setActionModalOpen(false);
         setActionTargetCell(null);
         setCurrentAction(null);
@@ -443,7 +440,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             return;
         }
 
-        // Get the correct value (string OR array) and isComposite status
         const { key, rowIndex, value: valueToFill, isComposite: isTargetComposite } = actionTargetCell;
         const maxRowIndex = getMaxRowIndex(variableRowData);
         const updates: VariableRowDataState = {};
@@ -455,38 +451,34 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             return;
         }
 
-        console.log(`Action Fill: Filling with value (isComposite=${isTargetComposite}):`, valueToFill); // Debug log
+        console.log(`Action Fill: Filling with value (isComposite=${isTargetComposite}):`, valueToFill);
 
         for (let i = rowIndex + 1; i <= maxRowIndex; i++) {
             const dataKey = `${key}_row_${i}`;
             const existingCell = variableRowData[dataKey];
 
-            // Determine if the cell is considered empty
             let isCellEmpty = false;
             if (!existingCell) {
                 isCellEmpty = true;
             } else if (existingCell.isComposite) {
-                // Empty if composite and value is empty array
                 isCellEmpty = Array.isArray(existingCell.value) && existingCell.value.length === 0;
             } else {
-                // Empty if not composite and value is empty string
                 isCellEmpty = typeof existingCell.value === 'string' && existingCell.value.trim() === '';
             }
 
             if (isCellEmpty) {
-                // CORRECTLY create the new cell data, preserving value type and isComposite flag
                 updates[dataKey] = {
                     classKey: key,
                     index: i,
-                    value: valueToFill,           // Use the original value (string OR array)
-                    isComposite: isTargetComposite, // Use the original isComposite status
+                    value: valueToFill,
+                    isComposite: isTargetComposite,
                 };
                 filledCount++;
             }
         }
 
         if (filledCount > 0) {
-            console.log(`Action Fill: Applying updates:`, updates); // Debug log
+            console.log(`Action Fill: Applying updates:`, updates);
             setVariableClassData((prevData: VariableRowDataState) => ({
                 ...prevData,
                 ...updates
@@ -497,7 +489,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             toast.info(`No empty cells found below to fill in column "${key}".`);
         }
 
-        // Close modal and reset state
         setActionModalOpen(false);
         setActionTargetCell(null);
         setCurrentAction(null);
@@ -836,64 +827,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                 }
                                             });
 
-                                            const getCellValue = (
-                                                keyObj: { index: number; value: string; },
-                                                rowIndex: number,
-                                                rowDataMap: Map<number, Map<string, any>>,
-                                                variableRowData: VariableRowDataState
-                                            ): string => {
-                                                const rowSpecificData = rowDataMap.has(rowIndex) ?
-                                                    rowDataMap.get(rowIndex)?.get(keyObj.value) : undefined;
-
-                                                let columnData: any = undefined;
-                                                const baseColumnData = variableRowData[keyObj.value];
-
-                                                if (baseColumnData !== undefined) {
-                                                    if (Array.isArray(baseColumnData)) {
-                                                        columnData = rowIndex < baseColumnData.length ? baseColumnData[rowIndex] : undefined;
-                                                    } else if (rowIndex === 0) {
-                                                        columnData = baseColumnData;
-                                                    }
-                                                }
-
-                                                const cellData = rowSpecificData !== undefined ? rowSpecificData : columnData;
-
-                                                if (cellData && typeof cellData === 'object' && 'index' in cellData && 'value' in cellData) {
-                                                    return cellData.value;
-                                                }
-
-                                                let cellValue = '';
-
-                                                if (cellData !== undefined && cellData !== null) {
-                                                    if (typeof cellData === 'object' && cellData !== null && '__rowIndex' in cellData) {
-                                                        const { __rowIndex, ...actualData } = cellData;
-
-                                                        if (Object.keys(actualData).length === 0) {
-                                                        } else if (Object.keys(actualData).length === 1) {
-                                                            const singleValue = Object.values(actualData)[0];
-                                                            cellValue = typeof singleValue === 'object' && singleValue !== null
-                                                                ? JSON.stringify(singleValue)
-                                                                : String(singleValue ?? '');
-                                                        } else {
-                                                            cellValue = JSON.stringify(actualData);
-                                                        }
-                                                    } else if (typeof cellData === 'string') {
-                                                        cellValue = cellData;
-                                                    } else if (Array.isArray(cellData)) {
-                                                        cellValue = rowIndex < cellData.length ?
-                                                            (typeof cellData[rowIndex] === 'object' && cellData[rowIndex] !== null ?
-                                                                JSON.stringify(cellData[rowIndex]) :
-                                                                String(cellData[rowIndex] ?? '')) : '';
-                                                    } else if (typeof cellData === 'object' && cellData !== null) {
-                                                        cellValue = (cellData.name as string | undefined) || JSON.stringify(cellData);
-                                                    } else {
-                                                        cellValue = String(cellData);
-                                                    }
-                                                }
-
-                                                return cellValue;
-                                            };
-
                                             return Array.from({ length: maxArrayLength }).map((_, rowIndex) => (
                                                 <tr key={`row-${rowIndex}`}>
                                                     <td className={styles.rowNumberCell}>{rowIndex + 1}</td>
@@ -1059,10 +992,19 @@ const ClassKey: React.FC<{
                         </button>
                     </form>
                 ) : (
-                    <>
-                        <span>{input}</span>
+                    <div className={styles.inputHeader}>
                         {permanentOrigin && (
                             <div className={styles.headerButtonContainer}>
+                                <div className={styles.buttonContents}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                    }}
+                                    className={styles.importKeyButton}
+                                    title={`For any rows that are empty, you may provide a default value for ${input}`}
+                                    >
+                                    Default
+                                </button>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -1070,7 +1012,7 @@ const ClassKey: React.FC<{
                                     }}
                                     className={styles.importKeyButton}
                                     title={`Import row data for ${input}`}
-                                >
+                                    >
                                     Import
                                 </button>
                                 <button
@@ -1080,11 +1022,13 @@ const ClassKey: React.FC<{
                                     }}
                                     className={styles.importKeyButton}
                                     title={`Clear row data for ${input}`}
-                                >
+                                    >
                                     Clear
                                 </button>
+                                </div>
                             </div>
                         )}
+                        <span>{input}</span>
                         <div className={styles.keyButtons}>
                             {!permanentOrigin ? (
                                 <>
@@ -1109,7 +1053,7 @@ const ClassKey: React.FC<{
                                 </>
                             ) : ("")}
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
         </th>

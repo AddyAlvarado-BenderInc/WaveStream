@@ -28,4 +28,15 @@ class Program
 
         app.Run();
     }
+
+    private static async AutoDeleteOldUpload()
+    {
+        var dbService = app.Services.GetRequiredService<DatabaseService>();
+        var oldUploads = await dbService.GetOldUploadsAsync();
+        foreach (var upload in oldUploads)
+        {
+            await dbService.DeleteUploadAsync(upload);
+        }
+    }
+    
 }

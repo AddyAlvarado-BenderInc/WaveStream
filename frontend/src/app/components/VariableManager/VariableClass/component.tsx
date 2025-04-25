@@ -54,8 +54,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
                 return integerMKS();
             case 'TextareaMKS':
                 return textareaMKS();
-            case 'EscapeSequenceMKS':
-                return escapeSequenceMKS();
             case 'LinkedMKS':
                 return linkedMKS();
             default:
@@ -216,16 +214,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
                     <p>No variables detected.</p>
                 )}
             </div>
-        </div>
-    );
-
-    const escapeSequenceMKS = () => (
-        <div>
-            <select
-                onChange={(e) => handleEscapeSequence(e.target.value)}
-            >
-                <option value="1">!SKIP</option>
-            </select>
         </div>
     );
 

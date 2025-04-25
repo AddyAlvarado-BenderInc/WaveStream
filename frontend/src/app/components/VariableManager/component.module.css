@@ -91,11 +91,6 @@
   transition: 0.2s ease-in-out;
 }
 
-.variableClassContent:hover {
-  background-color: var(--gray-alpha-100);
-  cursor: pointer;
-}
-
 .variableClassItem {
   padding: 0.5rem;
   display: flex;
