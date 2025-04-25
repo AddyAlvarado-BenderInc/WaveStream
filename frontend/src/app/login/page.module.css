@@ -27,7 +27,7 @@
 
 .button {
     background: inherit;
-    color: var(--button-secondary-hover);
+    color: #fff;
     border: 1px solid #fff;
     border-radius: 4px;
     padding: 8px 16px;

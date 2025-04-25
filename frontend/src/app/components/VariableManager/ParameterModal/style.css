@@ -1,12 +1,3 @@
-.page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-  
-    --button-primary-hover: #fff;
-    --button-secondary-hover: #000;
-  }
-
 .parameter-modal-overlay {
     position: fixed;
     top: 0;

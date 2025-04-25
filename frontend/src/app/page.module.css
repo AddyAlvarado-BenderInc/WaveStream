@@ -3,9 +3,9 @@
   --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
   --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
 
-  --button-primary-hover: #383838;
-  --button-secondary-hover: #f2f2f2;
-  
+  --button-primary-hover: #fff;
+  --button-secondary-hover: #000;
+
   --button-critical: #ff2a00;
 
   display: grid;
@@ -15,11 +15,6 @@
   padding: 80px;
   gap: 64px;
   font-family: var(--font-geist-sans);
-}
-
-.lightTheme {
-  background-color: white;
-  color: black;
 }
 
 .darkTheme {
@@ -56,27 +51,15 @@
   margin-left: -10px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+.page {
+  --gray-rgb: 255, 255, 255;
+  --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+  --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
 
-    --button-primary-hover: #fff;
-    --button-secondary-hover: #000;
-  }
+  --button-primary-hover: #fff;
+  --button-secondary-hover: #000;
 }
 
-@media (prefers-color-scheme: light) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-
-    --button-primary-hover: #000;
-    --button-secondary-hover:#fff;
-  }
-}
 
 .main {
   display: flex;
@@ -205,6 +188,7 @@ a.secondary {
 .input {
   border-radius: 4px;
   padding: 8px 16px;
+  background-color: #333333;
   border: 1px solid var(--gray-alpha-200);
 }
 
@@ -217,6 +201,7 @@ a.secondary {
   border-radius: 4px;
   padding: 8px 16px;
   border: 1px solid var(--gray-alpha-200);
+  color: var(--button-primary-hover);
   background: var(--gray-alpha-100);
   cursor: pointer;
   color: invert;
@@ -228,13 +213,13 @@ a.secondary {
 }
 
 .select option {
-  color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
 }
 
 .button {
   background: var(--foreground);
   color: var(--background);
-  border: none;
+  border: 1px solid var(--button-primary-hover);
   border-radius: 4px;
   padding: 8px 16px;
   cursor: pointer;
@@ -244,11 +229,12 @@ a.secondary {
 .button:hover {
   background: var(--button-secondary-hover);
   color: var(--button-primary-hover);
+  border: 1px solid var(--button-primary-hover);
 }
 
 .themeSelect {
-  background: var(--button-secondary-hover);
-  color: var(--button-primary-hover);
+  background: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
   border: 1px solid invert;
   border-radius: 4px;
   padding: 8px 16px;

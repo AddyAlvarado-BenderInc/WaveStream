@@ -1,13 +1,4 @@
 .page {
-    --gray-rgb: 0, 0, 0;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
-  
-    --button-primary-hover: #383838;
-    --button-secondary-hover: #f2f2f2;
-    
-    --button-critical: #ff2a00;
-  
     padding: 40px;
     font-family: var(--font-geist-sans);
     margin: auto;
@@ -32,8 +23,8 @@
 
   .page header button {
     background: inherit;
-    color: invert;
-    border: 1px solid invert;
+    color: var(--button-primary-hover);
+    border: 1px solid var(--button-primary-hover);
     border-radius: 8px;
     padding: 12px 24px;
     font-size: 10pt;

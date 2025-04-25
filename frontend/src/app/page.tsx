@@ -165,10 +165,10 @@ export default function Home() {
           />
         ))}
       </div>
-      <select className={styles.themeSelect} value={theme} onChange={handleThemeChange}>
+      {/* <select className={styles.themeSelect} value={theme} onChange={handleThemeChange}>
         <option value="Dark">Dark</option>
         <option value="Light">Light</option>
-      </select>
+      </select> */}
     </div>
   );
 }
