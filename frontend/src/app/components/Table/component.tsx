@@ -46,7 +46,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
     const tableContainerRef = useRef<HTMLDivElement>(null);
 
     const [targetImportColumn, setTargetImportColumn] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const triggerRowImport = (columnKey: string) => {
         console.log(`Setting target import column: ${columnKey}`);
@@ -357,8 +356,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                         __rowIndex: rowIndex,
                         isComposite: false,
                     };
-                }
-                else {
+                } else {
                     updatedData[dataKey] = {
                         value: newValue,
                         __rowIndex: rowIndex,
@@ -382,6 +380,60 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             }
         });
         return maxIndex;
+    };
+
+    const handleSetDefaultColumnValue = (columnKey: string) => {
+        const defaultValue = prompt(`Enter default value for column "${columnKey}":`);
+
+        if (defaultValue === null) {
+            toast.info("Default value assignment cancelled.");
+            return;
+        }
+
+        if (defaultValue.trim() === "") {
+            toast.warn("Default value cannot be empty. Use 'Clear' button to remove values.");
+            return;
+        }
+
+        setVariableClassData((prevData) => {
+            const maxRowIndex = getMaxRowIndex(prevData);
+            const updates: VariableRowDataState = {};
+            let defaultAppliedCount = 0;
+
+            const highestRowToFill = Math.max(0, maxRowIndex);
+
+            for (let i = 0; i <= highestRowToFill; i++) {
+                const dataKey = `${columnKey}_row_${i}`;
+                const existingCell = prevData[dataKey];
+
+                const shouldApplyDefault = !existingCell ||
+                    (existingCell.value === '' && !existingCell.isDefault);
+
+                if (shouldApplyDefault) {
+                    updates[dataKey] = {
+                        classKey: columnKey,
+                        index: i,
+                        value: defaultValue,
+                        isComposite: false,
+                        isDefault: true,
+                    };
+                    defaultAppliedCount++;
+                } else if (existingCell && existingCell.isDefault && existingCell.value !== defaultValue) {
+                    updates[dataKey] = {
+                        ...existingCell,
+                        value: defaultValue,
+                    };
+                    defaultAppliedCount++;
+                }
+            }
+
+            if (defaultAppliedCount > 0) {
+                return { ...prevData, ...updates };
+            } else {
+                toast.info(`No empty cells found to apply default value in column "${columnKey}". Existing values were preserved.`);
+                return prevData;
+            }
+        });
     };
 
     const actionExtendLength = () => {
@@ -788,6 +840,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                 headerOrigin={headerOrigin}
                                                 onTriggerImport={triggerRowImport}
                                                 clearCellRow={handleClearColumnData}
+                                                onSetDefault={handleSetDefaultColumnValue}
                                             />
                                         ))}
                                     </tr>
@@ -795,7 +848,8 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                 <tbody>
                                     {Object.keys(variableRowData).length > 0 ? (
                                         (() => {
-                                            let maxArrayLength = 1;
+                                            const currentMaxIndex = getMaxRowIndex(variableRowData);
+                                            let maxArrayLength = Math.max(1, currentMaxIndex + 1);
                                             let rowDataMap = new Map();
 
                                             Object.keys(variableRowData).forEach(key => {
@@ -828,6 +882,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                         const cellData = rowDataMap.get(rowIndex)?.get(keyObj.value);
                                                         const isCompositeCell = cellData?.isComposite ?? false;
                                                         const cellValue = cellData?.value;
+                                                        let isDefaultCell = cellData?.isDefault ?? false;
                                                         const isExpanded = expandedCellKey === cellKey;
 
                                                         let displayContent: React.ReactNode = '';
@@ -847,7 +902,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                         return (
                                                             <td
                                                                 key={`${keyObj.index}-${rowIndex}`}
-                                                                className={styles.tableCell}
+                                                                className={isDefaultCell ? styles.tableCellDefault : styles.tableCell}
                                                                 id={`${keyObj.value}-${rowIndex}`}
                                                             >
                                                                 <div className={styles.tableContainer}>
@@ -951,7 +1006,8 @@ const ClassKey: React.FC<{
     headerOrigin: string;
     onTriggerImport: (columnKey: string) => void;
     clearCellRow: (key: string, rowIndex: number) => void;
-}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin, onTriggerImport, clearCellRow }) => {
+    onSetDefault: (key: string) => void;
+}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin, onTriggerImport, clearCellRow, onSetDefault }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(input);
 
@@ -997,9 +1053,10 @@ const ClassKey: React.FC<{
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            onSetDefault(input); // <-- Call the handler
                                         }}
-                                        className={styles.importKeyButton}
-                                        title={`For any rows that are empty, you may provide a default value for ${input}`}
+                                        className={styles.importKeyButton} // Reuse style or create new one
+                                        title={`Set a default value for empty cells in the "${input}" column`}
                                     >
                                         Default
                                     </button>

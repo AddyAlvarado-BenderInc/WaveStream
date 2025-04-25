@@ -58,6 +58,14 @@ interface OriginalData {
     variableClassArray: VariableClassArrayState;
 }
 
+const now = new Date(Date.now());
+
+const month = (now.getMonth() + 1).toString().padStart(2, '0');
+const day = now.getDate().toString().padStart(2, '0');
+const year = now.getFullYear().toString().slice(-2);
+
+const formattedDate = `${month}-${day}-${year}`; 
+
 let saveClicked = 0;
 
 const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
@@ -700,12 +708,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 csvRows.push(rowValues.join(','));
             }
             const csvContent = csvRows.join('\n');
-            triggerDownload(csvContent, `export_${productManager._id || 'data'}.csv`, 'text/csv;charset=utf-8;');
+            triggerDownload(csvContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.csv`, 'text/csv;charset=utf-8;');
             toast.success('CSV export started.');
 
         } else if (format === 'JSON') {
             handleJSONUtility(hasHeaders, hasCellData, headers).then((jsonContent: string | undefined) => {
-                triggerDownload(jsonContent, `export_${productManager._id || 'data'}.json`, 'application/json;charset=utf-8;');
+                triggerDownload(jsonContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.json`, 'application/json;charset=utf-8;');
                 toast.success('JSON export started.');
             })
         }

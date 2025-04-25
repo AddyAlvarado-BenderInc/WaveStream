@@ -14,6 +14,7 @@ export interface tableCellData {
     index: number;
     value: string | string[];
     isComposite: boolean;
+    isDefault?: boolean;
 }
 
 export interface mainKeyString {
