@@ -1,56 +1,51 @@
-@media (prefers-color-scheme: light) {
-    .page {
-      --gray-rgb: 255, 255, 255;
-      --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-      --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-  
-      --button-primary-hover: #fff;
-      --button-secondary-hover: #000;
-    }
-  }
-  
-  @media (prefers-color-scheme: dark) {
-    .page {
-      --gray-rgb: 255, 255, 255;
-      --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-      --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-  
-      --button-primary-hover: #000;
-      --button-secondary-hover:#fff;
-    }
-  }
+.page {
+  --gray-rgb: 255, 255, 255;
+  --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+  --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+
+  --button-primary-hover: #fff;
+  --button-secondary-hover: #000;
+}
 
 .container {
-    display: flex;
-    flex-direction: column;
-    max-width: 1800px;
-    margin: auto;
-    width: 100%;
-  }
+  display: flex;
+  flex-direction: column;
+  max-width: 1800px;
+  margin: auto;
+  width: 100%;
+}
 
 .buttonContainer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 5px;
-    width: 100%;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  width: 100%;
 }
 
-.saveButton, .propertyInterfacesButton, .exportButton, .runButton {
-    margin-right: 5px;
-    padding: 10px 20px;
-    cursor: pointer;
-    border: 1px solid var(--button-primary-hover);
-    background-color: inherit;
-    border-radius: 5px;
-    transition: 0.3s ease-out;
+.saveButton,
+.propertyInterfacesButton,
+.exportButton,
+.runButton {
+  margin-right: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  border: 1px solid var(--button-primary-hover);
+  background-color: inherit;
+  border-radius: 5px;
+  transition: 0.3s ease-out;
 }
 
-.saveButton:hover, .propertyInterfacesButton:hover, .exportButton:hover, .runButton:hover {
-    background-color: var(--button-primary-hover);
-    color: var(--button-secondary-hover);
+.saveButton:hover,
+.propertyInterfacesButton:hover,
+.exportButton:hover,
+.runButton:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
 }
 
-.saveButtonDisabled, .exportButtonDisabled, .runButtonDisabled {
+.saveButtonDisabled,
+.exportButtonDisabled,
+.runButtonDisabled {
   opacity: 0.6;
   cursor: not-allowed;
   background-color: #cccccc;

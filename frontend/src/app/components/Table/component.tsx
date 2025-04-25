@@ -628,7 +628,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                             />
                             <span>{zoomLevel}%</span>
                         </div>
-
                         <button
                             onClick={handleZoomIn}
                             className={styles.zoomButton}
@@ -753,8 +752,9 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                             e.stopPropagation();
                                             handlePermanentOriginKey(headerOrigin);
                                         }}
+                                        title="Set this class key as the permanent origin, this will be the starting point for all automation processes"
                                     >
-                                        Set As Origin
+                                        Set As Origin*
                                     </button>
                                 </div>
                             ) : (
@@ -937,6 +937,11 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                             </table>
                         </div>
                     </div>
+                    {!headerOrigin && !permanentOrigin && (
+                        <div className={styles.preOriginTip}>
+                            <p>Click on a <b>Class Key</b> above to select an <b>Origin</b> point for the automation process</p>
+                        </div>
+                    )}
                 </div>
             )}
             <ToastContainer />
@@ -996,35 +1001,35 @@ const ClassKey: React.FC<{
                         {permanentOrigin && (
                             <div className={styles.headerButtonContainer}>
                                 <div className={styles.buttonContents}>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                    }}
-                                    className={styles.importKeyButton}
-                                    title={`For any rows that are empty, you may provide a default value for ${input}`}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                        }}
+                                        className={styles.importKeyButton}
+                                        title={`For any rows that are empty, you may provide a default value for ${input}`}
                                     >
-                                    Default
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onTriggerImport(input);
-                                    }}
-                                    className={styles.importKeyButton}
-                                    title={`Import row data for ${input}`}
+                                        Default
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onTriggerImport(input);
+                                        }}
+                                        className={styles.importKeyButton}
+                                        title={`Import row data for ${input}`}
                                     >
-                                    Import
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        clearCellRow(input, 0);
-                                    }}
-                                    className={styles.importKeyButton}
-                                    title={`Clear row data for ${input}`}
+                                        Import
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            clearCellRow(input, 0);
+                                        }}
+                                        className={styles.importKeyButton}
+                                        title={`Clear row data for ${input}`}
                                     >
-                                    Clear
-                                </button>
+                                        Clear
+                                    </button>
                                 </div>
                             </div>
                         )}

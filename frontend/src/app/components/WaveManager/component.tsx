@@ -751,7 +751,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             disabled={!hasChanges}
                             title={!hasChanges ? 'No changes to save' : 'Save changes'}
                         >
-                            Save
+                            {hasChanges ? 'Save*' : 'Saved'}
                         </button>
                         <button
                             className={`${styles.exportButton} ${(variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0) ? styles.exportButtonDisabled : ''}`}

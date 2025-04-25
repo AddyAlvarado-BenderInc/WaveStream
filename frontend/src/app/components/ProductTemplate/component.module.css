@@ -1,23 +1,10 @@
-@media (prefers-color-scheme: dark) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+.page {
+  --gray-rgb: 255, 255, 255;
+  --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+  --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
 
-    --button-primary-hover: #fff;
-    --button-secondary-hover: #000;
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  .page {
-    --gray-rgb: 255, 255, 255;
-    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-
-    --button-primary-hover: #000;
-    --button-secondary-hover:#fff;
-  }
+  --button-primary-hover: #fff;
+  --button-secondary-hover: #000;
 }
 
 .productTemplate {
