@@ -105,7 +105,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
                     }}
                 >
                     <h3>Edit Name</h3>
-                    <form 
+                    <form
                         onSubmit={handleEditName}
                     >
                         <input
@@ -125,15 +125,15 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
                         >
                             Save
                         </button>
-                    <button
-                        className={style.button}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onClose();
-                        }}
+                        <button
+                            className={style.button}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onClose();
+                            }}
                         >
-                        Close
-                    </button>
+                            Close
+                        </button>
                     </form>
                 </div>
             </div>
@@ -173,18 +173,10 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({ manager, onDelete, on
                     className={style.button}
                     onClick={(e) => {
                         e.stopPropagation();
+                        alert('Duplicate functionality not implemented yet.');
                     }}
                 >
-                    {isActive ? 'Deactivate' : 'Activate'}
-                </button>
-                <button
-                    className={style.runButton}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        alert('Running the product manager...[mockup]');
-                    }}
-                >
-                    Run
+                    Duplicate
                 </button>
             </div>
             <ConfirmationModal

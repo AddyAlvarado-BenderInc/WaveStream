@@ -937,7 +937,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                             </table>
                         </div>
                     </div>
-                    {!headerOrigin && !permanentOrigin && (
+                    {!headerOrigin && !permanentOrigin && classKeyInputObjects.length > 0 && (
                         <div className={styles.preOriginTip}>
                             <p>Click on a <b>Class Key</b> above to select an <b>Origin</b> point for the automation process</p>
                         </div>

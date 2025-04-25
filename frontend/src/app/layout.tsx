@@ -16,8 +16,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Product Management & Automation Application",
-  description: "Efficiently manage your product managers and products while automating tasks.",
+  title: "A Streamline Product Management & Automation Application",
+  description: "Efficiently manage your product streams and products while automating tasks.",
 };
 
 export default function RootLayout({

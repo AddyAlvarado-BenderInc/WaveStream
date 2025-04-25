@@ -124,21 +124,21 @@ export default function Home() {
     <div className={`${styles.page} ${theme === "Light" ? styles.lightTheme : styles.darkTheme}`}>
       <header>
         <div className={styles.leftHeader}>
-          <h1>WaveKey Manager</h1>
+          <h1>WaveStream</h1>
         </div>
         <button name="logout-button" className={styles.button}
           onClick={handleLogout}>
           Logout
         </button>
       </header>
-      <p>Total Keys: {productManagers.length}</p>
+      <p>Total Streams: {productManagers.length}</p>
       <form className={styles.form} onSubmit={handleAddProductManager}>
         <input
           className={styles.input}
           type="text"
           value={newManagerName}
           onChange={(e) => setNewManagerName(e.target.value)}
-          placeholder="Enter Key Name"
+          placeholder="Enter Stream Name"
           required
         />
         <select
@@ -147,11 +147,11 @@ export default function Home() {
           onChange={(e) => setNewManagerType(e.target.value)}
           required
         >
-          <option value="">Select A Type</option>
+          <option value="">Select a Type</option>
           <option value="Manager">Manager</option>
         </select>
         <button className={styles.button} type="submit">
-          Add Key
+          Add Stream
         </button>
       </form>
       <div className={styles.managerList}>
