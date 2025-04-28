@@ -3,3 +3,5 @@
 ################################################################################
 
 /backend/.env
+/javascriptBackend/.env
+/javascriptBackend/node_modules

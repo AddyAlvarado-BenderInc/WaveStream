@@ -50,40 +50,48 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7); 
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1100; 
-  backdrop-filter: blur(2px); 
+  z-index: 1100;
+  backdrop-filter: blur(2px);
 }
 
 .runModalContent {
-  background: #1a1a1a; 
+  background: #1a1a1a;
   padding: 25px 30px;
   border-radius: 8px;
   width: 100%;
-  min-width: 350px; 
+  min-width: 350px;
   max-width: 500px;
-  border: 1px solid rgba(var(--gray-rgb, 255, 255, 255), 0.1); 
-  text-align: center; 
+  border: 1px solid rgba(var(--gray-rgb, 255, 255, 255), 0.1);
+  text-align: center;
 }
 
 .runModalContent h2 {
   margin-top: 0;
   margin-bottom: 15px;
-  color: #fff; 
+  color: #fff;
   font-size: 1.3em;
 }
 
 .runModalContent p {
-  margin-bottom: 25px; 
+  margin-bottom: 25px;
   font-size: 1.0em;
-  color: #ccc; 
+  color: #ccc;
+}
+
+.runModalContent .runForm {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
 }
 
 .runModalContent form button {
-  padding: 5px 15px; 
+  padding: 5px 15px;
   cursor: pointer;
   margin: 0 5px;
   border-radius: 5px;

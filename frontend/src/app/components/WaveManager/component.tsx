@@ -64,7 +64,7 @@ const month = (now.getMonth() + 1).toString().padStart(2, '0');
 const day = now.getDate().toString().padStart(2, '0');
 const year = now.getFullYear().toString().slice(-2);
 
-const formattedDate = `${month}-${day}-${year}`; 
+const formattedDate = `${month}-${day}-${year}`;
 
 let saveClicked = 0;
 
@@ -74,7 +74,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [approvedTableSheetClear, setApprovedTableSheetClear] = useState(false);
     const [renderRunModal, setRenderRunModal] = useState(false);
     const [selectedRunOption, setSelectedRunOption] = useState("");
-
+    const [selectedServer, setSelectedServer] = useState("");
+    const [selectedType, setSelectedType] = useState("");
 
     useEffect(() => {
         console.log("WaveManager: Initializing/Syncing Redux state for globalVariableClassData");
@@ -646,21 +647,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         return jsonContent;
     }
 
-    const handleExport = async () => {
-        const hasHeaders = variableData.tableSheet.length > 0;
-        const hasCellData = Object.keys(variableRowData).length > 0;
-
+    const handleCSVUtility = async (hasHeaders: boolean, hasCellData: boolean, headers: string[]) => {
         if (!hasHeaders && !hasCellData) {
             toast.info('No data to export'); return;
         }
 
-        const format = window.prompt('Enter export format (CSV or JSON):', 'csv')?.toUpperCase();
-        if (format !== 'CSV' && format !== 'JSON') {
-            toast.error('Invalid format. Use CSV or JSON.'); return;
-        }
-
-        const headers = variableData.tableSheet.map(item => item.value);
-        if (headers.length === 0 && format === "CSV") {
+        if (headers?.length === 0) {
             toast.error('Cannot export CSV without headers.'); return;
         }
 
@@ -694,23 +686,41 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             }
         };
 
+        const csvRows: string[] = [];
+        csvRows.push(headers?.map(escapeCsvField).join(','));
+
+        for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
+            const rowMap = rowDataMap.get(rowIndex) || {};
+            const rowValues = headers?.map(header => {
+                const cellData = rowMap[header];
+                const formattedValue = formatValueForExport(cellData);
+                return escapeCsvField(formattedValue);
+            });
+            csvRows.push(rowValues?.join(','));
+        }
+        const csvContent = csvRows.join('\n');
+        return csvContent;
+    }
+
+    const handleExport = async () => {
+        const hasHeaders = variableData.tableSheet.length > 0;
+        const hasCellData = Object.keys(variableRowData).length > 0;
+
+        if (!hasHeaders && !hasCellData) {
+            toast.info('No data to export'); return;
+        }
+
+        const format = window.prompt('Enter export format (CSV or JSON):', 'csv')?.toUpperCase();
+        if (format !== 'CSV' && format !== 'JSON') {
+            toast.error('Invalid format. Use CSV or JSON.'); return;
+        }
+
+        const headers = variableData.tableSheet.map(item => item.value);
         if (format === 'CSV') {
-            const csvRows: string[] = [];
-            csvRows.push(headers.map(escapeCsvField).join(','));
-
-            for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-                const rowMap = rowDataMap.get(rowIndex) || {};
-                const rowValues = headers.map(header => {
-                    const cellData = rowMap[header];
-                    const formattedValue = formatValueForExport(cellData);
-                    return escapeCsvField(formattedValue);
-                });
-                csvRows.push(rowValues.join(','));
-            }
-            const csvContent = csvRows.join('\n');
-            triggerDownload(csvContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.csv`, 'text/csv;charset=utf-8;');
-            toast.success('CSV export started.');
-
+            handleCSVUtility(hasHeaders, hasCellData, headers).then((csvContent: string | undefined) => {
+                triggerDownload(csvContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.csv`, 'text/csv;charset=utf-8;');
+                toast.success('CSV export started.');
+            })
         } else if (format === 'JSON') {
             handleJSONUtility(hasHeaders, hasCellData, headers).then((jsonContent: string | undefined) => {
                 triggerDownload(jsonContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.json`, 'application/json;charset=utf-8;');
@@ -725,13 +735,32 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             alert("Please choose a run option.");
             return;
         }
-        handleRun(selectedRunOption);
+        handleRun(selectedRunOption, selectedServer);
     }
 
-    const handleRun = async (option: string) => {
+    const handleRun = async (option: string, selectedServer: string) => {
         const hasHeaders = variableData.tableSheet.length > 0;
         const hasCellData = Object.keys(variableRowData).length > 0;
         const cellOrigin = variableData.tableSheet.find(item => item.isOrigin);
+        const iconName = (productManager.icon).map(item => ({ item }).item.filename).toString().split(',').filter(Boolean);
+        const iconFile = iconName.map(item => `http://localhost:3000/api/files/${item}`);
+
+        if (iconFile.length === 0) {
+            toast.info('No icon file is found for this product');
+        } else if (iconFile.some(item => item.includes(' '))) {
+            console.warn('Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png');
+            toast.error('Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png"');
+            return;
+        };
+        console.log('iconFile:', iconFile);
+
+        if (!selectedServer) {
+            toast.error('No server is selected', {
+                position: 'bottom-right',
+                autoClose: 5000,
+            });
+            return;
+        }
 
         if (!hasHeaders && !hasCellData) {
             toast.info('No data to run', {
@@ -756,7 +785,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
 
         const confirmation = window.confirm(
-            `You are going to run a ${option} automation for ${productManager._id}_${productManager.name}. Are you sure?`
+            `You are going to run a ${option} automation for ${productManager._id}_${productManager.name} on ${selectedServer} server. Are you sure?`
         );
 
         if (!confirmation) {
@@ -764,32 +793,48 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
 
         const jsonData = handleJSONUtility(hasHeaders, hasCellData, variableData.tableSheet.map(item => item.value));
-        const response = await axios.post(`http://localhost:5000/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: {
-                runOption: option,
-                cellOrigin: cellOrigin,
-                jsonData
-            },
-        });
-
-        if (response) {
-            const result = await response;
-            console.log('Run result:', result);
-            toast.success('Automation run successfully!', {
-                position: 'bottom-right',
-                autoClose: 5000,
-            });
+        const handleRunPost = async (server: string) => {
+            try {
+                const response = await axios.post(server, {
+                    type: selectedType,
+                    runOption: option,
+                    cellOrigin: cellOrigin,
+                    files: iconFile,
+                    jsonData
+                }, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                if (response) {
+                    const result = await response;
+                    console.log('Run result:', result);
+                    toast.success('Automation run successfully!', {
+                        position: 'bottom-right',
+                        autoClose: 5000,
+                    });
+                } else {
+                    const error = await response;
+                    console.error('Error running automation:', error);
+                    toast.error(`Error running automation: ${error}`, {
+                        position: 'bottom-right',
+                        autoClose: 5000,
+                    });
+                }
+            } catch (error) {
+                console.error('Error running automation:', error);
+            }
+        };
+        if (selectedServer === 'javascript-server') {
+            handleRunPost('http://localhost:3002/js-server');
+        } else if (selectedServer === 'csharp-server') {
+            handleRunPost('http://localhost:5001/cs-server');
         } else {
-            const error = await response;
-            console.error('Error running automation:', error);
-            toast.error(`Error running automation: ${error}`, {
+            toast.error(`Server ${selectedServer} is not supported`, {
                 position: 'bottom-right',
                 autoClose: 5000,
             });
+            return;
         }
     };
 
@@ -872,12 +917,32 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 <option value="" disabled>Choose Run Option</option>
                                 <option value="dsf-edit-product">DSF - Edit Product</option>
                             </select>
-                            <button type='submit'>Run</button>
-                            <button
-                                type="button"
-                                onClick={() => setRenderRunModal(false)}>
-                                Cancel
-                            </button>
+                            <select
+                                className={styles.runSelect}
+                                value={selectedRunOption}
+                                onChange={(e) => setSelectedType(e.target.value)}
+                            >
+                                <option value="" disabled>Choose Type Option</option>
+                                <option value="csv-type">Use .csv</option>
+                                <option value="json-type">Use .json</option>
+                            </select>
+                            <select
+                                className={styles.runSelect}
+                                value={selectedServer}
+                                onChange={(e) => setSelectedServer(e.target.value)}
+                            >
+                                <option value="" disabled>Choose Server</option>
+                                <option value="javascript-server">Javascript Server</option>
+                                <option value="csharp-server" disabled>C# Server {`[coming soon]`}</option>
+                            </select>
+                            <div className={styles.runButtonsContainer}>
+                                <button type='submit'>Run</button>
+                                <button
+                                    type="button"
+                                    onClick={() => setRenderRunModal(false)}>
+                                    Cancel
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
