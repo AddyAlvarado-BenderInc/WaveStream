@@ -15,7 +15,7 @@ app.use(cors());
 const upload = multer({ dest: 'uploads/' });
 
 const loadPuppeteerScript = (folder, scriptName) => {
-    const scriptPath = path.join(folder, scriptName);
+    const scriptPath = path.join(__dirname, folder, scriptName);
     return require(scriptPath);
 };
 
@@ -46,103 +46,77 @@ const autoDeleteOldUploads = async () => {
     }
 };
 
-// Old csv extraction from previous server code, update as needed
-async function extractCSVValues(csvFilePath) {
-    return new Promise((resolve, reject) => {
-        const results = [];
+const removeEmptyValues = (obj) => {
+    if (Array.isArray(obj)) {
+        return obj
+            .map((item) => removeEmptyValues(item))
+            .filter((item) => item !== null && item !== undefined && item !== '' && Object.keys(item).length > 0); 
+    } else if (obj !== null && typeof obj === 'object') {
+        return Object.entries(obj)
+            .filter(([_, value]) => value !== null && value !== undefined && value !== '' && !(typeof value === 'object' && Object.keys(value).length === 0)) // Filter out empty values
+            .reduce((acc, [key, value]) => {
+                acc[key] = removeEmptyValues(value);
+                return acc;
+            }, {});
+    } else {
+        return obj;
+    }
+};
 
-        fs.createReadStream(csvFilePath)
-            .pipe(csvParser())
-            .on('data', (data) => results.push(data))
-            .on('end', () => {
-                console.log('CSV parsed data:', results);
+const differentializeProductData = async (type, fileData) => {
+    const { jsonData } = fileData;
+    let products = [];
 
-                const products = results.map(row => ({
-                    nullSpace: row.null || "Intentionally Left Blank",
-                    type: row.Type || "null",
-                    productName: row.ItemName?.trim() || "",
-                    displayName: row.DisplayName?.trim() || "",
-                    itemTemplate: row.ItemTemplate?.trim() || "",
-                    longDescription: row.LongDescription || "",
-                    orderQuantity: row.OrderQuantity || "default",
-                    advancedRange: row.AdvancedRange || "",
-                    weightInput: row.WeightInput || "0",
-                    rangeStart: row.RangeStart,
-                    rangeEnd: row.RangeEnd || "",
-                    regularPrice: parseFloat(row.RegularPrice).toFixed(4),
-                    setupPrice: parseFloat(row.SetupPrice).toFixed(4),
-                    icon: row.Icon || "null",
-                    pdfUpload: row.PDFUploadName,
-                    ticketTemplate: row.TicketTemplates || "default", // PACE IT 4/0 is default
-                    shippingWidth: row.ShippingWidth || "9",
-                    shippingLength: row.ShippingLength || "12",
-                    shippingHeight: row.ShippingHeight || "12",
-                    shippingMaxQtyPerSub: row.ShippingMaxQtyPerSub || "500",
-                    buyerConfig: row.BuyerConfiguration || false,
-                    skipProduct: row.SkipProduct || false,
-                    maxQuantity: row.MaxQty || "default",
-                    showQtyPrice: row.ShowQtyPrice || false,
-                }));
-
-                console.log('Products:', products);
-                resolve(products);
-            })
-            .on('error', (error) => reject(error));
-    });
-}
-
-async function differentializeProductData(type, runOption, cellOrigin, data) {
-    const results = Array.isArray(data.jsonData) ? data.jsonData : [];
-
-    if (results.length === 0) {
-        console.error("No valid JSON data found!");
-        return [];
+    if (type === 'json-type' && jsonData) {
+        try {
+            products = JSON.parse(jsonData);
+            products = removeEmptyValues(products);
+        } catch (error) {
+            console.error('Error parsing JSON data:', error);
+            throw new Error('Invalid JSON data');
+        }
+    } else if (type === 'csv-type' && fileData.file) {
+        const filePath = path.join(__dirname, 'uploads', fileData.file.filename);
+        return new Promise((resolve, reject) => {
+            const results = [];
+            fs.createReadStream(filePath)
+                .pipe(csvParser())
+                .on('data', (data) => results.push(data))
+                .on('end', () => {
+                    products = results;
+                    resolve(products);
+                })
+                .on('error', (error) => {
+                    console.error('Error reading CSV file:', error);
+                    reject(error);
+                });
+        });
     }
 
-    const products = results.map(row => ({
-        productName: row.ItemName?.trim() || "Unnamed Product", // Use default name if empty
-        displayName: row.DisplayName?.trim() || "Untitled Product",
-        rangeStart: row.RangeStart || "0", // Default range start
-        rangeEnd: row.RangeEnd || "0", // Default range end
-        regularPrice: row.RegularPrice ? parseFloat(row.RegularPrice).toFixed(4) : "0.0000", // Default price
-        setupPrice: row.SetupPrice?.Composite || [], // Extract composite array
-        type: row.Type || "General", // Default product type
-        longDescription: row.LongDescription?.trim() || "No description provided",
-        briefDescription: row.BriefDescription?.trim() || "No brief description",
-        orderQuantity: row.OrderQuantity || "1", // Default order quantity
-        advancedRange: row.AdvancedRange || "",
-        icon: row.Icon || "No Icon",
-        pdfUpload: row.PDFUploadName || "No PDF",
-        ticketTemplate: row.TicketTemplates || "Default Template",
-        shippingWidth: row.ShippingWidth || "0",
-        shippingLength: row.ShippingLength || "0",
-        shippingHeight: row.ShippingHeight || "0",
-        shippingMaxQtyPerSub: row.ShippingMaxQtyPerSub || "Unlimited",
-        itemTemplate: row.ItemTemplate || "Default Template",
-        buyerConfig: row.BuyerConfiguration || false,
-        skipProduct: row.SkipProduct || false,
-        weightInput: row.WeightInput || "0",
-    }));
-
-    console.log("Processed Products for Automation:", products);
-
     return products;
-}
+};
 
 app.post('/js-server', upload.single('file'), async (req, res) => {
     const { type, runOption, cellOrigin, jsonData } = req.body;
 
-    console.log(`Run Option: ${runOption}`);
-    console.log(`Type: ${type}`);
-    console.log(`Cell Origin:`, cellOrigin);
-
     try {
+        if (typeof cellOrigin !== 'object' || cellOrigin === null) {
+            throw new Error('Invalid Cell Origin: Expected an object');
+        }
+        const cellOriginObj = Object.entries(cellOrigin);
+
+        console.log(`Run Option: ${runOption}`);
+        console.log(`Type: ${type}`);
+        console.log(`Cell Origin:`, JSON.stringify(cellOriginObj, null, 2));
+
         let products = [];
-        if (type === 'csv-type' && req.file) {
-            const csvFilePath = req.file.path;
-            products = await extractCSVValues(csvFilePath);
-        } else if (type === 'json-type' && jsonData) {
-            products = await differentializeProductData(type, runOption, cellOrigin, { jsonData });
+        if (type === 'json-type' && jsonData) {
+            const resolvedJsonData = await Promise.resolve(jsonData);
+            if (typeof resolvedJsonData !== 'string') {
+                throw new Error('Invalid JSON data: Expected a string');
+            }
+
+            products = await differentializeProductData(type, { jsonData: resolvedJsonData });
         } else {
             res.status(400).json({ message: 'Invalid data type or missing file/data' });
             return;
@@ -157,7 +131,7 @@ app.post('/js-server', upload.single('file'), async (req, res) => {
         await autoDeleteOldUploads();
     } catch (error) {
         console.error('Error running Puppeteer script:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: error.message });
     }
 });
 

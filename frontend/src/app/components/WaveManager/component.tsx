@@ -75,7 +75,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [renderRunModal, setRenderRunModal] = useState(false);
     const [selectedRunOption, setSelectedRunOption] = useState("");
     const [selectedServer, setSelectedServer] = useState("");
-    const [selectedType, setSelectedType] = useState("");
 
     useEffect(() => {
         console.log("WaveManager: Initializing/Syncing Redux state for globalVariableClassData");
@@ -717,12 +716,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
         const headers = variableData.tableSheet.map(item => item.value);
         if (format === 'CSV') {
-            handleCSVUtility(hasHeaders, hasCellData, headers).then((csvContent: string | undefined) => {
+            await handleCSVUtility(hasHeaders, hasCellData, headers).then((csvContent: string | undefined) => {
                 triggerDownload(csvContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.csv`, 'text/csv;charset=utf-8;');
                 toast.success('CSV export started.');
             })
         } else if (format === 'JSON') {
-            handleJSONUtility(hasHeaders, hasCellData, headers).then((jsonContent: string | undefined) => {
+            await handleJSONUtility(hasHeaders, hasCellData, headers).then((jsonContent: string | undefined) => {
                 triggerDownload(jsonContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.json`, 'application/json;charset=utf-8;');
                 toast.success('JSON export started.');
             })
@@ -792,19 +791,34 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             return;
         }
 
-        const jsonData = handleJSONUtility(hasHeaders, hasCellData, variableData.tableSheet.map(item => item.value));
+        const jsonData = await handleJSONUtility(hasHeaders, hasCellData, variableData.tableSheet.map(item => item.value));
+        if (!jsonData) {
+            toast.error('Error generating JSON data for the run', {
+                position: 'bottom-right',
+                autoClose: 5000,
+            });
+            return;
+        }
+
         const handleRunPost = async (server: string) => {
             try {
                 const response = await axios.post(server, {
-                    type: selectedType,
+                    type: 'json-type',
                     runOption: option,
                     cellOrigin: cellOrigin,
                     files: iconFile,
-                    jsonData
+                    jsonData: jsonData,
                 }, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                     },
+                });
+                console.log("Payload being sent:", {
+                    type: 'json-type',
+                    runOption: option,
+                    cellOrigin: cellOrigin,
+                    files: iconFile,
+                    jsonData: jsonData,
                 });
                 if (response) {
                     const result = await response;
@@ -916,15 +930,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             >
                                 <option value="" disabled>Choose Run Option</option>
                                 <option value="dsf-edit-product">DSF - Edit Product</option>
-                            </select>
-                            <select
-                                className={styles.runSelect}
-                                value={selectedRunOption}
-                                onChange={(e) => setSelectedType(e.target.value)}
-                            >
-                                <option value="" disabled>Choose Type Option</option>
-                                <option value="csv-type">Use .csv</option>
-                                <option value="json-type">Use .json</option>
                             </select>
                             <select
                                 className={styles.runSelect}

@@ -27,7 +27,7 @@ async function sendSuccessEmail(processProductCount, products) {
                 <h1>The Following Products Have Been Autofilled</h1>
                 <br />
                 <span>
-                    <p>${products.map(product => product.productName).join('<br />')}</p>
+                    <p>${products.map(product => product.ItemName).join('<br />')}</p>
                 </span>
             </span>
             `,
@@ -54,7 +54,7 @@ async function sendFailureEmail(processProductCount, products, error) {
 
     function generateHighlightedProductList(count, products) {
         return products.map((product, index) => {
-            const productLine = `${product.productName}`;
+            const productLine = `${product.ItemName}`;
             if (index === count) {
                 return `<div style="background-color: #ffcccc; padding: 4px; border-radius: 4px;">${productLine} ❌ </div>`;
             }
@@ -265,7 +265,7 @@ async function detectMultipleRanges(newPage) {
 };
 
 async function detectFilledDetails(newPage, product) {
-    const longDescriptions = product.longDescription;
+    const longDescriptions = product.LongDescription;
     const evaluation = await newPage.$eval('textarea.reTextArea', el => el.textContent);
 
     console.log('Text Populating the text area: ', evaluation);
@@ -285,11 +285,11 @@ async function fillItemTemplate(newPage, product) {
     await newPage.waitForSelector(itemTemplateSelector);
     await newPage.click(itemTemplateSelector);
     await completeDelete(newPage);
-    await newPage.type(itemTemplateSelector, product.itemTemplate);
+    await newPage.type(itemTemplateSelector, product.ItemTemplate);
 }
 
 async function fillProductInfo(newPage, product) {
-    let nameDisplay = product.displayName ? product.displayName : "";
+    let nameDisplay = product.DisplayName ? product.DisplayName : "";
     const displayNameSelector = '#ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName';
     await newPage.waitForSelector(displayNameSelector);
     console.log('Display selector found!')
@@ -384,7 +384,7 @@ async function fillPricingForm(newPage, startingRange, endingRange, regularPrice
 };
 
 async function fillLongDescription(newPage, product) {
-    const longDescriptions = product.longDescription;
+    const longDescriptions = product.LongDescription;
     const longDescriptionField = 'textarea.reTextArea';
     if (await newPage.$(longDescriptionField)) {
         console.log('Long Description field exists');
@@ -400,37 +400,37 @@ async function processProduct(browser, page, product) {
     const anyQuantitiesButton = '#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__AnyQuantities';
     const advancedQuantitiesButton = '#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Advanced';
     const productNameSelector = '#ctl00_ctl00_C_M_ctl00_W_ctl01__Name';
-    const productName = product.productName;
-    const advancedRanges = product.advancedRange;
-    const orderQuantities = product.orderQuantity;
-    const icon = product.icon;
-    const pdf = product.pdfUpload;
-    const ticketTemplates = product.ticketTemplate;
-    const shippingWidths = product.shippingWidth;
-    const shippingLengths = product.shippingLength;
-    const shippingHeights = product.shippingHeight;
-    const shippingMaxs = product.shippingMaxQtyPerSub;
-    const buyerConfigs = product.buyerConfig;
-    const productType = product.type;
-    const weightInput = product.weightInput;
-    let maxQuantity = product.maxQuantity;
-    const showQtyPrice = product.showQtyPrice;
+    const productName = product.ItemName;
+    const advancedRanges = product.AdvancedRange;
+    const orderQuantities = product.OrderQuantity;
+    const icon = product.Icon;
+    const pdf = product.PDFUploadName;
+    const ticketTemplates = product.TicketTemplate;
+    const shippingWidths = product.ShippingWidth;
+    const shippingLengths = product.ShippingLength;
+    const shippingHeights = product.ShippingHeight;
+    const shippingMaxs = product.ShippingMaxQtyPerSub;
+    const buyerConfigs = product.BuyerCofiguration;
+    const productType = product.Type;
+    const weightInput = product.WeightInput;
+    let maxQuantity = product.MaxQuantity;
+    const showQtyPrice = product.ShowQtyPrice;
 
-    const startingRange = product.rangeStart;
-    const endingRange = product.rangeEnd;
-    const regularPrices = product.regularPrice;
-    const setupPrices = product.setupPrice;
+    const startingRange = product.RangeStart;
+    const endingRange = product.RangeEnd;
+    const regularPrices = product.RegularPrice;
+    const setupPrices = product.SetupPrice;
 
-    const skipProduct = product.skipProduct;
+    const skipProduct = product.SkipProduct;
     if (skipProduct) {
-        console.log('Skipping product:', product.productName);
+        console.log('Skipping product:', product.ItemName);
         return;
     }
 
     const validProductTypes = (productType) => {
         switch (productType) {
             case 'Static Document':
-            case 'AdHoc':
+            case 'Ad Hoc':
             case 'Product Matrix':
             case 'Non Printed Products':
                 return true;
@@ -450,10 +450,10 @@ async function processProduct(browser, page, product) {
     const allowIconFields = false;
     const allowDescriptionFields = false;
 
-    console.log('Processing for product:', product.productName);
+    console.log('Processing for product:', product.ItemName);
 
-    if (!product.productName || typeof product.productName !== 'string') {
-        console.error('Invalid product name:', product.productName);
+    if (!product.ItemName || typeof product.ItemName !== 'string') {
+        console.error('Invalid product name:', product.ItemName);
         throw new Error('Invalid product name');
     };
 
@@ -464,7 +464,7 @@ async function processProduct(browser, page, product) {
 
     await completeDelete(page);
 
-    await page.type(searchBar, product.productName);
+    await page.type(searchBar, product.ItemName);
     await page.keyboard.press('Enter');
 
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -705,11 +705,11 @@ async function processProduct(browser, page, product) {
             'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_StorefrontName"]',
             el => el.value.trim()
         );
-        if (queriedProduct === product.displayName) {
+        if (queriedProduct === product.DisplayName) {
             console.log(`Product matches our display name: ${queriedProduct}, Skipping!`);
             return true;
         } else {
-            console.log(`Product does not match our display name. Queried: ${queriedProduct}, Expected: ${product.displayName}`);
+            console.log(`Product does not match our display name. Queried: ${queriedProduct}, Expected: ${product.DisplayName}`);
             return false;
         }
     };
@@ -765,19 +765,20 @@ async function processProduct(browser, page, product) {
     };
     console.log('Product name matches, proceeding with autofill!, product name: ', productName);
 
-    if (product.displayName === '!SKIP') {
-        console.log('Product details are skipped for product: ', product.productName);
-    } else if (!await productQueriedCheck(newPage, product) && product.displayName !== '!SKIP') {
+    if (product.DisplayName === '!SKIP' && product.DisplayName) {
+        console.log('Product details are skipped for product: ', product.ItemName);
+    } else if (!await productQueriedCheck(newPage, product) && product.DisplayName !== '!SKIP' && product.DisplayName) {
         await fillProductInfo(newPage, product);
     }
 
     await new Promise(resolve => setTimeout(resolve, 600));
     const evaluatedItemTemplate = await newPage.$eval('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$txtMISEstimateId"]', el => el.value.trim());
     console.log("Evaluated item template name: ", evaluatedItemTemplate);
-    if (product.itemTemplate !== '!SKIP') {
-        if (evaluatedItemTemplate !== product.itemTemplate) {
+    if (product.ItemTemplate !== '!SKIP' && product.ItemTemplate) {
+        console.log('Filling Item template field with: ', product.ItemTemplate);
+        if (evaluatedItemTemplate !== product.ItemTemplate) {
             await fillItemTemplate(newPage, product);
-            console.log('Item template typed: ', product.itemTemplate);
+            console.log('Item template typed: ', product.ItemTemplate);
         } else {
             console.log('Item template already exists. Skipping');
         }
@@ -814,7 +815,7 @@ async function processProduct(browser, page, product) {
         }
         await newPage.keyboard.press('Enter');
     }
-    if (product.longDescription !== '!SKIP' && allowDescriptionFields || productType !== 'Non Printed Products' && allowDescriptionFields) {
+    if (product.LongDescription !== '!SKIP' && allowDescriptionFields || productType !== 'Non Printed Products' && allowDescriptionFields) {
         if (await detectFilledDetails(newPage, product) === false) {
             await fillLongDescription(newPage, product);
         }
@@ -913,8 +914,8 @@ async function processProduct(browser, page, product) {
             const pdfTitle = await newPage.$('#ctl00_ctl00_C_M_ctl00_W_ctl02_FilesAddedToJob1_FileRepeater_ctl01_UF_FN');
             const pdfTitleEvaluation = await pdfTitle.evaluate(el => el.textContent);
             await console.log('PDF Title: ', pdfTitleEvaluation);
-            if (pdfTitleEvaluation !== product.pdfUpload) {
-                console.log('PDF does not match! Uploading PDF: ', product.pdfUpload);
+            if (pdfTitleEvaluation !== product.PDFUploadName) {
+                console.log('PDF does not match! Uploading PDF: ', product.PDFUploadName);
                 await uploadPDF(newPage, pdf);
             } else {
                 console.log('PDF matches. Skipping PDF upload procedure');
@@ -968,7 +969,7 @@ async function runPuppeteer(products) {
         // the automation in order to return to the previous point. For now, we should just have a variable that we can change.
 
         console.log(`Total products to process: ${products.length}`);
-        sound.play(activateSound);
+        // sound.play(activateSound);
 
         for (const product of products) {
             console.log(`Processing product ${processedProductCount + 1}/${products.length}`);
@@ -984,12 +985,12 @@ async function runPuppeteer(products) {
         }
     } catch (error) {
         const page = await browser.newPage();
-        sound.play(errorSound);
+        // sound.play(errorSound);
         // await sendFailureEmail(processedProductCount, products, error);
         console.error('An error occurred:', error);
     } finally {
         if (browser) {
-            // await browser.close();
+            await browser.close();
         }
     }
 };
