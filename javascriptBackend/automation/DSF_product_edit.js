@@ -587,7 +587,7 @@ async function processProduct(browser, page, product) {
         maxQuantity,
         showQtyPrice,
     ) {
-        const inputElement = await page.$('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_Expression"]');
+        const inputElement = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_Expression"]';
         switch (orderQuantities) {
             case "AnyQuantity":
                 await newPage.waitForSelector(anyQuantitiesButton);
@@ -599,9 +599,16 @@ async function processProduct(browser, page, product) {
                 await newPage.click(advancedQuantitiesButton);
                 await console.log('Clicked advanced quantities for selected quantity: ', orderQuantities);
                 await newPage.waitForSelector(inputElement);
-                await newPage.click(inputElement, { clickCount: 4 });
-                await newPage.type(inputElement, advancedRanges);
-                console.log('Filled advanced ranges with: ', advancedRanges);
+                if (await newPage.$(inputElement)) {
+                    console.log('Found input element');
+                    await newPage.type(inputElement, advancedRanges);
+                    await newPage.waitForSelector('#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_btnDone');
+                    await newPage.click('#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_btnDone');
+                    console.log('Filled advanced ranges with: ', advancedRanges);
+                } else {
+                    console.log('Input element not found');
+                }
+                break;
             default:
                 await newPage.waitForSelector(advancedQuantitiesButton);
                 await newPage.click(advancedQuantitiesButton);
@@ -611,42 +618,49 @@ async function processProduct(browser, page, product) {
 
         const maxQtySelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$txtMaxOrderQuantityPermitted"]';
         const showQtyPriceSelector = 'input[value="rdbShowPricing"]';
-        const maxQtySelectorValue = await newPage.$eval(maxQtySelector, el => el.value.trim());
-
-        if (maxQuantity === 'default' || maxQuantity === '') {
-            maxQuantity = '';
-        };
-
-        if (maxQtySelectorValue === maxQuantity) {
-            console.log('Max quantity already set to: ', maxQuantity);
-        } else {
-            if (await newPage.$(maxQtySelector)) {
-                console.log('Max quantity selector found and doesn\'t match', maxQtySelectorValue);
-                await newPage.waitForSelector(maxQtySelector);
-                await newPage.click(maxQtySelector, { clickCount: 4 });
-                await new Promise(resolve => setTimeout(resolve, 800));
-                await completeDelete(newPage);
-                if (maxQtySelector !== maxQuantity) {
-                    // TODO: we'll have to solve this later instead of commenting it out, stupid freaking csv files and your unreliably sad interface >;(
-                    // await newPage.type(maxQtySelector, maxQuantity);
-                    // console.log('Filled max quantity with: ', maxQuantity);
-                } else {
-                    console.log('Max quantity is empty, skipping!');
-                }
+        
+        if (maxQuantity) {
+            const maxQtySelectorValue = await newPage.$eval(maxQtySelector, el => el.value.trim());
+            console.log('Max quantity found: ', maxQuantity);
+            if (maxQuantity === 'default' || maxQuantity === '') {
+                maxQuantity = '';
             };
-        };
+
+            if (maxQtySelectorValue === maxQuantity) {
+                console.log('Max quantity already set to: ', maxQuantity);
+            } else {
+                if (await newPage.$(maxQtySelector)) {
+                    console.log('Max quantity selector found and doesn\'t match', maxQtySelectorValue);
+                    await newPage.waitForSelector(maxQtySelector);
+                    await newPage.click(maxQtySelector, { clickCount: 4 });
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    await completeDelete(newPage);
+                    if (maxQtySelector !== maxQuantity) {
+                        // TODO: we'll have to solve this later instead of commenting it out, stupid freaking csv files and your unreliably sad interface >;(
+                        // await newPage.type(maxQtySelector, maxQuantity);
+                        // console.log('Filled max quantity with: ', maxQuantity);
+                    } else {
+                        console.log('Max quantity is empty, skipping!');
+                    }
+                };
+            };
+        } else {
+            console.log('Max quantity not found, skipping!');
+        }
 
         await new Promise(resolve => setTimeout(resolve, 800));
-        if (await newPage.$eval(showQtyPriceSelector, el => el.checked) === showQtyPrice) {
-            console.log('Show quantity price already set to: ', showQtyPrice);
-        } else {
-            if (await newPage.$(showQtyPriceSelector)) {
-                console.log('Show quantity price selector found');
-                await newPage.waitForSelector(showQtyPriceSelector);
-                await newPage.click(showQtyPriceSelector);
-                console.log('Clicked show quantity price checkbox');
+        if (showQtyPrice) {
+            if (await newPage.$eval(showQtyPriceSelector, el => el.checked) === showQtyPrice) {
+                console.log('Show quantity price already set to: ', showQtyPrice);
+            } else {
+                if (await newPage.$(showQtyPriceSelector)) {
+                    console.log('Show quantity price selector found');
+                    await newPage.waitForSelector(showQtyPriceSelector);
+                    await newPage.click(showQtyPriceSelector);
+                    console.log('Clicked show quantity price checkbox');
+                };
             };
-        };
+        }
 
         await page.evaluate(() => {
             document.activeElement?.blur();
@@ -699,98 +713,126 @@ async function processProduct(browser, page, product) {
             throw new Error('Print weight measurement selector not found');
         };
 
-        if (
-            await newPage.$(printWeightCheckbox) &&
-            await newPage.$eval(printWeightCheckbox, el => el.checked) === false &&
-            await newPage.$eval(printWeightInput, el => el.value.trim()) === '0'
-        ) {
-            await newPage.waitForSelector(printWeightCheckbox);
-            await newPage.click(printWeightCheckbox);
-            console.log('Clicked print weight checkbox');
-            if (await newPage.$eval(printWeightInput, el => el.value.trim()) === '0') {
-                console.log('Processing Weight and adding: ', weightInput);
-                await newPage.waitForSelector(printWeightInput);
-                await newPage.click(printWeightInput, { clickCount: 4 });
-                await new Promise(resolve => setTimeout(resolve, 800));
-                await completeDelete(newPage);
-                // TODO: we'll have to solve this later instead of hardcoding it, stupid freaking javascript and your unsexy dynamic type >:(
-                await newPage.keyboard.type(inputtedWeight);
-                console.log('Filled weight input with: ', inputtedWeight);
-            }
-        } else if (
-            await newPage.$eval(printWeightCheckbox, el => el.checked) === true &&
-            await newPage.$eval(printWeightInput, el => el.value.trim()) === inputtedWeight
-        ) {
-            console.log('Print weight checkbox already checked, skipping!');
+        if (weightInput) {
+            console.log('Weight input found: ', weightInput);
+            if (
+                await newPage.$(printWeightCheckbox) &&
+                await newPage.$eval(printWeightCheckbox, el => el.checked) === false &&
+                await newPage.$eval(printWeightInput, el => el.value.trim()) === '0'
+            ) {
+                await newPage.waitForSelector(printWeightCheckbox);
+                await newPage.click(printWeightCheckbox);
+                console.log('Clicked print weight checkbox');
+                if (await newPage.$eval(printWeightInput, el => el.value.trim()) === '0') {
+                    console.log('Processing Weight and adding: ', weightInput);
+                    await newPage.waitForSelector(printWeightInput);
+                    await newPage.click(printWeightInput, { clickCount: 4 });
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    await completeDelete(newPage);
+                    // TODO: we'll have to solve this later instead of hardcoding it, stupid freaking javascript and your unsexy dynamic type >:(
+                    await newPage.keyboard.type(inputtedWeight);
+                    console.log('Filled weight input with: ', inputtedWeight);
+                }
+            } else if (
+                await newPage.$eval(printWeightCheckbox, el => el.checked) === true &&
+                await newPage.$eval(printWeightInput, el => el.value.trim()) === inputtedWeight
+            ) {
+                console.log('Print weight checkbox already checked, skipping!');
+            } else {
+                throw new Error('Print weight measurement not found');
+            };
         } else {
-            throw new Error('Print weight measurement not found');
+            console.log('Print weight checkbox not found, skipping!');
         };
 
         await new Promise(resolve => setTimeout(resolve, 3000));
-        if (await newPage.$eval(widthSelector, el => el.value.trim()) !== shippingWidths) {
-            console.log('Processing Width');
-            await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxX');
-            await new Promise(resolve => setTimeout(resolve, 800));
-            await newPage.keyboard.press('Tab');
+        if (shippingWidths) {
+            console.log('Shipping widths found: ', shippingWidths);
+            if (await newPage.$eval(widthSelector, el => el.value.trim()) !== shippingWidths) {
+                console.log('Processing Width');
+                await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxX');
+                await new Promise(resolve => setTimeout(resolve, 800));
+                await newPage.keyboard.press('Tab');
 
-            await completeDelete(newPage);
+                await completeDelete(newPage);
 
-            await newPage.keyboard.type(shippingWidths);
-            if (await newPage.$eval(widthSelector, el => el.value.trim()) === shippingWidths) {
-                console.log('Completed filling shipping widths with: ', shippingWidths);
+                await newPage.keyboard.type(shippingWidths);
+                if (await newPage.$eval(widthSelector, el => el.value.trim()) === shippingWidths) {
+                    console.log('Completed filling shipping widths with: ', shippingWidths);
+                } else {
+                    throw new Error('Failed to fill shipping widiths');
+                }
             } else {
-                throw new Error('Failed to fill shipping widiths');
-            }
+                console.log('Width is already set to: ', shippingWidths);
+            };
         } else {
-            console.log('Width is already set to: ', shippingWidths);
+            console.log('Shipping widths not found, skipping!');
         };
-        if (await newPage.$eval(lengthSelector, el => el.value.trim()) !== shippingLengths) {
-            console.log('Processing Length');
-            await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxY');
-            await newPage.keyboard.press('Tab');
 
-            await completeDelete(newPage);
+        if (shippingLengths) {
+            console.log('Shipping lengths found: ', shippingLengths);
+            if (await newPage.$eval(lengthSelector, el => el.value.trim()) !== shippingLengths) {
+                console.log('Processing Length');
+                await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxY');
+                await newPage.keyboard.press('Tab');
 
-            await newPage.keyboard.type(shippingLengths);
-            if (await newPage.$eval(lengthSelector, el => el.value.trim()) === shippingLengths) {
-                console.log('Completed filling shipping widths with: ', shippingLengths);
+                await completeDelete(newPage);
+
+                await newPage.keyboard.type(shippingLengths);
+                if (await newPage.$eval(lengthSelector, el => el.value.trim()) === shippingLengths) {
+                    console.log('Completed filling shipping widths with: ', shippingLengths);
+                } else {
+                    throw new Error('Failed to fill shipping lengths');
+                }
             } else {
-                throw new Error('Failed to fill shipping lengths');
-            }
+                console.log('Length is already set to: ', shippingLengths);
+            };
         } else {
-            console.log('Length is already set to: ', shippingLengths);
+            console.log('Shipping lengths not found, skipping!');
         };
-        if (await newPage.$eval(heightSelector, el => el.value.trim()) !== shippingHeights) {
-            console.log('Processing Height');
-            await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxZ');
-            await newPage.keyboard.press('Tab');
 
-            await completeDelete(newPage);
+        if (shippingHeights) {
+            console.log('Shipping heights found: ', shippingHeights);
+            if (await newPage.$eval(heightSelector, el => el.value.trim()) !== shippingHeights) {
+                console.log('Processing Height');
+                await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxZ');
+                await newPage.keyboard.press('Tab');
 
-            await newPage.keyboard.type(shippingHeights);
-            if (await newPage.$eval(heightSelector, el => el.value.trim()) === shippingHeights) {
-                console.log('Completed filling shipping widths with: ', shippingHeights);
+                await completeDelete(newPage);
+
+                await newPage.keyboard.type(shippingHeights);
+                if (await newPage.$eval(heightSelector, el => el.value.trim()) === shippingHeights) {
+                    console.log('Completed filling shipping widths with: ', shippingHeights);
+                } else {
+                    throw new Error('Failed to fill shipping heights');
+                }
             } else {
-                throw new Error('Failed to fill shipping heights');
-            }
+                console.log('Height is already set to: ', shippingHeights);
+            };
         } else {
-            console.log('Height is already set to: ', shippingHeights);
+            console.log('Shipping heights not found, skipping!');
         };
-        if (await newPage.$eval(maxSelector, el => el.value.trim()) !== shippingMaxs) {
-            console.log('Processing Max');
-            await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_lblLotSize');
-            await newPage.keyboard.press('Tab');
 
-            await completeDelete(newPage);
+        if (shippingMaxs) {
+            console.log('Shipping maxs found: ', shippingMaxs);
+            if (await newPage.$eval(maxSelector, el => el.value.trim()) !== shippingMaxs) {
+                console.log('Processing Max');
+                await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_lblLotSize');
+                await newPage.keyboard.press('Tab');
 
-            await newPage.keyboard.type(shippingMaxs);
-            if (await newPage.$eval(maxSelector, el => el.value.trim()) === shippingMaxs) {
-                console.log('Completed filling shipping widths with: ', shippingMaxs);
+                await completeDelete(newPage);
+
+                await newPage.keyboard.type(shippingMaxs);
+                if (await newPage.$eval(maxSelector, el => el.value.trim()) === shippingMaxs) {
+                    console.log('Completed filling shipping widths with: ', shippingMaxs);
+                } else {
+                    throw new Error('Failed to fill shipping maxs');
+                }
             } else {
-                throw new Error('Failed to fill shipping maxs');
-            }
+                console.log('Max is already set to: ', shippingMaxs);
+            };
         } else {
-            console.log('Max is already set to: ', shippingMaxs);
+            console.log('Shipping maxs not found, skipping!');
         };
     };
 
@@ -936,7 +978,7 @@ async function processProduct(browser, page, product) {
             console.log('Found the html button!');
             await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv');
             console.log('Moused to html textarea');
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 2; i++) {
                 await newPage.keyboard.press('Tab');
             }
             await newPage.keyboard.press('Enter');
