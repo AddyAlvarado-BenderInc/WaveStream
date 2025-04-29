@@ -8,6 +8,7 @@ const app = express();
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3002;
+let setStandardBehavior = false;
 
 app.use(express.json());
 app.use(cors());
@@ -50,7 +51,7 @@ const removeEmptyValues = (obj) => {
     if (Array.isArray(obj)) {
         return obj
             .map((item) => removeEmptyValues(item))
-            .filter((item) => item !== null && item !== undefined && item !== '' && Object.keys(item).length > 0); 
+            .filter((item) => item !== null && item !== undefined && item !== '' && Object.keys(item).length > 0);
     } else if (obj !== null && typeof obj === 'object') {
         return Object.entries(obj)
             .filter(([_, value]) => value !== null && value !== undefined && value !== '' && !(typeof value === 'object' && Object.keys(value).length === 0)) // Filter out empty values
@@ -96,6 +97,18 @@ const differentializeProductData = async (type, fileData) => {
     return products;
 };
 
+app.post('/close-browser', async (req, res) => {
+    try {
+        const puppeteerScript = loadPuppeteerScript('automation', 'DSF_product_edit.js');
+        await puppeteerScript.closeBrowser();
+        setStandardBehavior = true;
+        res.json({ message: 'Browser closed successfully' });
+    } catch (error) {
+        console.error('Error closing the Puppeteer browser:', error);
+        res.status(500).json({ message: 'Failed to close the browser', error: error.message });
+    }
+});
+
 app.post('/js-server', upload.single('file'), async (req, res) => {
     const { type, runOption, cellOrigin, jsonData } = req.body;
 
@@ -123,9 +136,13 @@ app.post('/js-server', upload.single('file'), async (req, res) => {
         }
 
         console.log('Processed Products:', products);
+        console.log('END OF PROCESSING');
+        if (products.length === 0) {
+            throw new Error('No products found after processing');
+        }
 
         const puppeteerScript = loadPuppeteerScript('automation', 'DSF_product_edit.js');
-        await puppeteerScript(products);
+        await puppeteerScript.runPuppeteer(products);
 
         res.json({ message: 'Automation script executed successfully', products });
         await autoDeleteOldUploads();

@@ -11,6 +11,12 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { isEqual, set } from 'lodash';
 import axios from 'axios';
+import dotenv from 'dotenv';
+import path from "path";
+
+dotenv.config({
+  path: path.resolve(process.cwd(), '../../../../', '.env')
+});
 
 interface FormDataState {
     itemName: string;
@@ -58,6 +64,9 @@ interface OriginalData {
     variableClassArray: VariableClassArrayState;
 }
 
+const javascriptServer = process.env.JS_SERVER_URL || 'http://localhost:3002';
+const csharpServer = process.env.CS_SERVER_URL || 'http://localhost:5001';
+
 const now = new Date(Date.now());
 
 const month = (now.getMonth() + 1).toString().padStart(2, '0');
@@ -75,6 +84,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [renderRunModal, setRenderRunModal] = useState(false);
     const [selectedRunOption, setSelectedRunOption] = useState("");
     const [selectedServer, setSelectedServer] = useState("");
+    const [server, setServer] = useState("");
+    const [automationRunning, setAutomationRunning] = useState(false);
 
     useEffect(() => {
         console.log("WaveManager: Initializing/Syncing Redux state for globalVariableClassData");
@@ -742,10 +753,11 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         const hasCellData = Object.keys(variableRowData).length > 0;
         const cellOrigin = variableData.tableSheet.find(item => item.isOrigin);
         const iconName = (productManager.icon).map(item => ({ item }).item.filename).toString().split(',').filter(Boolean);
-        const iconFile = iconName.map(item => `http://localhost:3000/api/files/${item}`);
+        const iconFile = iconName.map(item => `${BASE_URL}/api/files/${item}`);
+
+        console.log('Found icon files:', iconFile);
 
         if (iconFile.length === 0) {
-            toast.info('No icon file is found for this product');
         } else if (iconFile.some(item => item.includes(' '))) {
             console.warn('Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png');
             toast.error('Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png"');
@@ -801,6 +813,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
 
         const handleRunPost = async (server: string) => {
+            setAutomationRunning(true);
             try {
                 const response = await axios.post(server, {
                     type: 'json-type',
@@ -840,15 +853,38 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             }
         };
         if (selectedServer === 'javascript-server') {
-            handleRunPost('http://localhost:3002/js-server');
+            setServer(javascriptServer);
+            handleRunPost(`${javascriptServer}/js-server`);
         } else if (selectedServer === 'csharp-server') {
-            handleRunPost('http://localhost:5001/cs-server');
+            setServer(csharpServer);
+            handleRunPost(`${csharpServer}/cs-server`);
         } else {
             toast.error(`Server ${selectedServer} is not supported`, {
                 position: 'bottom-right',
                 autoClose: 5000,
             });
             return;
+        }
+    };
+
+    const handleCloseBrowser = async (server: string) => {
+        try {
+            const response = await fetch(`${server}/close-browser`, {
+                method: 'POST',
+            })
+
+            if (response.ok) {
+                console.log('Browser closed successfully');
+            } else {
+                console.error('Failed to close the browser:', response.statusText);
+            }
+
+            const result = await response.json();
+            console.log('Result:', result);
+            alert(result.message);
+        } catch (error) {
+            console.error('Error closing the browser:', error);
+            alert('Error closing the browser');
         }
     };
 
@@ -941,7 +977,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 <option value="csharp-server" disabled>C# Server {`[coming soon]`}</option>
                             </select>
                             <div className={styles.runButtonsContainer}>
-                                <button type='submit'>Run</button>
+                                <button type='submit'>
+                                    Run
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => setRenderRunModal(false)}>
@@ -949,6 +987,33 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 </button>
                             </div>
                         </form>
+                        <div className={styles.automationViewer}>
+                            {automationRunning ? (
+                                <div className={styles.automationContainer}>
+                                    <div className={styles.automationViewerText}>
+                                        <p>Automation is running...</p>
+                                    </div>
+                                    <div className={styles.viewBackend}>
+                                        <a
+                                            href={selectedServer}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            View Backend
+                                        </a>
+                                    </div>
+                                    <button
+                                        onClick={() => handleCloseBrowser(server)}
+                                    >
+                                        Close Browser
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className={styles.automationViewerText}>
+                                    <p>Automation is not running</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

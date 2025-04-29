@@ -16,6 +16,8 @@ const sendgridApi = process.env.SENDGRID_API_KEY;;
 const userEmail = process.env.USER_EMAIL;
 const secondaryEmail = process.env.SECONDARY_EMAIL;
 
+let browser = null;
+
 async function sendSuccessEmail(processProductCount, products) {
     sgMail.setApiKey(sendgridApi)
     const msg = {
@@ -904,9 +906,9 @@ async function processProduct(browser, page, product) {
     };
     console.log('Product name matches, proceeding with autofill!, product name: ', productName);
 
-    if (product.DisplayName === '!SKIP' && product.DisplayName) {
+    if (product.DisplayName) {
         console.log('Product details are skipped for product: ', product.ItemName);
-    } else if (!await productQueriedCheck(newPage, product) && product.DisplayName !== '!SKIP' && product.DisplayName) {
+    } else if (!await productQueriedCheck(newPage, product) && product.DisplayName) {
         await fillProductInfo(newPage, product);
     }
 
@@ -945,7 +947,7 @@ async function processProduct(browser, page, product) {
     // TODO: in the future, we should have a toggle that allows
     // the user to enable or disable the icon field entirely.
     await new Promise(resolve => setTimeout(resolve, 600));
-    if (allowIconFields) {
+    if (allowIconFields && icon) {
         console.log('Icon field enabled');
         const blankImage = await newPage.$('img[src="/DSF/Images/a6b0f33a-f440-4378-8e9a-bb320ee87610/Blanks/27.gif"]');
         if (blankImage) {
@@ -983,7 +985,7 @@ async function processProduct(browser, page, product) {
             }
             await newPage.keyboard.press('Enter');
         }
-        if (product.LongDescription !== '!SKIP' && allowDescriptionFields && product.LongDescription || productType !== 'Non Printed Products' && allowDescriptionFields && product.LongDescription) {
+        if (allowDescriptionFields && product.LongDescription || productType !== 'Non Printed Products' && allowDescriptionFields && product.LongDescription) {
             if (await detectFilledDetails(newPage, product) === false) {
                 await fillLongDescription(newPage, product);
             }
@@ -1132,7 +1134,6 @@ async function processProduct(browser, page, product) {
 };
 
 async function runPuppeteer(products) {
-    let browser;
     let processedProductCount = 0;
     try {
         browser = await puppeteer.launch({ headless: false, args: ['--window-size=1920,1080'] });
@@ -1172,7 +1173,7 @@ async function runPuppeteer(products) {
     } catch (error) {
         const page = await browser.newPage();
         sound.play(errorSound);
-        // await sendFailureEmail(processedProductCount, products, error);
+        await sendFailureEmail(processedProductCount, products, error);
         console.error('An error occurred:', error);
     } finally {
         if (browser) {
@@ -1181,4 +1182,15 @@ async function runPuppeteer(products) {
     }
 };
 
-module.exports = runPuppeteer;
+async function closeBrowser() {
+    if (browser) {
+        console.log('Closing browser...');
+        await browser.close();
+        browser = null;
+    } else {
+        console.log('No browser instance found.');
+        throw error;
+    }
+};
+
+module.exports = { runPuppeteer, closeBrowser };
