@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const sound = require('sound-play');
 const sgMail = require('@sendgrid/mail');
-const { error } = require('console');
+const { error, debug } = require('console');
 
 const activateSound = path.join(__dirname, 'sounds', 'activate.wav');
 const errorSound = path.join(__dirname, 'sounds', 'error.wav');
@@ -97,11 +97,27 @@ const ticketSelectorValues = {
 // TODO: Detect user's OS and flip the function below based on OS detected
 async function completeDelete(newPage) {
     // Below command is Windows deprecated, uncomment when on Mac and comment out redundant code!
-    // await newPage.evaluate(() => document.execCommand('selectall', false, null));
-    await newPage.keyboard.down('Control');
-    await newPage.keyboard.press('A');
-    await newPage.keyboard.up('Control');
+    await newPage.evaluate(() => document.execCommand('selectall', false, null));
+    // await newPage.keyboard.down('Control');
+    // await newPage.keyboard.press('A');
+    // await newPage.keyboard.up('Control');
     await newPage.keyboard.press('Backspace');
+};
+
+async function detectCompositeProduct(product) {
+    if (Object.keys(product).includes('Composite')) {
+        console.log('Composite product detected');
+        const compositeRange = Array.isArray(product)
+            ? product.map(item => item.Composite).length
+            : typeof product.Composite === 'object'
+                ? Object.keys(product.Composite).length
+                : 0;
+
+        console.log('Composite range length: ', compositeRange);
+        return compositeRange;
+    };
+    console.log('Composite product not detected');
+    return 0;
 };
 
 async function ticketTemplateSelector(templates, newPage) {
@@ -123,6 +139,7 @@ async function ticketTemplateSelector(templates, newPage) {
 }
 
 // TODO: Eventually we should have a "Delete current icon" option in the future.
+// TODO: Need to have composite check
 async function uploadIcon(newPage, icon) {
     const filePath = path.join(__dirname, 'icons', icon);
 
@@ -163,6 +180,7 @@ async function uploadIcon(newPage, icon) {
     }
 };
 
+// TODO: Need to have composite check
 async function uploadPDF(newPage, pdf) {
     const fileDeleteButton = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$FilesAddedToJob1$FileRepeater$ctl01$UF$DEL"]';
     const filePath = path.join(__dirname, 'pdfs', pdf);
@@ -253,15 +271,16 @@ async function tryOpenNewPage(browser, page, maxRetries = 3) {
 
 async function detectMultipleRanges(newPage) {
     let page = newPage;
-    let range = 0;
-    for (let i = 0; i < 2; i++) {
-        const ranges = await page.$$(`#tbl_0_PriceCatalog_rngbegin_${i + 1}`);
-        ranges.forEach(foundRange => {
-            foundRange = range++;
-        });
-    }
-    console.log(`Found ${range} ranges.`);
-    return range;
+    let rangeCount = 0;
+
+    const ranges = await page.$$('[id^="tbl_0_PriceCatalog_rngbegin_"]');
+
+    ranges.forEach(() => {
+        rangeCount++;
+    });
+
+    console.log(`Found ${rangeCount} ranges.`);
+    return rangeCount;
 };
 
 async function detectFilledDetails(newPage, product) {
@@ -304,71 +323,145 @@ async function fillPricingForm(newPage, startingRange, endingRange, regularPrice
     await new Promise(resolve => setTimeout(resolve, 1000));
     console.log('Fill pricing procedure called');
 
-    // TODO: To scale these variables, we should set the ending number or the '_1' as a template literal
-    // so users can set the ending number instead of hardcoding the ending number.
-    const beginRangeSelector = `#tbl_0_PriceCatalog_rngbegin_1`;
-    const endRangeSelector = `#tbl_0_PriceCatalog_rngend_1`;
-    const regularPriceSelector = `#tbl_0_PriceCatalog_regularprice_1`;
-    const setupPriceSelector = `#tbl_0_PriceCatalog_setupprice_1`;
-
     const deleteRangeButton = 'img[onclick^="Javascript:delRow"][height="17"][width="16"]';
+    const addRangeButton = '#ctl00_ctl00_C_M_ctl00_W_ctl01_GridViewPricesheets_ctl02_PriceItemFrame_imageplushid_PriceCatalog';
+    const multipleRanges = await detectMultipleRanges(newPage);
+    console.log('Multiple ranges detected: ', multipleRanges);
 
-    if (await detectMultipleRanges(newPage) >= 2) {
-        console.log('Multiple ranges detected.');
+    const compositeLength = await detectCompositeProduct(endingRange);
+    if (!compositeLength) {
+        console.log('No composite length detected');
+    }
+
+    if (multipleRanges !== compositeLength) {
+        console.log('Found ranges exceeds our composite length.');
         await newPage.$(deleteRangeButton);
-        await console.log('Delete selector exists')
         await newPage.waitForSelector(deleteRangeButton);
-        await newPage.click(deleteRangeButton);
-        await console.log('Deleted range!')
+        for (let i = 1; i < multipleRanges; i++) {
+            await newPage.click(deleteRangeButton);
+            await console.log('Deleted range offset: ', i);
+        }
+        await newPage.waitForSelector(addRangeButton);
+        for (let i = 2; i < compositeLength; i++) {
+            await newPage.click(addRangeButton);
+        }
+        await console.log('Added range!', compositeLength);
+    } else if (detectMultipleRanges(newPage) === compositeLength) {
+        console.log('Multiple ranges detected and matches composite length');
     } else {
         console.log('Multiple ranges not detected. Proceeding with range input.');
     };
 
-    if (await newPage.$(beginRangeSelector) !== null) {
-        await newPage.waitForSelector(beginRangeSelector);
-        await newPage.click(beginRangeSelector, { clickCount: 4 });
-        await new Promise(resolve => setTimeout(resolve, 600));
-        await completeDelete(newPage);
-        await newPage.type(beginRangeSelector, startingRange);
-        await console.log('Filled beginning range with: ', startingRange);
+    if (startingRange) {
+        if (await detectCompositeProduct(startingRange)) {
+            console.log('Composite product detected for starting range');
+            const startingRangeComposite = Object.values(startingRange).toString().split(',');
+            for (let i = 1; i < compositeLength; i++) {
+                const beginRangeSelector = `#tbl_0_PriceCatalog_rngbegin_${[i]}`;
+                await newPage.waitForSelector(beginRangeSelector);
+                await newPage.click(beginRangeSelector, { clickCount: 4 });
+                await new Promise(resolve => setTimeout(resolve, 150));
+                await completeDelete(newPage);
+                await newPage.type(beginRangeSelector, startingRangeComposite[i - 1]);
+                await console.log('Filled beginning range with: ', startingRangeComposite[i - 1]);
+            }
+        } else {
+            console.log('No composite length detected for starting range, filling for single range');
+            const beginRangeSelector = `#tbl_0_PriceCatalog_rngbegin_1`;
+            await newPage.waitForSelector(beginRangeSelector);
+            await newPage.click(beginRangeSelector, { clickCount: 4 });
+            await new Promise(resolve => setTimeout(resolve, 600));
+            await completeDelete(newPage);
+            await newPage.type(beginRangeSelector, startingRange);
+            await console.log('Filled beginning range with: ', startingRange);
+        }
     } else {
-        throw new Error('Begin Range field not found');
+        console.log(`Start Range field empty or not found. Skipping.`);
     };
 
-    if (await newPage.$(endRangeSelector) !== null && endRangeSelector == true) {
-        await newPage.waitForSelector(endRangeSelector);
-        await newPage.click(endRangeSelector, { clickCount: 4 });
-        await new Promise(resolve => setTimeout(resolve, 600));
-        await completeDelete(newPage);
-        await console.log('Pressed backspace');
-        await newPage.type(endRangeSelector, endingRange);
-        await new Promise(resolve => setTimeout(resolve, 600));
-        await console.log('Filled ending range with: ', endingRange);
+    if (endingRange) {
+        if (await detectCompositeProduct(endingRange)) {
+            console.log('Composite product detected for ending range');
+            const endingRangeComposite = Object.values(endingRange).toString().split(',');
+            for (let i = 1; i < compositeLength; i++) {
+                const endRangeSelector = `#tbl_0_PriceCatalog_rngend_${[i]}`;
+                await newPage.waitForSelector(endRangeSelector);
+                await newPage.click(endRangeSelector, { clickCount: 4 });
+                await new Promise(resolve => setTimeout(resolve, 150));
+                await completeDelete(newPage);
+                await newPage.type(endRangeSelector, endingRangeComposite[i - 1]);
+                await console.log('Filled ending range with: ', endingRangeComposite[i - 1]);
+            }
+        } else {
+            console.log('No composite length detected for ending range, filling for single range');
+            const endRangeSelector = `#tbl_0_PriceCatalog_rngend_1`;
+            await newPage.waitForSelector(endRangeSelector);
+            await newPage.click(endRangeSelector, { clickCount: 4 });
+            await new Promise(resolve => setTimeout(resolve, 600));
+            await completeDelete(newPage);
+            await console.log('Pressed backspace');
+            await newPage.type(endRangeSelector, endingRange);
+            await new Promise(resolve => setTimeout(resolve, 600));
+            await console.log('Filled ending range with: ', endingRange);
+        }
     } else {
         console.log(`End Range field empty or not found. Skipping.`);
     };
 
-    if (await newPage.$(regularPriceSelector) !== null) {
-        await newPage.waitForSelector(regularPriceSelector);
-        await newPage.click(regularPriceSelector, { clickCount: 4 });
-        console.log('Clicked regular price');
-        await new Promise(resolve => setTimeout(resolve, 600));
-        await completeDelete(newPage);
-        await newPage.type(regularPriceSelector, regularPrices);
-        await console.log('Filled regular price with: ', regularPrices);
+    if (regularPrices) {
+        if (await detectCompositeProduct(regularPrices)) {
+            console.log('Composite product detected for regular price');
+            const regularPricesComposite = Object.values(regularPrices).toString().split(',');
+            for (let i = 1; i < compositeLength; i++) {
+                const regularPriceSelector = `#tbl_0_PriceCatalog_regularprice_${[i]}`;
+                await newPage.waitForSelector(regularPriceSelector);
+                await newPage.click(regularPriceSelector, { clickCount: 4 });
+                await new Promise(resolve => setTimeout(resolve, 150));
+                await completeDelete(newPage);
+                await newPage.type(regularPriceSelector, regularPricesComposite[i - 1]);
+                await console.log('Filled regular price with: ', regularPricesComposite[i - 1]);
+            }
+        } else {
+            console.log('No composite length detected for regular price, filling for single range');
+            const regularPriceSelector = `#tbl_0_PriceCatalog_regularprice_1`;
+            await newPage.waitForSelector(regularPriceSelector);
+            await newPage.click(regularPriceSelector, { clickCount: 4 });
+            console.log('Clicked regular price');
+            await new Promise(resolve => setTimeout(resolve, 600));
+            await completeDelete(newPage);
+            await newPage.type(regularPriceSelector, regularPrices);
+            await console.log('Filled regular price with: ', regularPrices);
+        }
     } else {
-        throw new Error('Regular price field not found');
+        console.log(`Regular Price field empty or not found. Skipping.`);
     };
 
-    if (await newPage.$(setupPriceSelector) !== null) {
-        await newPage.waitForSelector(setupPriceSelector);
-        await newPage.click(setupPriceSelector, { clickCount: 4 });
-        await new Promise(resolve => setTimeout(resolve, 600));
-        await completeDelete(newPage);
-        await newPage.type(setupPriceSelector, setupPrices);
-        await console.log('Filled setup price with: ', setupPrices);
+    if (setupPrices) {
+        if (await detectCompositeProduct(setupPrices)) {
+            console.log('Composite product detected for setup price');
+            const setupPricesComposite = Object.values(setupPrices).toString().split(',');
+            for (let i = 1; i < compositeLength; i++) {
+                const setupPriceSelector = `#tbl_0_PriceCatalog_setupprice_${[i]}`;
+                await newPage.waitForSelector(setupPriceSelector);
+                await newPage.click(setupPriceSelector, { clickCount: 4 });
+                await new Promise(resolve => setTimeout(resolve, 150));
+                await completeDelete(newPage);
+                await newPage.type(setupPriceSelector, setupPricesComposite[i - 1]);
+                await console.log('Filled setup price with: ', setupPricesComposite[i - 1]);
+            }
+        } else {
+            console.log('No composite length detected for setup price, filling for single range');
+            const setupPriceSelector = `#tbl_0_PriceCatalog_setupprice_1`;
+            await newPage.waitForSelector(setupPriceSelector);
+            await newPage.click(setupPriceSelector, { clickCount: 4 });
+            console.log('Clicked setup price');
+            await new Promise(resolve => setTimeout(resolve, 600));
+            await completeDelete(newPage);
+            await newPage.type(setupPriceSelector, setupPrices);
+            await console.log('Filled setup price with: ', setupPrices);
+        }
     } else {
-        throw new Error('Setup price field not found');
+        console.log(`Setup Price field empty or not found. Skipping.`);
     };
 
     await new Promise(resolve => setTimeout(resolve, 600));
@@ -415,6 +508,7 @@ async function processProduct(browser, page, product) {
     const weightInput = product.WeightInput;
     let maxQuantity = product.MaxQuantity;
     const showQtyPrice = product.ShowQtyPrice;
+    const briefDescription = product.BriefDescription;
 
     const startingRange = product.RangeStart;
     const endingRange = product.RangeEnd;
@@ -447,8 +541,8 @@ async function processProduct(browser, page, product) {
     }
 
     // TODO: in the future, we should scale this as a frontend toggle button
-    const allowIconFields = false;
-    const allowDescriptionFields = false;
+    const allowIconFields = true;
+    const allowDescriptionFields = true;
 
     console.log('Processing for product:', product.ItemName);
 
@@ -493,6 +587,7 @@ async function processProduct(browser, page, product) {
         maxQuantity,
         showQtyPrice,
     ) {
+        const inputElement = await page.$('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_Expression"]');
         switch (orderQuantities) {
             case "AnyQuantity":
                 await newPage.waitForSelector(anyQuantitiesButton);
@@ -503,12 +598,14 @@ async function processProduct(browser, page, product) {
                 await newPage.waitForSelector(advancedQuantitiesButton);
                 await newPage.click(advancedQuantitiesButton);
                 await console.log('Clicked advanced quantities for selected quantity: ', orderQuantities);
-                await newPage.type('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_Expression"]', advancedRanges);
+                await newPage.waitForSelector(inputElement);
+                await newPage.click(inputElement, { clickCount: 4 });
+                await newPage.type(inputElement, advancedRanges);
+                console.log('Filled advanced ranges with: ', advancedRanges);
             default:
                 await newPage.waitForSelector(advancedQuantitiesButton);
                 await newPage.click(advancedQuantitiesButton);
-                await console.log('Nothing Specified, Defaulting to 1 Qty for selected quantity: ', orderQuantities);
-                await newPage.type('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_Expression"]', '1');
+                await console.log('Nothing Specified, Assuming skip');
                 break;
         };
 
@@ -774,7 +871,7 @@ async function processProduct(browser, page, product) {
     await new Promise(resolve => setTimeout(resolve, 600));
     const evaluatedItemTemplate = await newPage.$eval('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$txtMISEstimateId"]', el => el.value.trim());
     console.log("Evaluated item template name: ", evaluatedItemTemplate);
-    if (product.ItemTemplate !== '!SKIP' && product.ItemTemplate) {
+    if (product.ItemTemplate) {
         console.log('Filling Item template field with: ', product.ItemTemplate);
         if (evaluatedItemTemplate !== product.ItemTemplate) {
             await fillItemTemplate(newPage, product);
@@ -786,6 +883,23 @@ async function processProduct(browser, page, product) {
         console.log('Item template field explicitly skipped!');
     }
 
+    await new Promise(resolve => setTimeout(resolve, 600));
+    if (product.BriefDescription) {
+        const htmlElement = await newPage.$('.reEditorModes ul li:nth-of-type(2)');
+        if (htmlElement) {
+            console.log('Found brief description selector');
+            await htmlElement.click();
+            console.log('Entering into html textarea');
+            await completeDelete(newPage);
+            await newPage.type('textarea.reTextArea', briefDescription);
+            console.log('Filled brief description with: ', briefDescription);
+        } else {
+            console.log('Brief description selector not found');
+        }
+    } else {
+        console.log('Brief description field explicitly skipped!');
+    }
+
     // TODO: in the future, we should have a toggle that allows
     // the user to enable or disable the icon field entirely.
     await new Promise(resolve => setTimeout(resolve, 600));
@@ -795,51 +909,68 @@ async function processProduct(browser, page, product) {
         if (blankImage) {
             console.log('Icon field blank. Uploading!');
             await uploadIcon(newPage, icon);
+        } else if (blankImage && allowIconFields && product.Icon) {
+            try {
+                console.log('Icon field populated but user wants to change it');
+                await uploadIcon(newPage, icon);
+            } catch (error) {
+                console.error('Error uploading icon:', error);
+            }
         } else {
-            console.log('Icon field populated. Skipping!');
+            console.log('Icon field populated and no replacement. Skipping!');
         }
+    } else {
+        console.log('Icon field explicitly skipped!');
     }
 
     await new Promise(resolve => setTimeout(resolve, 600));
-    await newPage.$('#TabDetails'),
-        await console.log('Found details tab'),
-        await newPage.waitForSelector('#TabDetails'),
-        await newPage.click('#TabDetails'),
-        await console.log('Details tab clicked!');
-    const htmlButton = '.reEditorModes .reMode_html';
-    if (await newPage.$(htmlButton)) {
-        console.log('Found the html button!');
-        await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv');
-        for (let i = 0; i < 2; i++) {
-            await newPage.keyboard.press('Tab');
+    if (product.LongDescription) {
+        console.log('Long description field enabled');
+        await newPage.$('#TabDetails'),
+            await console.log('Found details tab'),
+            await newPage.waitForSelector('#TabDetails'),
+            await newPage.click('#TabDetails'),
+            await console.log('Details tab clicked!');
+        const htmlButton = '.reEditorModes .reMode_html';
+        if (await newPage.$(htmlButton)) {
+            console.log('Found the html button!');
+            await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv');
+            console.log('Moused to html textarea');
+            for (let i = 0; i < 1; i++) {
+                await newPage.keyboard.press('Tab');
+            }
+            await newPage.keyboard.press('Enter');
         }
-        await newPage.keyboard.press('Enter');
-    }
-    if (product.LongDescription !== '!SKIP' && allowDescriptionFields || productType !== 'Non Printed Products' && allowDescriptionFields) {
-        if (await detectFilledDetails(newPage, product) === false) {
-            await fillLongDescription(newPage, product);
+        if (product.LongDescription !== '!SKIP' && allowDescriptionFields && product.LongDescription || productType !== 'Non Printed Products' && allowDescriptionFields && product.LongDescription) {
+            if (await detectFilledDetails(newPage, product) === false) {
+                await fillLongDescription(newPage, product);
+            }
         }
     } else {
         console.log('Long description field explicitly skipped!');
-    }
+    };
 
     if (productType === 'Static Document' || productType === 'Ad Hoc' || productType === 'Non Printed Products') {
         if (productType !== 'Non Printed Products') {
             await new Promise(resolve => setTimeout(resolve, 800));
-            await newPage.$('#TabPricing');
-            await console.log('Found pricing tab');
-            await newPage.waitForSelector('#TabPricing');
-            await newPage.click('#TabPricing');
-            await console.log('Pricing tab clicked!');
+            if (product.SetupPrice || product.RegularPrice || product.RangeStart || product.RangeEnd) {
+                await newPage.$('#TabPricing');
+                await console.log('Found pricing tab');
+                await newPage.waitForSelector('#TabPricing');
+                await newPage.click('#TabPricing');
+                await console.log('Pricing tab clicked!');
 
-            await new Promise(resolve => setTimeout(resolve, 800));
-            if (await productPriceMatches(newPage, startingRange, endingRange, regularPrices, setupPrices) === false ||
-                (parseFloat(startingRange) !== 0 &&
-                    parseFloat(endingRange) !== 0 &&
-                    parseFloat(regularPrices) !== 0 &&
-                    parseFloat(setupPrices) !== 0)) {
-                await fillPricingForm(newPage, startingRange, endingRange, regularPrices, setupPrices);
-            };
+                await new Promise(resolve => setTimeout(resolve, 800));
+                if (await productPriceMatches(newPage, startingRange, endingRange, regularPrices, setupPrices) === false ||
+                    (parseFloat(startingRange) !== 0 &&
+                        parseFloat(endingRange) !== 0 &&
+                        parseFloat(regularPrices) !== 0 &&
+                        parseFloat(setupPrices) !== 0)) {
+                    await fillPricingForm(newPage, startingRange, endingRange, regularPrices, setupPrices);
+                };
+            } else {
+                console.log('Pricing fields explicitly skipped!');
+            }
         };
 
         if (await newPage.$('#TabSettings')) {
@@ -851,7 +982,7 @@ async function processProduct(browser, page, product) {
         }
 
         await new Promise(resolve => setTimeout(resolve, 800));
-        if (productType !== 'Non Printed Products') {
+        if (productType !== 'Non Printed Products' && productType !== 'Ad Hoc') {
             if (!buyerConfigs) {
                 console.log('buyer configuation is set to false');
                 await newPage.waitForSelector("#ctl00_ctl00_C_M_ctl00_W_ctl01_AllowBuyerConfigurationRadioButton_1");
@@ -883,6 +1014,8 @@ async function processProduct(browser, page, product) {
                     await new Promise(resolve => setTimeout(resolve, 1200));
                 }
             }
+        } else {
+            console.log(`Product type incompatible with buyer configuration: ${productType}, proceeding to skip this step`);
         }
 
         await new Promise(resolve => setTimeout(resolve, 800));
@@ -908,9 +1041,9 @@ async function processProduct(browser, page, product) {
     await newPage.keyboard.press('Enter');
 
     // Adding a check for different product types of this step (Static Document, Product Matrix, or Ad Hoc Product)
-    if (productType !== 'Non Printed Products') {
+    if (productType !== 'Non Printed Products' && productType !== 'Ad Hoc') {
         await new Promise(resolve => setTimeout(resolve, 1200));
-        if (productType === 'Static Document') {
+        if (productType === 'Static Document' && product.PDFUploadName) {
             const pdfTitle = await newPage.$('#ctl00_ctl00_C_M_ctl00_W_ctl02_FilesAddedToJob1_FileRepeater_ctl01_UF_FN');
             const pdfTitleEvaluation = await pdfTitle.evaluate(el => el.textContent);
             await console.log('PDF Title: ', pdfTitleEvaluation);
@@ -925,8 +1058,9 @@ async function processProduct(browser, page, product) {
             await newPage.waitForSelector('input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$Fileupload1$htmlInputFileUpload"]');
             console.log('File Page Loaded Successfully');
         } else if (productType === 'Product Matrix') {
-            // TODO: Will add support for Product Matrix in the future!
             console.warn('Product Matrix type not yet supported');
+        } else if (!productType.PDFUploadName) {
+            console.log('PDF upload field is skipped!');
         };
         await newPage.waitForSelector('input[name="ctl00$ctl00$C$M$ctl00$W$StepNavigationTemplateContainerID$StepNextButton"]');
         await newPage.click('input[name="ctl00$ctl00$C$M$ctl00$W$StepNavigationTemplateContainerID$StepNextButton"]');
@@ -937,12 +1071,22 @@ async function processProduct(browser, page, product) {
         } else {
             console.log(`No support for ${productType} yet, proceeding to next step`);
         };
-    };
+    } else if (productType === 'Ad Hoc') {
+        if (productType.TicketTemplate) {
+            console.log('Ad Hoc product type detected, proceeding to ticket template selector');
+            await ticketTemplateSelector(ticketTemplates, newPage);
+        } else {
+            console.log('Ad Hoc product type detected, but no ticket template provided. Skipping this step.');
+        }
+    }
 
     await new Promise(resolve => setTimeout(resolve, 800));
+    console.log('Found save and exit button');
     await newPage.waitForSelector('input[value="Save & Exit"]');
     await newPage.click('input[value="Save & Exit"]');
+    console.log('Clicked save and exit button');
     await page.bringToFront();
+    console.log('Returned to main page');
 };
 
 async function runPuppeteer(products) {
@@ -969,7 +1113,7 @@ async function runPuppeteer(products) {
         // the automation in order to return to the previous point. For now, we should just have a variable that we can change.
 
         console.log(`Total products to process: ${products.length}`);
-        // sound.play(activateSound);
+        sound.play(activateSound);
 
         for (const product of products) {
             console.log(`Processing product ${processedProductCount + 1}/${products.length}`);
@@ -985,7 +1129,7 @@ async function runPuppeteer(products) {
         }
     } catch (error) {
         const page = await browser.newPage();
-        // sound.play(errorSound);
+        sound.play(errorSound);
         // await sendFailureEmail(processedProductCount, products, error);
         console.error('An error occurred:', error);
     } finally {
