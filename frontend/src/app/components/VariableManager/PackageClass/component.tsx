@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import styles from '../component.module.css'; // Assuming it uses the same styles
+import styles from '../component.module.css';
 
 interface PackageData {
     name: string;
     dataLength: number;
-    iconData: {
-        filename: string[];
-        url: string[];
-    };
-    // Include dataId if needed for display or key
+    variableData: Record<string, {
+        dataId: number;
+        value: {
+            filename: string[];
+            url: string[];
+        };
+    } | null>;
     dataId?: number;
 }
 
@@ -18,14 +20,22 @@ interface DisplayPackageClassProps {
 
 export const DisplayPackageClass: React.FC<DisplayPackageClassProps> = ({ packageItem }) => {
     const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 3; // Show fewer items per page for icon data
+    const itemsPerPage = 3;
 
     if (!packageItem) {
         return <div className={styles.variableClassContainer}><span className={styles.noData}>No Data</span></div>;
     }
 
-    const { name, dataLength, iconData, dataId } = packageItem;
-    const filenames = iconData?.filename || [];
+    const { name, dataLength, variableData, dataId } = packageItem;
+    const variableDataValues = (variableData && typeof variableData === 'object')
+        ? Object.values(variableData)
+        : []; 
+
+    const filenames = variableDataValues
+        .filter(item => item && item.value && Array.isArray(item.value.filename))
+        .map(item => item!.value.filename)
+        .flat(); 
+
     const totalPages = Math.ceil(filenames.length / itemsPerPage);
 
     const currentFilenames = filenames.slice(
@@ -34,19 +44,18 @@ export const DisplayPackageClass: React.FC<DisplayPackageClassProps> = ({ packag
     );
 
     return (
-        <div className={styles.variableClassContainer}> {/* Reuse container style */}
-            <div className={styles.variableItems}> {/* Reuse item container style */}
-                {/* Display Core Package Info */}
+        <div className={styles.variableClassContainer}>
+            <div className={styles.variableItems}>
+                <div className={styles.variableClassItem}>
+                    <span className={styles.variableValue}>
+                        <b>dataId:</b><br />
+                        <span style={{ fontSize: "10pt" }}>{dataId ?? 'N/A'}</span>
+                    </span>
+                </div>
                 <div className={styles.variableClassItem}>
                     <span className={styles.variableValue}>
                         <b>Name:</b><br />
                         <span style={{ fontSize: "10pt" }}>{name || "No Name"}</span>
-                    </span>
-                </div>
-                 <div className={styles.variableClassItem}>
-                    <span className={styles.variableValue}>
-                        <b>ID:</b><br />
-                        <span style={{ fontSize: "10pt" }}>{dataId ?? 'N/A'}</span>
                     </span>
                 </div>
                 <div className={styles.variableClassItem}>
@@ -56,12 +65,11 @@ export const DisplayPackageClass: React.FC<DisplayPackageClassProps> = ({ packag
                     </span>
                 </div>
 
-                {/* Display Filenames (Paginated) */}
                 {filenames.length > 0 && (
-                    <div className={styles.variableClassItem} style={{ gridColumn: '1 / -1' }}> {/* Span full width */}
+                    <div className={styles.variableClassItem} style={{ gridColumn: '1 / -1' }}>
                         <span className={styles.variableValue}>
                             <b>Filenames:</b><br />
-                            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '9pt' }}>
+                            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12pt' }}>
                                 {currentFilenames.map((filename, index) => (
                                     <li key={`${dataId}-fn-${currentPage}-${index}`}>{filename}</li>
                                 ))}
@@ -71,7 +79,6 @@ export const DisplayPackageClass: React.FC<DisplayPackageClassProps> = ({ packag
                 )}
             </div>
 
-            {/* Pagination for Filenames */}
             {filenames.length > itemsPerPage && (
                 <div className={styles.paginationControls}>
                     <button

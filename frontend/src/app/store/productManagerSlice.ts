@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
 import { toast } from 'react-toastify';
-import { ProductManager, variableClassArray } from '../../../types/productManager';
+import { ProductManager, variableClassArray, variablePackageArray } from '../../../types/productManager';
 
 interface ProductManagerState {
   productManagers: ProductManager[];
@@ -35,11 +35,14 @@ interface VariableState {
     dataId: number;
     name: string;
     dataLength: number;
-    iconData: {
-      filename: string[];
-      url: string[];
-    }
-  }>;
+    variableData: Record<string, {
+        dataId: number;
+        value: {
+            filename: string[];
+            url: string[];
+        };
+    } | null>;
+}>;
   variableClass: Record<string, any> | null;
   stringInput: string;
   textareaInput: string;
@@ -60,13 +63,20 @@ interface VariableIconPackage {
   dataId: number;
   name: string;
   dataLength: number;
-  iconData: {
-    filename: string[];
-    url: string[];
-  };
+  variableData: Record<string, {
+      dataId: number;
+      value: {
+          filename: string[];
+          url: string[];
+      };
+  } | null>;
 }
 
-type VariableClassArrayState = Array<variableClassArray | null | undefined>;
+type VariableClassArrayPayload = Array<variableClassArray | null | undefined>;
+type VariablePackageArrayPayload = Array<variablePackageArray | null | undefined>;
+
+type VariableClassState = Array<VariableClass>;
+type VariablePackageState = Array<VariableIconPackage>;
 
 const initialState: VariableState = {
   variableIconPackage: [],
@@ -160,12 +170,26 @@ const variableSlice = createSlice({
     deleteVariableClassArray: (state, action: PayloadAction<number | null | undefined>) => {
       state.variableClassArray = state.variableClassArray.filter((id) => id?.dataId !== action.payload);
     },
-    setVariableClassArray: (state, action: PayloadAction<VariableClassArrayState>) => {
+    setVariableClassArray: (state, action: PayloadAction<VariableClassArrayPayload>) => {
       try {
-        state.variableClassArray = action.payload;
+        const filteredPayload = action.payload.filter(
+          (item): item is variableClassArray => item !== null && item !== undefined
+        );
+        state.variableClassArray = filteredPayload as VariableClassState;
       } catch (e) {
-        console.error("Payload for setVariableClassArray is non-serializable:", action.payload, e);
+        console.error("Error processing setVariableClassArray payload:", action.payload, e);
         toast.error("Failed to update variable class data due to internal error.");
+      }
+    },
+    setVariablePackageArray: (state, action: PayloadAction<VariablePackageArrayPayload>) => {
+      try {
+        const filteredPayload = action.payload.filter(
+          (item): item is variablePackageArray => item !== null && item !== undefined
+        );
+        state.variableIconPackage = filteredPayload as VariablePackageState;
+      } catch (e) {
+        console.error("Error processing setVariablePackageArray payload:", action.payload, e);
+        toast.error("Failed to update variable package data due to internal error.");
       }
     },
     setVariableClass: (state, action: PayloadAction<Object>) => {
@@ -238,6 +262,7 @@ export const {
   setIntegerInput,
   clearAllInputs,
   setVariableClassArray,
+  setVariablePackageArray,
 } = variableSlice.actions;
 
 export const { setTaskName, setTaskType } = typeTaskSlice.actions;

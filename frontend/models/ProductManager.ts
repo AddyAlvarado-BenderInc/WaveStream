@@ -25,6 +25,7 @@ export interface IProductManager extends Document {
   tableCellData: object[];
   mainKeyString: string[];
   globalVariableClassData: object[];
+  globalVariablePackageData: object[];
 }
 
 const ProductManagerSchema = new mongoose.Schema({
@@ -72,6 +73,14 @@ const ProductManagerSchema = new mongoose.Schema({
     }
   },
   globalVariableClassData: {
+    type: [Object],
+    default: [],
+    validate: {
+        validator: (value: object[]) => value.every(v => typeof v === 'object'),
+        message: 'Invalid tableSheet format'
+    }
+  },
+  globalVariablePackageData: {
     type: [Object],
     default: [],
     validate: {

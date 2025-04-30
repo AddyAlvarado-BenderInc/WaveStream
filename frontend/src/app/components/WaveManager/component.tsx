@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/app/store/store';
-import { setVariableClassArray } from "../../store/productManagerSlice";
-import { ProductManager, IconData, tableSheetData, tableCellData, variableClassArray } from '../../../../types/productManager';
+import { setVariableClassArray, setVariablePackageArray } from "../../store/productManagerSlice";
+import { ProductManager, IconData, tableSheetData, tableCellData, variableClassArray, variablePackageArray } from '../../../../types/productManager';
 import VariableManager from '../VariableManager/component';
 import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import { BASE_URL } from '../../config';
@@ -44,7 +44,22 @@ interface VariableClassArray {
     } | null>;
 }
 
+interface VariablePackageArray {
+    dataId: number;
+    name: string;
+    dataLength: number;
+    variableData: Record<string, {
+        dataId: number;
+        value: {
+            filename: string[];
+            url: string[];
+        };
+    } | null>;
+}
+
 type VariableClassArrayState = Array<variableClassArray | null | undefined>;
+
+type VariablePackageArrayState = Array<variablePackageArray | null | undefined>;
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
@@ -53,7 +68,7 @@ interface VariableDataState {
 type VariableRowDataState = Record<string, tableCellData>;
 
 interface WaveManagerProps {
-    productManager: ProductManager & { globalVariableClass?: VariableClassArray };
+    productManager: ProductManager & { globalVariableClass?: VariableClassArray, globalVariablePackage?: VariablePackageArray };
 }
 
 interface OriginalData {
@@ -62,6 +77,7 @@ interface OriginalData {
     variableData: VariableDataState;
     variableRowData: VariableRowDataState;
     variableClassArray: VariableClassArrayState;
+    variablePackageArray: VariablePackageArrayState;
 }
 
 const javascriptServer = process.env.JS_SERVER_URL || 'http://localhost:3002';
@@ -113,8 +129,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         };
 
         const initialVariableClassData = parseAndClone(productManager.globalVariableClassData);
+        const initialVariablePackageData = parseAndClone(productManager.globalVariablePackageData);
 
         dispatch(setVariableClassArray(initialVariableClassData));
+        dispatch(setVariablePackageArray(initialVariablePackageData));
 
         setOriginalData(prevOriginal => ({
             ...prevOriginal,
@@ -140,6 +158,22 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             return [];
         };
 
+        const parseVariablePackageArray = (data: any): VariablePackageArrayState => {
+            if (Array.isArray(data)) {
+                return data;
+            }
+            if (typeof data === 'object' && data !== null) {
+                Object.values(data).filter((item: any) => item != null && item !== undefined);
+                return Object.values(data).map((item: any) => ({
+                    dataId: item.dataId,
+                    name: item.name,
+                    dataLength: item.dataLength,
+                    variableData: item.variableData || {}
+                }));
+            }
+            return [];
+        }
+
         const normalizeTableCellData = (data: any): VariableRowDataState => {
             if (!Array.isArray(data)) return {};
             return data.reduce((acc: VariableRowDataState, item: any) => {
@@ -150,6 +184,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         index: item.index,
                         value: item.value || '',
                         isComposite: item.isComposite || false,
+                        isPackage: item.isPackage || false,
                     };
                 }
                 return acc;
@@ -197,7 +232,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 tableSheet: normalizeTableSheet(productManager.tableSheet)
             },
             variableRowData: normalizeTableCellData(productManager.tableCellData),
-            variableClassArray: parseVariableClassArray(productManager.globalVariableClassData)
+            variableClassArray: parseVariableClassArray(productManager.globalVariableClassData),
+            variablePackageArray: parseVariablePackageArray(productManager.globalVariablePackageData)
         };
     });
 
@@ -209,6 +245,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
+    const globalVariablePackage = useSelector((state: RootState) => state.variables.variableIconPackage);
 
     const checkForChanges = useCallback(() => {
         const normalizeTableSheetForCompare = (tableSheet: tableSheetData[]) => {
@@ -242,6 +279,27 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 .sort((a, b) => a.dataId - b.dataId);
         };
 
+        const normalizeVariablePackageArrayForCompare = (arr: VariablePackageArrayState): VariablePackageArray[] => {
+            return arr
+            // TODO: this is filtering over a nested object, need to break it down further before filtering each item
+                .filter((item): item is VariablePackageArray => item != null && item !== undefined)
+                .map(item => {
+                    const safeVariableData = (item.variableData && typeof item.variableData === 'object')
+                        ? item.variableData
+                        : {};
+                    return {
+                        ...item,
+                        variableData: Object.entries(safeVariableData)
+                            .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+                            .reduce((acc, [key, value]) => {
+                                acc[key] = value;
+                                return acc;
+                            }, {} as typeof item.variableData)
+                    };
+                })
+                .sort((a, b) => a.dataId - b.dataId);
+        }
+
         const formDataChanged = !isEqual(formData, originalData.formData);
         const iconDataChanged = iconData.newFiles.length > 0 ||
             !isEqual(iconData.icon.map(i => i.filename).sort(), originalData.iconData.icon.map(i => i.filename).sort());
@@ -260,7 +318,13 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeVariableClassArrayForCompare(globalVariableClass),
             normalizeVariableClassArrayForCompare(originalData.variableClassArray)
         );
-        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged || variableClassArrayChanged;
+
+        const variablePackageArrayChanged = !isEqual(
+            normalizeVariablePackageArrayForCompare(globalVariablePackage),
+            normalizeVariablePackageArrayForCompare(originalData.variablePackageArray)
+        );
+
+        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged || variableClassArrayChanged || variablePackageArrayChanged;
 
         setHasChanges(dataChanged);
 
@@ -276,8 +340,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 console.log('Original VariableClassArray:', normalizeVariableClassArrayForCompare(originalData.variableClassArray));
                 console.log('Current VariableClassArray:', normalizeVariableClassArrayForCompare(globalVariableClass));
             }
+            if (variablePackageArrayChanged) {
+                console.log('Original VariablePackageArray:', normalizeVariablePackageArrayForCompare(originalData.variablePackageArray));
+                console.log('Current VariablePackageArray:', normalizeVariablePackageArrayForCompare(globalVariablePackage));
+            }
         }
-    }, [formData, iconData, variableData, variableRowData, globalVariableClass, originalData]);
+    }, [formData, iconData, variableData, variableRowData, globalVariablePackage, globalVariableClass, originalData]);
 
     useEffect(() => {
         checkForChanges();
@@ -402,6 +470,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 formDataPayload.append('globalVariableClassData', '[]');
             };
 
+            if (Array.isArray(globalVariablePackage) && globalVariablePackage.length > 0) {
+                console.log("Sending globalVariablePackage data array:", globalVariablePackage.length, "items");
+                formDataPayload.append('globalVariablePackageData', JSON.stringify(globalVariablePackage));
+            } else {
+                console.log("No globalVariablePackage data to send, sending empty array string.");
+                formDataPayload.append('globalVariablePackageData', '[]');
+            }
+
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
 
             console.log('Current variableRowData:', variableRowData);
@@ -490,6 +566,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 index: item.index,
                                 value: item.value,
                                 isComposite: item.isComposite || false,
+                                isPackage: item.isPackage || false,
                             };
                         }
                     });
@@ -501,6 +578,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 if (hasChanges) {
                     console.log('Updating original data references');
                     dispatch(setVariableClassArray(updatedProduct));
+                    dispatch(setVariablePackageArray(updatedProduct));
 
                     const newOriginalData = {
                         formData: {
@@ -541,11 +619,15 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                         index: item.index,
                                         value: item.value || '',
                                         isComposite: item.isComposite || false,
+                                        isPackage: item.isPackage || false,
                                     };
                                 }
                                 return acc;
                             }, {})
                             : {},
+                        variablePackageArray: Array.isArray(updatedProduct.globalVariablePackageData)
+                            ? updatedProduct.globalVariablePackageData
+                            : [],
                         variableClassArray: Array.isArray(updatedProduct.globalVariableClassData)
                             ? updatedProduct.globalVariableClassData
                             : []
@@ -553,8 +635,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     setOriginalData(newOriginalData);
                     if (updatedProduct.globalVariableClassData) {
                         dispatch(setVariableClassArray(updatedProduct.globalVariableClassData));
+                        dispatch(setVariablePackageArray(updatedProduct.globalVariablePackageData));
                     } else {
                         dispatch(setVariableClassArray([]));
+                        dispatch(setVariablePackageArray([]));
                     }
                     setHasChanges(false);
                 }

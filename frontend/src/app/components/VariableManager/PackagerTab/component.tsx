@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addVariablePackage } from '@/app/store/productManagerSlice';
+import { variablePackageArray } from '../../../../../types/productManager';
 import { handleCreateName } from '../ParameterTab/VariableUtility/utility';
 import styles from './component.module.css';
 import { RootState } from '@/app/store/store';
@@ -8,8 +9,13 @@ import { RootState } from '@/app/store/store';
 interface PackagerTabProps {
     initialName?: string | null;
     pendingData: {
-        filename: string[];
-        url: string[];
+        variableData: Record<string, {
+            dataId: number;
+            value: {
+                filename: string[];
+                url: string[];
+            };
+        } | null>
     };
     onClose: () => void;
 }
@@ -24,6 +30,11 @@ export const PackagerTab: React.FC<PackagerTabProps> = ({ initialName, pendingDa
 
     const dispatch = useDispatch();
     const currentVariableClassPackage = useSelector((state: RootState) => state.variables.variableIconPackage as VariablePackageItem[]);
+    const filename = pendingData.variableData && Object.values(pendingData.variableData).map(item => item?.value.filename).flat() || [];
+    const url = pendingData.variableData && Object.values(pendingData.variableData).map(item => item?.value.url).flat() || [];
+
+    console.log(`Filename: ${filename}`);
+    console.log(`URL: ${url}`);
 
     const handleCloseCleanup = () => {
         onClose();
@@ -35,9 +46,19 @@ export const PackagerTab: React.FC<PackagerTabProps> = ({ initialName, pendingDa
             return;
         }
 
-        if (!pendingData || !pendingData.filename || !pendingData.url) {
-            console.error('Pending data is missing or invalid');
+        const currentFilenamesInput = filename || [];
+        const currentUrlsInput = url || [];
+
+        const validFilenames = currentFilenamesInput.filter((name): name is string => name !== undefined);
+        const validUrls = currentUrlsInput.filter((link): link is string => link !== undefined);
+
+        if (!pendingData || validFilenames.length === 0) {
+            console.error('Pending data is missing or invalid (no valid filenames)');
             return;
+        }
+
+        if (validUrls.length !== validFilenames.length) {
+            console.warn(`Mismatch between valid filename count (${validFilenames.length}) and valid URL count (${validUrls.length}).`);
         }
 
         const currentPackageArray = Array.isArray(currentVariableClassPackage) ? currentVariableClassPackage : [];
@@ -47,19 +68,22 @@ export const PackagerTab: React.FC<PackagerTabProps> = ({ initialName, pendingDa
         }, 0);
         const nextDataId = maxId + 1;
 
-        const payload = {
+        const payload: variablePackageArray = {
             dataId: nextDataId,
             name: localVariableName,
-            dataLength: pendingData.filename.length,
-            iconData: {
-                filename: [...pendingData.filename],
-                url: [...pendingData.url]
+            dataLength: validFilenames.length,
+            variableData: {
+                "package_content": {
+                    dataId: nextDataId,
+                    value: {
+                        filename: validFilenames,
+                        url: validUrls
+                    }
+                }
             }
         };
-
-        console.log(`Dispatching Payload for "${localVariableName}":`, JSON.stringify(payload, null, 2));
+        console.log(`Dispatching Payload for "${localVariableName}" (ID: ${nextDataId}):`, JSON.stringify(payload, null, 2));
         dispatch(addVariablePackage(payload));
-
         handleCloseCleanup();
     };
 
@@ -97,7 +121,7 @@ export const PackagerTab: React.FC<PackagerTabProps> = ({ initialName, pendingDa
                     ) : (
                         <div className={styles.parameterEntry}>
                             <h2>Package Name: {localVariableName}</h2>
-                            <p>Click below to package the {pendingData.filename.length} selected item(s) under this name.</p>
+                            <p>Click below to package the {filename.length} selected item(s) under this name.</p>
                             <div className={styles.buttonGroup}>
                                 <button
                                     className={styles.actionButton}
@@ -106,7 +130,7 @@ export const PackagerTab: React.FC<PackagerTabProps> = ({ initialName, pendingDa
                                     Create Variable Package
                                 </button>
                                 <button
-                                    className={styles.secondaryButton}
+                                    className={styles.actionButton}
                                     onClick={() => setOpenNameModal(false)}
                                 >
                                     Back

@@ -127,16 +127,18 @@
   
   .buttonGroup {
     display: flex;
-    justify-content: center; 
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
     margin-top: 10px; 
   }
   
   
   .actionButton {
-    background-color: var(--button-primary-hover); 
-    color: var(--button-secondary-hover); 
+    background-color: var(--button-secondary-hover); 
+    color: var(--button-primary-hover); 
     padding: 12px 25px;
-    border: none;
+    border: 1px solid var(--button-primary-hover);
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, box-shadow 0.2s ease;
@@ -145,8 +147,8 @@
   }
   
   .actionButton:hover {
-    background-color: var(--background-light); 
-    color: var(--button-primary-hover);
+    background-color: var(--button-primary-hover); 
+    color: var(--button-secondary-hover);
     border: 1px solid var(--button-primary-hover); 
     padding: 11px 24px; 
     box-shadow: 0 0 8px rgba(221, 221, 221, 0.3);

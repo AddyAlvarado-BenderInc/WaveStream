@@ -100,6 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     count: tableCellData.length
                 });
 
+                // TODO: Will refactor later to condense globalVariableClassData and globalVariablePackageData, speedrunning now for convenience
                 const processGlobalVariableClassData = (data: any[] | undefined): any[] => {
                     if (!Array.isArray(data)) {
                         console.log('Original globalVariableClassData is not an array or undefined, returning [].');
@@ -131,6 +132,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     count: globalVariableClassData.length
                 });
 
+                const processGlobalVariablePackageData = (data: any[] | undefined): any[] => {
+                    if (!Array.isArray(data)) {
+                        console.log('Original globalVariablePackageData is not an array or undefined, returning [].');
+                        return [];
+                    }
+                    return data.map((item, index) => {
+                        if (typeof item !== 'object' || item === null) {
+                            console.warn(`Invalid item found in globalVariablePackageData at index ${index}:`, item);
+                            return { dataId: -1, name: 'invalid', dataLength: 0, variableData: {} };
+                        }
+                        const variableDataFromDB = item.variableData;
+
+                        return {
+                            dataId: item.dataId ?? -1,
+                            name: item.name ?? "null",
+                            dataLength: item.dataLength ?? 0,
+                            variableData: (typeof variableDataFromDB === 'object' && variableDataFromDB !== null)
+                                ? variableDataFromDB
+                                : {}
+                        };
+                    }).filter(item => item.dataId !== -1);
+                };
+
+                const globalVariablePackageData = processGlobalVariablePackageData(productManager.globalVariablePackageData);
+
+                console.log('Processed globalVariablePackageData:', {
+                    original: productManager.globalVariablePackageData,
+                    processed: globalVariablePackageData,
+                    count: globalVariablePackageData.length
+                });
+
                 const mainKeyString = Array.isArray(productManager.mainKeyString)
                     ? productManager.mainKeyString.map((value: any, index: number) => ({
                         index,
@@ -145,6 +177,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     tableSheet,
                     tableCellData,
                     globalVariableClassData,
+                    globalVariablePackageData,
                     icon: productManager.icon.map(filename => ({
                         filename,
                         url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
@@ -376,7 +409,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             }
                             return item1.value === item2.value;
                         };
-
 
                         const existingDataMap = new Map<string, ProcessedCellData>();
                         existingTableCellData.forEach(item => existingDataMap.set(getComparisonSignature(item), item));
@@ -712,7 +744,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                         typeof item.name === 'string' &&
                                         typeof item.dataLength === 'number' &&
                                         typeof item.variableData === 'object' && item.variableData !== null) {
-
                                         return item;
                                     } else {
                                         console.warn(`Invalid item structure in globalVariableClassData at index ${index}. Skipping item. Item:`, item);
@@ -800,6 +831,108 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     } else {
                         console.warn("Skipping globalVariableClassData update due to previous parsing or validation errors.");
                     }
+
+                    /*
+
+                    const approvedVariablePackageClearFlag = formFields.approvedGlobalVariablePackageClear === 'true';
+                    let incomingVariablePackageData: any[] | undefined = undefined;
+                    let variablePackageParseError = false;
+
+                    const rawGlobalVariablePackageData = formFields.globalVariablePackageData;
+
+                    console.log('Backend PATCH: Received raw globalVariablePackageData:', rawGlobalVariablePackageData);
+
+                    if (rawGlobalVariablePackageData !== undefined && typeof rawGlobalVariablePackageData === 'string') {
+                        try {
+                            const parsedData = JSON.parse(rawGlobalVariablePackageData);
+                            if (Array.isArray(parsedData)) {
+                                incomingVariablePackageData = parsedData.map((item: any, index: number) => {
+                                    if (typeof item === 'object' && item !== null &&
+                                        typeof item.dataId === 'number' &&
+                                        typeof item.name === 'string' &&
+                                        typeof item.dataLength === 'number' &&
+                                        typeof item.variableData === 'object' && item.variableData !== null) {
+                                        // NOTE: Deeper validation of variableData contents (value object) might be needed here later
+                                        return item;
+                                    } else {
+                                        console.warn(`Invalid item structure in globalVariablePackageData at index ${index}. Skipping item. Item:`, item);
+                                        variablePackageParseError = true;
+                                        return null;
+                                    }
+                                }).filter(item => item !== null);
+
+                                if (variablePackageParseError) {
+                                    console.warn("Found invalid items during globalVariablePackageData parsing. Update for this field will be skipped.");
+                                    incomingVariablePackageData = undefined;
+                                } else if (incomingVariablePackageData.length > 0) {
+                                    console.log(`Successfully parsed ${incomingVariablePackageData.length} globalVariablePackageData items.`);
+                                } else {
+                                    console.log("Successfully parsed globalVariablePackageData as an empty array.");
+                                }
+                            } else {
+                                console.error("Parsed globalVariablePackageData is not an array. Skipping update for this field.");
+                                variablePackageParseError = true;
+                            }
+                        } catch (jsonParseError) {
+                            console.error("Failed to parse globalVariablePackageData JSON string:", jsonParseError);
+                            variablePackageParseError = true;
+                        }
+                    } else if (rawGlobalVariablePackageData !== undefined) {
+                        console.error(`Unexpected type for globalVariablePackageData: ${typeof rawGlobalVariablePackageData}. Expected a JSON string. Skipping update for this field.`);
+                        variablePackageParseError = true;
+                    } else {
+                        console.log("globalVariablePackageData field is absent from the request.");
+                    }
+
+                    if (incomingVariablePackageData) {
+                        console.log(">>> DEBUG: Backend parsed incomingVariablePackageData:", JSON.stringify(incomingVariablePackageData, null, 2));
+                    }
+
+                    if (!variablePackageParseError) {
+                        const ensureArray = (data: any): any[] => {
+                            if (Array.isArray(data)) {
+                                return data.filter(item => item && typeof item === 'object');
+                            }
+                            return [];
+                        };
+
+                        const existingVariablePackageData = ensureArray(productManager.globalVariablePackageData);
+                        let variablePackageChanged = false;
+                        let finalVariablePackageData: any[] = existingVariablePackageData;
+
+                        if (incomingVariablePackageData === undefined) {
+                            if (approvedVariablePackageClearFlag && existingVariablePackageData.length > 0) {
+                                finalVariablePackageData = [];
+                                variablePackageChanged = true;
+                                console.log("globalVariablePackageData absent/invalid and approvedClear=true. Clearing.");
+                            } else {
+                                console.log("globalVariablePackageData absent/invalid and approvedClear=false/absent. No change.");
+                            }
+                        } else {
+                            const currentIncomingVariablePackageData = ensureArray(incomingVariablePackageData);
+                            const sortById = (a: any, b: any) => (a?.dataId ?? 0) - (b?.dataId ?? 0);
+
+                            const sortedExisting = [...existingVariablePackageData].sort(sortById);
+                            const sortedIncoming = [...currentIncomingVariablePackageData].sort(sortById);
+
+                            if (!isEqual(sortedExisting, sortedIncoming)) {
+                                finalVariablePackageData = currentIncomingVariablePackageData;
+                                variablePackageChanged = true;
+                                console.log(`Changes detected in globalVariablePackageData. Updating.`);
+                            } else {
+                                console.log("No changes detected in globalVariablePackageData.");
+                            }
+                        }
+
+                        if (variablePackageChanged) {
+                            updateData.globalVariablePackageData = finalVariablePackageData;
+                            console.log(">>> DEBUG: Backend updateData.globalVariablePackageData BEFORE save:", JSON.stringify(updateData.globalVariablePackageData, null, 2));
+                        }
+                    } else {
+                        console.warn("Skipping globalVariablePackageData update due to previous parsing or validation errors.");
+                    }
+
+                    */
 
                     if (Object.keys(updateData).length === 0) {
                         return res.status(400).json({ error: 'No valid fields provided for update' });

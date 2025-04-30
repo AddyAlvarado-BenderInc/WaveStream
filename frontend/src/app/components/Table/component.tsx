@@ -37,8 +37,12 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
         setExpandedCellKey(prevKey => (prevKey === key ? null : key));
     };
 
+    const toggleExpandPackage = (key: string) => {
+        setExpandedCellKey(prevKey => (prevKey === key ? null : key));
+    };
+
     const [actionModalOpen, setActionModalOpen] = useState<boolean>(false);
-    const [actionTargetCell, setActionTargetCell] = useState<{ key: string; rowIndex: number; value: string; isComposite: boolean } | null>(null);
+    const [actionTargetCell, setActionTargetCell] = useState<{ key: string; rowIndex: number; value: string; isComposite: boolean; isPackage: boolean } | null>(null);
     const [currentAction, setCurrentAction] = useState<'extendLength' | 'fillEmpty' | null>(null);
     const [actionInputValue, setActionInputValue] = useState<string>('');
 
@@ -203,6 +207,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                 index: rowIndex,
                                 value: cleanedValue,
                                 isComposite: false,
+                                isPackage: false,
                             };
                         });
 
@@ -416,6 +421,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                         value: defaultValue,
                         isComposite: false,
                         isDefault: true,
+                        isPackage: false,
                     };
                     defaultAppliedCount++;
                 } else if (existingCell && existingCell.isDefault && existingCell.value !== defaultValue) {
@@ -447,7 +453,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             return;
         }
 
-        const { key, rowIndex, value: valueToExtend, isComposite: isTargetComposite } = actionTargetCell;
+        const { key, rowIndex, value: valueToExtend, isComposite: isTargetComposite, isPackage: isPackage } = actionTargetCell;
 
         const updates: VariableRowDataState = {};
         let extendedCount = 0;
@@ -463,6 +469,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                 index: targetRowIndex,
                 value: valueToExtend,
                 isComposite: isTargetComposite,
+                isPackage: isPackage,
             };
             extendedCount++;
         }
@@ -489,7 +496,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
             return;
         }
 
-        const { key, rowIndex, value: valueToFill, isComposite: isTargetComposite } = actionTargetCell;
+        const { key, rowIndex, value: valueToFill, isComposite: isTargetComposite, isPackage: isPackage } = actionTargetCell;
         const maxRowIndex = getMaxRowIndex(variableRowData);
         const updates: VariableRowDataState = {};
         let filledCount = 0;
@@ -521,6 +528,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                     index: i,
                     value: valueToFill,
                     isComposite: isTargetComposite,
+                    isPackage: isPackage
                 };
                 filledCount++;
             }
@@ -881,22 +889,42 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                         const cellKey = `${keyObj.value}_row_${rowIndex}`;
                                                         const cellData = rowDataMap.get(rowIndex)?.get(keyObj.value);
                                                         const isCompositeCell = cellData?.isComposite ?? false;
+                                                        const isPackage = cellData?.isPackage ?? false;
                                                         const cellValue = cellData?.value;
                                                         let isDefaultCell = cellData?.isDefault ?? false;
                                                         const isExpanded = expandedCellKey === cellKey;
 
+                                                        type PackageItem = {
+                                                            dataId: number;
+                                                            value: { filename: string[]; url: string[] };
+                                                        };
+
                                                         let displayContent: React.ReactNode = '';
                                                         let editActionValue = '';
 
+                                                        let totalFileLength = 0;
+                                                        if (isPackage && Array.isArray(cellValue)) {
+                                                            const packageItems = cellValue as PackageItem[];
+                                                            totalFileLength = packageItems.reduce((sum, item) => {
+                                                                const currentLength = item?.value?.filename?.length ?? 0;
+                                                                return sum + currentLength;
+                                                            }, 0);
+                                                        }
+
                                                         if (cellData) {
                                                             if (isCompositeCell && Array.isArray(cellValue)) {
-                                                                displayContent = `COMP - ${cellData.classKey}`;
+                                                                displayContent = `COMP - ${cellData.classKey} (${cellValue.length})`;
+                                                            } else if (isPackage) {
+                                                                displayContent = `PKG - ${cellData.classKey} (${totalFileLength})`;
                                                             } else if (typeof cellValue === 'string') {
                                                                 displayContent = cellValue;
                                                                 editActionValue = cellValue;
                                                             } else {
-                                                                displayContent = '';
+                                                                displayContent = '[Invalid Data]';
+                                                                console.warn(`Unexpected cellValue type for key ${cellKey}:`, cellValue);
                                                             }
+                                                        } else {
+                                                            displayContent = '';
                                                         }
 
                                                         return (
@@ -910,11 +938,15 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                                         <span onClick={() => toggleExpandComposite(cellKey)} className={styles.compositeDisplay} title="Click to view/hide details">
                                                                             {displayContent}
                                                                         </span>
+                                                                    ) : isPackage ? (
+                                                                        <span onClick={() => toggleExpandComposite(cellKey)} className={styles.compositeDisplay} title="Click to view/hide details">
+                                                                            {displayContent}
+                                                                        </span>
                                                                     ) : (displayContent)}
                                                                     <div className={styles.cellButtons}>
                                                                         {cellValue && (
                                                                             <>
-                                                                                {isCompositeCell && (
+                                                                                {isCompositeCell ? (
                                                                                     <button
                                                                                         onClick={(e) => {
                                                                                             e.stopPropagation();
@@ -925,17 +957,19 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                                                     >
                                                                                         {isExpanded ? 'Minimize' : 'Expand'}
                                                                                     </button>
-                                                                                )}
-                                                                                <button
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        handleDeleteCell(keyObj.value, rowIndex);
-                                                                                    }}
-                                                                                    className={styles.cellDelete}
-                                                                                    title="Delete cell data"
-                                                                                >
-                                                                                    &times;
-                                                                                </button>
+                                                                                ) : isPackage ? (
+                                                                                    <button
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            toggleExpandPackage(cellKey);
+                                                                                        }}
+                                                                                        className={styles.cellExpand}
+                                                                                        title="Expand package cell"
+                                                                                    >
+                                                                                        {isExpanded ? 'Minimize' : 'Expand'}
+                                                                                    </button>
+
+                                                                                ) : ("")}
                                                                                 <button
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
@@ -949,7 +983,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                                                 <button
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
-                                                                                        setActionTargetCell({ key: keyObj.value, rowIndex, value: cellValue, isComposite: isCompositeCell });
+                                                                                        setActionTargetCell({ key: keyObj.value, rowIndex, value: cellValue, isComposite: isCompositeCell, isPackage: isPackage });
                                                                                         setCurrentAction(null);
                                                                                         setActionInputValue('');
                                                                                         setActionModalOpen(true);
@@ -959,12 +993,47 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, selected
                                                                                 >
                                                                                     Action
                                                                                 </button>
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        handleDeleteCell(keyObj.value, rowIndex);
+                                                                                    }}
+                                                                                    className={styles.cellDelete}
+                                                                                    title="Delete cell data"
+                                                                                >
+                                                                                    &times;
+                                                                                </button>
                                                                             </>
                                                                         )}
                                                                     </div>
                                                                     {isCompositeCell && isExpanded && Array.isArray(cellValue) && (
                                                                         <div className={styles.compositeExpandedView}>
                                                                             <ul> {cellValue.map((val, idx) => <li key={`${cellKey}-val-${idx}`}>{val}</li>)} </ul>
+                                                                        </div>
+                                                                    )}
+                                                                    {isPackage && isExpanded && Array.isArray(cellValue) && (
+                                                                        <div className={styles.compositeExpandedView}>
+                                                                            {(cellValue as PackageItem[]).map((packageItem, pkgIdx) => (
+                                                                                <div key={`${cellKey}-pkg-${pkgIdx}`} className={styles.packageItemDetail}>
+                                                                                    <br />
+                                                                                    <strong>Item ID: {packageItem.dataId}</strong>
+                                                                                    {packageItem.value && (
+                                                                                        <>
+                                                                                            {packageItem.value.filename.map((fname, fileIdx) => (
+                                                                                                <div key={`${cellKey}-pkg-${pkgIdx}-file-${fileIdx}`} className={styles.fileUrlPair}>
+                                                                                                    <span><strong>File:</strong> {fname}</span>
+                                                                                                    <span><strong>URL:</strong> {packageItem.value.url?.[fileIdx] || 'N/A'}</span>
+                                                                                                    {packageItem.value.url?.[fileIdx] && (
+                                                                                                        <a href={packageItem.value.url[fileIdx]} target="_blank" rel="noopener noreferrer" title={packageItem.value.url[fileIdx]}>
+                                                                                                            (Link)
+                                                                                                        </a>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </>
+                                                                                    )}
+                                                                                </div>
+                                                                            ))}
                                                                         </div>
                                                                     )}
                                                                 </div>

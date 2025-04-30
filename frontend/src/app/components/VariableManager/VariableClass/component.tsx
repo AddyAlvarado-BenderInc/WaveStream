@@ -17,8 +17,13 @@ interface VariableClasses {
 }
 
 interface IconPackageClass {
-    filename: string[];
-    url: string[];
+    variableData: Record<string, {
+        dataId: number;
+        value: {
+            filename: string[];
+            url: string[];
+        };
+    } | null>
 }
 
 interface variableClassProps {
@@ -358,9 +363,19 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
             toast.error("Please select a file!");
             return;
         }
+        // TODO: in the future, we'll add a check to see if the file is an image or pdf
+        let dataValue = "image";
+
         const dataToSend = {
-            filename: localFilename,
-            url: localFile,
+            variableData: {
+                [`package_content_${dataValue}`]: {
+                    dataId: 0,
+                    value: {
+                        filename: localFilename,
+                        url: localFile
+                    }
+                }
+            }
         }
 
         if (onPackage) {

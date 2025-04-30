@@ -12,9 +12,10 @@ export interface tableSheetData {
 export interface tableCellData {
     classKey: string;
     index: number;
-    value: string | string[];
+    value: any;
     isComposite: boolean;
     isDefault?: boolean;
+    isPackage: boolean;
 }
 
 export interface mainKeyString {
@@ -28,7 +29,20 @@ export interface variableClassArray {
     dataLength: number;
     variableData: Record<string, {
         dataId: number;
-        value: string;
+        value: any;
+    } | null>;
+}
+
+export interface variablePackageArray {
+    dataId: number;
+    name: string;
+    dataLength: number; 
+    variableData: Record<string, {
+        dataId: number;
+        value: {
+            filename: string[];
+            url: string[];
+        };
     } | null>;
 }
 
@@ -61,5 +75,6 @@ export interface ProductManager {
     tableCellData: tableCellData[];
     variableClass: string[];
     variabelClassArray: variableClassArray;
+    variablePackageArray: variablePackageArray;
     mainKeyString: mainKeyString[];
 }
