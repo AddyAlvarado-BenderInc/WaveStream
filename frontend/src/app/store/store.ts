@@ -3,6 +3,7 @@ import productManagerReducer from './productManagerSlice';
 import { variableReducer } from './productManagerSlice';
 import { typeTaskReducer } from './productManagerSlice';
 import { parameterReducer } from './productManagerSlice';
+import { iconManagerReducer } from './productManagerSlice';
 
 export const store = configureStore({
     reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
         variables: variableReducer,
         typeTask: typeTaskReducer,
         parameter: parameterReducer,
+        iconManager: iconManagerReducer,
     },
     devTools: process.env.NODE_ENV !== 'production',
 });

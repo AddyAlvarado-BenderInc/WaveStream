@@ -10,6 +10,17 @@ const initialManagerState: ProductManagerState = {
   productManagers: [],
 };
 
+interface IconManagerState {
+  icon: Array<{
+    filename: string;
+    url: string;
+  }[]>;
+}
+
+const initialIconManagerState: IconManagerState = {
+  icon: [],
+};
+
 interface VariableState {
   variableClassArray: Array<{
     dataId: number;
@@ -20,6 +31,15 @@ interface VariableState {
       value: string;
     } | null>;
   } | null | undefined>
+  variableIconPackage: Array<{
+    dataId: number;
+    name: string;
+    dataLength: number;
+    iconData: {
+      filename: string[];
+      url: string[];
+    }
+  }>;
   variableClass: Record<string, any> | null;
   stringInput: string;
   textareaInput: string;
@@ -36,9 +56,20 @@ interface VariableClass {
   } | null>;
 }
 
+interface VariableIconPackage {
+  dataId: number;
+  name: string;
+  dataLength: number;
+  iconData: {
+    filename: string[];
+    url: string[];
+  };
+}
+
 type VariableClassArrayState = Array<variableClassArray | null | undefined>;
 
 const initialState: VariableState = {
+  variableIconPackage: [],
   variableClassArray: [],
   variableClass: null,
   stringInput: "",
@@ -73,6 +104,27 @@ const initialParameterState: ParameterState = {
   parameterBundle: null
 };
 
+const iconManagerSlice = createSlice({
+  name: 'iconManager',
+  initialState: initialIconManagerState,
+  reducers: {
+    setIcon: (state, action: PayloadAction<IconManagerState['icon']>) => {
+      state.icon = action.payload;
+    },
+    addIcon: (state, action: PayloadAction<{ filename: string; url: string }[]>) => {
+      state.icon.push(action.payload);
+    },
+    deleteIcon: (state, action: PayloadAction<string>) => {
+      state.icon = state.icon.map((iconArray) =>
+        iconArray.filter((item) => item.filename !== action.payload)
+      );
+    },
+    clearIcon: (state) => {
+      state.icon = [];
+    },
+  },
+});
+
 const productManagerSlice = createSlice({
   name: 'productManager',
   initialState: initialManagerState,
@@ -90,6 +142,15 @@ const variableSlice = createSlice({
   name: "variableMKS",
   initialState,
   reducers: {
+    addVariablePackage: (state, action: PayloadAction<VariableIconPackage>) => {
+      state.variableIconPackage.push(action.payload);
+    },
+    clearAllVariablePackage: (state) => {
+      state.variableIconPackage = [];
+    },
+    deleteVariablePackage: (state, action: PayloadAction<number | null | undefined>) => {
+      state.variableIconPackage = state.variableIconPackage.filter((id) => id?.dataId !== action.payload);
+    },
     addVariableClassArray: (state, action: PayloadAction<VariableClass>) => {
       state.variableClassArray.push(action.payload);
     },
@@ -165,6 +226,9 @@ const parameterSlice = createSlice({
 });
 
 export const {
+  addVariablePackage,
+  deleteVariablePackage,
+  clearAllVariablePackage,
   addVariableClassArray,
   clearAllVariableClassArray,
   deleteVariableClassArray,
@@ -180,8 +244,10 @@ export const { setTaskName, setTaskType } = typeTaskSlice.actions;
 export const { addParameter, setParameterBundle, clearAllParameters } = parameterSlice.actions;
 export const clearParameter = createAction<number | undefined>('parameters/clear');
 export const { updateProductManager } = productManagerSlice.actions;
+export const { setIcon, addIcon, clearIcon, deleteIcon } = iconManagerSlice.actions;
 
 export default productManagerSlice.reducer;
 export const variableReducer = variableSlice.reducer;
 export const typeTaskReducer = typeTaskSlice.reducer;
 export const parameterReducer = parameterSlice.reducer;
+export const iconManagerReducer = iconManagerSlice.reducer;

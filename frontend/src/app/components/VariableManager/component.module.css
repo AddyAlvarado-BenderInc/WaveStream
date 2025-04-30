@@ -38,7 +38,7 @@
   overflow-y: auto;
 }
 
-.variableClassContainer button, .sendToSheetButton, .deleteAllButton, .deleteButton {
+.variableClassContainer button, .sendToSheetButton, .deleteAllButton, .deleteButton, .actionButton {
   cursor: pointer;
   color: var(--button-primary-hover);
   border: 1px solid var(--button-primary-hover);
@@ -48,9 +48,10 @@
   margin-right: 10px;
   margin-bottom: 10px;
   padding: 10px 20px;
+  white-space: nowrap;
 }
 
-.variableClassContainer button:hover, .sendToSheetButton:hover, .deleteAllButton:hover, .deleteButton:hover {
+.variableClassContainer button:hover, .sendToSheetButton:hover, .deleteAllButton:hover, .deleteButton:hover, .actionButton:hover {
   background-color: var(--button-primary-hover);
   color: var(--button-secondary-hover);
 }

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { addIcon, deleteIcon } from "@/app/store/productManagerSlice";
+import { useDispatch } from "react-redux";
 import styles from "./component.module.css";
 import { toast } from "react-toastify";
 
@@ -17,6 +19,7 @@ const MAX_IMAGES = 5;
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({
     icon, label, onUpload, onDelete
 }) => {
+    const dispatch = useDispatch();
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [newFiles, setNewFiles] = useState<File[]>([]);
 
@@ -42,6 +45,10 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
 
             setNewFiles(prev => [...prev, ...validFiles]);
             onUpload(validFiles);
+            dispatch(addIcon(validFiles.map(file => ({
+                filename: file.name,
+                url: URL.createObjectURL(file),
+            }))));
         }
     };
 
@@ -49,9 +56,10 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
         try {
             if (index < icon.length) {
                 const filename = icon[index].filename;
-                
+
                 await onDelete(filename);
-                
+                dispatch(deleteIcon(filename));
+
                 const newImages = [...icon];
                 newImages.splice(index, 1);
                 if (currentIndex >= newImages.length) {
@@ -80,15 +88,7 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
 
     const FileNameWithTooltip: React.FC<{ filename: string }> = ({ filename }) => {
         const [isHovered, setIsHovered] = useState(false);
-    
-        const handleCopy = () => {
-            navigator.clipboard.writeText(filename).then(() => {
-                toast("Filename copied to clipboard!");
-            }).catch(err => {
-                console.error("Failed to copy: ", err);
-            });
-        };
-    
+
         return (
             <div
                 className={styles.imageInfo}
@@ -99,9 +99,6 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
                 {isHovered && (
                     <div className={styles.tooltip}>
                         <strong>{filename}</strong>
-                        <button onClick={handleCopy} className={styles.copyButton}>
-                            Copy
-                        </button>
                     </div>
                 )}
             </div>

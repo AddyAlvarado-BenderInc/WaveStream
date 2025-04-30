@@ -69,6 +69,7 @@ interface VariableClasses {
     stringInput: string;
     textareaInput: string;
     integerInput: string;
+    fileInput: string;
     task: string;
     type: string;
 }
@@ -103,16 +104,16 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     const globalParameterBundle = useSelector((state: RootState) => state.parameter.parameters);
     const currentVariableClassArray = useSelector((state: RootState) => state.variables.variableClassArray);
 
+    const dispatch = useDispatch();
+
+    const { value, detectVariables } = cleanedInputValues(variableClass);
+
     useEffect(() => {
         if (editingItemId && initialName) {
             setLocalVariableName(initialName);
             setOpenNameModal(true);
         }
     }, [editingItemId, initialName]);
-
-    const dispatch = useDispatch();
-
-    const { value, detectVariables } = cleanedInputValues(variableClass);
 
     const displayIntegerVariables = (value: object) => {
         const cleanValue = cleanedInputValues(value).value;
@@ -376,7 +377,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
 
     const handleAddVariable = (object: object, param: BundlizedParameters[]) => {
         let inputString = "";
-        const { task, type, stringInput, textareaInput, integerInput } = object as VariableClasses;
+        const { task, type, stringInput, textareaInput, integerInput, fileInput } = object as VariableClasses;
 
         if (type === "String" && task === "Text Line" || type === "Linked") {
             inputString = stringInput || "";
@@ -384,8 +385,8 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             inputString = textareaInput || "";
         } else if (type === "Integer" && task === "Number") {
             inputString = integerInput || "";
-        } else if (type === "EscapeSequence" && task === "Special Instructions") {
-            inputString = stringInput || "";
+        } else if (type === "String" && task === "Linked Media") {
+            inputString = fileInput || "";
         }
 
         else if (stringInput) {

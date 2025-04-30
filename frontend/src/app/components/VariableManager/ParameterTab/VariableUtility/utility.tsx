@@ -10,7 +10,6 @@ export const cleanedInputValues = (object: any) => {
         'Text Line': ['stringInput'],
         'Number': ['integerInput'],
         'Description': ['textareaInput'],
-        'Special Instructions': ['escapeSequence'],
         'File Upload': ['linkedInput'],
     };
 

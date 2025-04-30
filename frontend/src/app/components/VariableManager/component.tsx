@@ -1,9 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import VariableClass from '../VariableManager/VariableClass/component';
 import {
+    addVariableClassArray,
     clearAllVariableClassArray,
     deleteVariableClassArray,
-    addVariableClassArray,
+    addVariablePackage,
+    clearAllVariablePackage,
+    deleteVariablePackage,
 } from '@/app/store/productManagerSlice';
 import { tableSheetData, tableCellData, ProductManager } from '../../../../types/productManager';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
@@ -13,12 +16,19 @@ import Table from '../Table/component';
 import styles from './component.module.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { PackagerTab } from './PackagerTab/component';
+import { DisplayPackageClass } from './PackageClass/component';
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
 }
 
 type VariableRowDataState = Record<string, tableCellData>;
+
+interface PendingPackageData {
+    filename: string[];
+    url: string[];
+}
 
 interface VariableManagerProps {
     productManager: ProductManager;
@@ -41,6 +51,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({
 }) => {
     const [parameterizationOpen, setParameterizationOpen] = useState(false);
     const [parameterizationData, setParameterizationData] = useState<object | null>(null);
+    const [pendingPackageData, setPendingPackageData] = useState<PendingPackageData | null>(null);
+    const [packagerOpen, setPackagerOpen] = useState(false);
     const [originAssignment, setOriginAssignment] = useState("");
     const [sendToSheetModal, setSendToSheetModal] = useState(false);
     const [selectedClassKey, setSelectedClassKey] = useState<string>('');
@@ -51,11 +63,14 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     const [concatModal, setConcatModal] = useState(false);
     const [concatOption, setConcatOption] = useState<string>('');
     const [hideVariableClass, setHideVariableClass] = useState(false);
+    const [hidePackageClass, setHidePackageClass] = useState(false);
     const [editingItemId, setEditingItemId] = useState<number | null>(null);
     const [editPrefillData, setEditPrefillData] = useState<{ name: string, params: any[] } | null>(null);
+    const [packageIdentifier, setPackageIdentifier] = useState<number | null | undefined>(null);
     let [addOrSend, setAddOrSend] = useState<string>('send');
 
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
+    const globalPackageClass = useSelector((state: RootState) => state.variables.variableIconPackage);
 
     const dispatch = useDispatch();
 
@@ -70,6 +85,16 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         setEditingItemId(null);
         setEditPrefillData(null);
     };
+
+    const handlePackagedData = (dataFromVariableClass: PendingPackageData) => {
+        console.log('Packaged Data received from VariableClass:', dataFromVariableClass);
+        if (!dataFromVariableClass || !dataFromVariableClass.filename || dataFromVariableClass.filename.length === 0) {
+            toast.error("No files selected to package.");
+            return;
+        }
+        setPendingPackageData(dataFromVariableClass);
+        setPackagerOpen(true);
+    }
 
     const handleSubmitTableData = (tableSheetData: tableSheetData[]) => {
         setVariableData((prevState) => ({
@@ -90,6 +115,11 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         setEditPrefillData(null);
     };
 
+    const handleClosePackagerTab = () => {
+        setPackagerOpen(false);
+        setPendingPackageData(null);
+    };
+
     const itemForModal = useMemo(() => {
         if (variableClassIdentifier === null || variableClassIdentifier === undefined) {
             return null;
@@ -97,6 +127,14 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         const sourceArray = Array.isArray(globalVariableClass) ? globalVariableClass : [];
         return sourceArray.find(item => item?.dataId === variableClassIdentifier);
     }, [variableClassIdentifier, globalVariableClass]);
+
+    const packageItemForModal = useMemo(() => {
+        if (packageIdentifier === null || packageIdentifier === undefined) {
+            return null;
+        }
+        const sourceArray = Array.isArray(globalPackageClass) ? globalPackageClass : [];
+        return sourceArray.find(item => item?.dataId === packageIdentifier);
+    }, [packageIdentifier, globalPackageClass]);
 
     const handleSendToSheet = (
         variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
@@ -157,6 +195,52 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         });
         setSendToSheetModal(false);
         setVariableClassIdentifier(null);
+    };
+
+    const handleSendPackageToSheet = (
+        packageItem: typeof globalPackageClass[0] | null | undefined,
+        selectedKey: string
+    ) => {
+        if (!packageItem) {
+            toast.error("Invalid package item.");
+            return;
+        }
+        if (!selectedKey) {
+            toast.error("Please select a class key.");
+            return;
+        }
+        console.log(`Sending Package "${packageItem.name}" (ID: ${packageItem.dataId}) to sheet under key "${selectedKey}"`);
+        // TODO: Implement the logic to format packageItem.iconData (filenames/urls)
+        // and update the variableRowData state, similar to handleSendToSheet or handleSendComposite.
+        // Decide how to represent filenames/URLs (separate rows, composite array, etc.)
+        // Example: Sending filenames as separate rows
+        const filenamesToAdd = packageItem.iconData.filename;
+
+        setVariableRowData(prevData => {
+            const updatedData = { ...prevData };
+            let nextRowIndex = 0;
+            Object.keys(updatedData).forEach(key => {
+                const match = key.match(/^(.+)_row_(\d+)$/);
+                if (match && match[1] === selectedKey) {
+                    nextRowIndex = Math.max(nextRowIndex, parseInt(match[2], 10) + 1);
+                }
+            });
+
+            filenamesToAdd.forEach((filename, index) => {
+                const newRowKey = `${selectedKey}_row_${nextRowIndex + index}`;
+                updatedData[newRowKey] = {
+                    classKey: selectedKey,
+                    index: nextRowIndex + index,
+                    value: filename,
+                    isComposite: false,
+                };
+            });
+            return updatedData;
+        });
+
+        toast.success(`Package "${packageItem.name}" sent to key "${selectedKey}".`);
+        setSendToSheetModal(false);
+        setPackageIdentifier(null);
     };
 
     const handleSendComposite = (
@@ -243,8 +327,12 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         setSendToSheetModal(false);
     }
 
-    const modalOptions = (key: number | null | undefined, object: Record<string, { dataId: number, value: string } | null>) => {
-        console.log(`MODALOPTIONS: Received ID=${key}, Data=`, object);
+    const modalOptions = (
+        key: number | null | undefined,
+        object: any,
+        dataType: 'variable' | 'package',
+    ) => {
+        console.log(`MODALOPTIONS: Type=${dataType}, ID=${key}, Data=`, object);
         let name = "";
 
         if (Array.isArray(object)) {
@@ -255,9 +343,16 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             }
         }
 
-        const valuesToDisplay = object && typeof object === 'object'
-            ? Object.values(object).map(item => item?.value)
-            : [];
+        let valuesToDisplay: any[] = [];
+
+        if (dataType === 'variable' && object && typeof object === 'object') {
+            const variableRecord = object as Record<string, { dataId: number, value: string } | null>;
+            valuesToDisplay = Object.values(variableRecord).map(item => item?.value);
+        } else if (dataType === 'package' && object && typeof object === 'object') {
+            const iconData = object as { filename: string[], url: string[] };
+            name = packageItemForModal?.name || "";
+            valuesToDisplay = iconData.filename || [];
+        }
 
         return (
             <div className={styles.modal}>
@@ -381,10 +476,30 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         dispatch(deleteVariableClassArray(id));
     };
 
+    const handleDeletePackage = (id: number | null | undefined) => {
+        if (id === null || id === undefined) return;
+        console.log("Dispatching deleteVariablePackage with ID:", id);
+        dispatch(deleteVariablePackage(id));
+        if (packageIdentifier === id) {
+            setPackageIdentifier(null);
+            setSendToSheetModal(false);
+        }
+    };
+
     const handleClearAllVariableClass = () => {
         window.confirm("Are you sure you want to delete all variable classes?")
             ? dispatch(clearAllVariableClassArray())
             : toast.error("Deletion cancelled.");
+    };
+
+    const handleClearAllPackages = () => {
+        if (window.confirm("Are you sure you want to delete all variable packages?")) {
+            console.log("Dispatching clearAllVariablePackages");
+            dispatch(clearAllVariablePackage());
+            setPackageIdentifier(null);
+        } else {
+            toast.error("Deletion cancelled.");
+        }
     };
 
     /* const handleEditVariableClass = ( itemToEdit: VariableClassPayload | null | undefined ) => {
@@ -519,6 +634,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         }
     }
 
+    const handleHidePackageClass = () => {
+        setHidePackageClass(!hidePackageClass);
+    }
+
     const toggleVariableClass = () => {
         setHideVariableClass(true);
         if (hideVariableClass) {
@@ -531,7 +650,9 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             {originAssignment && (
                 <div className={styles.formContainer}>
                     <VariableClass
-                        onSave={(parameterizationData) => handleOpenParameterizationTab(parameterizationData)}
+                        productManager={productManager}
+                        onSave={handleOpenParameterizationTab}
+                        onPackage={handlePackagedData}
                     />
                     {parameterizationData && parameterizationOpen && (
                         <ParameterizationTab
@@ -541,6 +662,12 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                             editingItemId={editingItemId}
                             initialName={editPrefillData?.name}
                             initialParams={editPrefillData?.params}
+                        />
+                    )}
+                    {packagerOpen && pendingPackageData && (
+                        <PackagerTab
+                            pendingData={pendingPackageData}
+                            onClose={handleClosePackagerTab}
                         />
                     )}
                     {globalVariableClass.length > 0 && (
@@ -576,7 +703,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                                     {displayVariableClass(currentVariableClassData || [])}
                                                     <div className={styles.buttonContainer}>
                                                         <button
-                                                            className={styles.deleteButton}
+                                                            className={styles.actionButton}
                                                             onClick={(e) => {
                                                                 e.preventDefault();
                                                                 setVariableClassIdentifier(variableClassDataId);
@@ -615,21 +742,6 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                                         </button>
                                                     </div>
                                                 </div>
-                                                {sendToSheetModal && itemForModal && (
-                                                    <div
-                                                        className={styles.modalOverlay}
-                                                        onClick={(e) => {
-                                                            if (e.target === e.currentTarget) {
-                                                                setSendToSheetModal(false);
-                                                                setVariableClassIdentifier(null);
-                                                            }
-                                                        }}
-                                                    >
-                                                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                                                            {modalOptions(itemForModal.dataId, itemForModal.variableData)}
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         )
                                     })}
@@ -648,7 +760,76 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                             )}
                         </div>
                     )}
-
+                    {globalPackageClass.length > 0 && (
+                        <div className={styles.variableClassList}>
+                            <div className={styles.hideButtonContainer}>
+                                <button className={styles.hideButton} onClick={handleHidePackageClass} title={`Toggle Package List`}>
+                                    <h2>Variable Packages | </h2>
+                                    <span>{globalPackageClass.length} total | {hidePackageClass ? "Show" : "Hide"}</span>
+                                </button>
+                            </div>
+                            {!hidePackageClass && (
+                                <>
+                                    {globalPackageClass.map((currentPackageData) => {
+                                        const packageDataId = currentPackageData?.dataId;
+                                        return (
+                                            <div key={`pkg-${packageDataId}`} className={styles.variableClassRow}>
+                                                <div className={styles.variableClassContent}>
+                                                    <DisplayPackageClass packageItem={currentPackageData} />
+                                                    <div className={styles.buttonContainer}>
+                                                        <button
+                                                            className={styles.actionButton}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                setPackageIdentifier(packageDataId);
+                                                                setVariableClassIdentifier(null);
+                                                                setSendToSheetModal(true);
+                                                            }}
+                                                            title={`Send Package to Sheet`}
+                                                        >
+                                                            Send To Sheet
+                                                        </button>
+                                                        <button
+                                                            className={styles.deleteButton}
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleDeletePackage(packageDataId);
+                                                            }}
+                                                            title={`Delete Package`}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    <div className={styles.actionButtons}>
+                                        <button className={styles.deleteAllButton} onClick={(e) => { e.preventDefault(); handleClearAllPackages(); }}>
+                                            Delete All Packages
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                            {sendToSheetModal && (itemForModal || packageItemForModal) && (
+                                <div
+                                    className={styles.modalOverlay}
+                                    onClick={(e) => {
+                                        if (e.target === e.currentTarget) {
+                                            setSendToSheetModal(false);
+                                            setVariableClassIdentifier(null);
+                                            setPackageIdentifier(null);
+                                        }
+                                    }}
+                                >
+                                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                                        {itemForModal && modalOptions(itemForModal.dataId, itemForModal.variableData, 'variable')}
+                                        {packageItemForModal && modalOptions(packageItemForModal.dataId, packageItemForModal.iconData, 'package')}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
             <div className={styles.tableContainer}>

@@ -32,9 +32,7 @@ interface PropertyInterfaceTableProps {
 }
 
 const PropertyInterfaceTable: React.FC<PropertyInterfaceTableProps> = ({ productManager, formData, iconData, setFormData, setIconData }) => {
-
     const [descriptionName, setDescriptionName] = useState("");
-
     const handleDescriptionNameChange = (name: string) => {
         setDescriptionName(name);
     }

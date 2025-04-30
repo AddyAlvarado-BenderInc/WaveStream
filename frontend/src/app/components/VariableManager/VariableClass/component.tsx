@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { ToastContainer, toast } from 'react-toastify';
+import { ProductManager } from "../../../../../types/productManager";
 import styles from './component.module.css';
 import 'react-toastify/dist/ReactToastify.css';
 import React from 'react';
@@ -10,25 +11,34 @@ interface VariableClasses {
     stringInput: string;
     textareaInput: string;
     integerInput: string;
+    fileInput: string;
     task: string;
     type: string;
 }
 
-interface variableClassProps {
-    onSave?: (variableClasses: VariableClasses) => void;
+interface IconPackageClass {
+    filename: string[];
+    url: string[];
 }
 
-const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
+interface variableClassProps {
+    onPackage?: (iconVariableClass: IconPackageClass) => void;
+    onSave?: (variableClasses: VariableClasses) => void;
+    productManager: ProductManager
+}
+
+
+const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, onPackage }) => {
     const [MKSType, setMKSType] = useState<string>('StringMKS');
     const [IntVar, setIntVar] = useState<string[]>([]);
+    const [showImageName, setShowImageName] = useState(false);
 
     useEffect(() => {
         setLocalString('');
         setLocalTextarea('');
         setLocalInteger('');
         setLocalIntegerResult(null);
-        setLocalEscapeSequence('');
-        setLocalFile('');
+        setLocalFile([]);
         setLocalIntegerError('');
         setIntVar([]);
     }, [MKSType]);
@@ -41,8 +51,8 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     const [localTextarea, setLocalTextarea] = useState<string>(textareaInput);
     const [localInteger, setLocalInteger] = useState<string>(integerInput);
     const [localIntegerResult, setLocalIntegerResult] = useState<number | null>(null);
-    const [localEscapeSequence, setLocalEscapeSequence] = useState<string>("");
-    const [localFile, setLocalFile] = useState<string>("");
+    const [localFilename, setLocalFilename] = useState<string[]>([]);
+    const [localFile, setLocalFile] = useState<string[]>([]);
     const [localIntegerError, setLocalIntegerError] = useState('');
 
 
@@ -96,16 +106,9 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         });
     };
 
+    // TODO: eventually add this function
     const loadVariableClasses = (e: React.FormEvent) => {
         e.preventDefault();
-    };
-
-    const handleEscapeSequence = (text: string) => {
-        const skipField = text.match(/(!SKIP)/g);
-        if (skipField) {
-            return "!SKIP";
-        }
-        return;
     };
 
     const stringMKS = () => (
@@ -137,6 +140,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         </div>
     );
 
+    // TODO: fix
     const integerMKS = () => {
         const safeEvaluate = (expression: string) => {
             try {
@@ -218,17 +222,72 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
     );
 
     const linkedMKS = () => (
-        <div className={styles.containerMKS}>
-            <div className={styles.tooltipContainer}>
-                <textarea
-                    placeholder="Input Filename..."
-                    value={localFile}
-                    aria-describedby="input-tooltip"
-                />
-                <div className={styles.customTooltip} id="input-tooltip">
-                    Copy and paste icon name from the Property Interfaces
-                </div>
-            </div>
+        <div className={styles.fileList}>
+            {productManager.icon.length > 0 ? (
+                <>
+                    <div className={styles.fileListContainer}>
+                        <h4>Available Files</h4>
+                        <ul>
+                            {Object.values(productManager.icon).map((icon) => (
+                                <li key={icon.filename} className={styles.checkboxItem}>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            value={icon.url}
+                                            onChange={(e) => {
+                                                const selectedFile = e.target.value;
+                                                const selectedFilename = icon.filename;
+
+                                                setLocalFile((prev) =>
+                                                    prev.includes(selectedFile)
+                                                        ? prev.filter((file: string) => file !== selectedFile)
+                                                        : [...prev, selectedFile]
+                                                );
+                                                setLocalFilename((prev) =>
+                                                    prev.includes(selectedFilename)
+                                                        ? prev.filter((file: string) => file !== selectedFilename)
+                                                        : [...prev, selectedFilename]
+                                                );
+                                            }}
+                                            checked={localFile.includes(icon.url)}
+                                        />
+                                        {icon.filename}
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className={styles.filePreviewContainer}>
+                        <div className={styles.filePreview}>
+                            {localFile.map((file, index) => (
+                                <>
+                                    <img
+                                        key={index}
+                                        src={file}
+                                        alt={`Preview ${index}`}
+                                        onMouseDown={(e => {
+                                            e.preventDefault()
+                                            setShowImageName(true);
+                                        })}
+                                        onMouseUp={(e => {
+                                            e.preventDefault()
+                                            setShowImageName(false);
+                                        })}
+                                        className={styles.fileImage}
+                                    />
+                                    {showImageName && (
+                                        <div className={styles.imageName}>
+                                            {localFilename[index]}
+                                        </div>
+                                    )}
+                                </>
+                            ))}
+                        </div>
+                    </div>
+                </>
+            ) : (
+                <p>No files available for this product. Open the Property Interfaces tab to upload images</p>
+            )}
         </div>
     );
 
@@ -238,8 +297,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         setLocalTextarea('');
         setLocalInteger('');
         setLocalIntegerResult(null);
-        setLocalEscapeSequence('');
-        setLocalFile('');
+        setLocalFile([]);
         setLocalIntegerError('');
         setIntVar([]);
         toast.info("Inputs cleared");
@@ -252,8 +310,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
             StringMKS: { task: "Text Line", type: "String" },
             IntegerMKS: { task: "Number", type: "Integer" },
             TextareaMKS: { task: "Description", type: "Textarea" },
-            EscapeSequenceMKS: { task: "Escape Sequence", type: "String" },
-            LinkedMKS: { task: "Linked Media", type: "String" },
         };
 
         const { task, type } = typeMappings[MKSType] || { task: "Text Line", type: "String" };
@@ -282,20 +338,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
                 }
                 dataToSend.textareaInput = localTextarea;
                 break;
-            case 'EscapeSequenceMKS':
-                if (!localEscapeSequence) {
-                    toast.error("Please fill in the input field!");
-                    return;
-                }
-                dataToSend.stringInput = localEscapeSequence;
-                break;
-            case 'LinkedMKS':
-                if (!localFile) {
-                    toast.error("Please fill in the input field!");
-                    return;
-                }
-                dataToSend.stringInput = localFile;
-                break;
             default:
                 if (!localString) {
                     toast.error("Please fill in the input field!");
@@ -310,6 +352,22 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
         }
     };
 
+    const packageVariables = (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (localFile.length === 0) {
+            toast.error("Please select a file!");
+            return;
+        }
+        const dataToSend = {
+            filename: localFilename,
+            url: localFile,
+        }
+
+        if (onPackage) {
+            onPackage(dataToSend as unknown as IconPackageClass);
+        }
+    };
+
     {
         return (
             <div className={styles.variableClassContainer}>
@@ -320,7 +378,11 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
                         </div>
                         <div className={styles.configurationTools}>
                             <div className={styles.buttonContainer}>
-                                <button type='submit' onClick={configureVariables}>Configure</button>
+                                {MKSType === 'LinkedMKS' ? (
+                                    <button type='submit' onClick={packageVariables}>Package</button>
+                                ) : (
+                                    <button type='submit' onClick={configureVariables}>Configure</button>
+                                )}
                                 <button type='submit' onClick={(e) => { handleClear(e) }}>Clear</button>
                                 {/* <button type='submit' onClick={(e) => { loadVariableClasses(e) }}>Load</button> */}
                             </div>
@@ -328,7 +390,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave }) => {
                                 value={MKSType}
                                 onChange={(e) => setMKSType(e.target.value)}>
                                 <option value='StringMKS'>Single Line</option>
-                                <option value='IntegerMKS'>Number</option>
+                                {/* <option value='IntegerMKS'>Number</option> */}
                                 <option value='TextareaMKS'>Description</option>
                                 <option value='LinkedMKS'>Linked Media</option>
                             </select>
