@@ -170,26 +170,42 @@ const variableSlice = createSlice({
     deleteVariableClassArray: (state, action: PayloadAction<number | null | undefined>) => {
       state.variableClassArray = state.variableClassArray.filter((id) => id?.dataId !== action.payload);
     },
-    setVariableClassArray: (state, action: PayloadAction<VariableClassArrayPayload>) => {
+    setVariableClassArray: (state, action: PayloadAction<VariableClassArrayPayload | undefined>) => {
       try {
+        if (!Array.isArray(action.payload)) {
+          console.warn("setVariableClassArray received non-array payload, setting state to empty array:", action.payload);
+          state.variableClassArray = [];
+          return;
+        }
+
         const filteredPayload = action.payload.filter(
           (item): item is variableClassArray => item !== null && item !== undefined
         );
         state.variableClassArray = filteredPayload as VariableClassState;
+
       } catch (e) {
         console.error("Error processing setVariableClassArray payload:", action.payload, e);
         toast.error("Failed to update variable class data due to internal error.");
+        state.variableClassArray = []; 
       }
     },
-    setVariablePackageArray: (state, action: PayloadAction<VariablePackageArrayPayload>) => {
+
+    setVariablePackageArray: (state, action: PayloadAction<VariablePackageArrayPayload | undefined>) => {
       try {
+        if (!Array.isArray(action.payload)) {
+          console.warn("setVariablePackageArray received non-array payload, setting state to empty array:", action.payload);
+          state.variableIconPackage = [];
+          return;
+        }
         const filteredPayload = action.payload.filter(
           (item): item is variablePackageArray => item !== null && item !== undefined
         );
         state.variableIconPackage = filteredPayload as VariablePackageState;
+
       } catch (e) {
         console.error("Error processing setVariablePackageArray payload:", action.payload, e);
         toast.error("Failed to update variable package data due to internal error.");
+        state.variableIconPackage = [];
       }
     },
     setVariableClass: (state, action: PayloadAction<Object>) => {

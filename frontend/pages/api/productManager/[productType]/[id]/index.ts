@@ -27,6 +27,7 @@ interface TableCellDataFrontend {
     index: number;
     value: string | string[];
     isComposite: boolean;
+    isPackage: boolean;
 }
 
 const upload = multer({ storage: multer.memoryStorage() }).any();
@@ -79,12 +80,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             typeof item.classKey === 'string' &&
                             typeof item.index === 'number' &&
                             item.value !== undefined &&
-                            typeof item.isComposite === 'boolean') {
+                            typeof item.isComposite === 'boolean' &&
+                            typeof item.isPackage === 'boolean') {
                             return {
                                 classKey: item.classKey,
                                 index: item.index,
                                 value: item.value,
                                 isComposite: item.isComposite,
+                                isPackage: item.isPackage,
                             };
                         } else {
                             console.warn('GET: Invalid tableCellData item structure from DB:', item);
@@ -139,18 +142,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
                     return data.map((item, index) => {
                         if (typeof item !== 'object' || item === null) {
-                            console.warn(`Invalid item found in globalVariablePackageData at index ${index}:`, item);
                             return { dataId: -1, name: 'invalid', dataLength: 0, variableData: {} };
                         }
+
                         const variableDataFromDB = item.variableData;
+                        let processedVariableData: Record<string, any> = {};
+
+                        if (typeof variableDataFromDB === 'object' && variableDataFromDB !== null) {
+                            processedVariableData = Object.entries(variableDataFromDB).reduce((acc, [key, entry]) => {
+                                if (entry && typeof entry === 'object' && 'value' in entry) {
+                                    const valueFromDB = entry.value;
+
+                                    if (typeof valueFromDB === 'string') {
+                                        try {
+                                            const parsedValue = JSON.parse(valueFromDB);
+                                            if (typeof parsedValue === 'object' && parsedValue !== null && Array.isArray(parsedValue.filename) && Array.isArray(parsedValue.url)) {
+                                                acc[key] = { ...entry, value: parsedValue };
+                                            } else {
+                                                console.warn(`Parsed value for package item ${item.dataId}, key ${key}, is not the expected object structure. Keeping original string. Parsed:`, parsedValue);
+                                                acc[key] = { ...entry, value: valueFromDB };
+                                            }
+                                        } catch (parseError) {
+                                            console.error(`Failed to parse value for package item ${item.dataId}, key ${key}. Keeping original string. Error:`, parseError, `Value:`, valueFromDB);
+                                            acc[key] = { ...entry, value: valueFromDB };
+                                        }
+                                    } else if (typeof valueFromDB === 'object' && valueFromDB !== null) {
+                                        console.log(`Value for package item ${item.dataId}, key ${key} is already an object.`);
+                                        acc[key] = { ...entry, value: valueFromDB };
+                                    } else {
+                                        console.warn(`Unexpected value type for package item ${item.dataId}, key ${key}:`, valueFromDB);
+                                        acc[key] = { ...entry, value: valueFromDB };
+                                    }
+                                } else {
+                                    console.warn(`Invalid entry structure (missing 'value'?) for package item ${item.dataId}, key ${key}:`, entry);
+                                    acc[key] = entry;
+                                }
+                                return acc;
+                            }, {} as Record<string, any>);
+                        } else {
+                            console.warn(`variableData for package item ${item.dataId} is not a valid object:`, variableDataFromDB);
+                        }
 
                         return {
                             dataId: item.dataId ?? -1,
                             name: item.name ?? "null",
                             dataLength: item.dataLength ?? 0,
-                            variableData: (typeof variableDataFromDB === 'object' && variableDataFromDB !== null)
-                                ? variableDataFromDB
-                                : {}
+                            variableData: processedVariableData
                         };
                     }).filter(item => item.dataId !== -1);
                 };
@@ -305,6 +342,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         classKey: string;
                         value: string | string[];
                         isComposite: boolean;
+                        isPackage: boolean;
                     }
 
                     let incomingTableCellDataItems: ProcessedCellData[] | undefined = undefined;
@@ -330,22 +368,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     } else if (tableCellDataFromBody.length === 1 && tableCellDataFromBody[0] === '[]') {
                         console.warn("Received legacy '[]' string marker, treating as empty.");
                         updateData.tableCellData = [];
-                    } else if (tableCellDataFromBody.length % 4 !== 0) { 
-                        console.error(`Received tableCellData with incorrect number of items (${tableCellDataFromBody.length}), expected quadruplets (index, key, value, isComposite). Skipping update.`, tableCellDataFromBody);
+                    } else if (tableCellDataFromBody.length % 5 !== 0) {
+                        console.error(`Received tableCellData with incorrect number of items (${tableCellDataFromBody.length}), expected quadruplets (index, key, value, isComposite, isPackage). Skipping update.`, tableCellDataFromBody);
                         processingError = true;
                     } else {
                         const processedItems: ProcessedCellData[] = [];
-                        for (let i = 0; i < tableCellDataFromBody.length; i += 4) {
+                        for (let i = 0; i < tableCellDataFromBody.length; i += 5) {
                             const indexStr = tableCellDataFromBody[i];
                             const classKey = tableCellDataFromBody[i + 1];
                             const valueStr = tableCellDataFromBody[i + 2];
                             const isCompositeStr = tableCellDataFromBody[i + 3];
+                            const isPackageStr = tableCellDataFromBody[i + 4];
 
                             const index = parseInt(indexStr, 10);
                             const isComposite = isCompositeStr === 'true';
+                            const isPackage = isPackageStr === 'true';
 
-                            if (isNaN(index) || typeof classKey !== 'string' || typeof valueStr !== 'string' || typeof isCompositeStr !== 'string') {
-                                console.warn(`Malformed item at index ${i / 4}. Skipping.`, { indexStr, classKey, valueStr, isCompositeStr });
+                            if (isNaN(index) || typeof classKey !== 'string' || typeof valueStr !== 'string' || typeof isCompositeStr !== 'string' || typeof isPackageStr !== 'string') {
+                                console.warn(`Malformed item at index ${i / 4}. Skipping.`, { indexStr, classKey, valueStr, isCompositeStr, isPackageStr });
                                 processingError = true;
                                 continue;
                             }
@@ -364,9 +404,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 }
                             }
 
-                            processedItems.push({ index, classKey, value: finalValue, isComposite });
+                            processedItems.push({ index, classKey, value: finalValue, isComposite, isPackage });
                         }
-                        incomingTableCellDataItems = processedItems; 
+                        incomingTableCellDataItems = processedItems;
                         console.log(`Processed ${incomingTableCellDataItems.length} tableCellData items from flat array.`);
                     }
 
@@ -376,15 +416,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             classKey: item?.classKey ?? '',
                             value: item?.value,
                             isComposite: item?.isComposite ?? false,
+                            isPackage: item?.isPackage ?? false,
                         })).filter((item: any) => item.index !== -1 && item.classKey !== '');
 
                         const normalizeData = (data: ProcessedCellData | undefined): ProcessedCellData => {
-                            if (!data) return { classKey: "", index: -1, value: "", isComposite: false };
+                            if (!data) return { classKey: "", index: -1, value: "", isComposite: false, isPackage: false };
                             return {
                                 classKey: data.classKey,
                                 index: data.index,
                                 value: data.value,
                                 isComposite: data.isComposite,
+                                isPackage: data.isPackage,
                             };
                         };
 
@@ -393,11 +435,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             const valueString = Array.isArray(normalized.value)
                                 ? `[${normalized.value.join('||')}]`
                                 : String(normalized.value);
-                            return `${normalized.classKey}|${normalized.index}|${normalized.isComposite}|${valueString}`;
+                            return `${normalized.classKey}|${normalized.index}|${normalized.isComposite}|${valueString}|${normalized.isPackage}`;
                         };
 
                         const areItemsEqual = (item1: ProcessedCellData, item2: ProcessedCellData): boolean => {
-                            if (item1.classKey !== item2.classKey || item1.index !== item2.index || item1.isComposite !== item2.isComposite) {
+                            if (item1.classKey !== item2.classKey || item1.index !== item2.index || item1.isComposite !== item2.isComposite || item1.isPackage !== item2.isPackage) {
                                 return false;
                             }
                             if (Array.isArray(item1.value) && Array.isArray(item2.value)) {
@@ -832,8 +874,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         console.warn("Skipping globalVariableClassData update due to previous parsing or validation errors.");
                     }
 
-                    /*
-
                     const approvedVariablePackageClearFlag = formFields.approvedGlobalVariablePackageClear === 'true';
                     let incomingVariablePackageData: any[] | undefined = undefined;
                     let variablePackageParseError = false;
@@ -932,8 +972,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         console.warn("Skipping globalVariablePackageData update due to previous parsing or validation errors.");
                     }
 
-                    */
-
                     if (Object.keys(updateData).length === 0) {
                         return res.status(400).json({ error: 'No valid fields provided for update' });
                     }
@@ -941,28 +979,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const updatedManager = await ProductManager.findOneAndUpdate(
                         query,
                         { $set: updateData },
-                        { new: true }
-                    );
+                        { new: true, runValidators: true }
+                    ).lean() as IProductManager | null;
 
                     if (!updatedManager) {
-                        return res.status(404).json({ error: 'Product manager not found' });
+                        return res.status(404).json({ error: 'Product manager not found after update attempt' });
                     }
 
-                    res.status(200).json({
-                        ...updatedManager.toObject(),
-                        icon: allIcons.map(filename => ({
+                    console.log(">>> DEBUG: Raw data returned by findOneAndUpdate (.lean()):", JSON.stringify(updatedManager, null, 2));
+
+                    const responsePayload = {
+                        ...updatedManager,
+
+                        icon: (updatedManager.icon || []).map((filename: string) => ({
                             filename,
                             url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         })),
-                        iconPreview: allIcons.map(filename => ({
+                        iconPreview: (updatedManager.iconPreview || updatedManager.icon || []).map((filename: string) => ({
                             filename,
                             url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         })),
-                        globalVariableClassData: Array.isArray(productManager.globalVariableClassData) ? productManager.globalVariableClassData : [],
+
+                        globalVariableClassData: updatedManager.globalVariableClassData || [],
+                        globalVariablePackageData: updatedManager.globalVariablePackageData || [],
+                        tableCellData: updatedManager.tableCellData || [],
+                        tableSheet: updatedManager.tableSheet || [],
+
                         message: 'Product manager updated successfully'
-                    });
+                    };
+
+                    console.log(">>> DEBUG: Data being sent in response:", JSON.stringify(responsePayload, null, 2));
+                    res.status(200).json(responsePayload);
+
                 } catch (error) {
                     console.error('Error processing PATCH request:', error);
+                    if (error instanceof Error && error.name === 'ValidationError') {
+                        return res.status(400).json({ error: 'Validation failed', details: (error as any).errors });
+                    }
                     res.status(500).json({ error: 'Error processing PATCH request' });
                 }
                 break;

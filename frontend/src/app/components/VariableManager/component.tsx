@@ -8,7 +8,7 @@ import {
     clearAllVariablePackage,
     deleteVariablePackage,
 } from '@/app/store/productManagerSlice';
-import { tableSheetData, tableCellData, ProductManager, variablePackageArray } from '../../../../types/productManager';
+import { tableSheetData, tableCellData, ProductManager, IGlobalVariablePackage, variablePackageArray } from '../../../../types/productManager';
 import ParameterizationTab from '../VariableManager/ParameterTab/component';
 import { RootState } from '@/app/store/store';
 import { useSelector, useDispatch } from 'react-redux';
@@ -18,6 +18,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { PackagerTab } from './PackagerTab/component';
 import { DisplayPackageClass } from './PackageClass/component';
+import { convertToTableFormat } from '@/app/utility/packageDataTransformer';
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
@@ -149,8 +150,6 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         return sourceArray.find(item => item?.dataId === packageIdentifier);
     }, [packageIdentifier, globalPackageClass]);
 
-    console.log("Item for Modal:", packageItemForModal);
-
     const handleSendToSheet = (
         variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
         selectedKey: string,
@@ -274,63 +273,46 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const handleSendPackage = (
-        packageData: {
-            variableData: Record<string, {
-                dataId: number;
-                value: {
-                    filename: string[];
-                    url: string[];
-                };
-            } | null>
-        },
         selectedKey: string,
-        id: number | null | undefined
+        key: number | null | undefined 
     ) => {
-        console.log(`handleSendPackage: Received ID=${id}, Key=${selectedKey}, Package Data=`, packageData);
-
+        const sourcePackageObject: variablePackageArray | null | undefined = packageItemForModal;
+    
+        console.log(`handleSendPackage: Attempting to send Package ID=${key} to column Key=${selectedKey}`);
+    
         if (!selectedKey) {
-            toast.error('Please select a class key for the package');
+            toast.error('Please select a class key (column) for the package.');
             return;
         }
-        if (id === null || id === undefined) {
-            toast.error('Invalid source item ID for package');
+        if (key === null || key === undefined) {
+            toast.error('Invalid source package ID provided.');
+            console.error("handleSendPackage: Received invalid package ID (null or undefined).");
             return;
         }
-
-        if (!packageData || typeof packageData.variableData !== 'object' || packageData.variableData === null) {
-            toast.warn("No package data found to process.");
-            console.warn("handleSendPackage: packageData.variableData is missing or not an object.", packageData);
+    
+        if (!sourcePackageObject || sourcePackageObject.dataId !== key) {
+            toast.error("Internal error: Could not find the package data object to send.");
+            console.error(`handleSendPackage: Mismatch or missing packageItemForModal. Expected ID: ${key}, Found:`, sourcePackageObject);
             return;
         }
-
-        type PackageItem = {
-            dataId: number;
-            value: { filename: string[]; url: string[] };
-        };
-
-        const allValues = Object.values(packageData.variableData);
-
-        const nonNullValues = allValues.filter(
-            (item): item is PackageItem => item !== null
-        );
-
-        const packageValuesWithFilenames = nonNullValues.filter(
-            item => item.value && item.value.filename && item.value.filename.length > 0
-        );
-
-        const packageValuesToStore: PackageItem[] = packageValuesWithFilenames;
-
-        if (packageValuesToStore.length === 0) {
-            toast.warn("No valid data (with filenames) found in the package.");
+    
+        const packageToSend: IGlobalVariablePackage | null = convertToTableFormat(sourcePackageObject);
+    
+        if (!packageToSend) {
+            toast.error("Internal error: Failed to prepare package data for the table.");
+            console.error(`handleSendPackage: convertToTableFormat returned null for source package ID ${key}`);
             return;
         }
-
+        if (!sourcePackageObject.variableData || Object.keys(sourcePackageObject.variableData).length === 0) {
+            console.warn(`handleSendPackage: Source Package ID ${key} had no variableData content. Sending converted structure anyway.`);
+        }
+    
         setVariableRowData(prevData => {
             const updatedData = { ...prevData };
-
+    
             let nextRowIndex = 0;
-            Object.keys(updatedData).forEach(key => {
-                const match = key.match(/^(.+)_row_(\d+)$/);
+            Object.keys(updatedData).forEach(dataKey => {
+                const match = dataKey.match(/^(.+)_row_(\d+)$/);
                 if (match) {
                     const baseKey = match[1];
                     const rowNum = parseInt(match[2], 10);
@@ -340,25 +322,25 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                 }
             });
             console.log(`Next available row index for package key "${selectedKey}" is ${nextRowIndex}`);
-
+    
             const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
-
+    
             updatedData[newRowKey] = {
                 classKey: selectedKey,
                 index: nextRowIndex,
-                value: packageValuesToStore,
+                value: packageToSend,
                 isComposite: false,
                 isPackage: true,
             };
-
-            console.log(`Adding package data to sheet state: Key=${newRowKey}, Values=${JSON.stringify(packageValuesToStore)}, RowIndex=${nextRowIndex}`);
-            console.log("Updated variableRowData state (after package add):", updatedData);
+    
+            console.log(`Adding package OBJECT (Table format) to sheet state: CellKey=${newRowKey}, PackageID=${key}, RowIndex=${nextRowIndex}, Value=`, packageToSend);
+            console.log("New variableRowData state (after package add):", updatedData);
             return updatedData;
         });
-
+    
         setSendToSheetModal(false);
         setPackageIdentifier(null);
-        console.log(`Package data added under key "${selectedKey}"`);
+        console.log(`Package object reference (Table format) added to table state under column "${selectedKey}"`);
     };
 
     const handleConcatOption = (
@@ -537,17 +519,17 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     ) => {
         let name = packageItemForModal?.name || "";
         let valuesToDisplay: string[] = [];
-    
+
         if (object && typeof object === 'object') {
             const firstEntryKey = Object.keys(object).find(k => object[k] !== null);
             const firstEntry = firstEntryKey ? object[firstEntryKey] : null;
-    
+
             if (firstEntry?.value?.filename) {
                 valuesToDisplay = firstEntry.value.filename.filter((fname): fname is string => fname !== undefined);
             }
         }
-        console.log("Values to display:", valuesToDisplay); 
-    
+        console.log("Values to display:", valuesToDisplay);
+
         return (
             <div className={styles.modal}>
                 <div className={styles.modalContent}>
@@ -590,13 +572,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                 onClick={(e) => {
                                     e.preventDefault();
                                     if (!object || Object.keys(object).length === 0) {
-                                         toast.error("Cannot send empty package data.");
-                                         return;
+                                        toast.error("Cannot send empty package data.");
+                                        return;
                                     }
-                                    const packageDataToSend = {
-                                        variableData: object 
-                                    };
-                                    handleSendPackage(packageDataToSend, selectedClassKey, key);
+                                    handleSendPackage(selectedClassKey, key);
                                 }}
                             >
                                 Send Package

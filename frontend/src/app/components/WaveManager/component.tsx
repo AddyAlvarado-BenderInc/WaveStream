@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/app/store/store';
 import { setVariableClassArray, setVariablePackageArray } from "../../store/productManagerSlice";
-import { ProductManager, IconData, tableSheetData, tableCellData, variableClassArray, variablePackageArray } from '../../../../types/productManager';
+import { convertToTableFormat } from '../../utility/packageDataTransformer';
+import { ProductManager, IconData, tableSheetData, tableCellData, variableClassArray, variablePackageArray, IGlobalVariablePackage } from '../../../../types/productManager';
 import VariableManager from '../VariableManager/component';
 import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import { BASE_URL } from '../../config';
@@ -15,7 +16,7 @@ import dotenv from 'dotenv';
 import path from "path";
 
 dotenv.config({
-  path: path.resolve(process.cwd(), '../../../../', '.env')
+    path: path.resolve(process.cwd(), '../../../../', '.env')
 });
 
 interface FormDataState {
@@ -142,6 +143,25 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     }, [productManager.globalVariableClassData, dispatch]);
 
     const [originalData, setOriginalData] = useState<OriginalData>(() => {
+
+        const initialRawPackages = productManager.globalVariablePackageData;
+        const initialPackageDataMap = new Map<number, IGlobalVariablePackage>();
+
+        if (Array.isArray(initialRawPackages)) {
+            console.log("Initial Load: Processing raw packages for map:", initialRawPackages);
+            initialRawPackages.forEach(rawPkg => {
+                const tableFormattedPkg = convertToTableFormat(rawPkg as variablePackageArray);
+                if (tableFormattedPkg && typeof tableFormattedPkg.dataId === 'number') {
+                    initialPackageDataMap.set(tableFormattedPkg.dataId, tableFormattedPkg);
+                } else {
+                    console.warn("Initial Load: Failed to convert package or invalid ID", rawPkg);
+                }
+            });
+            console.log("Initial Load: Created packageDataMap:", initialPackageDataMap);
+        } else {
+            console.warn("Initial Load: productManager.globalVariablePackageData is not an array.");
+        }
+
         const parseVariableClassArray = (data: any): VariableClassArrayState => {
             if (Array.isArray(data)) {
                 return data;
@@ -174,17 +194,36 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             return [];
         }
 
-        const normalizeTableCellData = (data: any): VariableRowDataState => {
-            if (!Array.isArray(data)) return {};
-            return data.reduce((acc: VariableRowDataState, item: any) => {
+        const normalizeTableCellData = (
+            cellDataArray: any,
+            packageMap: Map<number, IGlobalVariablePackage>
+        ): VariableRowDataState => {
+            if (!Array.isArray(cellDataArray)) return {};
+    
+            return cellDataArray.reduce((acc: VariableRowDataState, item: any) => {
                 if (item && typeof item === 'object' && item.classKey != null && item.index != null) {
                     const key = `${item.classKey}_row_${item.index}`;
+                    const isPackage = item.isPackage === true;
+                    let finalValue = item.value || '';
+    
+                    if (isPackage && (typeof item.value === 'string' || typeof item.value === 'number') && String(item.value).trim() !== '') {
+                        const packageId = parseInt(String(item.value), 10);
+                        if (!isNaN(packageId) && packageMap.has(packageId)) {
+                            finalValue = packageMap.get(packageId)!;
+                             console.log(`Initial Load: Mapped package object (ID: ${packageId}) to cell ${key}`);
+                        } else {
+                            console.warn(`Initial Load: Package cell ${key} ID ${item.value} not found in package map. Storing ID string.`);
+                        }
+                    } else if (isPackage) {
+                         console.warn(`Initial Load: Package cell ${key} has invalid ID:`, item.value);
+                    }
+    
                     acc[key] = {
                         classKey: item.classKey,
                         index: item.index,
-                        value: item.value || '',
+                        value: finalValue,
                         isComposite: item.isComposite || false,
-                        isPackage: item.isPackage || false,
+                        isPackage: isPackage,
                     };
                 }
                 return acc;
@@ -231,7 +270,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             variableData: {
                 tableSheet: normalizeTableSheet(productManager.tableSheet)
             },
-            variableRowData: normalizeTableCellData(productManager.tableCellData),
+            variableRowData: normalizeTableCellData(productManager.tableCellData, initialPackageDataMap),
             variableClassArray: parseVariableClassArray(productManager.globalVariableClassData),
             variablePackageArray: parseVariablePackageArray(productManager.globalVariablePackageData)
         };
@@ -246,6 +285,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
     const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
     const globalVariablePackage = useSelector((state: RootState) => state.variables.variableIconPackage);
+
+    console.log('data for globalVariableClass:', globalVariableClass);
+    console.log('data for globalVariablePackage:', globalVariablePackage);
 
     const checkForChanges = useCallback(() => {
         const normalizeTableSheetForCompare = (tableSheet: tableSheetData[]) => {
@@ -281,7 +323,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
         const normalizeVariablePackageArrayForCompare = (arr: VariablePackageArrayState): VariablePackageArray[] => {
             return arr
-            // TODO: this is filtering over a nested object, need to break it down further before filtering each item
+                // TODO: this is filtering over a nested object, need to break it down further before filtering each item
                 .filter((item): item is VariablePackageArray => item != null && item !== undefined)
                 .map(item => {
                     const safeVariableData = (item.variableData && typeof item.variableData === 'object')
@@ -351,6 +393,56 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         checkForChanges();
     }, [checkForChanges]);
 
+    const parsePackageValues = (packageDataArray: any[] | undefined): VariablePackageArrayState => {
+        if (!Array.isArray(packageDataArray)) {
+            console.warn("parsePackageValues received non-array input, returning empty array.");
+            return [];
+        }
+
+        return packageDataArray.map((item) => {
+            if (typeof item !== 'object' || item === null || typeof item.dataId !== 'number' || typeof item.variableData !== 'object' || item.variableData === null) {
+                console.warn("Skipping invalid package item structure during frontend parsing:", item);
+                return null;
+            }
+
+            const processedVariableData: Record<string, any> = {};
+
+            Object.entries(item.variableData).forEach(([key, entry]) => {
+                if (entry && typeof entry === 'object' && 'value' in entry) {
+                    const valueFromSource = entry.value;
+
+                    if (typeof valueFromSource === 'string') {
+                        try {
+                            const parsedValue = JSON.parse(valueFromSource);
+
+                            if (typeof parsedValue === 'object' && parsedValue !== null && Array.isArray(parsedValue.filename) && Array.isArray(parsedValue.url)) {
+                                processedVariableData[key] = { ...entry, value: parsedValue };
+                            } else {
+                                console.warn(`Frontend parsed value for pkg ${item.dataId}, key ${key}, not expected object structure. Keeping string.`);
+                                processedVariableData[key] = { ...entry, value: valueFromSource };
+                            }
+                        } catch (parseError) {
+                            console.error(`Frontend failed to parse value for pkg ${item.dataId}, key ${key}. Keeping string. Error:`, parseError);
+                            processedVariableData[key] = { ...entry, value: valueFromSource };
+                        }
+                    } else if (typeof valueFromSource === 'object' && valueFromSource !== null) {
+                        processedVariableData[key] = { ...entry, value: valueFromSource };
+                    } else {
+                        processedVariableData[key] = { ...entry, value: valueFromSource };
+                    }
+                } else {
+                    console.warn(`Invalid entry structure for pkg ${item.dataId}, key ${key}:`, entry);
+                    processedVariableData[key] = entry;
+                }
+            });
+
+            return {
+                ...item,
+                variableData: processedVariableData
+            };
+        }).filter(item => item !== null);
+    };
+
     const handleSave = async () => {
         if (!hasChanges) {
             toast.info('No changes to save', {
@@ -413,12 +505,28 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         formDataPayload.append('tableCellData', rowItem.index.toString());
                         formDataPayload.append('tableCellData', rowItem.classKey);
 
-                        const valueToSend = rowItem.isComposite && Array.isArray(rowItem.value)
-                            ? JSON.stringify(rowItem.value)
-                            : String(rowItem.value ?? '');
+                        let valueToSend: string;
+                        if (rowItem.isComposite && Array.isArray(rowItem.value)) {
+                            valueToSend = JSON.stringify(rowItem.value);
+                        } else if (rowItem.isPackage) {
+                            let packageIdValue: string | number | undefined;
+                            if (typeof rowItem.value === 'object' && rowItem.value !== null && 'dataId' in rowItem.value) {
+                                packageIdValue = (rowItem.value as any).dataId;
+                            } else if (typeof rowItem.value === 'string' || typeof rowItem.value === 'number') {
+                                packageIdValue = rowItem.value;
+                            }
+                            valueToSend = String(packageIdValue ?? '');
+                        } else {
+                            valueToSend = String(rowItem.value ?? '');
+                        }
+
+                        if (rowItem.classKey === 'Icon') {
+                            console.log(`>>> Sending Icon cell (${rowItem.classKey}_row_${rowItem.index}): isPackage=${rowItem.isPackage}, isComposite=${rowItem.isComposite}, valueToSend=${valueToSend}`);
+                        }
 
                         formDataPayload.append('tableCellData', valueToSend);
                         formDataPayload.append('tableCellData', rowItem.isComposite.toString());
+                        formDataPayload.append('tableCellData', rowItem.isPackage.toString());
                     } else {
                         console.warn("Skipping invalid rowItem during save:", rowItem);
                     }
@@ -470,13 +578,44 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 formDataPayload.append('globalVariableClassData', '[]');
             };
 
+            let packageDataToSendString: string;
+
             if (Array.isArray(globalVariablePackage) && globalVariablePackage.length > 0) {
-                console.log("Sending globalVariablePackage data array:", globalVariablePackage.length, "items");
-                formDataPayload.append('globalVariablePackageData', JSON.stringify(globalVariablePackage));
+                console.log("Transforming globalVariablePackage data array before sending:", globalVariablePackage.length, "items");
+
+                try {
+                    const transformedPackageData = globalVariablePackage
+                        .filter((item): item is variablePackageArray => item != null && item !== undefined)
+                        .map(pkgItem => {
+                            const newItem = JSON.parse(JSON.stringify(pkgItem));
+
+                            if (newItem.variableData && typeof newItem.variableData === 'object') {
+                                Object.keys(newItem.variableData).forEach(key => {
+                                    const entry = newItem.variableData[key];
+                                    if (entry && typeof entry.value === 'object' && entry.value !== null) {
+                                        entry.value = JSON.stringify(entry.value);
+                                    }
+                                });
+                            }
+                            return newItem;
+                        });
+
+                    packageDataToSendString = JSON.stringify(transformedPackageData);
+                    console.log("Sending transformed globalVariablePackage data string:", packageDataToSendString);
+
+                } catch (error) {
+                    console.error("Error transforming globalVariablePackage data:", error);
+                    toast.error("Failed to prepare package data for saving.");
+                    saveClicked = 0;
+                    return;
+                }
+
             } else {
                 console.log("No globalVariablePackage data to send, sending empty array string.");
-                formDataPayload.append('globalVariablePackageData', '[]');
+                packageDataToSendString = '[]';
             }
+
+            formDataPayload.append('globalVariablePackageData', packageDataToSendString);
 
             console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
 
@@ -489,24 +628,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             });
 
             if (response.ok) {
-                const confirmReload = window.confirm('Product saved successfully! Do you want to refresh the page?');
-                if (confirmReload) {
-                    window.location.reload();
-                } else {
-                    toast.info('Page needs reloading for further saves to work properly');
-                    setHasChanges(false);
-                    return;
-                }
                 const updatedProduct = await response.json();
                 console.log('Updated Product:', updatedProduct);
-
                 console.log('Server returned tableCellData:', updatedProduct.tableCellData);
-
                 console.log('Server returned tableSheet:', updatedProduct.tableSheet);
 
-                const shouldPreventReload = !updatedProduct.tableSheet || updatedProduct.tableSheet.length === 0;
-                if (shouldPreventReload) {
-                    console.warn('Server returned empty tableSheet, keeping current state to prevent data loss');
+                const shouldPreventUpdate = !updatedProduct.tableSheet || updatedProduct.tableSheet.length === 0;
+                if (shouldPreventUpdate) {
+                    console.warn('Server returned empty tableSheet, preventing further state updates.');
                     toast.warn('Warning: Server returned incomplete data. Your changes were saved but please refresh the page.');
                     return;
                 };
@@ -551,6 +680,25 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
                 setVariableRowData((prev) => {
                     const serverRowData = updatedProduct.tableCellData;
+                    const rawPackageDataArray: variablePackageArray[] | undefined = updatedProduct.globalVariablePackageData;
+
+                    console.log('Server returned globalVariablePackageData as raw package data array:', rawPackageDataArray);
+
+                    const packageDataMap = new Map<number, IGlobalVariablePackage>();
+
+                    if (Array.isArray(rawPackageDataArray)) {
+                        rawPackageDataArray.forEach(rawPkgItem => {
+                            const tableFormattedPkg = convertToTableFormat(rawPkgItem);
+                            if (tableFormattedPkg && typeof tableFormattedPkg.dataId === 'number') {
+                                packageDataMap.set(tableFormattedPkg.dataId, tableFormattedPkg);
+                            }
+                            console.log("Hydration: Converted package data to Table format:", tableFormattedPkg);
+                        });
+                        console.log("Hydration: Created packageDataMap with Table-formatted objects:", packageDataMap);
+                    }
+
+                    console.log('Server returned tableCellData:', serverRowData);
+
                     if (!Array.isArray(serverRowData)) {
                         console.warn('Server did not return valid tableCellData array, keeping existing state.');
                         return prev;
@@ -559,26 +707,65 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     const updatedData: VariableRowDataState = {};
 
                     serverRowData.forEach((item: any) => {
-                        if (item && typeof item === 'object') {
+                        if (item && typeof item === 'object' && typeof item.classKey === 'string' && typeof item.index === 'number') {
                             const key = `${item.classKey}_row_${item.index}`;
+                            const isPackage = item.isPackage === true;
+                            const isComposite = item.isComposite === true;
+                            let finalValue = item.value;
+
+                            if (item.classKey === 'Icon') {
+                                console.log(`Hydration Processing Icon cell (${key}): isPackage=${isPackage}, isComposite=${isComposite}, serverValue=${item.value}`);
+                            }
+
+                            if (isPackage && (typeof item.value === 'string' || typeof item.value === 'number') && String(item.value).trim() !== '') {
+                                const packageId = parseInt(String(item.value), 10);
+
+                                if (!isNaN(packageId) && packageDataMap.has(packageId)) {
+                                    finalValue = packageDataMap.get(packageId);
+                                    console.log(`Hydration: Mapped package object (Table format, ID: ${packageId}) to cell ${key}`);
+                                } else {
+                                    console.warn(`Hydration Error: Package cell ${key} has isPackage=true, but couldn't find converted package data in map for ID: ${item.value}. Storing original value.`);
+                                    finalValue = item.value;
+                                }
+                            } else if (isPackage) {
+                                console.warn(`Hydration Warning: Package cell ${key} has isPackage=true, but value is not a valid string/number ID:`, item.value);
+                                finalValue = item.value;
+                            }
+
+                            console.log(`Hydration: Final value for cell ${key}:`, finalValue);
+
                             updatedData[key] = {
                                 classKey: item.classKey,
                                 index: item.index,
-                                value: item.value,
-                                isComposite: item.isComposite || false,
-                                isPackage: item.isPackage || false,
+                                value: finalValue,
+                                isComposite: isComposite,
+                                isPackage: isPackage,
                             };
+                        } else {
+                            console.warn("Skipping invalid item from serverRowData during hydration:", item);
                         }
                     });
 
-                    console.log('Updated variableRowData:', updatedData);
+                    console.log('Hydration: Final updated variableRowData state:', updatedData);
                     return updatedData;
                 });
 
+                console.log('Dispatching updates to Redux store');
+                if (updatedProduct.globalVariableClassData || updatedProduct.globalVariablePackageData) {
+                    dispatch(setVariableClassArray(updatedProduct.globalVariableClassData || []));
+
+                    const processedPackageData = parsePackageValues(updatedProduct.globalVariablePackageData);
+                    dispatch(setVariablePackageArray(processedPackageData));
+                    console.log('Processed globalVariablePackageData:', processedPackageData);
+                } else {
+                    dispatch(setVariableClassArray([]));
+                    dispatch(setVariablePackageArray([]));
+                }
+
+                console.log('Updating original data references');
+
                 if (hasChanges) {
                     console.log('Updating original data references');
-                    dispatch(setVariableClassArray(updatedProduct));
-                    dispatch(setVariablePackageArray(updatedProduct));
 
                     const newOriginalData = {
                         formData: {
@@ -633,16 +820,15 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             : []
                     };
                     setOriginalData(newOriginalData);
-                    if (updatedProduct.globalVariableClassData) {
-                        dispatch(setVariableClassArray(updatedProduct.globalVariableClassData));
-                        dispatch(setVariablePackageArray(updatedProduct.globalVariablePackageData));
-                    } else {
-                        dispatch(setVariableClassArray([]));
-                        dispatch(setVariablePackageArray([]));
-                    }
                     setHasChanges(false);
                 }
 
+                const confirmReload = window.confirm('Product data updated. Do you want to refresh the page now? (Recommended if UI seems inconsistent)');
+                if (confirmReload) {
+                    window.location.reload();
+                } else {
+                    toast.info('Manual refresh recommended if UI appears inconsistent.');
+                }
                 toast.success('Product saved successfully!', {
                     position: 'bottom-right',
                     autoClose: 5000,

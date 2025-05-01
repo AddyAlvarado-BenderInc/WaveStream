@@ -1,4 +1,45 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
+
+const VariablePackageDataEntrySchema = new Schema({
+    dataId: Number,
+    value: String
+}, { _id: false });
+
+const GlobalVariablePackageSchema = new Schema({
+    dataId: { type: Number, required: true },
+    name: String,
+    dataLength: Number,
+    variableData: {
+        type: Map,
+        of: VariablePackageDataEntrySchema
+    }
+}, { _id: false });
+
+const TableCellDataSchema = new Schema({
+    index: { type: Number, required: true },
+    classKey: { type: String, required: true },
+    value: { type: mongoose.Schema.Types.Mixed, required: true },
+    isComposite: { type: Boolean, required: true, default: false },
+    isPackage: { type: Boolean, required: true, default: false }
+}, { _id: false });
+
+export interface ITableCellData {
+    index: number;
+    classKey: string;
+    value: string | string[]; 
+    isComposite: boolean;
+    isPackage: boolean;
+}
+
+export interface IGlobalVariablePackage {
+    dataId: number;
+    name?: string;
+    dataLength?: number;
+    variableData?: Map<string, {
+        dataId?: number;
+        value: string;
+    }>;
+}
 
 export interface IProductManager extends Document {
   _id: string;
@@ -21,14 +62,14 @@ export interface IProductManager extends Document {
   icon: string[];
   iconPreview: string[];
   label: string;
-  tableSheet: object[];
-  tableCellData: object[];
+  tableSheet: any[]; 
+  tableCellData: ITableCellData[];
   mainKeyString: string[];
-  globalVariableClassData: object[];
-  globalVariablePackageData: object[];
+  globalVariableClassData: any[];
+  globalVariablePackageData: IGlobalVariablePackage[];
 }
 
-const ProductManagerSchema = new mongoose.Schema({
+const ProductManagerSchema: Schema = new Schema({
   _id: { type: String, required: true },
   name: { type: String, required: true },
   productType: { type: String, required: true },
@@ -46,49 +87,29 @@ const ProductManagerSchema = new mongoose.Schema({
   initialJS: { type: String, default: '' },
   initialHTML: { type: String, default: '' },
   initialCSS: { type: String, default: '' },
-  icon: { 
-    type: [String], 
+  icon: {
+    type: [String],
     default: [],
-    validate: {
-        validator: (filenames: string[]) => filenames.every(f => f.match(/^[\w.-]+$/)),
-        message: 'Invalid filename format'
-    }
-},
+  },
   iconPreview: { type: [String], default: [] },
   label: { type: String, default: '' },
-  tableSheet: { 
-    type: [Object], 
+  tableSheet: {
+    type: [mongoose.Schema.Types.Mixed],
     default: [],
-    validate: {
-        validator: (value: object[]) => value.every(v => typeof v === 'object'),
-        message: 'Invalid tableSheet format'
-    }
   },
-  tableCellData: { 
-    type: [Object], 
+  tableCellData: {
+    type: [TableCellDataSchema],
     default: [],
-    validate: {
-        validator: (value: object[]) => value.every(v => typeof v === 'object'),
-        message: 'Invalid tableSheet format'
-    }
   },
   globalVariableClassData: {
-    type: [Object],
+    type: [mongoose.Schema.Types.Mixed],
     default: [],
-    validate: {
-        validator: (value: object[]) => value.every(v => typeof v === 'object'),
-        message: 'Invalid tableSheet format'
-    }
   },
   globalVariablePackageData: {
-    type: [Object],
-    default: [],
-    validate: {
-        validator: (value: object[]) => value.every(v => typeof v === 'object'),
-        message: 'Invalid tableSheet format'
-    }
+     type: [GlobalVariablePackageSchema],
+     default: []
   },
   mainKeyString: { type: [String], default: [] },
 });
 
-export default mongoose.models.ProductManager || mongoose.model<IProductManager>('ProductManager', ProductManagerSchema);
+export default mongoose.models.ProductManager as mongoose.Model<IProductManager> || mongoose.model<IProductManager>('ProductManager', ProductManagerSchema);

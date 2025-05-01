@@ -46,6 +46,16 @@ export interface variablePackageArray {
     } | null>;
 }
 
+export interface IGlobalVariablePackage {
+    dataId: number;
+    name?: string;
+    dataLength?: number;
+    variableData?: Map<string, {
+        dataId?: number;
+        value: string;
+    }>;
+}
+
 export interface ProductManager {
     _id: string;
     name: string;
