@@ -199,25 +199,25 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             packageMap: Map<number, IGlobalVariablePackage>
         ): VariableRowDataState => {
             if (!Array.isArray(cellDataArray)) return {};
-    
+
             return cellDataArray.reduce((acc: VariableRowDataState, item: any) => {
                 if (item && typeof item === 'object' && item.classKey != null && item.index != null) {
                     const key = `${item.classKey}_row_${item.index}`;
                     const isPackage = item.isPackage === true;
                     let finalValue = item.value || '';
-    
+
                     if (isPackage && (typeof item.value === 'string' || typeof item.value === 'number') && String(item.value).trim() !== '') {
                         const packageId = parseInt(String(item.value), 10);
                         if (!isNaN(packageId) && packageMap.has(packageId)) {
                             finalValue = packageMap.get(packageId)!;
-                             console.log(`Initial Load: Mapped package object (ID: ${packageId}) to cell ${key}`);
+                            console.log(`Initial Load: Mapped package object (ID: ${packageId}) to cell ${key}`);
                         } else {
                             console.warn(`Initial Load: Package cell ${key} ID ${item.value} not found in package map. Storing ID string.`);
                         }
                     } else if (isPackage) {
-                         console.warn(`Initial Load: Package cell ${key} has invalid ID:`, item.value);
+                        console.warn(`Initial Load: Package cell ${key} has invalid ID:`, item.value);
                     }
-    
+
                     acc[key] = {
                         classKey: item.classKey,
                         index: item.index,
@@ -897,7 +897,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         });
         const numRows = maxRowIndex + 1;
 
-        type JsonRowObject = Record<string, string | { Composite: string[] }>;
+        type JsonRowObject = Record<string, string | { Composite: string[] } | { Package: { id: number; name: string; content?: { filename: string[]; url: string[] } | string } }>;
 
         const jsonData: JsonRowObject[] = [];
 
@@ -909,13 +909,40 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 const cellData = rowMap[header];
 
                 if (cellData) {
-                    if (cellData.isComposite && Array.isArray(cellData.value)) {
+                    if (cellData.isPackage && typeof cellData.value === 'object' && cellData.value !== null && 'dataId' in cellData.value) {
+                        const pkg = cellData.value as IGlobalVariablePackage;
+                        let packageContent: { filename: string[]; url: string[] } | string = "[Error retrieving content]";
+
+                        if (pkg.variableData instanceof Map && pkg.variableData.size > 0) {
+                            const firstEntry = pkg.variableData.values().next().value;
+                            if (firstEntry && typeof firstEntry.value === 'string') {
+                                try {
+                                    packageContent = JSON.parse(firstEntry.value);
+                                } catch (e) {
+                                    console.error(`Error parsing package content for export (cell ${header}[${i}]):`, e);
+                                    packageContent = `[Error parsing content: ${firstEntry.value}]`;
+                                }
+                            } else {
+                                packageContent = "[Invalid content structure]";
+                            }
+                        } else {
+                            packageContent = "[No content found]";
+                        }
+
+                        rowObject[header] = {
+                            Package: {
+                                id: pkg.dataId,
+                                name: pkg.name || `ID ${pkg.dataId}`,
+                                content: packageContent
+                            }
+                        };
+                    } else if (cellData.isComposite && Array.isArray(cellData.value)) {
                         rowObject[header] = { Composite: cellData.value };
                     } else if (typeof cellData.value === 'string') {
                         rowObject[header] = cellData.value;
                     } else {
                         console.warn(`Unexpected value type for cell ${header}[${i}] during JSON export:`, cellData.value);
-                        rowObject[header] = "";
+                        rowObject[header] = JSON.stringify(cellData.value);
                     }
                 } else {
                     rowObject[header] = "";
@@ -953,16 +980,29 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         const numRows = maxRowIndex + 1;
 
         const formatValueForExport = (cellData: tableCellData | undefined): string => {
-            if (!cellData) {
-                return '';
-            }
-            if (cellData.isComposite && Array.isArray(cellData.value)) {
+            if (!cellData) { return ''; }
+
+            if (cellData.isPackage && typeof cellData.value === 'object' && cellData.value !== null && 'dataId' in cellData.value) {
+                const pkg = cellData.value as IGlobalVariablePackage;
+                let contentString = "[No content]";
+
+                if (pkg.variableData instanceof Map && pkg.variableData.size > 0) {
+                    const firstEntry = pkg.variableData.values().next().value;
+                    if (firstEntry && typeof firstEntry.value === 'string') {
+                        contentString = firstEntry.value;
+                    } else {
+                        contentString = "[Invalid content structure]";
+                    }
+                }
+                return `PACK: ${contentString}`;
+
+            } else if (cellData.isComposite && Array.isArray(cellData.value)) {
                 return `COMP: ${cellData.value.join(' [/&/] ')}`;
             } else if (typeof cellData.value === 'string') {
                 return cellData.value;
             } else {
-                console.warn("Unexpected cell value type during export:", cellData.value);
-                return JSON.stringify(cellData.value);
+                console.warn("Unexpected cell value type during CSV export:", cellData.value);
+                return `[Unknown Type: ${typeof cellData.value}]`;
             }
         };
 

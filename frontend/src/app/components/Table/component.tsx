@@ -47,7 +47,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
     };
 
     const [actionModalOpen, setActionModalOpen] = useState<boolean>(false);
-    const [actionTargetCell, setActionTargetCell] = useState<{ key: string; rowIndex: number; value: string; isComposite: boolean; isPackage: boolean } | null>(null);
+    const [actionTargetCell, setActionTargetCell] = useState<{ key: string; rowIndex: number; value: string | string[] | IGlobalVariablePackage; isComposite: boolean; isPackage: boolean } | null>(null);
     const [currentAction, setCurrentAction] = useState<'extendLength' | 'fillEmpty' | null>(null);
     const [actionInputValue, setActionInputValue] = useState<string>('');
 
@@ -458,12 +458,14 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
             return;
         }
 
-        const { key, rowIndex, value: valueToExtend, isComposite: isTargetComposite, isPackage: isPackage } = actionTargetCell;
+        const { key, rowIndex, value: valueToExtend, isComposite: isTargetComposite, isPackage: isTargetIsPackage } = actionTargetCell;
+
+        const logValue = isTargetIsPackage ? `Package (ID: ${(valueToExtend as unknown as IGlobalVariablePackage)?.dataId})` : valueToExtend;
+        console.log(`Action Extend: Extending column "${key}" with value:`, logValue, `(isComposite=${isTargetComposite}, isPackage=${isTargetIsPackage})`);
+
 
         const updates: VariableRowDataState = {};
         let extendedCount = 0;
-
-        console.log(`Action Extend: Extending value (isComposite=${isTargetComposite}):`, valueToExtend);
 
         for (let i = 1; i <= lengthToExtend; i++) {
             const targetRowIndex = rowIndex + i;
@@ -474,7 +476,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                 index: targetRowIndex,
                 value: valueToExtend,
                 isComposite: isTargetComposite,
-                isPackage: isPackage,
+                isPackage: isTargetIsPackage,
             };
             extendedCount++;
         }
@@ -485,6 +487,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                 ...prevData,
                 ...updates
             }));
+            toast.success(`Extended value down ${extendedCount} row(s) in column "${key}".`);
         } else {
             toast.info("Length specified was zero or invalid.");
         }
@@ -501,10 +504,13 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
             return;
         }
 
-        const { key, rowIndex, value: valueToFill, isComposite: isTargetComposite, isPackage: isPackage } = actionTargetCell;
+        const { key, rowIndex, value: valueToFill, isComposite: isTargetComposite, isPackage: isTargetIsPackage } = actionTargetCell;
         const maxRowIndex = getMaxRowIndex(variableRowData);
         const updates: VariableRowDataState = {};
         let filledCount = 0;
+
+        const logValue = isTargetIsPackage ? `Package (ID: ${(valueToFill as unknown as IGlobalVariablePackage)?.dataId})` : valueToFill;
+        console.log(`Action Fill: Filling empty cells below row ${rowIndex} in column "${key}" with value:`, logValue, `(isComposite=${isTargetComposite}, isPackage=${isTargetIsPackage})`);
 
         if (maxRowIndex <= rowIndex) {
             toast.info("No rows below the selected cell to fill.");
@@ -512,20 +518,14 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
             return;
         }
 
-        console.log(`Action Fill: Filling with value (isComposite=${isTargetComposite}):`, valueToFill);
-
         for (let i = rowIndex + 1; i <= maxRowIndex; i++) {
             const dataKey = `${key}_row_${i}`;
             const existingCell = variableRowData[dataKey];
 
-            let isCellEmpty = false;
-            if (!existingCell) {
-                isCellEmpty = true;
-            } else if (existingCell.isComposite) {
-                isCellEmpty = Array.isArray(existingCell.value) && existingCell.value.length === 0;
-            } else {
-                isCellEmpty = typeof existingCell.value === 'string' && existingCell.value.trim() === '';
-            }
+            let isCellEmpty = !existingCell ||
+                (existingCell.isComposite && Array.isArray(existingCell.value) && existingCell.value.length === 0) ||
+                (!existingCell?.isComposite && !existingCell?.isPackage && typeof existingCell?.value === 'string' && existingCell.value.trim() === '') ||
+                (!existingCell?.isComposite && !existingCell?.isPackage && existingCell?.value == null);
 
             if (isCellEmpty) {
                 updates[dataKey] = {
@@ -533,7 +533,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                     index: i,
                     value: valueToFill,
                     isComposite: isTargetComposite,
-                    isPackage: isPackage
+                    isPackage: isTargetIsPackage
                 };
                 filledCount++;
             }
@@ -545,7 +545,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                 ...prevData,
                 ...updates
             }));
-            const valueDisplay = isTargetComposite ? "(Composite Data)" : `"${valueToFill}"`;
+            toast.success(`Filled ${filledCount} empty cell(s) below in column "${key}".`);
         } else {
             toast.info(`No empty cells found below to fill in column "${key}".`);
         }
@@ -559,17 +559,21 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
     const renderActionModal = () => {
         if (!actionTargetCell) return null;
 
-        const { key, rowIndex, value, isComposite } = actionTargetCell;
+        const { key, rowIndex, value, isComposite, isPackage } = actionTargetCell;
 
         const displayValueInModal = isComposite && Array.isArray(value)
             ? `[${value.join(', ')}] (Composite)`
-            : `"${value}"`;
+            : isPackage && typeof value === 'object' && value !== null && 'dataId' in value
+                ? `Package: ${value.name || `ID ${value.dataId}`}`
+                : typeof value === 'string'
+                    ? `"${value}"`
+                    : '[Unknown Value Type]';
 
         if (currentAction === 'extendLength') {
             return (
                 <div className={styles.actionModal}>
                     <h3>Extend Value for "{key}" (Row {rowIndex + 1})</h3>
-                    <p>Value: {displayValueInModal}</p>
+                    <p>Value: <strong>{displayValueInModal}</strong></p>
                     <form onSubmit={(e) => { e.preventDefault(); actionExtendLength(); }} className={styles.actionForm}>
                         <label>Extend by how many rows?</label>
                         <input
@@ -605,7 +609,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
         return (
             <div className={styles.actionModal}>
                 <h3>Cell Actions for "{key}" (Row {rowIndex + 1})</h3>
-                <p>Value: {displayValueInModal}</p>
+                <p>Value: <strong>{displayValueInModal}</strong></p>
                 <div className={styles.actionModalButtons}>
                     <button onClick={() => setCurrentAction('extendLength')}>Extend Value Down...</button>
                     <button onClick={() => setCurrentAction('fillEmpty')}>Fill Empty Cells Below</button>
@@ -1005,9 +1009,9 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                                                                                 <button
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
-                                                                                        const actionValue = isCompositeCell && Array.isArray(cellValue) ? JSON.stringify(cellValue) :
-                                                                                            isPackage ? '[Package Data]' :
-                                                                                                String(cellValue);
+                                                                                        const actionValue = isCompositeCell && Array.isArray(cellValue) ? cellValue :
+                                                                                            isPackage && typeof cellValue === 'object' ? cellValue :
+                                                                                                String(cellValue ?? '');
                                                                                         setActionTargetCell({ key: keyObj.value, rowIndex, value: actionValue, isComposite: isCompositeCell, isPackage: isPackage });
                                                                                         setCurrentAction(null); setActionInputValue(''); setActionModalOpen(true);
                                                                                     }}
@@ -1157,9 +1161,9 @@ const ClassKey: React.FC<{
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onSetDefault(input); // <-- Call the handler
+                                            onSetDefault(input);
                                         }}
-                                        className={styles.importKeyButton} // Reuse style or create new one
+                                        className={styles.importKeyButton}
                                         title={`Set a default value for empty cells in the "${input}" column`}
                                     >
                                         Default
