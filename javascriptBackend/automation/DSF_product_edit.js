@@ -1081,21 +1081,20 @@ async function processProduct(browser, page, product) {
 
     await new Promise(resolve => setTimeout(resolve, 600));
     if (product.LongDescription) {
-        console.log('Long description field enabled');
+        console.log('Long description field enabled and product exists');
         await newPage.$('#TabDetails'),
-            await console.log('Found details tab'),
-            await newPage.waitForSelector('#TabDetails'),
-            await newPage.click('#TabDetails'),
-            await console.log('Details tab clicked!');
+        await console.log('Found details tab'),
+        await newPage.waitForSelector('#TabDetails'),
+        await newPage.click('#TabDetails'),
+        await console.log('Details tab clicked!');
         const htmlButton = '.reEditorModes .reMode_html';
         if (await newPage.$(htmlButton)) {
             console.log('Found the html button!');
-            await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_contentDiv');
+            await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_ModesWrapper');
             console.log('Moused to html textarea');
             for (let i = 0; i < 2; i++) {
                 await newPage.keyboard.press('Tab');
             }
-            await newPage.keyboard.press('Enter');
         }
         if (allowDescriptionFields && product.LongDescription || productType !== 'Non Printed Products' && allowDescriptionFields && product.LongDescription) {
             if (await detectFilledDetails(newPage, product) === false) {
@@ -1281,7 +1280,7 @@ async function runPuppeteer(products) {
     } catch (error) {
         const page = await browser.newPage();
         sound.play(errorSound);
-        // await sendFailureEmail(processedProductCount, products, error);
+        await sendFailureEmail(processedProductCount, products, error);
         console.error('An error occurred:', error);
     } finally {
         if (browser) {
