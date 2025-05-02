@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     addParameter,
     clearParameter,
@@ -16,7 +16,7 @@ import {
     handleCreateName,
 } from './VariableUtility/utility';
 import ParameterModal from '../ParameterModal/component';
-import { variableClassArray } from '../../../../../types/productManager';
+import TaggingModal from './VariableUtility/tagModule';
 import { useDispatch, useSelector } from 'react-redux';
 import { ToastContainer, toast } from 'react-toastify';
 import { RootState } from '@/app/store/store';
@@ -46,6 +46,7 @@ interface AddedParameter {
     variable: string;
     name: string;
     value: string;
+    tags: string[];
 }
 
 interface BundlizedParameters {
@@ -83,13 +84,16 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     const [integerOptions, setIntegerOptions] = useState<string | null>(null);
     const [selectVariables, setSelectVariables] = useState<boolean>(false);
     const [selectModalValue, setSelectModalValue] = useState<string>('');
+    const [showTaggingModal, setShowTaggingModal] = useState(false);
+    const [taggingParameter, setTaggingParameter] = useState<AddedParameter | null>(null);
     const [addedParameters, setAddedParameters] = useState<AddedParameter[]>(() => {
         if (initialParams && initialParams.length > 0) {
             return initialParams.map(p => ({
                 id: p.id,
                 variable: p.variable,
                 name: p.parameterName,
-                value: p.addedParameter
+                value: p.addedParameter,
+                tags: [],
             }));
         }
         return [];
@@ -100,7 +104,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         parameterName: '',
         addedParameter: ''
     });
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const globalParameterBundle = useSelector((state: RootState) => state.parameter.parameters);
     const currentVariableClassArray = useSelector((state: RootState) => state.variables.variableClassArray);
 
@@ -113,7 +117,16 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             setLocalVariableName(initialName);
             setOpenNameModal(true);
         }
-    }, [editingItemId, initialName]);
+        if (editingItemId && initialParams) {
+            setAddedParameters(initialParams.map(p => ({
+                id: p.id,
+                variable: p.variable,
+                name: p.parameterName,
+                value: p.addedParameter,
+                tags: [],
+            })));
+        }
+    }, [editingItemId, initialName, initialParams]);
 
     const displayIntegerVariables = (value: object) => {
         const cleanValue = cleanedInputValues(value).value;
@@ -173,38 +186,58 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             return;
         }
 
-        dispatch(addParameter({
-            id: Date.now(),
-            variable: selectedInterpolatedVariables,
-            parameterName: localParameter.parameterName ? localParameter.parameterName : localParameter.addedParameter,
-            addedParameter: localParameter.addedParameter,
-        }));
+        const parameterName = localParameter.parameterName ? localParameter.parameterName : localParameter.addedParameter;
+        const parameterValue = localParameter.addedParameter;
 
-        setAddedParameters(prev => {
-            const existingParameter = prev.findIndex(p =>
-                p.variable === selectedInterpolatedVariables &&
-                p.name === localParameter.parameterName
-            );
+        const existingParamIndex = addedParameters.findIndex(p =>
+            p.variable === selectedInterpolatedVariables &&
+            p.name === parameterName
+        );
 
-            if (existingParameter > -1) {
+        if (existingParamIndex > -1) {
+            setAddedParameters(prev => {
                 const updated = [...prev];
-                updated[existingParameter] = {
-                    ...updated[existingParameter],
-                    value: localParameter.addedParameter
+                updated[existingParamIndex] = {
+                    ...updated[existingParamIndex],
+                    value: parameterValue
                 };
                 return updated;
-            }
-
-            return [...prev, {
+            });
+            toast.info(`Updated parameter value for %{${selectedInterpolatedVariables}} - ${parameterName}`);
+        } else {
+            const newParam: AddedParameter = {
                 id: Date.now(),
                 variable: selectedInterpolatedVariables,
-                name: localParameter.parameterName ? localParameter.parameterName : localParameter.addedParameter,
-                value: localParameter.addedParameter
-            }];
-        });
+                name: parameterName,
+                value: parameterValue,
+                tags: []
+            };
+            setAddedParameters(prev => [...prev, newParam]);
+            dispatch(addParameter({ ...newParam, parameterName: newParam.name, addedParameter: newParam.value }));
+        }
 
         setLocalParameter({ parameterName: '', addedParameter: '' });
         setShowParameterModal(false);
+    };
+
+    const handleTagging = (parameterToTag: AddedParameter) => {
+        console.log("Opening tagging for:", parameterToTag);
+        setTaggingParameter(parameterToTag);
+        setShowTaggingModal(true);
+    };
+
+    const handleSaveTags = (newTags: string[]) => {
+        if (!taggingParameter) return;
+
+        setAddedParameters(prev =>
+            prev.map(p =>
+                p.id === taggingParameter.id
+                    ? { ...p, tags: newTags }
+                    : p
+            )
+        );
+        setShowTaggingModal(false);
+        setTaggingParameter(null);
     };
 
     const renderAddedParameters = () => {
@@ -239,8 +272,8 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                 <th>Variable</th>
                                 <th>Name</th>
                                 <th>Value</th>
-                                <th>Action</th>
                                 <th>Tags</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -259,6 +292,16 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                     <td>{param.variable}</td>
                                     <td>{param.name}</td>
                                     <td>{param.value}</td>
+                                    <td className='parameter-tags-display'>
+                                        {param.tags && param.tags.length > 0
+                                            ? param.tags.map((tag, tagIndex) => (
+                                                <span key={tagIndex} className="tag-badge">
+                                                    {tag}
+                                                </span>
+                                            ))
+                                            : <i>Untagged</i>
+                                        }
+                                    </td>
                                     <td className='action-buttons'>
                                         <button
                                             className="edit-button"
@@ -271,7 +314,13 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                                 setShowParameterModal(true);
                                             }}
                                         >
-                                            Edit
+                                            Edit Value
+                                        </button>
+                                        <button
+                                            className='tag-button'
+                                            onClick={() => handleTagging(param)}
+                                        >
+                                            Edit Tags
                                         </button>
                                         <button
                                             className="delete-button"
@@ -281,15 +330,6 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                                             }}
                                         >
                                             Delete
-                                        </button>
-                                    </td>
-                                    <td className='parameter-tags'>
-                                        <button
-                                            className='tag-button'
-                                            onClick={() => {
-                                                handleTagging(param.variable);
-                                            }}>
-                                            tag
                                         </button>
                                     </td>
                                 </tr>
@@ -342,6 +382,8 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         setLocalParameter({ parameterName: '', addedParameter: '' });
         setAddedParameters([]);
         setIntVar([]);
+        setShowTaggingModal(false);
+        setTaggingParameter(null);
     };
 
     // TODO: Will work on later once the handleAddVariable function is working
@@ -371,10 +413,6 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         dispatch(setParameterBundle(transformedParams));
     };
 
-    const handleTagging = (tag: string) => {
-        alert('Tagging functionality will allow users to add tags to the parameter. This will help in organizing and categorizing parameters based off of the existing values in the configured parameters, ensuring some values will only pair with similarly tagged values while untagged values will be considered universally pairable.');
-    };
-
     const handleAddVariable = (object: object, param: BundlizedParameters[]) => {
         let inputString = "";
         const { task, type, stringInput, textareaInput, integerInput, fileInput } = object as VariableClasses;
@@ -402,7 +440,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
 
         const relevantParams = addedParameters.filter(p => detectedVars.includes(p.variable));
         const relevantParamsExist = detectedVars.length > 0 && relevantParams.length > 0;
-        console.log("handleAddVariable - Relevant parameters from state:", JSON.stringify(relevantParams, null, 2));
+        console.log("handleAddVariable - Relevant parameters from state (with tags):", JSON.stringify(relevantParams, null, 2));
         console.log("handleAddVariable - Relevant parameters exist:", relevantParamsExist);
 
         let variableData: string[] = [];
@@ -410,23 +448,26 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
 
         if (detectedVars.length > 0 && relevantParamsExist) {
             console.log("handleAddVariable - Running COMBINATION logic.");
-            const groupedParams = relevantParams.reduce((acc, item) => {
+
+            // --- MODIFICATION: Group parameters including tags ---
+            const groupedParamsWithTags = relevantParams.reduce((acc, item) => {
                 if (!acc[item.variable]) {
                     acc[item.variable] = [];
                 }
-                acc[item.variable].push(item.value);
+                // Store object with value and tags
+                acc[item.variable].push({ value: item.value, tags: item.tags || [] });
                 return acc;
-            }, {} as Record<string, string[]>);
-            console.log("handleAddVariable - Grouped Relevant Params:", JSON.stringify(groupedParams, null, 2));
+            }, {} as Record<string, { value: string; tags: string[] }[]>); // Type updated
+            console.log("handleAddVariable - Grouped Relevant Params (with tags):", JSON.stringify(groupedParamsWithTags, null, 2));
 
-            const hasValuesForAllDetectedVars = detectedVars.every(v => groupedParams[v] && groupedParams[v].length > 0);
+            const hasValuesForAllDetectedVars = detectedVars.every(v => groupedParamsWithTags[v] && groupedParamsWithTags[v].length > 0);
 
             if (!hasValuesForAllDetectedVars) {
-                console.warn("handleAddVariable - Missing parameter values for some detected variables. Treating as single item.", groupedParams);
+                console.warn("handleAddVariable - Missing parameter values for some detected variables. Treating as single item.");
                 variableData = [inputString];
             } else {
-                const combinations = generateCombinations(groupedParams);
-                console.log("handleAddVariable - Generated Combinations:", JSON.stringify(combinations, null, 2));
+                const combinations = generateCombinations(groupedParamsWithTags);
+                console.log("handleAddVariable - Generated Combinations (from tagged logic):", JSON.stringify(combinations, null, 2));
 
                 if (!combinations || combinations.length === 0) {
                     console.warn("handleAddVariable - generateCombinations returned empty or invalid result. Treating as single item.");
@@ -438,13 +479,13 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                             if (combo.hasOwnProperty(variableKey)) {
                                 const replacementValue = combo[variableKey];
                                 const regex = new RegExp(String.raw`\%\{${variableKey}\}`, 'g');
-                                console.log(`---> Replacing '%{${variableKey}}' with '${replacementValue}' in: '${result}'`);
-                                result = result.replace(regex, replacementValue);
-                                console.log(`---> Result after replace: '${result}'`);
+                                console.log(`---> Replacing '%{${variableKey}}' with '${replacementValue}' in: '${result}'`); 
+                                result = result.replace(regex, String(replacementValue));
+                                console.log(`---> Result after replace: '${result}'`); 
                             } else {
-                                console.warn(`---> Combo object missing expected key: ${variableKey}`, combo);
+                                console.warn(`---> Combo object missing expected key from inputString: ${variableKey}`, combo);
                             }
-                        });
+                         });
                         return result;
                     });
                     console.log("handleAddVariable - Final Generated variableData array:", variableData);
@@ -506,7 +547,6 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         if (response.ok) {
             const data = await response.json();
             console.log('Save successful:', data);
-            toast.success('Variable saved successfully!');
         } else {
             const error = await response.json();
             console.error('Save failed:', error);
@@ -648,8 +688,6 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 }
 
                 addImportedParameters(importedValues, selectedInterpolatedVariables);
-                toast.success(`Imported ${importedValues.length} parameters for %{${selectedInterpolatedVariables}} from ${file.name}`);
-
             } catch (error: any) {
                 console.error("Error processing file:", error);
                 toast.error(`Failed to process file: ${error.message || 'Unknown error'}`);
@@ -709,7 +747,8 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 id: Date.now() + Math.random(),
                 variable: selectedInterpolatedVariables,
                 name: valueStr,
-                value: valueStr
+                value: valueStr,
+                tags: [],
             }));
 
             setAddedParameters(prevParams => {
@@ -903,6 +942,19 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                         addedParameter={localParameter.addedParameter}
                         setLocalParameter={setLocalParameter}
                         intVarValue={selectedInterpolatedVariables || ''}
+                    />
+                )}
+                {showTaggingModal && taggingParameter && (
+                    <TaggingModal
+                        isOpen={showTaggingModal}
+                        onClose={() => {
+                            setShowTaggingModal(false);
+                            setTaggingParameter(null);
+                        }}
+                        parameterName={taggingParameter.name}
+                        parameterValue={taggingParameter.value}
+                        currentTags={taggingParameter.tags || []}
+                        onSaveTags={handleSaveTags}
                     />
                 )}
                 <input

@@ -239,7 +239,7 @@
 
 .action-buttons button.delete-button:hover, 
 .action-buttons button.edit-button:hover,
-.action-buttons button.tag-button:hover {
+button.tag-button:hover {
   cursor: pointer;
   background-color: #f0f0f0;
   color: black;
@@ -277,7 +277,7 @@
   margin: 0 2px; 
 }
 
-button.delete-button, button.edit-button {
+button.delete-button, button.edit-button, button.tag-button {
   cursor: pointer;
   background: none;
 	color: inherit;
@@ -286,6 +286,10 @@ button.delete-button, button.edit-button {
 	font: inherit;
 	outline: inherit;
   transition: 0.2s ease-in-out;
+}
+
+button.tag-button {
+  padding: 0 10px;
 }
 
 .drag-handle {

@@ -102,26 +102,95 @@ export const displayOnlyValue = (value: string) => {
     return filteredParts;
 };
 
-export const generateCombinations = (groupedParams: Record<string, string[]>) => {
-    const keys = Object.keys(groupedParams);
-    const values = keys.map((key) => groupedParams[key]);
-    const combinations = cartesianProduct(values);
+const canCombine = (tagsA: string[], tagsB: string[]): boolean => {
+    const aIsEmpty = !tagsA || tagsA.length === 0;
+    const bIsEmpty = !tagsB || tagsB.length === 0;
+    const aHasAsterisk = tagsA && tagsA.includes('*');
+    const bHasAsterisk = tagsB && tagsB.includes('*');
 
-    return combinations.map((combo) => {
-        const result: Record<string, string> = {};
-        keys.forEach((key, index) => {
-            result[key] = combo[index];
-        });
+    if (aIsEmpty && bIsEmpty) {
+        return true;
+    }
+
+    if (aIsEmpty && !bIsEmpty) {
+        const result = !bHasAsterisk;
         return result;
-    });
+    }
+    if (!aIsEmpty && bIsEmpty) {
+        const result = !aHasAsterisk;
+        return result;
+    }
+
+    if (!aIsEmpty && !bIsEmpty) {
+        const commonTagsExist = tagsA.some(tagA => tagA !== '*' && tagsB.includes(tagA));
+        return commonTagsExist;
+    }
+
+    return false;
 };
 
-const cartesianProduct = (arrays: string[][]): string[][] => {
+export const generateCombinations = (
+    groupedParamsWithTags: Record<string, { value: string; tags: string[] }[]>
+): Record<string, string>[] => {
+
+    const variables = Object.keys(groupedParamsWithTags);
+    if (variables.length === 0) {
+        return [];
+    }
+
+    const results: Record<string, string>[] = [];
+
+    const generate = (
+        varIndex: number,
+        currentCombination: Record<string, string>,
+        currentCombinationTags: Record<string, string[]> 
+    ) => {
+        if (varIndex === variables.length) {
+            results.push({ ...currentCombination });
+            return;
+        }
+
+        const currentVariable = variables[varIndex];
+        const itemsForCurrentVar = groupedParamsWithTags[currentVariable];
+
+        itemsForCurrentVar.forEach(item => {
+            let isCompatible = true;
+            if (varIndex > 0) {
+                 for (const existingVar in currentCombinationTags) {
+                    if (!canCombine(item.tags, currentCombinationTags[existingVar])) {
+                        isCompatible = false;
+                        break; 
+                    }
+                }
+            }
+
+            if (isCompatible) {
+                const nextCombination = {
+                    ...currentCombination,
+                    [currentVariable]: item.value 
+                };
+                const nextCombinationTags = {
+                    ...currentCombinationTags,
+                    [currentVariable]: item.tags
+                };
+                generate(varIndex + 1, nextCombination, nextCombinationTags);
+            } else {
+                console.log(`Skipping combination: Cannot add ${currentVariable}=${item.value} [${item.tags}] to`, currentCombination, currentCombinationTags);
+            }
+        });
+    };
+    generate(0, {}, {});
+
+    console.log("generateCombinations Results:", results);
+    return results;
+};
+
+/* const cartesianProduct = (arrays: string[][]): string[][] => {
     return arrays.reduce(
         (acc, curr) => acc.flatMap((a) => curr.map((b) => [...a, b])),
         [[]] as string[][]
     );
-};
+}; */
 
 export const handleCreateName = (name: string) => {
     const cleanedName = name.replace(/[^a-zA-Z0-9]/g, '');
