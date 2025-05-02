@@ -2,18 +2,23 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 const multer = require('multer');
 const csvParser = require('csv-parser');
+const axios = require('axios');
 const app = express();
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3002;
 let setStandardBehavior = false;
 
+const ICONS_DIR = path.join(__dirname, 'icons');
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+
+const upload = multer({ dest: UPLOADS_DIR });
+
 app.use(express.json());
 app.use(cors());
-
-const upload = multer({ dest: 'uploads/' });
 
 const loadPuppeteerScript = (folder, scriptName) => {
     const scriptPath = path.join(__dirname, folder, scriptName);
@@ -21,22 +26,21 @@ const loadPuppeteerScript = (folder, scriptName) => {
 };
 
 const autoDeleteOldUploads = async () => {
-    const dirPath = path.join(__dirname, 'uploads/');
     try {
-        const files = await fs.promises.readdir(dirPath);
-
+        await fsPromises.mkdir(UPLOADS_DIR, { recursive: true });
+        const files = await fsPromises.readdir(UPLOADS_DIR);
         const deletePromises = files.map(async (file) => {
-            const filePath = path.join(dirPath, file);
+            const filePath = path.join(UPLOADS_DIR, file);
             try {
-                const stats = await fs.promises.stat(filePath);
+                const stats = await fsPromises.stat(filePath);
                 if (stats.isFile()) {
-                    await fs.promises.unlink(filePath);
-                    console.log(`Deleted file: ${file}`);
+                    await fsPromises.unlink(filePath);
+                    console.log(`Deleted upload file: ${file}`);
                 } else {
-                    console.log(`Skipping non-file: ${file}`);
+                    console.log(`Skipping non-file in uploads: ${file}`);
                 }
             } catch (err) {
-                console.error(`Error deleting file: ${file}`, err);
+                console.error(`Error deleting upload file: ${file}`, err);
             }
         });
 
@@ -44,6 +48,59 @@ const autoDeleteOldUploads = async () => {
         console.log('All old uploads deleted.');
     } catch (err) {
         console.error('Error reading uploads directory:', err);
+    }
+};
+
+const downloadImage = async (url, filepath) => {
+    try {
+        const response = await axios({
+            url,
+            method: 'GET',
+            responseType: 'stream'
+        });
+
+        if (response.status !== 200) {
+            throw new Error(`Failed to download ${url}. Status: ${response.status}`);
+        }
+
+        const writer = fs.createWriteStream(filepath);
+        response.data.pipe(writer);
+
+        return new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+            response.data.on('error', reject);
+        });
+    } catch (error) {
+        console.error(`Error downloading image from ${url}:`, error.message);
+        throw error;
+    }
+};
+
+const autoDeleteOldIcons = async () => {
+    try {
+        await fsPromises.mkdir(ICONS_DIR, { recursive: true });
+        const files = await fsPromises.readdir(ICONS_DIR);
+
+        const deletePromises = files.map(async (file) => {
+            const filePath = path.join(ICONS_DIR, file);
+            try {
+                const stats = await fsPromises.stat(filePath);
+                if (stats.isFile()) {
+                    await fsPromises.unlink(filePath);
+                    console.log(`Deleted icon file: ${file}`);
+                } else {
+                     console.log(`Skipping non-file in icons: ${file}`); 
+                }
+            } catch (err) {
+                console.error(`Error deleting icon file: ${file}`, err);
+            }
+        });
+
+        await Promise.all(deletePromises);
+        console.log('All old icons deleted.');
+    } catch (err) {
+        console.error('Error reading icons directory:', err);
     }
 };
 
@@ -68,13 +125,47 @@ const differentializeProductData = async (type, fileData) => {
     const { jsonData } = fileData;
     let products = [];
 
-    if (type === 'json-type' && jsonData) {
+    if (type === 'json-type' && fileData.jsonData) {
         try {
-            products = JSON.parse(jsonData);
+            products = JSON.parse(fileData.jsonData);
+
+            await fsPromises.mkdir(ICONS_DIR, { recursive: true });
+
+            for (const product of products) {
+                const iconData = product?.Icon?.Package?.content;
+                const filenames = iconData?.filename;
+                const urls = iconData?.url;
+
+                if (iconData && Array.isArray(filenames) && Array.isArray(urls) && filenames.length === urls.length && filenames.length > 0) {
+                    console.log(`Processing package icons for product: ${product.ItemName || product.DisplayName || 'Unknown'}`);
+                    const downloadPromises = [];
+
+                    for (let i = 0; i < urls.length; i++) {
+                        const url = urls[i];
+                        const filename = filenames[i];
+                        if (url && filename) {
+                            const filepath = path.join(ICONS_DIR, filename);
+                            console.log(`  Queueing download: ${url} -> ${filepath}`);
+                            downloadPromises.push(downloadImage(url, filepath));
+                        }
+                    }
+
+                    try {
+                        await Promise.all(downloadPromises);
+                        console.log(`  Downloads complete for product. Transforming Icon field.`);
+                        product.Icon = { Composite: filenames };
+                    } catch (downloadError) {
+                        console.error(`  Failed to download one or more icons for product. Icon field not transformed. Error: ${downloadError.message}`);
+                    }
+                } else if (product?.Icon?.Package) {
+                    console.log(`  Skipping Icon transformation for product ${product.ItemName || 'Unknown'}: Invalid or empty package content.`);
+                }
+            }
             products = removeEmptyValues(products);
+
         } catch (error) {
-            console.error('Error parsing JSON data:', error);
-            throw new Error('Invalid JSON data');
+            console.error('Error parsing or processing JSON data:', error);
+            throw new Error('Invalid JSON data or processing error');
         }
     } else if (type === 'csv-type' && fileData.file) {
         const filePath = path.join(__dirname, 'uploads', fileData.file.filename);
@@ -123,22 +214,14 @@ app.post('/js-server', upload.single('file'), async (req, res) => {
         console.log(`Cell Origin:`, JSON.stringify(cellOriginObj, null, 2));
 
         let products = [];
-        if (type === 'json-type' && jsonData) {
-            const resolvedJsonData = await Promise.resolve(jsonData);
-            if (typeof resolvedJsonData !== 'string') {
-                throw new Error('Invalid JSON data: Expected a string');
-            }
 
-            products = await differentializeProductData(type, { jsonData: resolvedJsonData });
-        } else {
-            res.status(400).json({ message: 'Invalid data type or missing file/data' });
-            return;
-        }
+        products = await differentializeProductData(type, { jsonData });
 
-        console.log('Processed Products:', products);
+        console.log('Processed & Transformed Products:', JSON.stringify(products, null, 2));
         console.log('END OF PROCESSING');
-        if (products.length === 0) {
-            throw new Error('No products found after processing');
+
+        if (!Array.isArray(products) || products.length === 0) {
+            throw new Error('No valid products found after processing');
         }
 
         const puppeteerScript = loadPuppeteerScript('automation', 'DSF_product_edit.js');
@@ -146,8 +229,10 @@ app.post('/js-server', upload.single('file'), async (req, res) => {
 
         res.json({ message: 'Automation script executed successfully', products });
         await autoDeleteOldUploads();
+        await autoDeleteOldIcons();
+
     } catch (error) {
-        console.error('Error running Puppeteer script:', error);
+        console.error('Error in /js-server route:', error);
         res.status(500).json({ message: error.message });
     }
 });

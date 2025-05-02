@@ -86,6 +86,12 @@ async function sendFailureEmail(processProductCount, products, error) {
     }
 }
 
+function ensureFileExists(filePath, contextMessage) {
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`${contextMessage}: File not found at "${filePath}"`);
+    }
+}
+
 const globalWidth = 1920;
 const globalHeight = 1080;
 
@@ -99,10 +105,10 @@ const ticketSelectorValues = {
 // TODO: Detect user's OS and flip the function below based on OS detected
 async function completeDelete(newPage) {
     // Below command is Windows deprecated, uncomment when on Mac and comment out redundant code!
-    await newPage.evaluate(() => document.execCommand('selectall', false, null));
-    // await newPage.keyboard.down('Control');
-    // await newPage.keyboard.press('A');
-    // await newPage.keyboard.up('Control');
+    // await newPage.evaluate(() => document.execCommand('selectall', false, null));
+    await newPage.keyboard.down('Control');
+    await newPage.keyboard.press('A');
+    await newPage.keyboard.up('Control');
     await newPage.keyboard.press('Backspace');
 };
 
@@ -140,47 +146,152 @@ async function ticketTemplateSelector(templates, newPage) {
     }
 }
 
-// TODO: Eventually we should have a "Delete current icon" option in the future.
-// TODO: Need to have composite check
-async function uploadIcon(newPage, icon) {
-    const filePath = path.join(__dirname, 'icons', icon);
+async function uploadIcon(newPage, iconData) {
+    const editMainIconButtonSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$EditProductImage"]';
+    const uploadMainIconRadioSelector = '#ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon';
+    const mainIconUploadInputSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01"]';
+    const useSameImageIconCheckboxSelector = '#ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon';
+    const uploadMainIconButtonSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$Upload"]';
+    const detailsTabSelector = '#TabDetails';
+    const infoTabSelector = '#TabInfo';
+    const firstDeleteButtonSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_MultipleImagesUpload$ImagesPreview$ctl01$ctl01"]';
+    const imagePreviewSelector = '.multiple-images-container-action';
+    const uploadMultipleImagesRadioSelector = '#ctl00_ctl00_C_M_ctl00_W_ctl01__MultipleImagesUpload_RadioUploadMultipleImages';
+    const multipleImagesUploadInputSelector = '#ctl00_ctl00_C_M_ctl00_W_ctl01__MultipleImagesUpload_UploadImages';
+    const uploadMultipleImagesButtonSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_MultipleImagesUpload$UploadedFile"]';
 
-    if (!fs.existsSync(filePath)) {
-        throw new Error(`Icon "${icon}" not found in ./icons directory`);
+    try {
+        const filenames = iconData?.Composite;
+        if (!Array.isArray(filenames) || filenames.length === 0) {
+            console.log('No valid composite icon data found. Skipping icon upload.');
+            return;
+        }
+        console.log(`Processing ${filenames.length} composite icons:`, filenames);
+
+        const firstIconFilename = filenames[0];
+        const firstIconPath = path.join(__dirname, '..', 'icons', firstIconFilename);
+        ensureFileExists(firstIconPath, `First icon (${firstIconFilename})`);
+        console.log(`Uploading first icon as main icon: ${firstIconFilename}`);
+
+        await newPage.waitForSelector(editMainIconButtonSelector, { visible: true });
+        await newPage.click(editMainIconButtonSelector);
+        console.log('Clicked Edit Main Icon button.');
+
+        await newPage.waitForSelector(uploadMainIconRadioSelector, { visible: true });
+        await newPage.click(uploadMainIconRadioSelector);
+        console.log('Selected Upload Main Icon radio.');
+
+        const mainIconUploadInput = await newPage.waitForSelector(mainIconUploadInputSelector);
+        await mainIconUploadInput.uploadFile(firstIconPath);
+        console.log(`Selected file for main icon: ${firstIconPath}`);
+
+        await newPage.waitForSelector(useSameImageIconCheckboxSelector, { visible: true });
+        await newPage.click(useSameImageIconCheckboxSelector);
+        console.log('Checked "Use same image for icon".');
+
+        console.log('Clicking Upload for main icon...');
+        await Promise.all([
+            newPage.waitForNavigation({ waitUntil: 'networkidle0', timeout: 60000 }),
+            newPage.click(uploadMainIconButtonSelector)
+        ]);
+        console.log(`Main icon (${firstIconFilename}) uploaded successfully.`);
+
+        if (filenames.length > 0) {
+            console.log(`Proceeding to upload all ${filenames.length} icons to multiple images section...`);
+            await newPage.waitForSelector(detailsTabSelector, { visible: true });
+            await newPage.click(detailsTabSelector);
+            console.log('Navigated to Details tab.');
+
+            const maxDeleteAttempts = 15;
+            let currentDeleteAttempt = 0;
+            console.log('Attempting to delete existing additional images based on image count...');
+
+            while (currentDeleteAttempt < maxDeleteAttempts) {
+                let imageCount = 0;
+                if (!imagePreviewSelector) {
+                    console.error(`Image preview selector is not defined!`);
+                    break;
+                } else {
+                    console.log(`   Image preview selector "${imagePreviewSelector}" found. Counting images...`);
+                }
+                try {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    imageCount = await newPage.$$eval(imagePreviewSelector, images =>
+                        images.filter(img => img.offsetParent !== null).length
+                    );
+                    console.log(`   Found ${imageCount} existing visible images (Attempt ${currentDeleteAttempt + 1}).`);
+                } catch (e) {
+                    console.log(`   Image preview selector "${imagePreviewSelector}" not found or evaluation failed. Assuming 0 images.`);
+                    imageCount = 0;
+                }
+
+                if (imageCount === 0) {
+                    console.log('   No more visible images to delete.');
+                    break;
+                }
+
+                try {
+                    console.log(`   Attempting to click delete button for first remaining image (Attempt ${currentDeleteAttempt + 1})...`);
+                    await newPage.waitForSelector(firstDeleteButtonSelector, { visible: true, timeout: 5000 });
+                    await newPage.click(firstDeleteButtonSelector);
+                    console.log(`   Clicked delete. Waiting for UI update...`);
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                } catch (error) {
+                    console.error(`   Error finding or clicking delete button (Attempt ${currentDeleteAttempt + 1}): ${error.message}`);
+                    console.warn('   Stopping delete process due to error.');
+                    break;
+                }
+                currentDeleteAttempt++;
+            }
+
+            if (currentDeleteAttempt >= maxDeleteAttempts) {
+                console.warn('Reached max delete attempts. There might still be images left, or counting failed.');
+            }
+            console.log(`Finished delete process after ${currentDeleteAttempt} attempts.`);
+
+            await newPage.waitForSelector(uploadMultipleImagesRadioSelector, { visible: true });
+            await newPage.click(uploadMultipleImagesRadioSelector);
+            console.log('Selected Upload Multiple Images radio.');
+
+            const validFilePaths = [];
+            for (const filename of filenames) {
+                const currentPath = path.join(__dirname, '..', 'icons', filename);
+                if (fs.existsSync(currentPath)) {
+                    validFilePaths.push(currentPath);
+                } else {
+                    console.warn(`Skipping missing file for multi-upload: ${currentPath}`);
+                }
+            }
+
+            if (validFilePaths.length > 0) {
+                console.log(`Uploading ${validFilePaths.length} files at once...`);
+                const multipleImagesInput = await newPage.waitForSelector(multipleImagesUploadInputSelector);
+                await multipleImagesInput.uploadFile(...validFilePaths);
+                console.log('Selected files for multi-upload.');
+
+                console.log('Clicking Upload for multiple images...');
+                await newPage.click(uploadMultipleImagesButtonSelector);
+                console.log('   Clicked. Waiting for upload process to complete (network idle)...');
+                await newPage.waitForNetworkIdle({ idleTime: 1000, timeout: 60000 });
+                console.log(`Successfully uploaded ${validFilePaths.length} files (network is idle).`);
+
+            } else {
+                console.log("No valid icon files found to upload for multiple images section.");
+            }
+
+            console.log('Ensuring Info tab is ready before clicking...');
+            await newPage.waitForSelector(infoTabSelector, { visible: true, timeout: 10000 });
+            await newPage.click(infoTabSelector);
+            console.log('Returned to Info tab.');
+        } else {
+            console.log("No filenames provided for multiple image upload section.");
+        }
+
+    } catch (error) {
+        console.error(`Error during icon upload process: ${error.message}`);
+        throw error;
     }
-
-    await console.log(`Uploading icons: ${icon}`);
-
-    await new Promise(resolve => setTimeout(resolve, 600));
-    await newPage.waitForSelector('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$EditProductImage"]');
-    await newPage.click('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$EditProductImage"]');
-
-    await newPage.waitForSelector('#ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon');
-    await newPage.click('#ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_rdbUploadIcon');
-
-    const uploadSelector = await newPage.$('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$_uploadedFile$ctl01"]');
-    await uploadSelector.uploadFile(filePath);
-
-    await new Promise(resolve => setTimeout(resolve, 800));
-    await newPage.waitForSelector('#ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon');
-    await newPage.click('#ctl00_ctl00_C_M_ctl00_W_ctl01__BigIconByItself_ProductIcon_ChkUseSameImageIcon');
-
-    await new Promise(resolve => setTimeout(resolve, 600));
-    await newPage.waitForSelector('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$Upload"]');
-    await newPage.click('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$Upload"]');
-    await Promise.all([
-        newPage.waitForNavigation(),
-    ]);
-    console.log('Page reloaded successfully');
-
-    await new Promise(resolve => setTimeout(resolve, 600));
-    if (await newPage.$('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$Upload"]')) {
-        console.log(`Waiting for file to completely upload`);
-        await newPage.waitForSelector('input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$ProductIcon$Upload"]', { hidden: true });
-    } else {
-        console.log(`Successfully uploaded icons: ${icon}`);
-    }
-};
+}
 
 // TODO: Need to have composite check
 async function uploadPDF(newPage, pdf) {
@@ -620,7 +731,7 @@ async function processProduct(browser, page, product) {
 
         const maxQtySelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$txtMaxOrderQuantityPermitted"]';
         const showQtyPriceSelector = 'input[value="rdbShowPricing"]';
-        
+
         if (maxQuantity) {
             const maxQtySelectorValue = await newPage.$eval(maxQtySelector, el => el.value.trim());
             console.log('Max quantity found: ', maxQuantity);
@@ -638,9 +749,8 @@ async function processProduct(browser, page, product) {
                     await new Promise(resolve => setTimeout(resolve, 800));
                     await completeDelete(newPage);
                     if (maxQtySelector !== maxQuantity) {
-                        // TODO: we'll have to solve this later instead of commenting it out, stupid freaking csv files and your unreliably sad interface >;(
-                        // await newPage.type(maxQtySelector, maxQuantity);
-                        // console.log('Filled max quantity with: ', maxQuantity);
+                        await newPage.type(maxQtySelector, maxQuantity);
+                        console.log('Filled max quantity with: ', maxQuantity);
                     } else {
                         console.log('Max quantity is empty, skipping!');
                     }
@@ -701,141 +811,145 @@ async function processProduct(browser, page, product) {
         const printWeightMeasurement = '#ctl00_ctl00_C_M_ctl00_W_ctl01_OptionalPrintWeightSelector_Active__Unit';
         const inputtedWeight = weightInput || '0.02';
 
-        if (await newPage.$(printWeightMeasurement)) {
-            console.log('Print weight measurement selector found');
-            if (await newPage.$eval(printWeightMeasurement, el => el.value) === '0') {
-                console.log('Print weight measurement at wrong measurement');
-                await newPage.waitForSelector(printWeightMeasurement);
-                await newPage.select(printWeightMeasurement, '1');
-                console.log('Changed weight measurement from oz to lb');
+        if (weightInput || shippingWidths || shippingLengths || shippingHeights || shippingMaxs) {
+            if (await newPage.$(printWeightMeasurement)) {
+                console.log('Print weight measurement selector found');
+                if (await newPage.$eval(printWeightMeasurement, el => el.value) === '0') {
+                    console.log('Print weight measurement at wrong measurement');
+                    await newPage.waitForSelector(printWeightMeasurement);
+                    await newPage.select(printWeightMeasurement, '1');
+                    console.log('Changed weight measurement from oz to lb');
+                } else {
+                    console.log('Print weight measurement already set to lb');
+                }
             } else {
-                console.log('Print weight measurement already set to lb');
-            }
-        } else {
-            throw new Error('Print weight measurement selector not found');
-        };
+                throw new Error('Print weight measurement selector not found');
+            };
 
-        if (weightInput) {
-            console.log('Weight input found: ', weightInput);
-            if (
-                await newPage.$(printWeightCheckbox) &&
-                await newPage.$eval(printWeightCheckbox, el => el.checked) === false &&
-                await newPage.$eval(printWeightInput, el => el.value.trim()) === '0'
-            ) {
-                await newPage.waitForSelector(printWeightCheckbox);
-                await newPage.click(printWeightCheckbox);
-                console.log('Clicked print weight checkbox');
-                if (await newPage.$eval(printWeightInput, el => el.value.trim()) === '0') {
-                    console.log('Processing Weight and adding: ', weightInput);
-                    await newPage.waitForSelector(printWeightInput);
-                    await newPage.click(printWeightInput, { clickCount: 4 });
+            if (weightInput) {
+                console.log('Weight input found: ', weightInput);
+                if (
+                    await newPage.$(printWeightCheckbox) &&
+                    await newPage.$eval(printWeightCheckbox, el => el.checked) === false &&
+                    await newPage.$eval(printWeightInput, el => el.value.trim()) === '0'
+                ) {
+                    await newPage.waitForSelector(printWeightCheckbox);
+                    await newPage.click(printWeightCheckbox);
+                    console.log('Clicked print weight checkbox');
+                    if (await newPage.$eval(printWeightInput, el => el.value.trim()) === '0') {
+                        console.log('Processing Weight and adding: ', weightInput);
+                        await newPage.waitForSelector(printWeightInput);
+                        await newPage.click(printWeightInput, { clickCount: 4 });
+                        await new Promise(resolve => setTimeout(resolve, 800));
+                        await completeDelete(newPage);
+                        // TODO: we'll have to solve this later instead of hardcoding it, stupid freaking javascript and your unsexy dynamic type >:(
+                        await newPage.keyboard.type(inputtedWeight);
+                        console.log('Filled weight input with: ', inputtedWeight);
+                    }
+                } else if (
+                    await newPage.$eval(printWeightCheckbox, el => el.checked) === true &&
+                    await newPage.$eval(printWeightInput, el => el.value.trim()) === inputtedWeight
+                ) {
+                    console.log('Print weight checkbox already checked, skipping!');
+                } else {
+                    throw new Error('Print weight measurement not found');
+                };
+            } else {
+                console.log('Print weight checkbox not found, skipping!');
+            };
+
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            if (shippingWidths) {
+                console.log('Shipping widths found: ', shippingWidths);
+                if (await newPage.$eval(widthSelector, el => el.value.trim()) !== shippingWidths) {
+                    console.log('Processing Width');
+                    await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxX');
                     await new Promise(resolve => setTimeout(resolve, 800));
+                    await newPage.keyboard.press('Tab');
+
                     await completeDelete(newPage);
-                    // TODO: we'll have to solve this later instead of hardcoding it, stupid freaking javascript and your unsexy dynamic type >:(
-                    await newPage.keyboard.type(inputtedWeight);
-                    console.log('Filled weight input with: ', inputtedWeight);
-                }
-            } else if (
-                await newPage.$eval(printWeightCheckbox, el => el.checked) === true &&
-                await newPage.$eval(printWeightInput, el => el.value.trim()) === inputtedWeight
-            ) {
-                console.log('Print weight checkbox already checked, skipping!');
-            } else {
-                throw new Error('Print weight measurement not found');
-            };
-        } else {
-            console.log('Print weight checkbox not found, skipping!');
-        };
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        if (shippingWidths) {
-            console.log('Shipping widths found: ', shippingWidths);
-            if (await newPage.$eval(widthSelector, el => el.value.trim()) !== shippingWidths) {
-                console.log('Processing Width');
-                await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxX');
-                await new Promise(resolve => setTimeout(resolve, 800));
-                await newPage.keyboard.press('Tab');
-
-                await completeDelete(newPage);
-
-                await newPage.keyboard.type(shippingWidths);
-                if (await newPage.$eval(widthSelector, el => el.value.trim()) === shippingWidths) {
-                    console.log('Completed filling shipping widths with: ', shippingWidths);
+                    await newPage.keyboard.type(shippingWidths);
+                    if (await newPage.$eval(widthSelector, el => el.value.trim()) === shippingWidths) {
+                        console.log('Completed filling shipping widths with: ', shippingWidths);
+                    } else {
+                        throw new Error('Failed to fill shipping widiths');
+                    }
                 } else {
-                    throw new Error('Failed to fill shipping widiths');
-                }
+                    console.log('Width is already set to: ', shippingWidths);
+                };
             } else {
-                console.log('Width is already set to: ', shippingWidths);
+                console.log('Shipping widths not found, skipping!');
             };
-        } else {
-            console.log('Shipping widths not found, skipping!');
-        };
 
-        if (shippingLengths) {
-            console.log('Shipping lengths found: ', shippingLengths);
-            if (await newPage.$eval(lengthSelector, el => el.value.trim()) !== shippingLengths) {
-                console.log('Processing Length');
-                await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxY');
-                await newPage.keyboard.press('Tab');
+            if (shippingLengths) {
+                console.log('Shipping lengths found: ', shippingLengths);
+                if (await newPage.$eval(lengthSelector, el => el.value.trim()) !== shippingLengths) {
+                    console.log('Processing Length');
+                    await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxY');
+                    await newPage.keyboard.press('Tab');
 
-                await completeDelete(newPage);
+                    await completeDelete(newPage);
 
-                await newPage.keyboard.type(shippingLengths);
-                if (await newPage.$eval(lengthSelector, el => el.value.trim()) === shippingLengths) {
-                    console.log('Completed filling shipping widths with: ', shippingLengths);
+                    await newPage.keyboard.type(shippingLengths);
+                    if (await newPage.$eval(lengthSelector, el => el.value.trim()) === shippingLengths) {
+                        console.log('Completed filling shipping widths with: ', shippingLengths);
+                    } else {
+                        throw new Error('Failed to fill shipping lengths');
+                    }
                 } else {
-                    throw new Error('Failed to fill shipping lengths');
-                }
+                    console.log('Length is already set to: ', shippingLengths);
+                };
             } else {
-                console.log('Length is already set to: ', shippingLengths);
+                console.log('Shipping lengths not found, skipping!');
             };
-        } else {
-            console.log('Shipping lengths not found, skipping!');
-        };
 
-        if (shippingHeights) {
-            console.log('Shipping heights found: ', shippingHeights);
-            if (await newPage.$eval(heightSelector, el => el.value.trim()) !== shippingHeights) {
-                console.log('Processing Height');
-                await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxZ');
-                await newPage.keyboard.press('Tab');
+            if (shippingHeights) {
+                console.log('Shipping heights found: ', shippingHeights);
+                if (await newPage.$eval(heightSelector, el => el.value.trim()) !== shippingHeights) {
+                    console.log('Processing Height');
+                    await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl__lblBoxZ');
+                    await newPage.keyboard.press('Tab');
 
-                await completeDelete(newPage);
+                    await completeDelete(newPage);
 
-                await newPage.keyboard.type(shippingHeights);
-                if (await newPage.$eval(heightSelector, el => el.value.trim()) === shippingHeights) {
-                    console.log('Completed filling shipping widths with: ', shippingHeights);
+                    await newPage.keyboard.type(shippingHeights);
+                    if (await newPage.$eval(heightSelector, el => el.value.trim()) === shippingHeights) {
+                        console.log('Completed filling shipping widths with: ', shippingHeights);
+                    } else {
+                        throw new Error('Failed to fill shipping heights');
+                    }
                 } else {
-                    throw new Error('Failed to fill shipping heights');
-                }
+                    console.log('Height is already set to: ', shippingHeights);
+                };
             } else {
-                console.log('Height is already set to: ', shippingHeights);
+                console.log('Shipping heights not found, skipping!');
             };
-        } else {
-            console.log('Shipping heights not found, skipping!');
-        };
 
-        if (shippingMaxs) {
-            console.log('Shipping maxs found: ', shippingMaxs);
-            if (await newPage.$eval(maxSelector, el => el.value.trim()) !== shippingMaxs) {
-                console.log('Processing Max');
-                await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_lblLotSize');
-                await newPage.keyboard.press('Tab');
+            if (shippingMaxs) {
+                console.log('Shipping maxs found: ', shippingMaxs);
+                if (await newPage.$eval(maxSelector, el => el.value.trim()) !== shippingMaxs) {
+                    console.log('Processing Max');
+                    await simulateMouseMove(newPage, '#ctl00_ctl00_C_M_ctl00_W_ctl01_ShipmentDimensionCtrl_lblLotSize');
+                    await newPage.keyboard.press('Tab');
 
-                await completeDelete(newPage);
+                    await completeDelete(newPage);
 
-                await newPage.keyboard.type(shippingMaxs);
-                if (await newPage.$eval(maxSelector, el => el.value.trim()) === shippingMaxs) {
-                    console.log('Completed filling shipping widths with: ', shippingMaxs);
+                    await newPage.keyboard.type(shippingMaxs);
+                    if (await newPage.$eval(maxSelector, el => el.value.trim()) === shippingMaxs) {
+                        console.log('Completed filling shipping widths with: ', shippingMaxs);
+                    } else {
+                        throw new Error('Failed to fill shipping maxs');
+                    }
                 } else {
-                    throw new Error('Failed to fill shipping maxs');
-                }
+                    console.log('Max is already set to: ', shippingMaxs);
+                };
             } else {
-                console.log('Max is already set to: ', shippingMaxs);
+                console.log('Shipping maxs not found, skipping!');
             };
         } else {
-            console.log('Shipping maxs not found, skipping!');
-        };
+            console.log('Shipping dimensions not found, skipping!');
+        }
     };
 
     async function productQueriedCheck(newPage, product) {
@@ -944,8 +1058,6 @@ async function processProduct(browser, page, product) {
         console.log('Brief description field explicitly skipped!');
     }
 
-    // TODO: in the future, we should have a toggle that allows
-    // the user to enable or disable the icon field entirely.
     await new Promise(resolve => setTimeout(resolve, 600));
     if (allowIconFields && icon) {
         console.log('Icon field enabled');
@@ -953,7 +1065,7 @@ async function processProduct(browser, page, product) {
         if (blankImage) {
             console.log('Icon field blank. Uploading!');
             await uploadIcon(newPage, icon);
-        } else if (blankImage && allowIconFields && product.Icon) {
+        } else if (!blankImage && allowIconFields && product.Icon) {
             try {
                 console.log('Icon field populated but user wants to change it');
                 await uploadIcon(newPage, icon);
@@ -1151,10 +1263,6 @@ async function runPuppeteer(products) {
         await page.waitForSelector('a[href="MD/base.aspx#/manageproducts"]', { visible: true });
         await page.click('a[href="MD/base.aspx#/manageproducts"]');
 
-        // TODO: In the future, when there's an interface, for when the user only wants to update certain products in the total product count
-        // we should create a value that the product count will be reactive to, that way the user won't need to wait for the rest of 
-        // the automation in order to return to the previous point. For now, we should just have a variable that we can change.
-
         console.log(`Total products to process: ${products.length}`);
         sound.play(activateSound);
 
@@ -1173,7 +1281,7 @@ async function runPuppeteer(products) {
     } catch (error) {
         const page = await browser.newPage();
         sound.play(errorSound);
-        await sendFailureEmail(processedProductCount, products, error);
+        // await sendFailureEmail(processedProductCount, products, error);
         console.error('An error occurred:', error);
     } finally {
         if (browser) {
