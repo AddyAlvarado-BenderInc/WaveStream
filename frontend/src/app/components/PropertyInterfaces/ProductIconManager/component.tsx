@@ -121,13 +121,14 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <label htmlFor="fileInput" className={styles.uploadLabel}>
+                <label htmlFor="iconFileInput" className={styles.uploadLabel}>
                     <span>{label}</span>
                 </label>
             </div>
             <input
-                id="fileInput"
+                id="iconFileInput"
                 type="file"
+                accept="image/*"
                 multiple
                 onChange={handleFileChange}
                 className={styles.fileInput}

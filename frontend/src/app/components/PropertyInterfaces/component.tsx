@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ProductManager, IconData } from '../../../../types/productManager';
+import { ProductManager, IconData, PDFData } from '../../../../types/productManager';
 import AdvancedDescription from './AdvancedDescriptionEditor/component';
 import ProductIconManager from './ProductIconManager/component';
+import ProductPDFManager from './PDFUploadsManager/component';
 import styles from './component.module.css';
 import { BASE_URL } from '../../config';
 import { ToastContainer, toast } from 'react-toastify';
@@ -23,15 +24,23 @@ interface IconDataState {
     newFiles: File[];
 }
 
+interface PDFDataState {
+    pdf: PDFData[];
+    pdfPreview: PDFData[];
+    newFiles: File[];
+}
+
 interface PropertyInterfaceTableProps {
     productManager: ProductManager;
     formData: any;
-    iconData: any;
+    iconData: IconDataState;
+    pdfData: PDFDataState;
     setFormData: React.Dispatch<React.SetStateAction<FormDataState>>;
     setIconData: React.Dispatch<React.SetStateAction<IconDataState>>;
+    setPDFData: React.Dispatch<React.SetStateAction<PDFDataState>>;
 }
 
-const PropertyInterfaceTable: React.FC<PropertyInterfaceTableProps> = ({ productManager, formData, iconData, setFormData, setIconData }) => {
+const PropertyInterfaceTable: React.FC<PropertyInterfaceTableProps> = ({ productManager, formData, iconData, pdfData, setFormData, setIconData, setPDFData }) => {
     const [descriptionName, setDescriptionName] = useState("");
     const handleDescriptionNameChange = (name: string) => {
         setDescriptionName(name);
@@ -50,6 +59,30 @@ const PropertyInterfaceTable: React.FC<PropertyInterfaceTableProps> = ({ product
                 [updatedField]: value,
             }));
         }
+    };
+
+    const checkAndFilterCollisions = (
+        filesToCheck: File[],
+        existingOtherFiles: { filename: string }[],
+        newOtherFiles: File[],
+        fileType: 'PDF' | 'Icon',
+        otherFileType: 'Icon' | 'PDF'
+    ): File[] => {
+        const otherFilenames = new Set([
+            ...existingOtherFiles.map(f => f.filename),
+            ...newOtherFiles.map(f => f.name)
+        ]);
+
+        const collisions = filesToCheck.filter(file => otherFilenames.has(file.name));
+        const nonCollidingFiles = filesToCheck.filter(file => !otherFilenames.has(file.name));
+
+        if (collisions.length > 0) {
+            toast.error(
+                `Cannot add ${fileType}(s) with the same name as existing ${otherFileType}(s): ${collisions.map(f => f.name).join(', ')}`,
+                { autoClose: 5000 }
+            );
+        }
+        return nonCollidingFiles;
     };
 
     const overwriteDescription = async (
@@ -170,6 +203,58 @@ const PropertyInterfaceTable: React.FC<PropertyInterfaceTableProps> = ({ product
                     handleClearButton={descriptionClearButton}
                 />
                 <div className={styles.divider} />
+                <ProductPDFManager
+                    pdf={pdfData.pdf}
+                    label="Product PDFs"
+                    onDelete={async (filename: string) => {
+                        const { productType, _id: productId } = productManager;
+
+                        try {
+                            const response = await fetch(
+                                `/api/productManager/${productType}/${productId}/pdf?filename=${encodeURIComponent(filename)}`,
+                                { method: 'DELETE' }
+                            );
+
+                            if (response.ok) {
+                                const result = await response.json();
+
+                                setPDFData(prev => ({
+                                    ...prev,
+                                    pdf: result.remainingPDFs.map((f: string) => ({
+                                        filename: f,
+                                        url: `${BASE_URL}/api/files/${encodeURIComponent(f)}`
+                                    })),
+                                    newFiles: prev.newFiles.filter(file => file.name !== filename)
+                                }));
+
+                                toast.success(result.message);
+                            } else {
+                                const error = await response.json();
+                                toast.error(`Delete failed: ${error.error}`);
+                            }
+                        } catch (error) {
+                            console.error('Delete error:', error);
+                            toast.error('Failed to delete PDF. Please try again.');
+                        }
+                    }}
+                    onUpload={(files: File[]) => {
+                        const nonCollidingFiles = checkAndFilterCollisions(
+                            files,
+                            iconData.icon,
+                            iconData.newFiles,
+                            'PDF',
+                            'Icon'
+                        );
+
+                        if (nonCollidingFiles.length === 0) return;
+
+                        setPDFData(prev => ({
+                            ...prev,
+                            newFiles: [...prev.newFiles, ...nonCollidingFiles],
+                        }));
+                    }}
+                />
+                <div className={styles.divider} />
                 <ProductIconManager
                     icon={iconData.icon}
                     label="Product Icons"
@@ -184,19 +269,14 @@ const PropertyInterfaceTable: React.FC<PropertyInterfaceTableProps> = ({ product
 
                             if (response.ok) {
                                 const result = await response.json();
-
                                 setIconData(prev => ({
                                     ...prev,
                                     icon: result.remainingIcons.map((f: string) => ({
                                         filename: f,
                                         url: `${BASE_URL}/api/files/${encodeURIComponent(f)}`
                                     })),
-                                    iconPreview: result.remainingIcons.map((f: string) => ({
-                                        filename: f,
-                                        url: `${BASE_URL}/api/files/${encodeURIComponent(f)}`
-                                    }))
+                                    newFiles: prev.newFiles.filter(file => file.name !== filename)
                                 }));
-
                                 toast.success(result.message);
                             } else {
                                 const error = await response.json();
@@ -208,16 +288,19 @@ const PropertyInterfaceTable: React.FC<PropertyInterfaceTableProps> = ({ product
                         }
                     }}
                     onUpload={(files: File[]) => {
+                        const nonCollidingFiles = checkAndFilterCollisions(
+                            files,
+                            pdfData.pdf, 
+                            pdfData.newFiles, 
+                            'Icon',
+                            'PDF'
+                        );
+
+                        if (nonCollidingFiles.length === 0) return;
+
                         setIconData(prev => ({
                             ...prev,
-                            newFiles: [...prev.newFiles, ...files],
-                            iconPreview: [
-                                ...prev.iconPreview,
-                                ...files.map(file => ({
-                                    filename: `temp-${Date.now()}-${file.name}`,
-                                    url: URL.createObjectURL(file)
-                                }))
-                            ]
+                            newFiles: [...prev.newFiles, ...nonCollidingFiles],
                         }));
                     }}
                 />

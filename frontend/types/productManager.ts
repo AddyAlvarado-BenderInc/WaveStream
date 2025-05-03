@@ -3,6 +3,11 @@ export interface IconData {
     url: string;
 }
 
+export interface PDFData {
+    filename: string;
+    url: string;
+}
+
 export interface tableSheetData {
     index: number;
     value: string;
@@ -77,6 +82,8 @@ export interface ProductManager {
     initialCSS: string;
     icon: IconData[];
     iconPreview: IconData[];
+    pdf: PDFData[];
+    pdfPreview: PDFData[];
     label: string;
     runManager?: boolean;
     targetValue: string;

@@ -1,0 +1,221 @@
+.page {
+    --gray-rgb: 255, 255, 255;
+    --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+    --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
+  
+    --button-primary-hover: #fff;
+    --button-secondary-hover: #000;
+  }
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: inherit;
+    width: 500px;
+    margin-bottom: 10px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.productIcon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.uploadLabel {
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    color: inverted;
+    text-align: center;
+    transition: 0.3s ease-out;
+    border-radius: 6px;
+}
+
+.uploadLabel::after {
+    margin-left: 5px;
+    content: '🔗';
+    font-size: 10pt;
+}
+
+.uploadLabel:hover {
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
+}
+
+.fileInput {
+    display: none;
+}
+
+.uploadButton, .copyButton {
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
+    padding: 8px 16px;
+    border: 0.25px solid invert;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.uploadButton:hover, .copyButton:hover {
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
+}
+
+.icon {
+    font-size: 2rem;
+}
+
+.previewContainer {
+    margin-top: 10px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.imageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.button {
+    background-color: inherit;
+    color: var(--button-primary-hover);
+    padding: 8px 16px;
+    border: 0.25px solid invert;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.previewContainer .button {
+    padding: 5px 10px;
+    cursor: pointer;
+    border: 0.8px solid transparent;
+    background-color: inherit;
+    border-radius: 5px;
+    transition: 0.3s ease-out;
+    font-weight: 800;
+    font-size: 24pt;
+}
+
+.previewContainer .button:hover {
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
+}
+
+.previewImage {
+    max-width: 400px;
+    max-height: 4000px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.previewBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.iconButton {
+    padding: 5px 10px;
+    cursor: pointer;
+    border: 0.8px solid var(--button-primary-hover);
+    background-color: inherit;
+    border-radius: 5px;
+    transition: 0.3s ease-out;
+    margin-left: 10px;
+}
+
+.button[name="add-icons"], .button[name="pagination"] {
+    padding: 5px 10px;
+    cursor: pointer;
+    border: 0.8px solid var(--button-primary-hover);
+    background-color: inherit;
+    border-radius: 5px;
+    transition: 0.3s ease-out;
+    margin-left: 10px;
+}
+
+.button:hover {
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
+}
+
+.iconButton:hover {
+    background-color: var(--button-primary-hover);
+    color: var(--button-secondary-hover);
+}
+
+.tooltip {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    text-align: center;
+    background-color: #3333337e;
+    color: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 12pt;
+    z-index: 1;
+}
+
+button.button[name="delete"] {
+    position: relative;
+    background-color: transparent;
+    font-size: 16pt;
+}
+
+button.button[name="pagination"] {
+    border: none;
+    margin: 0;
+    font-size: 16pt;
+}
+
+button.button[name="save"] { 
+    margin-top: 15px;
+}
+
+.dot {
+    display: inline-block;
+    margin: 0 5px;
+    cursor: pointer;
+    font-size: 20px;
+    color: #333;
+    transition: color 0.3s;
+}
+
+.activeDot {
+    color: #ccc;
+}
+
+.placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 200px;
+    height: 200px;
+    background-color: #f0f0f0;
+    color: #666;
+    font-size: 16px;
+    border-radius: 8px;
+}

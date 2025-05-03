@@ -61,6 +61,8 @@ export interface IProductManager extends Document {
   initialCSS: string;
   icon: string[];
   iconPreview: string[];
+  pdf: string[];
+  pdfPreview: string[];
   label: string;
   tableSheet: any[]; 
   tableCellData: ITableCellData[];
@@ -91,7 +93,12 @@ const ProductManagerSchema: Schema = new Schema({
     type: [String],
     default: [],
   },
+  pdf: {
+    type: [String],
+    default: [],
+  },
   iconPreview: { type: [String], default: [] },
+  pdfPreview: { type: [String], default: [] },
   label: { type: String, default: '' },
   tableSheet: {
     type: [mongoose.Schema.Types.Mixed],

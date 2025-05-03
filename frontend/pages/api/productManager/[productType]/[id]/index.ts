@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     return res.status(404).json({ error: 'Product manager not found.' });
                 }
 
-                const icons = productManager.icon.map(filename => ({
+                const icons = (productManager.icon || []).map(filename => ({
                     filename,
                     url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                 }));
@@ -60,7 +60,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     .filter(icon => !('error' in icon))
                     .map(icon => icon.filename);
 
-                await cleanOrphanedFiles(fileNames, id.toString());
+                const pdfs = (productManager.pdf || []).map(filename => ({
+                    filename,
+                    url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                }));
+
+                const pdfFilenames = pdfs
+                    .filter(pdf => !('error' in pdf))
+                    .map(pdf => pdf.filename);
 
                 const tableSheet = Array.isArray(productManager.tableSheet)
                     ? productManager.tableSheet.map((value: any, index: number) => ({
@@ -103,7 +110,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     count: tableCellData.length
                 });
 
-                // TODO: Will refactor later to condense globalVariableClassData and globalVariablePackageData, speedrunning now for convenience
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⣀⠤⠄⠒⠋⠉⠉⠉⠉⠉⠉⠉⠑⠒⠢⢄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⢀⡠⠖⠉⠀⠀⠀⠀⠀⠀⠀⠀⢸⠋⣑⡦⣄⠀⠀⠀⠈⠙⠢⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠴⠿⠷⠶⣶⣦⣤⣤⣀⡀⠀⠀⠀⢸⣿⡀⠉⠛⢽⢦⣀⠀⠀⠀⠀⠑⢄⣀⣀⣠⡤⢴⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠈⠙⣻⡿⠟⠒⠀⠀⢾⣙⣇⡠⠖⠋⠉⡉⠀⠀⠀⠀⠀⠈⠻⡏⠀⠀⡸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⢀⡤⠊⠁⠀⠀⠀⠀⠀⠈⠿⠏⠀⡠⠊⢉⣉⡉⠲⢄⠀⠀⠀⠀⢹⣄⣰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⡰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠁⡼⠋⠉⠙⢷⣌⣣⡀⠀⠀⠚⣡⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⢀⡞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠇⣸⠀⠀⣠⡀⠀⢻⣟⠓⠀⠀⢸⢿⠷⡞⠉⠒⢄⠀⠀⣀⡀⠀⠀⠀⠀
+                // ⠀⢀⡞⠀⠀⠀⠀⠀⠀⠀⣀⣤⠀⠀⠀⠀⠀⠀⢿⠀⢀⣯⡽⠀⠀⢿⡄⠀⢸⣿⣸⠀⠈⢆⠀⠈⡷⠉⢁⣈⣑⣄⠀⠀
+                // ⠀⡸⠀⠀⠀⠀⣀⣤⣶⣿⡿⠋⠀⠀⠀⠀⢀⣠⡬⢧⣸⣿⠃⠀⠀⠀⢣⣀⣾⣿⣏⡀⠀⢀⡇⠀⡇⡴⢉⣀⠤⠼⣧⠀
+                // ⢀⠇⠀⠀⣠⣾⠿⠛⠉⡟⠀⠀⠀⠀⠀⢳⣼⡋⢶⢾⡉⠓⠤⡠⠤⠒⠊⠙⣿⣿⠿⠃⠀⣸⡇⠀⢉⣇⡼⢀⡠⠤⣼⡇
+                // ⠘⠀⣠⡾⠋⠁⠀⠀⡼⠀⠀⠀⠀⠀⣴⣾⣿⣷⣌⡑⠛⠢⠄⠀⠀⢀⣀⡤⠚⠁⠀⠀⣰⡇⠹⣶⡏⠀⢹⡏⢀⣠⣼⠀
+                // ⢸⡾⠋⠀⠀⠀⠀⠀⡇⠀⠀⠀⣠⣾⡿⠟⢛⣻⠿⠛⠋⡿⠓⢛⡽⠟⠣⣄⠀⠀⠀⠀⢿⠾⡄⠙⠳⠤⣤⡭⠿⠛⠁⠀
+                // ⠀⠁⠀⠀⠀⠀⠀⢰⡇⠀⠀⣴⡿⠋⡴⠊⢁⡠⠴⠚⡏⠀⢀⡏⠀⠀⠀⠈⢏⠒⠢⠒⠉⢦⡀⠀⣰⡾⠋⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⢠⡇⠀⣼⠋⠀⠀⢧⠀⠘⣿⢳⢤⣸⣦⡀⡇⠀⠀⠀⠀⢸⠓⠦⠤⠔⠊⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⢇⣸⠁⠀⠀⠀⣼⣷⣤⠎⠘⢒⡇⠈⠉⢻⡄⠀⠀⢀⡞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇⠀⠀⠀⠀⠘⢺⣶⠆⣠⠞⠁⠀⠀⢸⠱⣤⣴⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⣄⣀⠀⢀⢠⣿⡾⢿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢘⣷⡿⠿⡿⠛⡿⣹⠁⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡰⠁⣰⢁⠇⢰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠤⢴⠁⢠⣿⣞⣀⣼⠷⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠁⠸⣤⡯⠤⠟⠛⡦⠀⣀⠤⢶⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠞⢷⡦⠀⠀⢠⡔⢯⠁⣀⣉⣉⡠⢿⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡤⠜⠓⠶⣤⣄⣀⣀⣼⡞⠛⡟⠉⠀⠀⢀⠔⠛⠓⠢⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣁⣀⡀⠀⠀⠀⠑⢄⠀⠀⢧⣼⠀⠀⠀⡴⠁⠀⠀⠀⠀⠀⠈⠳⡀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⣠⠞⠁⠀⠀⠀⠉⠢⡀⠀⠀⠈⡆⢀⣾⣿⣀⣀⢸⡁⠀⠀⠀⠀⠀⠀⠀⢀⣹⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⡴⠁⠀⠀⠀⠀⠀⠀⠀⠘⡀⠀⣠⡿⠟⠁⠉⠉⠛⠛⠛⠿⠶⠶⠶⠶⠿⠛⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⣥⡀⠀⠀⠀⠀⠀⢀⣀⣤⡷⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠉⠛⠻⠶⠶⠾⠛⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
+                // TODO: Will refactor later to condense globalVariableClassData and globalVariablePackageData, speedrunning now for convenience (Gotta go fast!)
                 const processGlobalVariableClassData = (data: any[] | undefined): any[] => {
                     if (!Array.isArray(data)) {
                         console.log('Original globalVariableClassData is not an array or undefined, returning [].');
@@ -222,7 +259,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     iconPreview: productManager.iconPreview.map(filename => ({
                         filename,
                         url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
-                    }))
+                    })),
+                    pdf: productManager.pdf.map(filename => ({
+                        filename,
+                        url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                    })),
+                    pdfPreview: productManager.pdfPreview.map(filename => ({
+                        filename,
+                        url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                    })),
                 };
 
                 res.status(200).json(enhancedResponse);
@@ -245,41 +290,112 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         return res.status(404).json({ error: 'Product manager not found' });
                     }
 
-                    const uploadedFiles = (req as any).files || [];
-                    const existingIcons = Array.isArray(req.body.icons) ? req.body.icons : [];
+                    const formFields = req.body;
+
+                    let existingIcons: string[] = [];
+                    try {
+                        if (formFields.existingIconsJson && typeof formFields.existingIconsJson === 'string') {
+                            existingIcons = JSON.parse(formFields.existingIconsJson);
+                            if (!Array.isArray(existingIcons)) {
+                                console.warn('Parsed existingIconsJson was not an array, defaulting to empty.');
+                                existingIcons = [];
+                            }
+                        } else {
+                            console.log('existingIconsJson field not found or not a string.');
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse existingIconsJson:", e);
+                        existingIcons = [];
+                    }
+                    console.log("Parsed existingIcons:", existingIcons);
+
+
+                    let existingPDFs: string[] = [];
+                    try {
+                        if (formFields.existingPdfsJson && typeof formFields.existingPdfsJson === 'string') {
+                            existingPDFs = JSON.parse(formFields.existingPdfsJson);
+                            if (!Array.isArray(existingPDFs)) {
+                                console.warn('Parsed existingPdfsJson was not an array, defaulting to empty.');
+                                existingPDFs = [];
+                            }
+                        } else {
+                            console.log('existingPdfsJson field not found or not a string.');
+                        }
+                    } catch (e) {
+                        console.error("Failed to parse existingPdfsJson:", e);
+                        existingPDFs = [];
+                    }
+                    console.log("Parsed existingPDFs:", existingPDFs);
+
+                    const allUploadedFiles = (req as any).files || [];
+                    const uploadedIconFiles = allUploadedFiles.filter((file: Express.Multer.File) =>
+                        file.mimetype.startsWith('image/')
+                    );
+                    const uploadedPdfFiles = allUploadedFiles.filter((file: Express.Multer.File) =>
+                        file.mimetype === 'application/pdf'
+                    );
 
                     const newIcons = await Promise.all(
-                        uploadedFiles.map(async (file: Express.Multer.File) => {
+                        uploadedIconFiles.map(async (file: Express.Multer.File) => {
                             const bucket = await getGridFSBucket();
                             const filename = file.originalname;
 
-                            const existingFiles = await bucket.find({
+                            const existingGridFSFiles = await bucket.find({
                                 filename,
                                 'metadata.productId': id,
                             }).toArray();
-
-                            if (existingFiles.length > 0) {
-                                await Promise.all(existingFiles.map((f) => bucket.delete(f._id)));
+                            if (existingGridFSFiles.length > 0) {
+                                console.log(`Deleting ${existingGridFSFiles.length} existing GridFS file(s) named ${filename} before icon upload.`);
+                                await Promise.all(existingGridFSFiles.map((f) => bucket.delete(f._id)));
                             }
 
                             const uploadStream = bucket.openUploadStream(filename, {
                                 contentType: file.mimetype,
                                 metadata: { productId: id },
                             });
-
                             await new Promise<void>((resolve, reject) => {
                                 Readable.from(file.buffer)
                                     .pipe(uploadStream)
                                     .on('finish', resolve)
                                     .on('error', reject);
                             });
+                            console.log(`Uploaded new icon: ${filename}`);
                             return filename;
                         })
                     );
 
                     const allIcons = [...existingIcons, ...newIcons];
 
-                    const formFields = req.body ? JSON.parse(JSON.stringify(req.body)) : {};
+                    const newPDFs = await Promise.all(
+                        uploadedPdfFiles.map(async (file: Express.Multer.File) => {
+                            const bucket = await getGridFSBucket();
+                            const filename = file.originalname;
+
+                            const existingGridFSFiles = await bucket.find({
+                                filename,
+                                'metadata.productId': id,
+                            }).toArray();
+                            if (existingGridFSFiles.length > 0) {
+                                console.log(`Deleting ${existingGridFSFiles.length} existing GridFS file(s) named ${filename} before PDF upload.`);
+                                await Promise.all(existingGridFSFiles.map((f) => bucket.delete(f._id)));
+                            }
+
+                            const uploadStream = bucket.openUploadStream(filename, {
+                                contentType: file.mimetype,
+                                metadata: { productId: id },
+                            });
+                            await new Promise<void>((resolve, reject) => {
+                                Readable.from(file.buffer)
+                                    .pipe(uploadStream)
+                                    .on('finish', resolve)
+                                    .on('error', reject);
+                            });
+                            console.log(`Uploaded new PDF: ${filename}`);
+                            return filename;
+                        })
+                    );
+
+                    const allPDFs = [...existingPDFs, ...newPDFs];
 
                     let updateData: Record<string, any> = {};
 
@@ -303,7 +419,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     const sanitizedData = Object.keys(formFields).reduce((acc, key) => {
                         const value = formFields[key];
                         if (allowedFields.includes(key)) {
-                            acc[key] = Array.isArray(value) ? value[0] : value;
+                            // acc[key] = Array.isArray(value) ? value[0] : value;
+                            acc[key] = formFields[key];
                         }
                         return acc;
                     }, {} as Record<string, any>);
@@ -327,11 +444,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         updateData = { ...updateData, ...sanitizedData };
                     }
 
-                    if (allIcons.length > 0 || uploadedFiles.length > 0) {
-                        updateData.icon = allIcons;
-                        updateData.iconPreview = allIcons.map(filename =>
+                    const uniqueIcons = Array.from(new Set(allIcons));
+                    const uniquePdfs = Array.from(new Set(allPDFs));
+
+                    if (uniqueIcons.length > 0) {
+                        updateData.icon = uniqueIcons;
+                        updateData.iconPreview = uniqueIcons.map(filename =>
                             `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         );
+                    } else { 
+                        updateData.icon = [];
+                        updateData.iconPreview = [];
+                    }
+
+                    if (uniquePdfs.length > 0) {
+                        updateData.pdf = uniquePdfs;
+                        updateData.pdfPreview = uniquePdfs.map(filename =>
+                            `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                        );
+                    } else { 
+                        updateData.pdf = [];
+                        updateData.pdfPreview = [];
                     }
 
                     let tableCellDataFromBody = req.body.tableCellData;
@@ -972,8 +1105,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         console.warn("Skipping globalVariablePackageData update due to previous parsing or validation errors.");
                     }
 
-                    if (Object.keys(updateData).length === 0) {
-                        return res.status(400).json({ error: 'No valid fields provided for update' });
+                    if (Object.keys(updateData).length === 0 && allUploadedFiles.length === 0) {
+                        return res.status(200).json({
+                            ...productManager.toObject(),
+                            message: 'No changes detected.'
+                        });
                     }
 
                     const updatedManager = await ProductManager.findOneAndUpdate(
@@ -996,6 +1132,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         })),
                         iconPreview: (updatedManager.iconPreview || updatedManager.icon || []).map((filename: string) => ({
+                            filename,
+                            url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                        })),
+                        pdf: (updatedManager.pdf || []).map((filename: string) => ({
+                            filename,
+                            url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
+                        })),
+                        pdfPreview: (updatedManager.pdfPreview || updatedManager.pdf || []).map((filename: string) => ({
                             filename,
                             url: `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         })),
@@ -1031,6 +1175,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 const bucket = await getGridFSBucket();
                 const filenames = productManager.icon;
                 for (const filename of filenames) {
+                    const files = await bucket.find({ filename }).toArray();
+                    await Promise.all(files.map(file => bucket.delete(file._id)));
+                }
+
+                const pdfFilenames = productManager.pdf;
+                for (const filename of pdfFilenames) {
                     const files = await bucket.find({ filename }).toArray();
                     await Promise.all(files.map(file => bucket.delete(file._id)));
                 }

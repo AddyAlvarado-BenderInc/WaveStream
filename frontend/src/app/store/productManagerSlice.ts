@@ -17,6 +17,17 @@ interface IconManagerState {
   }[]>;
 }
 
+interface PDFManagerState {
+  pdf: Array<{
+    filename: string;
+    url: string;
+  }[]>;
+}
+
+const initialPDFManagerState: PDFManagerState = {
+  pdf: [],
+};
+
 const initialIconManagerState: IconManagerState = {
   icon: [],
 };
@@ -134,6 +145,27 @@ const iconManagerSlice = createSlice({
     },
   },
 });
+
+const pdfManagerSlice = createSlice({
+  name: 'pdfManager',
+  initialState: initialPDFManagerState,
+  reducers: {
+    setPDF: (state, action: PayloadAction<PDFManagerState['pdf']>) => {
+      state.pdf = action.payload;
+    },
+    addPDF: (state, action: PayloadAction<{ filename: string; url: string }[]>) => {
+      state.pdf.push(action.payload);
+    },
+    deletePDF: (state, action: PayloadAction<string>) => {
+      state.pdf = state.pdf.map((pdfArray) =>
+        pdfArray.filter((item) => item.filename !== action.payload)
+      );
+    },
+    clearPDF: (state) => {
+      state.pdf = [];
+    },
+  },
+})
 
 const productManagerSlice = createSlice({
   name: 'productManager',
@@ -286,9 +318,11 @@ export const { addParameter, setParameterBundle, clearAllParameters } = paramete
 export const clearParameter = createAction<number | undefined>('parameters/clear');
 export const { updateProductManager } = productManagerSlice.actions;
 export const { setIcon, addIcon, clearIcon, deleteIcon } = iconManagerSlice.actions;
+export const { setPDF, addPDF, clearPDF, deletePDF } = pdfManagerSlice.actions;
 
 export default productManagerSlice.reducer;
 export const variableReducer = variableSlice.reducer;
 export const typeTaskReducer = typeTaskSlice.reducer;
 export const parameterReducer = parameterSlice.reducer;
 export const iconManagerReducer = iconManagerSlice.reducer;
+export const pdfManagerReducer = pdfManagerSlice.reducer;

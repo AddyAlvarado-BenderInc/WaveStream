@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/app/store/store';
 import { setVariableClassArray, setVariablePackageArray } from "../../store/productManagerSlice";
 import { convertToTableFormat } from '../../utility/packageDataTransformer';
-import { ProductManager, IconData, tableSheetData, tableCellData, variableClassArray, variablePackageArray, IGlobalVariablePackage } from '../../../../types/productManager';
+import { ProductManager, IconData, PDFData, tableSheetData, tableCellData, variableClassArray, variablePackageArray, IGlobalVariablePackage } from '../../../../types/productManager';
 import VariableManager from '../VariableManager/component';
 import PropertyInterfaceTable from '../PropertyInterfaces/component';
 import { BASE_URL } from '../../config';
@@ -32,6 +32,12 @@ interface FormDataState {
 interface IconDataState {
     icon: IconData[];
     iconPreview: IconData[];
+    newFiles: File[];
+}
+
+interface PDFDataState {
+    pdf: PDFData[];
+    pdfPreview: PDFData[];
     newFiles: File[];
 }
 
@@ -75,6 +81,7 @@ interface WaveManagerProps {
 interface OriginalData {
     formData: FormDataState;
     iconData: IconDataState;
+    pdfData: PDFDataState;
     variableData: VariableDataState;
     variableRowData: VariableRowDataState;
     variableClassArray: VariableClassArrayState;
@@ -267,6 +274,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 })),
                 newFiles: []
             },
+            pdfData: {
+                pdf: (productManager.pdf || []).map((pdf: PDFData) => ({
+                    filename: pdf?.filename || '',
+                    url: pdf?.url || `${BASE_URL}/api/files/${encodeURIComponent(pdf?.filename || '')}`
+                })),
+                pdfPreview: (productManager.pdfPreview || productManager.pdf || []).map((pdf: PDFData) => ({
+                    filename: pdf?.filename || '',
+                    url: pdf?.url || `${BASE_URL}/api/files/${encodeURIComponent(pdf?.filename || '')}`
+                })),
+                newFiles: []
+            },
             variableData: {
                 tableSheet: normalizeTableSheet(productManager.tableSheet)
             },
@@ -278,6 +296,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
     const [formData, setFormData] = useState<FormDataState>({ ...originalData.formData });
     const [iconData, setIconData] = useState<IconDataState>({ ...originalData.iconData });
+    const [pdfData, setPDFData] = useState<PDFDataState>({ ...originalData.pdfData });
     const [variableData, setVariableData] = useState<VariableDataState>({ ...originalData.variableData });
     const [variableRowData, setVariableRowData] = useState<VariableRowDataState>({ ...originalData.variableRowData });
     const [hasChanges, setHasChanges] = useState(false);
@@ -345,6 +364,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         const formDataChanged = !isEqual(formData, originalData.formData);
         const iconDataChanged = iconData.newFiles.length > 0 ||
             !isEqual(iconData.icon.map(i => i.filename).sort(), originalData.iconData.icon.map(i => i.filename).sort());
+        const pdfDataChanged = pdfData.newFiles.length > 0 ||
+            !isEqual(pdfData.pdf.map(i => i.filename).sort(), originalData.pdfData.pdf.map(i => i.filename).sort());
 
         const tableSheetChanged = !isEqual(
             normalizeTableSheetForCompare(variableData.tableSheet),
@@ -366,7 +387,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeVariablePackageArrayForCompare(originalData.variablePackageArray)
         );
 
-        const dataChanged = formDataChanged || iconDataChanged || tableSheetChanged || variableRowDataChanged || variableClassArrayChanged || variablePackageArrayChanged;
+        const dataChanged = formDataChanged || iconDataChanged || pdfDataChanged || tableSheetChanged || variableRowDataChanged || variableClassArrayChanged || variablePackageArrayChanged;
 
         setHasChanges(dataChanged);
 
@@ -374,6 +395,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             console.log('Changes detected:', {
                 formDataChanged,
                 iconDataChanged,
+                pdfDataChanged,
                 tableSheetChanged,
                 variableRowDataChanged,
                 variableClassArrayChanged,
@@ -387,7 +409,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 console.log('Current VariablePackageArray:', normalizeVariablePackageArrayForCompare(globalVariablePackage));
             }
         }
-    }, [formData, iconData, variableData, variableRowData, globalVariablePackage, globalVariableClass, originalData]);
+    }, [formData, iconData, pdfData, variableData, variableRowData, globalVariablePackage, globalVariableClass, originalData]);
 
     useEffect(() => {
         checkForChanges();
@@ -562,12 +584,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 console.error("WARNING: tableSheet is empty or not an array!");
             }
 
-            iconData.icon.forEach(icon => {
-                formDataPayload.append('icons', icon.filename);
-            });
+            formDataPayload.append('existingIconsJson', JSON.stringify(iconData.icon.map(i => i.filename)));
+            formDataPayload.append('existingPdfsJson', JSON.stringify(pdfData.pdf.map(p => p.filename)));
 
             iconData.newFiles.forEach(file => {
-                formDataPayload.append('files', file);
+                formDataPayload.append('files', file, file.name);
+            });
+            pdfData.newFiles.forEach(file => {
+                formDataPayload.append('files', file, file.name);
             });
 
             if (Array.isArray(globalVariableClass) && globalVariableClass.length > 0) {
@@ -643,13 +667,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 setFormData((prev) => ({
                     ...prev,
                     ...updatedProduct,
-                    iconPreview: updatedProduct.icon,
                 }));
 
                 setIconData((prev) => ({
                     ...prev,
                     icon: updatedProduct.icon,
-                    iconPreview: updatedProduct.icon,
+                    newFiles: []
+                }));
+
+                setPDFData((prev) => ({
+                    ...prev,
+                    pdf: updatedProduct.pdf,
                     newFiles: []
                 }));
 
@@ -778,14 +806,13 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             label: updatedProduct.label || '',
                         },
                         iconData: {
-                            icon: (updatedProduct.icon || []).map((icon: IconData) => ({
-                                filename: icon?.filename || '',
-                                url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
-                            })),
-                            iconPreview: (updatedProduct.iconPreview || updatedProduct.icon || []).map((icon: IconData) => ({
-                                filename: icon?.filename || '',
-                                url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
-                            })),
+                            icon: (updatedProduct.icon || []).map((icon: IconData) => ({ filename: icon?.filename || '', url: icon?.url || '' })),
+                            iconPreview: [],
+                            newFiles: []
+                        },
+                        pdfData: {
+                            pdf: (updatedProduct.pdf || []).map((pdf: PDFData) => ({ filename: pdf?.filename || '', url: pdf?.url || '' })),
+                            pdfPreview: [],
                             newFiles: []
                         },
                         variableData: {
@@ -1254,7 +1281,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         formData={formData}
                         setFormData={setFormData}
                         iconData={iconData}
+                        pdfData={pdfData}
                         setIconData={setIconData}
+                        setPDFData={setPDFData}
                     />
                 </div>
             )}
