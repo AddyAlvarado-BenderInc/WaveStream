@@ -219,12 +219,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 20px;
     width: 100%;
     height: auto;
     padding: 15px;
     border-radius: 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    gap: 20px;
 }
 
 .fileListContainer {
@@ -321,24 +321,50 @@
     text-align: center;
 }
 
-.filePreviewContainer {
+.filePreview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 10px;
+}
+
+.previewItemContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    margin-top: 20px;
-    width: 100%;
+    max-width: 160px;
 }
 
-.filePreview {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+.fileImage {
+    max-width: 500px;
+    max-height: 500px;
+    object-fit: contain;
+    border: 1px solid #555;
+}
+
+.fileEmbed {
+    border: 1px solid #555;
+    width: 500px;
+    height: 500px;
+}
+
+.previewFilename {
+    margin-top: 5px;
+    font-size: 0.8em;
+    color: #ccc;
+    text-align: center;
+    word-break: break-all;
+    max-width: 150px;
+}
+
+
+.filePreviewContainer h4 {
+    margin-bottom: 10px;
+    color: #eee;
 }
 
 .filePreview img {
-    width: 20%;
+    width: 100%;
     transition: 0.3s ease;
     opacity: 0.5;
 }
@@ -357,4 +383,35 @@
     margin-top: 5px;
     position: relative;
     z-index: 1;
+}
+
+.disabledItem {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.disabledLabel {
+    color: #888;
+    cursor: not-allowed;
+}
+
+.previewItemContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 160px;
+}
+
+.previewZoomTarget {
+    transition: transform 0.2s ease-in-out;
+    transform-origin: center center;
+    cursor: pointer;
+}
+
+.previewItemContainer:hover .previewZoomTarget {
+    width: 100%;
+    max-width: 600px;
+    transform: scale(5);
+    position: absolute;
+    z-index: 10;
 }

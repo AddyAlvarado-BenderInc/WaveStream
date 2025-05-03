@@ -1,0 +1,21 @@
+.magnifierContainer {
+    position: relative;
+    display: inline-block;
+    cursor: none; 
+    line-height: 0;
+  }
+  
+  .magnifiableImage {
+    display: block; 
+  }
+  
+  .magnifier {
+    position: absolute;
+    border: 2px solid #ffffff; 
+    background-repeat: no-repeat;
+    pointer-events: none; 
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); 
+    display: block;
+    overflow: hidden;
+    background-color: #ffffff;
+  }

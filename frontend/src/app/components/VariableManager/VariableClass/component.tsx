@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { ToastContainer, toast } from 'react-toastify';
 import { ProductManager } from "../../../../../types/productManager";
+import ImageMagnifier from "./utility/ImageMagnifier";
 import styles from './component.module.css';
 import 'react-toastify/dist/ReactToastify.css';
 import React from 'react';
@@ -24,6 +25,12 @@ interface IconPackageClass {
             url: string[];
         };
     } | null>
+}
+
+interface SelectedFile {
+    url: string;
+    filename: string;
+    type: 'icon' | 'pdf';
 }
 
 interface variableClassProps {
@@ -56,6 +63,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
     const [localTextarea, setLocalTextarea] = useState<string>(textareaInput);
     const [localInteger, setLocalInteger] = useState<string>(integerInput);
     const [localIntegerResult, setLocalIntegerResult] = useState<number | null>(null);
+    const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
     const [localFilename, setLocalFilename] = useState<string[]>([]);
     const [localFile, setLocalFile] = useState<string[]>([]);
     const [localIntegerError, setLocalIntegerError] = useState('');
@@ -226,75 +234,134 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
         </div>
     );
 
-    const linkedMKS = () => (
-        <div className={styles.fileList}>
-            {productManager.icon.length > 0 ? (
-                <>
-                    <div className={styles.fileListContainer}>
-                        <h4>Available Files</h4>
-                        <ul>
-                            {Object.values(productManager.icon).map((icon) => (
-                                <li key={icon.filename} className={styles.checkboxItem}>
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            value={icon.url}
-                                            onChange={(e) => {
-                                                const selectedFile = e.target.value;
-                                                const selectedFilename = icon.filename;
+    const linkedMKS = () => {
 
-                                                setLocalFile((prev) =>
-                                                    prev.includes(selectedFile)
-                                                        ? prev.filter((file: string) => file !== selectedFile)
-                                                        : [...prev, selectedFile]
-                                                );
-                                                setLocalFilename((prev) =>
-                                                    prev.includes(selectedFilename)
-                                                        ? prev.filter((file: string) => file !== selectedFilename)
-                                                        : [...prev, selectedFilename]
-                                                );
-                                            }}
-                                            checked={localFile.includes(icon.url)}
-                                        />
-                                        {icon.filename}
-                                    </label>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div className={styles.filePreviewContainer}>
-                        <div className={styles.filePreview}>
-                            {localFile.map((file, index) => (
-                                <>
-                                    <img
-                                        key={index}
-                                        src={file}
-                                        alt={`Preview ${index}`}
-                                        onMouseDown={(e => {
-                                            e.preventDefault()
-                                            setShowImageName(true);
-                                        })}
-                                        onMouseUp={(e => {
-                                            e.preventDefault()
-                                            setShowImageName(false);
-                                        })}
-                                        className={styles.fileImage}
-                                    />
-                                    {showImageName && (
-                                        <div className={styles.imageName}>
-                                            {localFilename[index]}
+        const handleFileSelectionChange = (
+            e: React.ChangeEvent<HTMLInputElement>,
+            fileInfo: { url: string; filename: string; type: 'icon' | 'pdf' }
+        ) => {
+            const isChecked = e.target.checked;
+
+            setSelectedFiles((prevSelected) => {
+                if (isChecked) {
+                    const canAdd = prevSelected.length === 0 || prevSelected[0].type === fileInfo.type;
+
+                    if (canAdd) {
+                        if (!prevSelected.some(f => f.url === fileInfo.url)) {
+                            return [...prevSelected, fileInfo];
+                        }
+                        return prevSelected;
+                    } else {
+                        toast.info(`Selection cleared. Cannot mix Icon and PDF files. Selecting only ${fileInfo.filename}.`, { autoClose: 3500 });
+                        return [fileInfo];
+                    }
+                } else {
+                    return prevSelected.filter((file) => file.url !== fileInfo.url);
+                }
+            });
+        };
+
+        const isFileSelected = (url: string): boolean => {
+            return selectedFiles.some(f => f.url === url);
+        };
+
+        const getDisabledState = (currentType: 'icon' | 'pdf'): boolean => {
+            return selectedFiles.length > 0 && selectedFiles[0].type !== currentType;
+        };
+
+        const icons = Array.isArray(productManager.icon) ? productManager.icon : [];
+        const pdfs = Array.isArray(productManager.pdf) ? productManager.pdf : [];
+
+        return (
+            <div className={styles.fileList}>
+                {icons.length > 0 || pdfs.length > 0 ? (
+                    <>
+                        {icons.length > 0 && (
+                            <div className={styles.fileListContainer}>
+                                <h4>Available Icon Files</h4>
+                                <ul>
+                                    {icons.map((icon) => {
+                                        const isDisabled = getDisabledState('icon');
+                                        return (
+                                            <li key={icon.filename} className={`${styles.checkboxItem} ${isDisabled ? styles.disabledItem : ''}`}>
+                                                <label className={isDisabled ? styles.disabledLabel : ''}>
+                                                    <input
+                                                        type="checkbox"
+                                                        value={icon.url}
+                                                        onChange={(e) => handleFileSelectionChange(e, { ...icon, type: 'icon' })}
+                                                        checked={isFileSelected(icon.url)}
+                                                        disabled={isDisabled}
+                                                    />
+                                                    {icon.filename}
+                                                </label>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        )}
+                        {pdfs.length > 0 && (
+                            <div className={styles.fileListContainer}>
+                                <h4>Available PDF Files</h4>
+                                <ul>
+                                    {pdfs.map((pdf) => {
+                                        const isDisabled = getDisabledState('pdf');
+                                        return (
+                                            <li key={pdf.filename} className={`${styles.checkboxItem} ${isDisabled ? styles.disabledItem : ''}`}>
+                                                <label className={isDisabled ? styles.disabledLabel : ''}>
+                                                    <input
+                                                        type="checkbox"
+                                                        value={pdf.url}
+                                                        onChange={(e) => handleFileSelectionChange(e, { ...pdf, type: 'pdf' })}
+                                                        checked={isFileSelected(pdf.url)}
+                                                        disabled={isDisabled}
+                                                    />
+                                                    {pdf.filename}
+                                                </label>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        )}
+                        {selectedFiles.length > 0 && (
+                            <div className={styles.filePreviewContainer}>
+                                <h4>Selected File Previews</h4>
+                                <div className={styles.filePreview}>
+                                    {selectedFiles.map((file) => (
+                                        <div key={file.url} className={styles.previewItemContainer}>
+                                            {file.type === 'pdf' ? (
+                                                <embed
+                                                    src={file.url}
+                                                    type="application/pdf"
+                                                    className={styles.fileEmbed}
+                                                    width="400"
+                                                    height="600"
+                                                />
+                                            ) : (
+                                                <ImageMagnifier
+                                                    src={file.url}
+                                                    alt={`Preview ${file.filename}`}
+                                                    imgClassName={styles.fileImage}
+                                                    magnifierRadius={100}
+                                                    zoomLevel={2.5}
+                                                />
+                                            )}
+                                            <div className={styles.previewFilename}>
+                                                {file.filename}
+                                            </div>
                                         </div>
-                                    )}
-                                </>
-                            ))}
-                        </div>
-                    </div>
-                </>
-            ) : (
-                <p>No files available for this product. Open the Property Interfaces tab to upload images</p>
-            )}
-        </div>
-    );
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <p>No files available for this product. Open the Property Interfaces tab to upload images</p>
+                )}
+            </div>
+        )
+    };
 
     const handleClear = (e: React.FormEvent) => {
         e.preventDefault();
@@ -302,7 +369,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
         setLocalTextarea('');
         setLocalInteger('');
         setLocalIntegerResult(null);
-        setLocalFile([]);
+        setSelectedFiles([]);
         setLocalIntegerError('');
         setIntVar([]);
         toast.info("Inputs cleared");
@@ -359,27 +426,37 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
 
     const packageVariables = (e?: React.FormEvent) => {
         e?.preventDefault();
-        if (localFile.length === 0) {
-            toast.error("Please select a file!");
+
+        if (selectedFiles.length === 0) {
+            toast.error("Please select at least one file to package!");
             return;
         }
-        // TODO: in the future, we'll add a check to see if the file is an image or pdf
-        let dataValue = "image";
+
+        const fileType = selectedFiles[0].type;
+        const dataValue = fileType;
+
+        const selectedFilenames = selectedFiles.map(file => file.filename);
+        const selectedUrls = selectedFiles.map(file => file.url);
 
         const dataToSend = {
             variableData: {
                 [`package_content_${dataValue}`]: {
                     dataId: 0,
                     value: {
-                        filename: localFilename,
-                        url: localFile
+                        filename: selectedFilenames,
+                        url: selectedUrls
                     }
                 }
             }
-        }
+        };
+
+        console.log("Packaging variables:", dataToSend);
 
         if (onPackage) {
             onPackage(dataToSend as unknown as IconPackageClass);
+        } else {
+            console.warn("onPackage function not provided.");
+            toast.warn("Packaging function not available.");
         }
     };
 
