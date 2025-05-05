@@ -105,6 +105,33 @@ const autoDeleteOldIcons = async () => {
     }
 };
 
+const autoDeleteOldPDFS = async () => {
+    try {
+        await fsPromises.mkdir(PDFS_DIR, { recursive: true });
+        const files = await fsPromises.readdir(PDFS_DIR);
+
+        const deletePromises = files.map(async (file) => {
+            const filePath = path.join(PDFS_DIR, file);
+            try {
+                const stats = await fsPromises.stat(filePath);
+                if (stats.isFile()) {
+                    await fsPromises.unlink(filePath);
+                    console.log(`Deleted pdf file: ${file}`);
+                } else {
+                    console.log(`Skipping non-file in icons: ${file}`);
+                }
+            } catch (err) {
+                console.error(`Error deleting pdf file: ${file}`, err);
+            }
+        });
+
+        await Promise.all(deletePromises);
+        console.log('All old pdfs deleted.');
+    } catch (err) {
+        console.error('Error reading pdfs directory:', err);
+    }
+};
+
 const removeEmptyValues = (obj) => {
     if (Array.isArray(obj)) {
         return obj
@@ -262,6 +289,7 @@ app.post('/js-server', upload.single('file'), async (req, res) => {
         res.json({ message: 'Automation script executed successfully', products });
         await autoDeleteOldUploads();
         await autoDeleteOldIcons();
+        await autoDeleteOldPDFS();
 
     } catch (error) {
         console.error('Error in /js-server route:', error);

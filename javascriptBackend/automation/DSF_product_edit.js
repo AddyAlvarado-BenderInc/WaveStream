@@ -204,7 +204,7 @@ async function uploadIcon(newPage, iconData) {
         ]);
         console.log(`Main icon (${firstIconFilename}) uploaded successfully.`);
 
-        if (filenames.length > 0) {
+        if (filenames.length > 0 && filenames.length !== 1) {
             console.log(`Proceeding to upload all ${filenames.length} icons to multiple images section...`);
             await newPage.waitForSelector(detailsTabSelector, { visible: true });
             await newPage.click(detailsTabSelector);
@@ -335,7 +335,7 @@ async function uploadIcon(newPage, iconData) {
             console.log('Returned to Info tab.');
 
         } else {
-            console.log("No filenames provided for multiple image upload section.");
+            console.log("No filenames provided for multiple image upload section or there's only one filename available.");
         }
 
     } catch (error) {
@@ -344,13 +344,10 @@ async function uploadIcon(newPage, iconData) {
     }
 }
 
-async function uploadPDFs(newPage, pdfData) {
+const uploadPDFs = async (newPage, pdfData) => {
     const fileDeleteButtonSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$FilesAddedToJob1$FileRepeater$ctl01$UF$DEL"]';
-    const uploadPDFInputSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$Fileupload1$htmlInputFileUpload"]';
-    const uploadPDFButtonSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$Fileupload1$ButtonUpload"]';
-
-    const detailsTabSelector = '#TabDetails';
-    const infoTabSelector = '#TabInfo';
+    const uploadPDFInputSelector = '#ctl00_ctl00_C_M_ctl00_W_ctl02_Fileupload1_htmlInputFileUpload';
+    const uploadPDFButtonSelector = '#ctl00_ctl00_C_M_ctl00_W_ctl02_Fileupload1_ButtonUpload';
 
     try {
         const filenames = pdfData?.Composite;
@@ -360,10 +357,6 @@ async function uploadPDFs(newPage, pdfData) {
         }
 
         console.log(`Processing ${filenames.length} composite PDFs:`, filenames);
-
-        await newPage.waitForSelector(detailsTabSelector, { visible: true });
-        await newPage.click(detailsTabSelector);
-        console.log('Navigated to Details tab.');
 
         const maxDeleteAttempts = 15;
         let currentDeleteAttempt = 0;
@@ -392,71 +385,39 @@ async function uploadPDFs(newPage, pdfData) {
 
         console.log(`Finished delete process after ${currentDeleteAttempt} attempts.`);
 
-        const validFilePaths = [];
-        for (const filename of filenames) {
-            const currentPath = path.join(__dirname, '..', 'pdfs', filename);
-            if (fs.existsSync(currentPath)) {
-                validFilePaths.push(currentPath);
-            } else {
-                console.warn(`Skipping missing file for upload: ${currentPath}`);
-            }
-        }
+        const validFilePaths = filenames.map(filename => path.join(__dirname, '..', 'pdfs', filename)).filter(fs.existsSync);
 
-        if (validFilePaths.length > 0) {
-            console.log(`Attempting to upload ${validFilePaths.length} PDF(s) with retries...`);
-
-            let uploadSuccess = false;
-            const maxRetries = 2;
-            let attempt = 0;
-
-            while (attempt <= maxRetries && !uploadSuccess) {
-                attempt++;
-                console.log(`Attempt ${attempt}/${maxRetries + 1}: Selecting files and clicking Upload...`);
-
-                try {
-                    console.log(`   (Attempt ${attempt}) Locating file input...`);
-                    const uploadPDFInput = await newPage.waitForSelector(uploadPDFInputSelector, { visible: true, timeout: 5000 });
-                    console.log(`   (Attempt ${attempt}) Uploading files: ${validFilePaths.join(', ')}`);
-                    await uploadPDFInput.uploadFile(...validFilePaths);
-                    console.log(`   (Attempt ${attempt}) Files selected.`);
-
-                    await newPage.waitForSelector(uploadPDFButtonSelector, { visible: true, timeout: 5000 });
-                    console.log(`   (Attempt ${attempt}) Clicking upload button...`);
-                    await newPage.click(uploadPDFButtonSelector);
-                    console.log(`   (Attempt ${attempt}) Clicked. Waiting for network idle...`);
-                    await newPage.waitForNetworkIdle({ idleTime: 1500, timeout: 60000 });
-
-                    console.log(`   (Attempt ${attempt}) Verifying upload success...`);
-                    uploadSuccess = true;
-                } catch (uploadError) {
-                    console.error(`   (Attempt ${attempt}) Error during upload process: ${uploadError.message}`);
-                    if (attempt > maxRetries) {
-                        console.error(`   Max retries reached. Upload failed.`);
-                    } else {
-                        console.log(`   Waiting before retry...`);
-                        await new Promise(resolve => setTimeout(resolve, 3000));
-                    }
-                }
-            }
-
-            if (!uploadSuccess) {
-                throw new Error(`Failed to confirm PDF upload after ${maxRetries + 1} attempts.`);
-            }
-            console.log(`Successfully uploaded ${validFilePaths.length} PDF(s).`);
-        } else {
+        if (validFilePaths.length === 0) {
             console.log('No valid PDF files found to upload.');
+            return;
         }
 
-        console.log('Ensuring Info tab is ready before clicking...');
-        await newPage.waitForSelector(infoTabSelector, { visible: true, timeout: 10000 });
-        await newPage.click(infoTabSelector);
-        console.log('Returned to Info tab.');
+        console.log(`Uploading ${validFilePaths.length} PDF(s) sequentially...`);
 
+        for (const filePath of validFilePaths) {
+            console.log(`Uploading PDF: ${filePath}`);
+            try {
+                const uploadInput = await newPage.waitForSelector(uploadPDFInputSelector, { visible: true, timeout: 5000 });
+                await uploadInput.uploadFile(filePath);
+                console.log(`File selected: ${filePath}`);
+
+                const uploadButton = await newPage.waitForSelector(uploadPDFButtonSelector, { visible: true, timeout: 5000 });
+                await uploadButton.click();
+                console.log('Clicked the upload button.');
+
+                await newPage.waitForNavigation({ waitUntil: 'networkidle0', timeout: 60000 });
+                console.log(`Successfully uploaded: ${filePath}`);
+            } catch (error) {
+                console.error(`Error uploading file: ${filePath}. Error: ${error.message}`);
+            }
+        }
+
+        console.log('Finished uploading all PDFs.');
     } catch (error) {
         console.error(`Error during PDF upload process: ${error.message}`);
         throw error;
     }
-}
+};
 
 async function simulateMouseMove(newPage, selector) {
     try {
