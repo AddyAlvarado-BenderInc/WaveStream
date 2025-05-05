@@ -13,6 +13,7 @@ const PORT = process.env.PORT || 3002;
 let setStandardBehavior = false;
 
 const ICONS_DIR = path.join(__dirname, 'icons');
+const PDFS_DIR = path.join(__dirname, 'pdfs');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 const upload = multer({ dest: UPLOADS_DIR });
@@ -90,7 +91,7 @@ const autoDeleteOldIcons = async () => {
                     await fsPromises.unlink(filePath);
                     console.log(`Deleted icon file: ${file}`);
                 } else {
-                     console.log(`Skipping non-file in icons: ${file}`); 
+                    console.log(`Skipping non-file in icons: ${file}`);
                 }
             } catch (err) {
                 console.error(`Error deleting icon file: ${file}`, err);
@@ -130,37 +131,68 @@ const differentializeProductData = async (type, fileData) => {
             products = JSON.parse(fileData.jsonData);
 
             await fsPromises.mkdir(ICONS_DIR, { recursive: true });
+            await fsPromises.mkdir(PDFS_DIR, { recursive: true });
 
             for (const product of products) {
                 const iconData = product?.Icon?.Package?.content;
-                const filenames = iconData?.filename;
-                const urls = iconData?.url;
+                const iconFilenames = iconData?.filename;
+                const iconUrls = iconData?.url;
 
-                if (iconData && Array.isArray(filenames) && Array.isArray(urls) && filenames.length === urls.length && filenames.length > 0) {
+                if (iconData && Array.isArray(iconFilenames) && Array.isArray(iconUrls) && iconFilenames.length === iconUrls.length && iconFilenames.length > 0) {
                     console.log(`Processing package icons for product: ${product.ItemName || product.DisplayName || 'Unknown'}`);
-                    const downloadPromises = [];
+                    const iconDownloadPromises = [];
 
-                    for (let i = 0; i < urls.length; i++) {
-                        const url = urls[i];
-                        const filename = filenames[i];
+                    for (let i = 0; i < iconUrls.length; i++) {
+                        const url = iconUrls[i];
+                        const filename = iconFilenames[i];
                         if (url && filename) {
                             const filepath = path.join(ICONS_DIR, filename);
                             console.log(`  Queueing download: ${url} -> ${filepath}`);
-                            downloadPromises.push(downloadImage(url, filepath));
+                            iconDownloadPromises.push(downloadImage(url, filepath));
                         }
                     }
 
                     try {
-                        await Promise.all(downloadPromises);
-                        console.log(`  Downloads complete for product. Transforming Icon field.`);
-                        product.Icon = { Composite: filenames };
+                        await Promise.all(iconDownloadPromises);
+                        console.log(`  Downloads complete for product icons. Transforming Icon field.`);
+                        product.Icon = { Composite: iconFilenames };
                     } catch (downloadError) {
                         console.error(`  Failed to download one or more icons for product. Icon field not transformed. Error: ${downloadError.message}`);
                     }
                 } else if (product?.Icon?.Package) {
                     console.log(`  Skipping Icon transformation for product ${product.ItemName || 'Unknown'}: Invalid or empty package content.`);
                 }
+
+                const pdfData = product?.PDFUploadName?.Package?.content;
+                const pdfFilenames = pdfData?.filename;
+                const pdfUrls = pdfData?.url;
+
+                if (pdfData && Array.isArray(pdfFilenames) && Array.isArray(pdfUrls) && pdfFilenames.length === pdfUrls.length && pdfFilenames.length > 0) {
+                    console.log(`Processing package PDFs for product: ${product.ItemName || product.DisplayName || 'Unknown'}`);
+                    const pdfDownloadPromises = [];
+
+                    for (let i = 0; i < pdfUrls.length; i++) {
+                        const url = pdfUrls[i];
+                        const filename = pdfFilenames[i];
+                        if (url && filename) {
+                            const filepath = path.join(PDFS_DIR, filename);
+                            console.log(`  Queueing download: ${url} -> ${filepath}`);
+                            pdfDownloadPromises.push(downloadImage(url, filepath));
+                        }
+                    }
+
+                    try {
+                        await Promise.all(pdfDownloadPromises);
+                        console.log(`  Downloads complete for product PDFs. Transforming PDFUploadName field.`);
+                        product.PDFUploadName = { Composite: pdfFilenames };
+                    } catch (downloadError) {
+                        console.error(`  Failed to download one or more PDFs for product. PDFUploadName field not transformed. Error: ${downloadError.message}`);
+                    }
+                } else if (product?.PDFUploadName?.Package) {
+                    console.log(`  Skipping PDF transformation for product ${product.ItemName || 'Unknown'}: Invalid or empty package content.`);
+                }
             }
+
             products = removeEmptyValues(products);
 
         } catch (error) {

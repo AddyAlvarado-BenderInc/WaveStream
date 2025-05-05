@@ -344,37 +344,118 @@ async function uploadIcon(newPage, iconData) {
     }
 }
 
+async function uploadPDFs(newPage, pdfData) {
+    const fileDeleteButtonSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$FilesAddedToJob1$FileRepeater$ctl01$UF$DEL"]';
+    const uploadPDFInputSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$Fileupload1$htmlInputFileUpload"]';
+    const uploadPDFButtonSelector = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$Fileupload1$ButtonUpload"]';
 
-// TODO: Need to have composite check
-async function uploadPDF(newPage, pdf) {
-    const fileDeleteButton = 'input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$FilesAddedToJob1$FileRepeater$ctl01$UF$DEL"]';
-    const filePath = path.join(__dirname, 'pdfs', pdf);
+    const detailsTabSelector = '#TabDetails';
+    const infoTabSelector = '#TabInfo';
 
-    if (!fs.existsSync(filePath)) {
-        console.error(`PDF "${pdf}" not found in ./pdf directory. Skipping upload procedure`);
-        return;
+    try {
+        const filenames = pdfData?.Composite;
+        if (!Array.isArray(filenames) || filenames.length === 0) {
+            console.log('No valid composite PDF data found. Skipping PDF upload.');
+            return;
+        }
+
+        console.log(`Processing ${filenames.length} composite PDFs:`, filenames);
+
+        await newPage.waitForSelector(detailsTabSelector, { visible: true });
+        await newPage.click(detailsTabSelector);
+        console.log('Navigated to Details tab.');
+
+        const maxDeleteAttempts = 15;
+        let currentDeleteAttempt = 0;
+
+        console.log('Attempting to delete existing PDFs...');
+        while (currentDeleteAttempt < maxDeleteAttempts) {
+            try {
+                await newPage.waitForSelector(fileDeleteButtonSelector, { visible: true, timeout: 5000 });
+                newPage.once('dialog', async (dialog) => {
+                    console.log(`Dialog message: ${dialog.message()}`);
+                    await dialog.accept();
+                });
+                await newPage.click(fileDeleteButtonSelector);
+                console.log(`Deleted an existing PDF (Attempt ${currentDeleteAttempt + 1}).`);
+                await new Promise(resolve => setTimeout(resolve, 800));
+            } catch (error) {
+                console.warn(`No more PDFs to delete (Attempt ${currentDeleteAttempt + 1}).`);
+                break;
+            }
+            currentDeleteAttempt++;
+        }
+
+        if (currentDeleteAttempt >= maxDeleteAttempts) {
+            console.warn('Reached max delete attempts. There might still be files left, or counting failed.');
+        }
+
+        console.log(`Finished delete process after ${currentDeleteAttempt} attempts.`);
+
+        const validFilePaths = [];
+        for (const filename of filenames) {
+            const currentPath = path.join(__dirname, '..', 'pdfs', filename);
+            if (fs.existsSync(currentPath)) {
+                validFilePaths.push(currentPath);
+            } else {
+                console.warn(`Skipping missing file for upload: ${currentPath}`);
+            }
+        }
+
+        if (validFilePaths.length > 0) {
+            console.log(`Attempting to upload ${validFilePaths.length} PDF(s) with retries...`);
+
+            let uploadSuccess = false;
+            const maxRetries = 2;
+            let attempt = 0;
+
+            while (attempt <= maxRetries && !uploadSuccess) {
+                attempt++;
+                console.log(`Attempt ${attempt}/${maxRetries + 1}: Selecting files and clicking Upload...`);
+
+                try {
+                    console.log(`   (Attempt ${attempt}) Locating file input...`);
+                    const uploadPDFInput = await newPage.waitForSelector(uploadPDFInputSelector, { visible: true, timeout: 5000 });
+                    console.log(`   (Attempt ${attempt}) Uploading files: ${validFilePaths.join(', ')}`);
+                    await uploadPDFInput.uploadFile(...validFilePaths);
+                    console.log(`   (Attempt ${attempt}) Files selected.`);
+
+                    await newPage.waitForSelector(uploadPDFButtonSelector, { visible: true, timeout: 5000 });
+                    console.log(`   (Attempt ${attempt}) Clicking upload button...`);
+                    await newPage.click(uploadPDFButtonSelector);
+                    console.log(`   (Attempt ${attempt}) Clicked. Waiting for network idle...`);
+                    await newPage.waitForNetworkIdle({ idleTime: 1500, timeout: 60000 });
+
+                    console.log(`   (Attempt ${attempt}) Verifying upload success...`);
+                    uploadSuccess = true;
+                } catch (uploadError) {
+                    console.error(`   (Attempt ${attempt}) Error during upload process: ${uploadError.message}`);
+                    if (attempt > maxRetries) {
+                        console.error(`   Max retries reached. Upload failed.`);
+                    } else {
+                        console.log(`   Waiting before retry...`);
+                        await new Promise(resolve => setTimeout(resolve, 3000));
+                    }
+                }
+            }
+
+            if (!uploadSuccess) {
+                throw new Error(`Failed to confirm PDF upload after ${maxRetries + 1} attempts.`);
+            }
+            console.log(`Successfully uploaded ${validFilePaths.length} PDF(s).`);
+        } else {
+            console.log('No valid PDF files found to upload.');
+        }
+
+        console.log('Ensuring Info tab is ready before clicking...');
+        await newPage.waitForSelector(infoTabSelector, { visible: true, timeout: 10000 });
+        await newPage.click(infoTabSelector);
+        console.log('Returned to Info tab.');
+
+    } catch (error) {
+        console.error(`Error during PDF upload process: ${error.message}`);
+        throw error;
     }
-
-    await new Promise(resolve => setTimeout(resolve, 800));
-    if (await newPage.$(fileDeleteButton)) {
-        console.log('Deleting existing file');
-        newPage.once('dialog', async (dialog) => {
-            console.log(`Dialog message: ${dialog.message()}`);
-            await dialog.accept();
-        });
-        await newPage.click(fileDeleteButton);
-    }
-    await new Promise(resolve => setTimeout(resolve, 800));
-    await console.log(`Uploading pdf ${pdf}`);
-
-    const uploadSelector = await newPage.$('input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$Fileupload1$htmlInputFileUpload"]');
-    await uploadSelector.uploadFile(filePath);
-
-    await new Promise(resolve => setTimeout(resolve, 800));
-    await newPage.waitForSelector('input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$Fileupload1$ButtonUpload"]');
-    await newPage.click('input[name="ctl00$ctl00$C$M$ctl00$W$ctl02$Fileupload1$ButtonUpload"]');
-
-    console.log(`Successfully uploaded pdf ${pdf}`);
 }
 
 async function simulateMouseMove(newPage, selector) {
@@ -1261,7 +1342,7 @@ async function processProduct(browser, page, product) {
             await console.log('PDF Title: ', pdfTitleEvaluation);
             if (pdfTitleEvaluation !== product.PDFUploadName) {
                 console.log('PDF does not match! Uploading PDF: ', product.PDFUploadName);
-                await uploadPDF(newPage, pdf);
+                await uploadPDFs(newPage, pdf);
             } else {
                 console.log('PDF matches. Skipping PDF upload procedure');
             };
