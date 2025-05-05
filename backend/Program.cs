@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 class Program
 {
-    public static async Task Main(string[]args)
+    public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -20,23 +20,20 @@ class Program
         app.MapGet("/", () => "Server is running, welcome to Wavekey!");
 
         var dbService = app.Services.GetRequiredService<DatabaseService>();
-        dbService.Connect();
+        //dbService.Connect();
 
         var automation = app.Services.GetRequiredService<Wavekey>();
-        // TODO: connect frontend to allow this method to run before uncommenting
-        // await automation.runPlaywright();
+
+        app.MapGet("/cs-server", async () =>
+        {
+            await automation.RunWavekeyServer();
+        });
+
+        /* app.MapGet("/close-browser", async () =>
+        {
+            await automation.CloseBrowser();
+        }); */
 
         app.Run();
     }
-
-    // private static async AutoDeleteOldUpload()
-    // {
-    //     var dbService = app.Services.GetRequiredService<DatabaseService>();
-    //     var oldUploads = await dbService.GetOldUploadsAsync();
-    //     foreach (var upload in oldUploads)
-    //     {
-    //         await dbService.DeleteUploadAsync(upload);
-    //     }
-    // }
-    
 }

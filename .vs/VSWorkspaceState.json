@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\backend",
+    "\\backend\\automation",
+    "\\backend\\automation\\modules",
+    "\\backend\\services",
+    "\\backend\\services\\businessLogic"
+  ],
+  "SelectedNode": "\\backend\\automation\\modules\\RunAutomation.cs",
+  "PreviewInSolutionExplorer": false
+}
