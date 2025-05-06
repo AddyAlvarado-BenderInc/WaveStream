@@ -3,5 +3,7 @@
 ################################################################################
 
 /backend/.env
+/backend/bin/
+/backend/obj/Debug//net9.0/
 /javascriptBackend/.env
 /javascriptBackend/node_modules
