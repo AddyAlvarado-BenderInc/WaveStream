@@ -1,0 +1,742 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using CsvHelper;
+using CsvHelper.Configuration;
+using DotNetEnv;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Playwright;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+public class Wavekey
+{
+    private readonly string baseDirectory;
+    private readonly string iconsDir;
+    private readonly string pdfsDir;
+    private readonly string uploadsDir;
+    private readonly ILogger<Wavekey> logger;
+    private static readonly HttpClient httpClient = new HttpClient();
+    private static ILogger _staticLogger = null!;
+
+    public Wavekey(ILogger<Wavekey> logger)
+    {
+        this.logger = logger;
+        _staticLogger = logger;
+        baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+        iconsDir = Path.Combine(baseDirectory, "icons");
+        pdfsDir = Path.Combine(baseDirectory, "pdfs");
+        uploadsDir = Path.Combine(baseDirectory, "uploads");
+
+        Directory.CreateDirectory(iconsDir);
+        Directory.CreateDirectory(pdfsDir);
+        Directory.CreateDirectory(uploadsDir);
+    }
+
+    private async Task AutoDeleteOldFilesAsync(string directory)
+    {
+        if (!Directory.Exists(directory))
+            return;
+
+        foreach (var file in Directory.EnumerateFiles(directory))
+        {
+            try
+            {
+                logger.LogInformation(
+                    "Deleting file: {FileName} from {DirectoryName}",
+                    (string)Path.GetFileName(file),
+                    (string)Path.GetFileName(directory) ?? "UnknownDir"
+                );
+
+                await Task.Run(() => File.Delete(file));
+            }
+            catch (IOException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "IO Error deleting file {FilePath}. File might be in use.",
+                    (string)file
+                );
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning(ex, "Permission Error deleting file {FilePath}.", (string)file);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpected Error deleting file {FilePath}", (string)file);
+            }
+        }
+    }
+
+    public Task AutoDeleteOldUploadsAsync() => AutoDeleteOldFilesAsync(uploadsDir);
+
+    public Task AutoDeleteOldPdfsAsync() => AutoDeleteOldFilesAsync(pdfsDir);
+
+    public Task AutoDeleteOldIconsAsync() => AutoDeleteOldFilesAsync(iconsDir);
+
+    public static async Task DownloadFileAsync(string url, string filePath)
+    {
+        ArgumentNullException.ThrowIfNull(_staticLogger, nameof(_staticLogger));
+
+        try
+        {
+            _staticLogger.LogDebug(
+                "Attempting download from {Url} to {FilePath}",
+                (string)url,
+                (string)filePath
+            );
+
+            using var response = await httpClient.GetAsync(
+                url,
+                HttpCompletionOption.ResponseHeadersRead
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException(
+                    $"Download failed for {url}. Status: {response.StatusCode}"
+                );
+            }
+
+            var directoryPath = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+            else
+            {
+                throw new ArgumentException(
+                    $"Invalid file path provided: {filePath}",
+                    nameof(filePath)
+                );
+            }
+
+            await using var responseStream = await response.Content.ReadAsStreamAsync();
+            await using var fileStream = new FileStream(
+                filePath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 8192,
+                useAsync: true
+            );
+
+            await responseStream.CopyToAsync(fileStream);
+            _staticLogger.LogInformation(
+                "Successfully downloaded {Url} to {FilePath}",
+                (string)url,
+                (string)filePath
+            );
+        }
+        catch (HttpRequestException ex)
+        {
+            _staticLogger.LogError(ex, "HTTP Error downloading {Url}", (string)url);
+            throw;
+        }
+        catch (IOException ex)
+        {
+            _staticLogger.LogError(
+                ex,
+                "IO Error saving downloaded file {FilePath} from {Url}",
+                (string)filePath,
+                (string)url
+            );
+            throw;
+        }
+        catch (ArgumentException ex)
+        {
+            _staticLogger.LogError(
+                ex,
+                "Invalid argument during download setup for {Url}",
+                (string)url
+            );
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _staticLogger.LogError(
+                ex,
+                "Unexpected Error during download/saving of {Url}",
+                (string)url
+            );
+            throw;
+        }
+    }
+
+    public static JToken? RemoveEmptyValues(object? obj)
+    {
+        if (obj is JArray array)
+        {
+            var newList = new JArray();
+            foreach (var item in array)
+            {
+                var cleanedItem = RemoveEmptyValues(item);
+                if (cleanedItem is JToken jtItem && jtItem.Type != JTokenType.Null)
+                {
+                    newList.Add(jtItem);
+                }
+            }
+            return newList.HasValues ? newList : null;
+        }
+        else if (obj is JObject jobj)
+        {
+            var newObj = new JObject();
+            foreach (var property in jobj.Properties())
+            {
+                var cleanedValue = RemoveEmptyValues(property.Value);
+                if (cleanedValue is JToken jtValue && jtValue.Type != JTokenType.Null)
+                {
+                    newObj.Add(property.Name, jtValue);
+                }
+            }
+            return newObj.HasValues ? newObj : null;
+        }
+        else if (obj is JValue jv && (jv.Value == null || string.IsNullOrEmpty(jv.ToString())))
+        {
+            return null;
+        }
+        else if (obj is string str && string.IsNullOrEmpty(str))
+        {
+            return null;
+        }
+        else if (obj is IList list && list.Count == 0)
+        {
+            return null;
+        }
+        else if (obj is IDictionary dict && dict.Count == 0)
+        {
+            return null;
+        }
+        else if (obj == null)
+        {
+            return null;
+        }
+
+        if (obj is not JToken)
+        {
+            try
+            {
+                return JToken.FromObject(obj);
+            }
+            catch (Exception ex)
+            {
+                _staticLogger?.LogError(
+                    ex,
+                    "Failed to convert object of type {ObjectType} to JToken in RemoveEmptyValues",
+                    obj.GetType().Name
+                );
+                return null;
+            }
+        }
+
+        return obj as JToken;
+    }
+
+    public async Task<List<dynamic>> ProcessRequestAsync(
+        string type,
+        string? runOption,
+        string? cellOriginJson,
+        string? jsonData,
+        IFormFile? uploadedFile
+    )
+    {
+        string? csvFilePath = null;
+        if (uploadedFile != null)
+        {
+            csvFilePath = Path.Combine(uploadsDir, $"{Guid.NewGuid()}_{uploadedFile.FileName}");
+            logger.LogInformation("Saving uploaded file to {FilePath}", (string)csvFilePath);
+            try
+            {
+                await using (var stream = new FileStream(csvFilePath, FileMode.Create))
+                {
+                    await uploadedFile.CopyToAsync(stream);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Failed to save uploaded file {FileName}",
+                    uploadedFile.FileName
+                );
+                throw new IOException($"Failed to save uploaded file: {uploadedFile.FileName}", ex);
+            }
+        }
+
+        var fileDataSource = new { JsonData = jsonData, CsvFilePath = csvFilePath };
+
+        var products = await DifferentiateProductDataAsync(type, fileDataSource);
+
+        try
+        {
+            if (!string.IsNullOrEmpty(cellOriginJson))
+            {
+                var cellOriginData = JToken.Parse(cellOriginJson);
+                logger.LogInformation("Cell Origin Data: {@CellOriginData}", cellOriginData);
+            }
+        }
+        catch (JsonReaderException ex)
+        {
+            logger.LogWarning(ex, "Failed to parse cellOrigin JSON: {Json}", cellOriginJson);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Error processing cellOrigin JSON: {Json}", cellOriginJson);
+        }
+
+        if (products != null && products.Any())
+        {
+            await ExecuteAutomationAsync(products, runOption);
+        }
+        else
+        {
+            logger.LogWarning("Skipping automation execution as no products were processed.");
+        }
+
+        if (!string.IsNullOrEmpty(csvFilePath) && File.Exists(csvFilePath))
+        {
+            try
+            {
+                File.Delete(csvFilePath);
+                logger.LogInformation("Cleaned up temporary upload file: {FilePath}", csvFilePath);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Failed to clean up temporary upload file: {FilePath}",
+                    csvFilePath
+                );
+            }
+        }
+
+        return products ?? new List<dynamic>();
+    }
+
+    private async Task<List<dynamic>> DifferentiateProductDataAsync(
+        string type,
+        dynamic fileDataSource
+    )
+    {
+        List<dynamic> products = new List<dynamic>();
+        List<JObject>? productJObjects = null;
+
+        if (type == "json-type" && !string.IsNullOrEmpty(fileDataSource.JsonData))
+        {
+            logger.LogInformation("Processing JSON data...");
+            try
+            {
+                productJObjects = JsonConvert.DeserializeObject<List<JObject>>(
+                    fileDataSource.JsonData
+                );
+                if (productJObjects == null)
+                    return products;
+
+                await ProcessProductDownloadsAsync(productJObjects);
+
+                var cleanedResult = RemoveEmptyValues(new JArray(productJObjects));
+                products =
+                    (cleanedResult as JArray)?.ToObject<List<dynamic>>() ?? new List<dynamic>();
+            }
+            catch (JsonReaderException ex)
+            {
+                logger.LogError(ex, "JSON Parsing Error");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error processing JSON data");
+                throw new Exception("Error during JSON data processing.", ex);
+            }
+        }
+        else if (type == "csv-type" && !string.IsNullOrEmpty(fileDataSource.CsvFilePath))
+        {
+            logger.LogInformation(
+                "Processing CSV file: {FilePath}",
+                (string)fileDataSource.CsvFilePath
+            );
+            try
+            {
+                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                { /* ... config ... */
+                };
+                using (var reader = new StreamReader(fileDataSource.CsvFilePath))
+                using (var csv = new CsvReader(reader, config))
+                {
+                    products = csv.GetRecords<dynamic>().ToList();
+                }
+
+                await ProcessProductDownloadsAsync(products);
+
+                var cleanedObject = RemoveEmptyValues(products);
+
+                if (cleanedObject is JArray cleanedJArray)
+                {
+                    products = cleanedJArray.ToObject<List<dynamic>>() ?? new List<dynamic>();
+                }
+                else
+                {
+                    products = new List<dynamic>();
+                    logger.LogWarning("Data cleaning for CSV resulted in unexpected type or null.");
+                }
+            }
+            catch (IOException ex)
+            {
+                logger.LogError(
+                    ex,
+                    "IO Error reading CSV file {FilePath}",
+                    (string)fileDataSource.CsvFilePath
+                );
+                throw new Exception("Error reading the uploaded CSV file.", ex);
+            }
+            catch (CsvHelperException ex)
+            {
+                logger.LogError(
+                    ex,
+                    "CSV Parsing Error in file {FilePath}",
+                    (string)fileDataSource.CsvFilePath
+                );
+                throw new Exception("Error parsing the CSV file content.", ex);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Error processing CSV file {FilePath}",
+                    (string)fileDataSource.CsvFilePath
+                );
+                throw new Exception("Error during CSV data processing.", ex);
+            }
+        }
+        else
+        {
+            logger.LogWarning("Unsupported type '{Type}' or missing data.", (string)type);
+        }
+
+        return products;
+    }
+
+    private async Task ProcessProductDownloadsAsync(List<JObject> products)
+    {
+        var allDownloadTasks = new List<Task>();
+        foreach (var p in products)
+        {
+            var iconContent = p?["Icon"]?["Package"]?["content"];
+            if (iconContent != null)
+            {
+                var iconFilenames = (iconContent["filename"] as JArray)?.ToObject<List<string>>();
+                var iconUrls = (iconContent["url"] as JArray)?.ToObject<List<string>>();
+
+                if (
+                    iconFilenames != null
+                    && iconUrls != null
+                    && iconFilenames.Count == iconUrls.Count
+                    && iconFilenames.Any()
+                )
+                {
+                    logger.LogInformation(
+                        "Processing Icons for Product: {ProductName}",
+                        (string?)p?["ItemName"] ?? "Unknown"
+                    );
+                    for (int i = 0; i < iconUrls.Count; i++)
+                    { /* ... add DownloadFileAsync tasks ... */
+                    }
+                    allDownloadTasks.Add(
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                p["Icon"] = JToken.FromObject(new { Composite = iconFilenames });
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogWarning(
+                                    ex,
+                                    "Failed to transform Icon field for {ProductName}",
+                                    (string?)p?["ItemName"] ?? "Unknown"
+                                );
+                            }
+                        })
+                    );
+                }
+            }
+            var pdfContent = p?["PDFUploadName"]?["Package"]?["content"];
+            if (pdfContent != null)
+            {
+                var pdfFilenames = (pdfContent["filename"] as JArray)?.ToObject<List<string>>();
+                var pdfUrls = (pdfContent["url"] as JArray)?.ToObject<List<string>>();
+                if (
+                    pdfFilenames != null
+                    && pdfUrls != null
+                    && pdfFilenames.Count == pdfUrls.Count
+                    && pdfFilenames.Any()
+                )
+                {
+                    logger.LogInformation(
+                        "Processing PDFs for Product: {ProductName}",
+                        (string?)p?["ItemName"] ?? "Unknown"
+                    );
+                    for (int i = 0; i < pdfUrls.Count; i++)
+                    { /* ... add DownloadFileAsync tasks ... */
+                    }
+                    allDownloadTasks.Add(
+                        Task.Run(() =>
+                        {
+                            try
+                            {
+                                p["PDFUploadName"] = JToken.FromObject(
+                                    new { Composite = pdfFilenames }
+                                );
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogWarning(
+                                    ex,
+                                    "Failed to transform PDFUploadName field for {ProductName}",
+                                    (string?)p?["ItemName"] ?? "Unknown"
+                                );
+                            }
+                        })
+                    );
+                }
+            }
+        }
+        try
+        {
+            await Task.WhenAll(allDownloadTasks);
+            logger.LogInformation("All file downloads/transformations completed for JSON data.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "One or more download/transformation tasks failed for JSON data.");
+            throw new Exception("Failed during file download/transformation phase for JSON.", ex);
+        }
+    }
+
+    private async Task ProcessProductDownloadsAsync(List<dynamic> products)
+    {
+        var allDownloadTasks = new List<Task>();
+        foreach (var product in products)
+        {
+            try
+            {
+                var iconContent = product.Icon?.Package?.content;
+                if (iconContent != null)
+                {
+                    var iconFilenames = (iconContent.filename as IEnumerable<object>)
+                        ?.Select(o => o.ToString())
+                        .ToList();
+                    var iconUrls = (iconContent.url as IEnumerable<object>)
+                        ?.Select(o => o.ToString())
+                        .ToList();
+
+                    if (
+                        iconFilenames != null
+                        && iconUrls != null
+                        && iconFilenames.Count == iconUrls.Count
+                        && iconFilenames.Any()
+                    )
+                    {
+                        logger.LogInformation(
+                            "Processing Icons for Product: {ProductName}",
+                            (string?)product.ItemName ?? (string?)product.DisplayName ?? "Unknown"
+                        );
+                        for (int i = 0; i < iconUrls.Count; i++)
+                        { /* ... add DownloadFileAsync tasks ... */
+                        }
+                        allDownloadTasks.Add(
+                            Task.Run(() =>
+                            {
+                                try
+                                {
+                                    product.Icon = new { Composite = iconFilenames };
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.LogWarning(
+                                        ex,
+                                        "Failed to transform Icon field for {ProductName}",
+                                        (string?)product.ItemName
+                                            ?? (string?)product.DisplayName
+                                            ?? "Unknown"
+                                    );
+                                }
+                            })
+                        );
+                    }
+                }
+
+                var pdfContent = product.PDFUploadName?.Package?.content;
+                if (pdfContent != null)
+                {
+                    var pdfFilenames = (pdfContent.filename as IEnumerable<object>)
+                        ?.Select(o => o.ToString())
+                        .ToList();
+                    var pdfUrls = (pdfContent.url as IEnumerable<object>)
+                        ?.Select(o => o.ToString())
+                        .ToList();
+                    if (
+                        pdfFilenames != null
+                        && pdfUrls != null
+                        && pdfFilenames.Count == pdfUrls.Count
+                        && pdfFilenames.Any()
+                    )
+                    {
+                        logger.LogInformation(
+                            "Processing PDFs for Product: {ProductName}",
+                            (string?)product.ItemName ?? (string?)product.DisplayName ?? "Unknown"
+                        );
+                        for (int i = 0; i < pdfUrls.Count; i++)
+                        { /* ... add DownloadFileAsync tasks ... */
+                        }
+                        allDownloadTasks.Add(
+                            Task.Run(() =>
+                            {
+                                try
+                                {
+                                    product.PDFUploadName = new { Composite = pdfFilenames };
+                                }
+                                catch (Exception ex)
+                                {
+                                    logger.LogWarning(
+                                        ex,
+                                        "Failed to transform PDFUploadName field for {ProductName}",
+                                        (string?)product.ItemName
+                                            ?? (string?)product.DisplayName
+                                            ?? "Unknown"
+                                    );
+                                }
+                            })
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Error processing downloads/transformations for a dynamic product object."
+                );
+            }
+        }
+        try
+        {
+            await Task.WhenAll(allDownloadTasks);
+            logger.LogInformation("All file downloads/transformations completed for dynamic data.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "One or more download/transformation tasks failed for dynamic data."
+            );
+            throw new Exception(
+                "Failed during file download/transformation phase for dynamic data.",
+                ex
+            );
+        }
+    }
+
+    private async Task ExecuteAutomationAsync(List<dynamic> products, string? runOption)
+    {
+        logger.LogInformation(
+            "Executing automation for {ProductCount} products with RunOption: {RunOption}...",
+            products.Count,
+            runOption ?? "N/A"
+        );
+
+        string benderUsername = Env.GetString("BENDER_USERNAME", "DEFAULT_USERNAME");
+        string benderPassword = Env.GetString("BENDER_PASSWORD", "DEFAULT_PASSWORD");
+        string benderSite = Env.GetString("BENDER_ADMIN_WEBSITE", "DEFAULT_SITE");
+
+        if (
+            benderUsername == "DEFAULT_USERNAME"
+            || benderPassword == "DEFAULT_PASSWORD"
+            || benderSite == "DEFAULT_SITE"
+        )
+        {
+            logger.LogWarning(
+                "One or more environment variables (BENDER_USERNAME, BENDER_PASSWORD, BENDER_ADMIN_WEBSITE) not found or using defaults."
+            );
+        }
+
+        IPlaywright? playwright = null;
+        IBrowser? browser = null;
+        try
+        {
+            playwright = await Playwright.CreateAsync();
+            if (playwright == null)
+                throw new InvalidOperationException("Failed to create Playwright instance.");
+
+            browser = await playwright.Chromium.LaunchAsync(
+                new BrowserTypeLaunchOptions { Headless = false }
+            );
+            if (browser == null)
+                throw new InvalidOperationException("Failed to launch browser instance.");
+
+            var page = await browser.NewPageAsync();
+            await page.GotoAsync(benderSite);
+            await page.WaitForSelectorAsync(
+                "input[ng-model=\"data.UserName\"]",
+                new PageWaitForSelectorOptions { Timeout = 30000 }
+            );
+            await page.WaitForSelectorAsync(
+                "#loginPwd",
+                new PageWaitForSelectorOptions { Timeout = 10000 }
+            );
+            await page.FillAsync("input[ng-model=\"data.UserName\"]", benderUsername);
+            await page.FillAsync("#loginPwd", benderPassword);
+            await page.ClickAsync(".login-button");
+
+            await page.WaitForLoadStateAsync(
+                LoadState.NetworkIdle,
+                new PageWaitForLoadStateOptions { Timeout = 60000 }
+            );
+
+            logger.LogInformation("Logged in successfully!");
+        }
+        catch (TimeoutException tex)
+        {
+            logger.LogError(tex, "Playwright operation timed out during automation.");
+            throw new Exception("Automation failed due to a timeout.", tex);
+        }
+        catch (PlaywrightException pex)
+        {
+            logger.LogError(pex, "Playwright error during automation.");
+            throw new Exception("Automation failed due to a Playwright error.", pex);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during automation execution.");
+            throw;
+        }
+        finally
+        {
+            if (browser != null)
+            {
+                await browser?.CloseAsync();
+                logger.LogInformation("Playwright browser closed.");
+            }
+            if (playwright != null)
+            {
+                playwright?.Dispose();
+                logger.LogInformation("Playwright instance disposed.");
+            }
+        }
+    }
+
+    public Task CloseAutomationBrowserAsync()
+    {
+        logger.LogInformation(
+            "Processing request to close automation browser (Placeholder - closing handled in ExecuteAutomationAsync finally block)."
+        );
+        return Task.CompletedTask;
+    }
+}

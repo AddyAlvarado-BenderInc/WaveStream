@@ -1,7 +1,6 @@
 using dotenv.net;
 using Microsoft.Playwright;
 
-
 class runAuto
 {
     public runAuto()
@@ -18,11 +17,13 @@ class runAuto
         try
         {
             var playwright = await Playwright.CreateAsync();
-            var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-            {
-                Headless = false,
-                ExecutablePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-            });
+            var browser = await playwright.Chromium.LaunchAsync(
+                new BrowserTypeLaunchOptions
+                {
+                    Headless = false,
+                    ExecutablePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                }
+            );
             var page = await browser.NewPageAsync();
             await page.GotoAsync(benderSite);
             await page.WaitForSelectorAsync("input[ng-model=\"data.UserName\"]");
@@ -38,14 +39,8 @@ class runAuto
             Console.WriteLine($"Error: {ex.Message}");
             throw;
         }
-        finally
-        {
-
-        }
+        finally { }
     }
 
-    public void CloseBrowser()
-    {
-     
-    }
+    public void CloseBrowser() { }
 }
