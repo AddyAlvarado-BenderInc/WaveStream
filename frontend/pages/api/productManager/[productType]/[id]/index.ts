@@ -104,11 +104,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 };
                 const tableCellData = processTableCellData(productManager.tableCellData);
 
+                /*
                 console.log('Processed tableCellData:', {
                     original: productManager.tableCellData,
                     processed: tableCellData,
                     count: tableCellData.length
                 });
+                */
 
                 // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
                 // ⠀⠀⠀⠀⠀⠀⣀⠤⠄⠒⠋⠉⠉⠉⠉⠉⠉⠉⠑⠒⠢⢄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -166,11 +168,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 const globalVariableClassData = processGlobalVariableClassData(productManager.globalVariableClassData);
 
+                /*
                 console.log('Processed globalVariableClassData:', {
                     original: productManager.globalVariableClassData,
                     processed: globalVariableClassData,
                     count: globalVariableClassData.length
                 });
+                */
 
                 const processGlobalVariablePackageData = (data: any[] | undefined): any[] => {
                     if (!Array.isArray(data)) {
@@ -231,11 +235,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                 const globalVariablePackageData = processGlobalVariablePackageData(productManager.globalVariablePackageData);
 
+                /*
                 console.log('Processed globalVariablePackageData:', {
                     original: productManager.globalVariablePackageData,
                     processed: globalVariablePackageData,
                     count: globalVariablePackageData.length
                 });
+                */
 
                 const mainKeyString = Array.isArray(productManager.mainKeyString)
                     ? productManager.mainKeyString.map((value: any, index: number) => ({
@@ -271,7 +277,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 };
 
                 res.status(200).json(enhancedResponse);
-                console.log('GET request successful:', enhancedResponse);
+                // console.log('GET request successful:', enhancedResponse);
                 break;
             }
             case 'PATCH': {
@@ -951,7 +957,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
 
                     if (incomingVariableClassData) {
-                        console.log(">>> DEBUG: Backend parsed incomingVariableClassData:", JSON.stringify(incomingVariableClassData, null, 2));
                     }
 
                     if (!variableClassParseError) {
@@ -1001,7 +1006,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                         if (variableClassChanged) {
                             updateData.globalVariableClassData = finalVariableClassData;
-                            console.log(">>> DEBUG: Backend updateData.globalVariableClassData BEFORE save:", JSON.stringify(updateData.globalVariableClassData, null, 2));
                         }
                     } else {
                         console.warn("Skipping globalVariableClassData update due to previous parsing or validation errors.");
@@ -1058,7 +1062,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }
 
                     if (incomingVariablePackageData) {
-                        console.log(">>> DEBUG: Backend parsed incomingVariablePackageData:", JSON.stringify(incomingVariablePackageData, null, 2));
                     }
 
                     if (!variablePackageParseError) {
@@ -1099,7 +1102,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                         if (variablePackageChanged) {
                             updateData.globalVariablePackageData = finalVariablePackageData;
-                            console.log(">>> DEBUG: Backend updateData.globalVariablePackageData BEFORE save:", JSON.stringify(updateData.globalVariablePackageData, null, 2));
                         }
                     } else {
                         console.warn("Skipping globalVariablePackageData update due to previous parsing or validation errors.");
@@ -1122,7 +1124,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         return res.status(404).json({ error: 'Product manager not found after update attempt' });
                     }
 
-                    console.log(">>> DEBUG: Raw data returned by findOneAndUpdate (.lean()):", JSON.stringify(updatedManager, null, 2));
 
                     const responsePayload = {
                         ...updatedManager,
@@ -1152,7 +1153,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         message: 'Product manager updated successfully'
                     };
 
-                    console.log(">>> DEBUG: Data being sent in response:", JSON.stringify(responsePayload, null, 2));
                     res.status(200).json(responsePayload);
 
                 } catch (error) {

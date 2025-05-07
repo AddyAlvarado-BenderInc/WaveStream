@@ -4,6 +4,9 @@
 
 /backend/.env
 /backend/bin/
-/backend/obj/Debug//net9.0/
+/backend/obj/
+/backend/Debug/
+/backend/Debug/net9.0/
+/backend/node_modules/
 /javascriptBackend/.env
 /javascriptBackend/node_modules

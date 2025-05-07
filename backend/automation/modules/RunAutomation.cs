@@ -39,7 +39,10 @@ class runAuto
             Console.WriteLine($"Error: {ex.Message}");
             throw;
         }
-        finally { }
+        finally
+        {
+            Console.WriteLine("Closing browser");
+        }
     }
 
     public void CloseBrowser() { }

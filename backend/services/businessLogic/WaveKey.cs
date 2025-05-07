@@ -428,7 +428,12 @@ public class Wavekey
         var allDownloadTasks = new List<Task>();
         foreach (var p in products)
         {
-            var iconContent = p?["Icon"]?["Package"]?["content"];
+            var iconContent =
+                p["Icon"] is JObject iconObj
+                && iconObj["Package"] is JObject packageObj
+                && packageObj["content"] is JObject contentObj
+                    ? contentObj
+                    : null;
             if (iconContent != null)
             {
                 var iconFilenames = (iconContent["filename"] as JArray)?.ToObject<List<string>>();
@@ -446,14 +451,35 @@ public class Wavekey
                         (string?)p?["ItemName"] ?? "Unknown"
                     );
                     for (int i = 0; i < iconUrls.Count; i++)
-                    { /* ... add DownloadFileAsync tasks ... */
+                    {
+                        if (iconUrls[i] != null)
+                        {
+                            allDownloadTasks.Add(
+                                DownloadFileAsync(
+                                    iconUrls[i],
+                                    Path.Combine(iconsDir, iconFilenames[i])
+                                )
+                            );
+                        }
+                        else
+                        {
+                            logger.LogWarning(
+                                "Icon URL is null for {ProductName}",
+                                (string?)p?["ItemName"] ?? "Unknown"
+                            );
+                        }
                     }
                     allDownloadTasks.Add(
                         Task.Run(() =>
                         {
                             try
                             {
-                                p["Icon"] = JToken.FromObject(new { Composite = iconFilenames });
+                                if (p != null)
+                                {
+                                    p["Icon"] = JToken.FromObject(
+                                        new { Composite = iconFilenames }
+                                    );
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -467,7 +493,15 @@ public class Wavekey
                     );
                 }
             }
-            var pdfContent = p?["PDFUploadName"]?["Package"]?["content"];
+
+            var pdfContent =
+                p["PDFUploadName"] is JObject pdfObj
+                && pdfObj != null
+                && pdfObj["Package"] is JObject pdfPackageObj
+                && pdfPackageObj["content"] is JObject pdfContentObj
+                    ? pdfContentObj
+                    : null;
+
             if (pdfContent != null)
             {
                 var pdfFilenames = (pdfContent["filename"] as JArray)?.ToObject<List<string>>();
@@ -484,16 +518,22 @@ public class Wavekey
                         (string?)p?["ItemName"] ?? "Unknown"
                     );
                     for (int i = 0; i < pdfUrls.Count; i++)
-                    { /* ... add DownloadFileAsync tasks ... */
+                    {
+                        allDownloadTasks.Add(
+                            DownloadFileAsync(pdfUrls[i], Path.Combine(pdfsDir, pdfFilenames[i]))
+                        );
                     }
                     allDownloadTasks.Add(
                         Task.Run(() =>
                         {
                             try
                             {
-                                p["PDFUploadName"] = JToken.FromObject(
-                                    new { Composite = pdfFilenames }
-                                );
+                                if (p != null)
+                                {
+                                    p["PDFUploadName"] = JToken.FromObject(
+                                        new { Composite = pdfFilenames }
+                                    );
+                                }
                             }
                             catch (Exception ex)
                             {
@@ -527,103 +567,87 @@ public class Wavekey
         {
             try
             {
-                var iconContent = product.Icon?.Package?.content;
+                var iconContent =
+                    product.Icon is JObject iconObj
+                    && iconObj["Package"] is JObject packageObj
+                    && packageObj["content"] is JObject contentObj
+                        ? contentObj
+                        : null;
+
                 if (iconContent != null)
                 {
-                    var iconFilenames = (iconContent.filename as IEnumerable<object>)
-                        ?.Select(o => o.ToString())
-                        .ToList();
-                    var iconUrls = (iconContent.url as IEnumerable<object>)
-                        ?.Select(o => o.ToString())
-                        .ToList();
+                    var iconFilenames = (iconContent["filename"] as JArray)?.ToObject<
+                        List<string>
+                    >();
+                    var iconUrls = (iconContent["url"] as JArray)?.ToObject<List<string>>();
 
                     if (
                         iconFilenames != null
                         && iconUrls != null
                         && iconFilenames.Count == iconUrls.Count
-                        && iconFilenames.Any()
                     )
                     {
                         logger.LogInformation(
                             "Processing Icons for Product: {ProductName}",
-                            (string?)product.ItemName ?? (string?)product.DisplayName ?? "Unknown"
+                            (string?)product.ItemName ?? "Unknown"
                         );
+
                         for (int i = 0; i < iconUrls.Count; i++)
-                        { /* ... add DownloadFileAsync tasks ... */
-                        }
-                        allDownloadTasks.Add(
-                            Task.Run(() =>
+                        {
+                            if (!string.IsNullOrEmpty(iconUrls[i]))
                             {
-                                try
-                                {
-                                    product.Icon = new { Composite = iconFilenames };
-                                }
-                                catch (Exception ex)
-                                {
-                                    logger.LogWarning(
-                                        ex,
-                                        "Failed to transform Icon field for {ProductName}",
-                                        (string?)product.ItemName
-                                            ?? (string?)product.DisplayName
-                                            ?? "Unknown"
-                                    );
-                                }
-                            })
-                        );
+                                allDownloadTasks.Add(
+                                    DownloadFileAsync(
+                                        iconUrls[i],
+                                        Path.Combine(iconsDir, iconFilenames[i])
+                                    )
+                                );
+                            }
+                        }
                     }
                 }
 
-                var pdfContent = product.PDFUploadName?.Package?.content;
+                var pdfContent =
+                    product.PDFUploadName is JObject pdfObj
+                    && pdfObj["Package"] is JObject pdfPackageObj
+                    && pdfPackageObj["content"] is JObject pdfContentObj
+                        ? pdfContentObj
+                        : null;
+
                 if (pdfContent != null)
                 {
-                    var pdfFilenames = (pdfContent.filename as IEnumerable<object>)
-                        ?.Select(o => o.ToString())
-                        .ToList();
-                    var pdfUrls = (pdfContent.url as IEnumerable<object>)
-                        ?.Select(o => o.ToString())
-                        .ToList();
+                    var pdfFilenames = (pdfContent["filename"] as JArray)?.ToObject<List<string>>();
+                    var pdfUrls = (pdfContent["url"] as JArray)?.ToObject<List<string>>();
+
                     if (
                         pdfFilenames != null
                         && pdfUrls != null
                         && pdfFilenames.Count == pdfUrls.Count
-                        && pdfFilenames.Any()
                     )
                     {
                         logger.LogInformation(
                             "Processing PDFs for Product: {ProductName}",
-                            (string?)product.ItemName ?? (string?)product.DisplayName ?? "Unknown"
+                            (string?)product.ItemName ?? "Unknown"
                         );
+
                         for (int i = 0; i < pdfUrls.Count; i++)
-                        { /* ... add DownloadFileAsync tasks ... */
-                        }
-                        allDownloadTasks.Add(
-                            Task.Run(() =>
+                        {
+                            if (!string.IsNullOrEmpty(pdfUrls[i]))
                             {
-                                try
-                                {
-                                    product.PDFUploadName = new { Composite = pdfFilenames };
-                                }
-                                catch (Exception ex)
-                                {
-                                    logger.LogWarning(
-                                        ex,
-                                        "Failed to transform PDFUploadName field for {ProductName}",
-                                        (string?)product.ItemName
-                                            ?? (string?)product.DisplayName
-                                            ?? "Unknown"
-                                    );
-                                }
-                            })
-                        );
+                                allDownloadTasks.Add(
+                                    DownloadFileAsync(
+                                        pdfUrls[i],
+                                        Path.Combine(pdfsDir, pdfFilenames[i])
+                                    )
+                                );
+                            }
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(
-                    ex,
-                    "Error processing downloads/transformations for a dynamic product object."
-                );
+                logger.LogWarning(ex, "Error processing downloads/transformations for a product.");
             }
         }
         try
@@ -671,9 +695,17 @@ public class Wavekey
         IBrowser? browser = null;
         try
         {
-            playwright = await Playwright.CreateAsync();
-            if (playwright == null)
-                throw new InvalidOperationException("Failed to create Playwright instance.");
+            try
+            {
+                playwright = await Playwright.CreateAsync();
+                if (playwright == null)
+                    throw new InvalidOperationException("Failed to create Playwright instance.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to initialize Playwright.");
+                throw new Exception("Playwright initialization failed.", ex);
+            }
 
             browser = await playwright.Chromium.LaunchAsync(
                 new BrowserTypeLaunchOptions { Headless = false }
@@ -721,7 +753,7 @@ public class Wavekey
         {
             if (browser != null)
             {
-                await browser?.CloseAsync();
+                await browser.CloseAsync();
                 logger.LogInformation("Playwright browser closed.");
             }
             if (playwright != null)

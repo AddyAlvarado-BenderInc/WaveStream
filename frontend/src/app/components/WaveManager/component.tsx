@@ -89,7 +89,7 @@ interface OriginalData {
 }
 
 const javascriptServer = process.env.JS_SERVER_URL || 'http://localhost:3002';
-const csharpServer = process.env.CS_SERVER_URL || 'http://localhost:5001';
+const csharpServer = process.env.CS_SERVER_URL || 'http://localhost:5000';
 
 const now = new Date(Date.now());
 
