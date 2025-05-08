@@ -1313,7 +1313,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             >
                                 <option value="" disabled>Choose Server</option>
                                 <option value="javascript-server">Javascript Server</option>
-                                <option value="csharp-server">C# Server {`[coming soon]`}</option>
+                                <option value="csharp-server">C# Server</option>
                             </select>
                             <div className={styles.runButtonsContainer}>
                                 <button type='submit'>

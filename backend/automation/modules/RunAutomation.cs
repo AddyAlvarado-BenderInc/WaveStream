@@ -1,38 +1,40 @@
-using dotenv.net;
+using backend.automation.modules;
 using Microsoft.Playwright;
 
 class runAuto
 {
-    public runAuto()
+    public async Task RunAutomation(dynamic products, IPage page, IBrowser browser)
     {
-        DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { ".env" }));
-    }
-
-    public async Task runAutomation()
-    {
-        string benderUsername = DotEnv.Read()["BENDER_USERNAME"];
-        string benderPassword = DotEnv.Read()["BENDER_PASSWORD"];
-        string benderSite = DotEnv.Read()["BENDER_ADMIN_WEBSITE"];
-
+        ProcessProducts processProducts = new ProcessProducts();
+        int processedProducts = 0;
         try
         {
-            var playwright = await Playwright.CreateAsync();
-            var browser = await playwright.Chromium.LaunchAsync(
-                new BrowserTypeLaunchOptions
+            await page.Locator(
+                    "#ctl00_ctl00_C_Menu_RepeaterCategories_ctl07_RepeaterItems_ctl06_HyperLinkItem"
+                )
+                .ClickAsync();
+            Console.WriteLine($"Total products to process: {products.Count}");
+            foreach (var product in products)
+            {
+                Console.WriteLine($"Processing product: {product.ItemName}");
+                await processProducts.ProcessProductsAsync(product, page);
+                processedProducts++;
+                if (processedProducts == products.Count)
                 {
-                    Headless = false,
-                    ExecutablePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                }
-            );
-            var page = await browser.NewPageAsync();
-            await page.GotoAsync(benderSite);
-            await page.WaitForSelectorAsync("input[ng-model=\"data.UserName\"]");
-            await page.WaitForSelectorAsync("#loginPwd");
-            await page.FillAsync("input[ng-model=\"data.UserName\"]", benderUsername);
-            await page.FillAsync("#loginPwd", benderPassword);
-            await page.ClickAsync(".login-button");
+                    Console.WriteLine("All products processed successfully.");
+                    // send success email
+                    // await SendEmailAsync("Success", "All products processed successfully.");
 
-            Console.WriteLine("Logged in successfully!");
+                    // play success sound
+                    // await PlaySoundAsync("success.mp3");
+                }
+                else
+                {
+                    Console.WriteLine(
+                        $"Processed {processedProducts} out of {products.Count} products."
+                    );
+                }
+            }
         }
         catch (Exception ex)
         {

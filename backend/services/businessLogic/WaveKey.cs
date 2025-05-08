@@ -1,11 +1,6 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DotNetEnv;
@@ -24,6 +19,8 @@ public class Wavekey
     private readonly ILogger<Wavekey> logger;
     private static readonly HttpClient httpClient = new HttpClient();
     private static ILogger _staticLogger = null!;
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> _fileDownloadLocks =
+        new ConcurrentDictionary<string, SemaphoreSlim>();
 
     public Wavekey(ILogger<Wavekey> logger)
     {
@@ -85,88 +82,191 @@ public class Wavekey
     {
         ArgumentNullException.ThrowIfNull(_staticLogger, nameof(_staticLogger));
 
+        SemaphoreSlim fileLock = _fileDownloadLocks.GetOrAdd(
+            filePath,
+            k => new SemaphoreSlim(1, 1)
+        );
+
+        await fileLock.WaitAsync();
         try
         {
-            _staticLogger.LogDebug(
-                "Attempting download from {Url} to {FilePath}",
-                (string)url,
-                (string)filePath
-            );
-
-            using var response = await httpClient.GetAsync(
-                url,
-                HttpCompletionOption.ResponseHeadersRead
-            );
-
-            if (!response.IsSuccessStatusCode)
+            if (File.Exists(filePath) && new FileInfo(filePath).Length > 0)
             {
-                throw new HttpRequestException(
-                    $"Download failed for {url}. Status: {response.StatusCode}"
+                _staticLogger.LogInformation(
+                    "File {FilePath} already exists and is non-empty. Skipping download from {Url}.",
+                    filePath,
+                    url
+                );
+                return;
+            }
+
+            string tempFilePath = filePath + ".tmp" + Guid.NewGuid().ToString("N");
+
+            try
+            {
+                _staticLogger.LogInformation(
+                    "Attempting to download {Url} to {FilePath} via temp file {TempFilePath}",
+                    url,
+                    filePath,
+                    tempFilePath
+                );
+                using HttpResponseMessage response = await httpClient.GetAsync(
+                    url,
+                    HttpCompletionOption.ResponseHeadersRead
+                );
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _staticLogger.LogError(
+                        "Failed to download file from {Url}. Status: {StatusCode}",
+                        url,
+                        response.StatusCode
+                    );
+                    return;
+                }
+
+                string? directoryPath = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(directoryPath))
+                {
+                    Directory.CreateDirectory(directoryPath);
+                }
+                else
+                {
+                    _staticLogger.LogWarning(
+                        "Could not determine directory for {FilePath}",
+                        filePath
+                    );
+                    return;
+                }
+
+                if (File.Exists(tempFilePath))
+                {
+                    File.Delete(tempFilePath);
+                }
+
+                using (Stream contentStream = await response.Content.ReadAsStreamAsync())
+                using (
+                    FileStream fileStream = new FileStream(
+                        tempFilePath,
+                        FileMode.Create,
+                        FileAccess.Write,
+                        FileShare.None,
+                        bufferSize: 8192,
+                        useAsync: true
+                    )
+                )
+                {
+                    await contentStream.CopyToAsync(fileStream);
+                    await fileStream.FlushAsync();
+                }
+
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+                File.Move(tempFilePath, filePath);
+
+                _staticLogger.LogInformation(
+                    "Successfully downloaded {Url} to {FilePath}",
+                    url,
+                    filePath
                 );
             }
-
-            var directoryPath = Path.GetDirectoryName(filePath);
-            if (!string.IsNullOrEmpty(directoryPath))
+            catch (HttpRequestException ex)
             {
-                Directory.CreateDirectory(directoryPath);
-            }
-            else
-            {
-                throw new ArgumentException(
-                    $"Invalid file path provided: {filePath}",
-                    nameof(filePath)
+                _staticLogger.LogError(
+                    ex,
+                    "HTTP request error downloading file {Url} to {TempFilePath}",
+                    url,
+                    tempFilePath
                 );
+                if (File.Exists(tempFilePath))
+                    try
+                    {
+                        File.Delete(tempFilePath);
+                    }
+                    catch (Exception iex)
+                    {
+                        _staticLogger.LogWarning(
+                            iex,
+                            "Failed to delete temp file {TempFilePath} on HTTP error.",
+                            tempFilePath
+                        );
+                    }
             }
-
-            await using var responseStream = await response.Content.ReadAsStreamAsync();
-            await using var fileStream = new FileStream(
-                filePath,
-                FileMode.Create,
-                FileAccess.Write,
-                FileShare.None,
-                bufferSize: 8192,
-                useAsync: true
-            );
-
-            await responseStream.CopyToAsync(fileStream);
-            _staticLogger.LogInformation(
-                "Successfully downloaded {Url} to {FilePath}",
-                (string)url,
-                (string)filePath
-            );
+            catch (IOException ex)
+            {
+                _staticLogger.LogError(
+                    ex,
+                    "IO Error during download/move operation for {Url} to {FilePath} (using temp {TempFilePath})",
+                    url,
+                    filePath,
+                    tempFilePath
+                );
+                if (File.Exists(tempFilePath))
+                    try
+                    {
+                        File.Delete(tempFilePath);
+                    }
+                    catch (Exception iex)
+                    {
+                        _staticLogger.LogWarning(
+                            iex,
+                            "Failed to delete temp file {TempFilePath} on IO error.",
+                            tempFilePath
+                        );
+                    }
+            }
+            catch (ArgumentException ex)
+            {
+                _staticLogger.LogError(
+                    ex,
+                    "Argument error during file download for {Url} to {FilePath} (using temp {TempFilePath})",
+                    url,
+                    filePath,
+                    tempFilePath
+                );
+                if (File.Exists(tempFilePath))
+                    try
+                    {
+                        File.Delete(tempFilePath);
+                    }
+                    catch (Exception iex)
+                    {
+                        _staticLogger.LogWarning(
+                            iex,
+                            "Failed to delete temp file {TempFilePath} on Argument error.",
+                            tempFilePath
+                        );
+                    }
+            }
+            catch (Exception ex)
+            {
+                _staticLogger.LogError(
+                    ex,
+                    "Unexpected error downloading file {Url} to {FilePath} (using temp {TempFilePath})",
+                    url,
+                    filePath,
+                    tempFilePath
+                );
+                if (File.Exists(tempFilePath))
+                    try
+                    {
+                        File.Delete(tempFilePath);
+                    }
+                    catch (Exception iex)
+                    {
+                        _staticLogger.LogWarning(
+                            iex,
+                            "Failed to delete temp file {TempFilePath} on unexpected error.",
+                            tempFilePath
+                        );
+                    }
+            }
         }
-        catch (HttpRequestException ex)
+        finally
         {
-            _staticLogger.LogError(ex, "HTTP Error downloading {Url}", (string)url);
-            throw;
-        }
-        catch (IOException ex)
-        {
-            _staticLogger.LogError(
-                ex,
-                "IO Error saving downloaded file {FilePath} from {Url}",
-                (string)filePath,
-                (string)url
-            );
-            throw;
-        }
-        catch (ArgumentException ex)
-        {
-            _staticLogger.LogError(
-                ex,
-                "Invalid argument during download setup for {Url}",
-                (string)url
-            );
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _staticLogger.LogError(
-                ex,
-                "Unexpected Error during download/saving of {Url}",
-                (string)url
-            );
-            throw;
+            fileLock.Release();
         }
     }
 
@@ -733,6 +833,10 @@ public class Wavekey
             );
 
             logger.LogInformation("Logged in successfully!");
+            await page.WaitForTimeoutAsync(2000);
+            var runAuto = new runAuto();
+            await runAuto.RunAutomation(products, page, browser);
+            logger.LogInformation("Automation completed successfully.");
         }
         catch (TimeoutException tex)
         {
