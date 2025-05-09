@@ -120,3 +120,30 @@
   background-color: var(--button-secondary-hover);
   transition: background-color 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out;
 }
+
+.runModalContent .sliderContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.runModalContent .sliderContainer label {
+  font-size: 1.0em;
+  color: #ccc;
+}
+.runModalContent .sliderContainer input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 5px;
+  background: var(--button-primary-hover);
+  border-radius: 5px;
+  outline: none;
+}
+.runModalContent .sliderContainer input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  background: var(--button-secondary-hover);
+  border-radius: 50%;
+  cursor: pointer;
+}

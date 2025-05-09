@@ -475,6 +475,10 @@
     margin: 0 5px;
  }
 
+ .buttonContents {
+  transform: scale(0.8);
+ }
+
  tbody tr .hide-default-unavailable-data {
    display: none;
  }
@@ -702,4 +706,11 @@
   background-color: yellow;
   color: var(--button-secondary-hover);
   padding: 2px 4px;
+ }
+
+ .disabledCell {
+  background-color: var(--gray-alpha-100) !important;
+  color: var(--gray-alpha-200) !important;
+  cursor: not-allowed !important;
+  font-style: italic;
  }

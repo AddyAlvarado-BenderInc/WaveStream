@@ -22,6 +22,9 @@ public class Wavekey
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> _fileDownloadLocks =
         new ConcurrentDictionary<string, SemaphoreSlim>();
 
+    private IBrowser? browser;
+    private IPlaywright? playwright;
+
     public Wavekey(ILogger<Wavekey> logger)
     {
         this.logger = logger;
@@ -344,6 +347,7 @@ public class Wavekey
         string? runOption,
         string? cellOriginJson,
         string? jsonData,
+        string? threadCount,
         IFormFile? uploadedFile
     )
     {
@@ -393,7 +397,7 @@ public class Wavekey
 
         if (products != null && products.Any())
         {
-            await ExecuteAutomationAsync(products, runOption);
+            await ExecuteAutomationAsync(products, runOption, threadCount);
         }
         else
         {
@@ -768,7 +772,8 @@ public class Wavekey
         }
     }
 
-    private async Task ExecuteAutomationAsync(List<dynamic> products, string? runOption)
+    private async Task ExecuteAutomationAsync(List<dynamic> products, string? runOption, string? threadCount)
+    
     {
         logger.LogInformation(
             "Executing automation for {ProductCount} products with RunOption: {RunOption}...",
@@ -791,56 +796,49 @@ public class Wavekey
             );
         }
 
-        IPlaywright? playwright = null;
-        IBrowser? browser = null;
+        IPage? page = null;
+        IBrowserContext? context = null;
+
         try
         {
-            try
+            if (playwright == null)
             {
                 playwright = await Playwright.CreateAsync();
-                if (playwright == null)
-                    throw new InvalidOperationException("Failed to create Playwright instance.");
             }
-            catch (Exception ex)
+            if (browser == null || !browser.IsConnected)
             {
-                logger.LogError(ex, "Failed to initialize Playwright.");
-                throw new Exception("Playwright initialization failed.", ex);
+                var launchOptions = new BrowserTypeLaunchOptions { Headless = false };
+                browser = await playwright.Chromium.LaunchAsync(launchOptions);
             }
 
-            browser = await playwright.Chromium.LaunchAsync(
-                new BrowserTypeLaunchOptions { Headless = false }
-            );
-            if (browser == null)
-                throw new InvalidOperationException("Failed to launch browser instance.");
+            context = await browser.NewContextAsync(new BrowserNewContextOptions());
 
-            var page = await browser.NewPageAsync();
+            page = await context.NewPageAsync();
+
+            logger.LogInformation("Navigating to login page...");
             await page.GotoAsync(benderSite);
-            await page.WaitForSelectorAsync(
-                "input[ng-model=\"data.UserName\"]",
-                new PageWaitForSelectorOptions { Timeout = 30000 }
-            );
-            await page.WaitForSelectorAsync(
-                "#loginPwd",
-                new PageWaitForSelectorOptions { Timeout = 10000 }
-            );
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
             await page.FillAsync("input[ng-model=\"data.UserName\"]", benderUsername);
             await page.FillAsync("#loginPwd", benderPassword);
             await page.ClickAsync(".login-button");
+            await page.WaitForNavigationAsync(new PageWaitForNavigationOptions { WaitUntil = WaitUntilState.NetworkIdle });
 
-            await page.WaitForLoadStateAsync(
-                LoadState.NetworkIdle,
-                new PageWaitForLoadStateOptions { Timeout = 60000 }
-            );
-
+            if (page.Url.Contains("Login", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogError("Login failed. Current URL: {Url}", page.Url);
+                throw new Exception("Login failed. Please check credentials or site status.");
+            }
             logger.LogInformation("Logged in successfully!");
-            await page.WaitForTimeoutAsync(2000);
-            var runAuto = new runAuto();
-            await runAuto.RunAutomation(products, page, browser);
+
+            runAuto automation = new runAuto();
+            await automation.RunAutomation(products, page, browser, threadCount);
+
             logger.LogInformation("Automation completed successfully.");
         }
         catch (TimeoutException tex)
         {
-            logger.LogError(tex, "Playwright operation timed out during automation.");
+            logger.LogError(tex, "Timeout during automation.");
             throw new Exception("Automation failed due to a timeout.", tex);
         }
         catch (PlaywrightException pex)
@@ -855,14 +853,22 @@ public class Wavekey
         }
         finally
         {
+            if (context != null)
+            {
+                await context.CloseAsync();
+                logger.LogInformation("Playwright browser context closed.");
+            }
+
             if (browser != null)
             {
                 await browser.CloseAsync();
+                browser = null;
                 logger.LogInformation("Playwright browser closed.");
             }
             if (playwright != null)
             {
-                playwright?.Dispose();
+                playwright.Dispose();
+                playwright = null;
                 logger.LogInformation("Playwright instance disposed.");
             }
         }

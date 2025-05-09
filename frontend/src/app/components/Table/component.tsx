@@ -35,8 +35,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
     const [permanentOrigin, setPermanentOrigin] = useState<string>("");
     const [hideTable, setHideTable] = useState<boolean>(false);
     const [expandedCellKey, setExpandedCellKey] = useState<string | null>(null);
-
-    const globalVariablePackageMap = useRef(new Map<number, IGlobalVariablePackage>());
+    const [isDisabled, setIsDisabled] = useState<boolean>(false);
 
     const toggleExpandComposite = (key: string) => {
         setExpandedCellKey(prevKey => (prevKey === key ? null : key));
@@ -213,6 +212,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                                 value: cleanedValue,
                                 isComposite: false,
                                 isPackage: false,
+                                isDisabled: false,
                             };
                         });
 
@@ -303,6 +303,58 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
             return updatedData;
         });
     };
+
+    const handleDisableColumnCells = (columnKey: string) => {
+        setVariableClassData((prevData: VariableRowDataState) => {
+            const updatedData = { ...prevData };
+            let allCurrentlyDisabled = true;
+            let columnHasCells = false;
+
+            Object.keys(updatedData).forEach(dataKey => {
+                if (dataKey.startsWith(`${columnKey}_row_`)) {
+                    columnHasCells = true;
+                    if (!updatedData[dataKey].isDisabled) {
+                        allCurrentlyDisabled = false;
+                    }
+                }
+            });
+
+            if (!columnHasCells && Object.keys(updatedData).every(dk => !dk.startsWith(`${columnKey}_row_`))) {
+                if (updatedData[columnKey]) {
+                    columnHasCells = true;
+                    if(!updatedData[columnKey].isDisabled) {
+                        allCurrentlyDisabled = false;
+                    }
+                } else {
+                    console.log(`No cells found for column ${columnKey} to toggle disable state.`);
+                    toast.info(`No cells found in column ${columnKey}.`);
+                    return prevData;
+                }
+            }
+
+            const newDisabledState = !allCurrentlyDisabled;
+
+            Object.keys(updatedData).forEach(dataKey => {
+                if (dataKey.startsWith(`${columnKey}_row_`)) {
+                    updatedData[dataKey] = {
+                        ...updatedData[dataKey],
+                        isDisabled: newDisabledState,
+                    };
+                }
+            });
+
+            if (updatedData[columnKey] && !columnKey.includes("_row_")) {
+                 updatedData[columnKey] = {
+                    ...updatedData[columnKey],
+                    isDisabled: newDisabledState,
+                };
+            }
+
+            console.log(`${newDisabledState ? 'Disabled' : 'Enabled'} all cells in column ${columnKey}`);
+            return updatedData;
+        });
+        setIsDisabled(!isDisabled);
+    }
 
     const handleClearAllCells = () => {
         const confirmation = window.confirm(
@@ -427,6 +479,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                         isComposite: false,
                         isDefault: true,
                         isPackage: false,
+                        isDisabled: false,
                     };
                     defaultAppliedCount++;
                 } else if (existingCell && existingCell.isDefault && existingCell.value !== defaultValue) {
@@ -477,6 +530,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                 value: valueToExtend,
                 isComposite: isTargetComposite,
                 isPackage: isTargetIsPackage,
+                isDisabled: isDisabled,
             };
             extendedCount++;
         }
@@ -533,7 +587,8 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                     index: i,
                     value: valueToFill,
                     isComposite: isTargetComposite,
-                    isPackage: isTargetIsPackage
+                    isPackage: isTargetIsPackage,
+                    isDisabled: isDisabled,
                 };
                 filledCount++;
             }
@@ -857,6 +912,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                                                 headerOrigin={headerOrigin}
                                                 onTriggerImport={triggerRowImport}
                                                 clearCellRow={handleClearColumnData}
+                                                disableCellRow={handleDisableColumnCells}
                                                 onSetDefault={handleSetDefaultColumnValue}
                                             />
                                         ))}
@@ -900,6 +956,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                                                         const isPackage = cellData?.isPackage ?? false;
                                                         const cellValue = cellData?.value;
                                                         let isDefaultCell = cellData?.isDefault ?? false;
+                                                        const isDisabledCell = cellData?.isDisabled ?? false; // Get the isDisabled state
                                                         const isExpanded = expandedCellKey === cellKey;
 
                                                         type PackageObject = IGlobalVariablePackage;
@@ -977,7 +1034,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                                                         return (
                                                             <td
                                                                 key={`${keyObj.index}-${rowIndex}`}
-                                                                className={isDefaultCell ? styles.tableCellDefault : styles.tableCell}
+                                                                className={`${isDefaultCell ? styles.tableCellDefault : styles.tableCell} ${isDisabledCell ? styles.disabledCell : ''}`}
                                                                 id={`${keyObj.value}-${rowIndex}`}
                                                             >
                                                                 <div className={styles.tableContainer}>
@@ -1020,6 +1077,7 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                                                                                 <button
                                                                                     onClick={(e) => { e.stopPropagation(); handleDeleteCell(keyObj.value, rowIndex); }}
                                                                                     className={styles.cellDelete} title="Delete cell data"
+                                                                                    disabled={isDisabledCell} // Optionally disable buttons too
                                                                                 > &times; </button>
                                                                             </>
                                                                         )}
@@ -1114,8 +1172,9 @@ const ClassKey: React.FC<{
     headerOrigin: string;
     onTriggerImport: (columnKey: string) => void;
     clearCellRow: (key: string, rowIndex: number) => void;
+    disableCellRow: (key: string, rowIndex: number) => void;
     onSetDefault: (key: string) => void;
-}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin, onTriggerImport, clearCellRow, onSetDefault }) => {
+}> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin, onTriggerImport, clearCellRow, onSetDefault, disableCellRow }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(input);
 
@@ -1187,6 +1246,16 @@ const ClassKey: React.FC<{
                                         title={`Clear row data for ${input}`}
                                     >
                                         Clear
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            disableCellRow(input, 0);
+                                        }}
+                                        className={styles.importKeyButton}
+                                        title={`Disable row data for ${input}`}
+                                    >
+                                        Disable
                                     </button>
                                 </div>
                             </div>

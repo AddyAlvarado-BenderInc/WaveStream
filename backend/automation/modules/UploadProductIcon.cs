@@ -272,9 +272,10 @@ namespace backend.automation.modules
             }
         }
 
-        public async Task UploadIconsAsync(dynamic iconData, IPage page)
+        public async Task UploadIconsAsync(string productName, dynamic iconData, IPage page)
         {
             JArray iconFilenames;
+            Console.WriteLine($"-- Entering UploadIconsAsync method for {productName} --");
 
             if (iconData is JArray ja)
             {
@@ -360,6 +361,12 @@ namespace backend.automation.modules
             {
                 Console.WriteLine($"Error processing icon(s) for product: {ex.Message}");
                 throw;
+            }
+            finally
+            {
+                Console.WriteLine(
+                    $"UploadIconsAsync method completed for {productName}. Cleaning up..."
+                );
             }
         }
     }

@@ -28,6 +28,7 @@ interface TableCellDataFrontend {
     value: string | string[];
     isComposite: boolean;
     isPackage: boolean;
+    isDisabled?: boolean;
 }
 
 const upload = multer({ storage: multer.memoryStorage() }).any();
@@ -88,13 +89,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             typeof item.index === 'number' &&
                             item.value !== undefined &&
                             typeof item.isComposite === 'boolean' &&
-                            typeof item.isPackage === 'boolean') {
+                            typeof item.isPackage === 'boolean'
+                        ) {
+                            const isDisabled = typeof item.isDisabled === 'boolean' ? item.isDisabled : false;
+                            // isDefault will be a future feature, so we set it to false if not present
+                            const isDefault = typeof item.isDefault === 'boolean' ? item.isDefault : false;
                             return {
                                 classKey: item.classKey,
                                 index: item.index,
                                 value: item.value,
                                 isComposite: item.isComposite,
                                 isPackage: item.isPackage,
+                                isDisabled: isDisabled,
                             };
                         } else {
                             console.warn('GET: Invalid tableCellData item structure from DB:', item);
@@ -121,26 +127,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 // ⠀⠀⠀⠀⡰⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⠁⡼⠋⠉⠙⢷⣌⣣⡀⠀⠀⠚⣡⡯⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
                 // ⠀⠀⢀⡞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠇⣸⠀⠀⣠⡀⠀⢻⣟⠓⠀⠀⢸⢿⠷⡞⠉⠒⢄⠀⠀⣀⡀⠀⠀⠀⠀
                 // ⠀⢀⡞⠀⠀⠀⠀⠀⠀⠀⣀⣤⠀⠀⠀⠀⠀⠀⢿⠀⢀⣯⡽⠀⠀⢿⡄⠀⢸⣿⣸⠀⠈⢆⠀⠈⡷⠉⢁⣈⣑⣄⠀⠀
-                // ⠀⡸⠀⠀⠀⠀⣀⣤⣶⣿⡿⠋⠀⠀⠀⠀⢀⣠⡬⢧⣸⣿⠃⠀⠀⠀⢣⣀⣾⣿⣏⡀⠀⢀⡇⠀⡇⡴⢉⣀⠤⠼⣧⠀
-                // ⢀⠇⠀⠀⣠⣾⠿⠛⠉⡟⠀⠀⠀⠀⠀⢳⣼⡋⢶⢾⡉⠓⠤⡠⠤⠒⠊⠙⣿⣿⠿⠃⠀⣸⡇⠀⢉⣇⡼⢀⡠⠤⣼⡇
-                // ⠘⠀⣠⡾⠋⠁⠀⠀⡼⠀⠀⠀⠀⠀⣴⣾⣿⣷⣌⡑⠛⠢⠄⠀⠀⢀⣀⡤⠚⠁⠀⠀⣰⡇⠹⣶⡏⠀⢹⡏⢀⣠⣼⠀
-                // ⢸⡾⠋⠀⠀⠀⠀⠀⡇⠀⠀⠀⣠⣾⡿⠟⢛⣻⠿⠛⠋⡿⠓⢛⡽⠟⠣⣄⠀⠀⠀⠀⢿⠾⡄⠙⠳⠤⣤⡭⠿⠛⠁⠀
-                // ⠀⠁⠀⠀⠀⠀⠀⢰⡇⠀⠀⣴⡿⠋⡴⠊⢁⡠⠴⠚⡏⠀⢀⡏⠀⠀⠀⠈⢏⠒⠢⠒⠉⢦⡀⠀⣰⡾⠋⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⢠⡇⠀⣼⠋⠀⠀⢧⠀⠘⣿⢳⢤⣸⣦⡀⡇⠀⠀⠀⠀⢸⠓⠦⠤⠔⠊⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⢇⣸⠁⠀⠀⠀⣼⣷⣤⠎⠘⢒⡇⠈⠉⢻⡄⠀⠀⢀⡞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇⠀⠀⠀⠀⠘⢺⣶⠆⣠⠞⠁⠀⠀⢸⠱⣤⣴⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⣄⣀⠀⢀⢠⣿⡾⢿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢘⣷⡿⠿⡿⠛⡿⣹⠁⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡰⠁⣰⢁⠇⢰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠤⢴⠁⢠⣿⣞⣀⣼⠷⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠁⠸⣤⡯⠤⠟⠛⡦⠀⣀⠤⢶⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠞⢷⡦⠀⠀⢠⡔⢯⠁⣀⣉⣉⡠⢿⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡤⠜⠓⠶⣤⣄⣀⣀⣼⡞⠛⡟⠉⠀⠀⢀⠔⠛⠓⠢⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣁⣀⡀⠀⠀⠀⠑⢄⠀⠀⢧⣼⠀⠀⠀⡴⠁⠀⠀⠀⠀⠀⠈⠳⡀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠀⣠⠞⠁⠀⠀⠀⠉⠢⡀⠀⠀⠈⡆⢀⣾⣿⣀⣀⢸⡁⠀⠀⠀⠀⠀⠀⠀⢀⣹⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⡴⠁⠀⠀⠀⠀⠀⠀⠀⠘⡀⠀⣠⡿⠟⠁⠉⠉⠛⠛⠛⠿⠶⠶⠶⠶⠿⠛⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⣥⡀⠀⠀⠀⠀⠀⢀⣀⣤⡷⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                // ⠀⠀⠀⠀⠀⠀⠉⠛⠻⠶⠶⠾⠛⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⡸⠀⠀⠀⠀⣀⣤⣶⣿⡿⠋⠀⠀⠀⠀⢳⣼⡋⢶⢾⡉⠓⠤⡠⠤⠒⠊⠙⣿⣿⠿⠃⠀⣸⡇⠀⢉⣇⡼⢀⡠⠤⣼⡇
+                // ⢀⠇⠀⠀⣠⣾⠿⠛⠉⡟⠀⠀⠀⠀⠀⣴⣾⣿⣷⣌⡑⠛⠢⠄⠀⠀⢀⣀⡤⠚⠁⠀⠀⣰⡇⠹⣶⡏⠀⢹⡏⢀⣠⣼⠀
+                // ⠘⠀⣠⡾⠋⠁⠀⠀⡼⠀⠀⠀⠀⠀⣴⡿⠋⡴⠊⢁⡠⠴⠚⡏⠀⢀⡏⠀⠀⠀⠈⢏⠒⠢⠒⠉⢦⡀⠀⣰⡾⠋⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⢠⡇⠀⣼⠋⠀⠀⢧⠀⠘⣿⢳⢤⣸⣦⡀⡇⠀⠀⠀⠀⢸⠓⠦⠤⠔⠊⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⢇⣸⠁⠀⠀⠀⣼⣷⣤⠎⠘⢒⡇⠈⠉⢻⡄⠀⠀⢀⡞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇⠀⠀⠀⠀⠘⢺⣶⠆⣠⠞⠁⠀⠀⢸⠱⣤⣴⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⣄⣀⠀⢀⢠⣿⡾⢿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢘⣷⡿⠿⡿⠛⡿⣹⠁⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡰⠁⣰⢁⠇⢰⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠤⢴⠁⢠⣿⣞⣀⣼⠷⠦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⠁⠸⣤⡯⠤⠟⠛⡦⠀⣀⠤⢶⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠞⢷⡦⠀⠀⢠⡔⢯⠁⣀⣉⣉⡠⢿⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡤⠜⠓⠶⣤⣄⣀⣀⣼⡞⠛⡟⠉⠀⠀⢀⠔⠛⠓⠢⢄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣁⣀⡀⠀⠀⠀⠑⢄⠀⠀⢧⣼⠀⠀⠀⡴⠁⠀⠀⠀⠀⠀⠈⠳⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠀⣠⠞⠁⠀⠀⠀⠉⠢⡀⠀⠀⠈⡆⢀⣾⣿⣀⣀⢸⡁⠀⠀⠀⠀⠀⠀⠀⢀⣹⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⡴⠁⠀⠀⠀⠀⠀⠀⠀⠘⡀⠀⣠⡿⠟⠁⠉⠉⠛⠛⠛⠿⠶⠶⠶⠶⠿⠛⠛⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⣥⡀⠀⠀⠀⠀⠀⢀⣀⣤⡷⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                // ⠀⠀⠀⠀⠀⠀⠉⠛⠻⠶⠶⠾⠛⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
                 // TODO: Will refactor later to condense globalVariableClassData and globalVariablePackageData, speedrunning now for convenience (Gotta go fast!)
                 const processGlobalVariableClassData = (data: any[] | undefined): any[] => {
@@ -458,7 +462,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         updateData.iconPreview = uniqueIcons.map(filename =>
                             `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         );
-                    } else { 
+                    } else {
                         updateData.icon = [];
                         updateData.iconPreview = [];
                     }
@@ -468,7 +472,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         updateData.pdfPreview = uniquePdfs.map(filename =>
                             `${process.env.NEXTAUTH_URL}/api/files/${encodeURIComponent(filename)}`
                         );
-                    } else { 
+                    } else {
                         updateData.pdf = [];
                         updateData.pdfPreview = [];
                     }
@@ -482,6 +486,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         value: string | string[];
                         isComposite: boolean;
                         isPackage: boolean;
+                        isDisabled: boolean; // Make isDisabled non-optional for internal processing
                     }
 
                     let incomingTableCellDataItems: ProcessedCellData[] | undefined = undefined;
@@ -507,24 +512,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     } else if (tableCellDataFromBody.length === 1 && tableCellDataFromBody[0] === '[]') {
                         console.warn("Received legacy '[]' string marker, treating as empty.");
                         updateData.tableCellData = [];
-                    } else if (tableCellDataFromBody.length % 5 !== 0) {
-                        console.error(`Received tableCellData with incorrect number of items (${tableCellDataFromBody.length}), expected quadruplets (index, key, value, isComposite, isPackage). Skipping update.`, tableCellDataFromBody);
+                    } else if (tableCellDataFromBody.length % 6 !== 0) { // Expect 6 items now
+                        console.error(`Received tableCellData with incorrect number of items (${tableCellDataFromBody.length}), expected sextuplets (index, key, value, isComposite, isPackage, isDisabled). Skipping update.`, tableCellDataFromBody);
                         processingError = true;
                     } else {
                         const processedItems: ProcessedCellData[] = [];
-                        for (let i = 0; i < tableCellDataFromBody.length; i += 5) {
+                        for (let i = 0; i < tableCellDataFromBody.length; i += 6) { // Iterate by 6
                             const indexStr = tableCellDataFromBody[i];
                             const classKey = tableCellDataFromBody[i + 1];
                             const valueStr = tableCellDataFromBody[i + 2];
                             const isCompositeStr = tableCellDataFromBody[i + 3];
                             const isPackageStr = tableCellDataFromBody[i + 4];
+                            const isDisabledStr = tableCellDataFromBody[i + 5]; // New field
 
                             const index = parseInt(indexStr, 10);
                             const isComposite = isCompositeStr === 'true';
                             const isPackage = isPackageStr === 'true';
+                            const isDisabled = isDisabledStr === 'true'; // Parse isDisabled
 
-                            if (isNaN(index) || typeof classKey !== 'string' || typeof valueStr !== 'string' || typeof isCompositeStr !== 'string' || typeof isPackageStr !== 'string') {
-                                console.warn(`Malformed item at index ${i / 4}. Skipping.`, { indexStr, classKey, valueStr, isCompositeStr, isPackageStr });
+                            if (isNaN(index) || typeof classKey !== 'string' || typeof valueStr !== 'string' || typeof isCompositeStr !== 'string' || typeof isPackageStr !== 'string' || typeof isDisabledStr !== 'string') {
+                                console.warn(`Malformed item at index ${i / 6}. Skipping.`, { indexStr, classKey, valueStr, isCompositeStr, isPackageStr, isDisabledStr });
                                 processingError = true;
                                 continue;
                             }
@@ -543,7 +550,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 }
                             }
 
-                            processedItems.push({ index, classKey, value: finalValue, isComposite, isPackage });
+                            processedItems.push({ index, classKey, value: finalValue, isComposite, isPackage, isDisabled });
                         }
                         incomingTableCellDataItems = processedItems;
                         console.log(`Processed ${incomingTableCellDataItems.length} tableCellData items from flat array.`);
@@ -556,16 +563,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             value: item?.value,
                             isComposite: item?.isComposite ?? false,
                             isPackage: item?.isPackage ?? false,
+                            isDisabled: item?.isDisabled ?? false,
                         })).filter((item: any) => item.index !== -1 && item.classKey !== '');
 
                         const normalizeData = (data: ProcessedCellData | undefined): ProcessedCellData => {
-                            if (!data) return { classKey: "", index: -1, value: "", isComposite: false, isPackage: false };
+                            if (!data) return { classKey: "", index: -1, value: "", isComposite: false, isPackage: false, isDisabled: false };
                             return {
                                 classKey: data.classKey,
                                 index: data.index,
                                 value: data.value,
                                 isComposite: data.isComposite,
                                 isPackage: data.isPackage,
+                                isDisabled: data.isDisabled === true,
                             };
                         };
 
@@ -574,11 +583,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                             const valueString = Array.isArray(normalized.value)
                                 ? `[${normalized.value.join('||')}]`
                                 : String(normalized.value);
-                            return `${normalized.classKey}|${normalized.index}|${normalized.isComposite}|${valueString}|${normalized.isPackage}`;
+                            return `${normalized.classKey}|${normalized.index}|${normalized.isComposite}|${valueString}|${normalized.isPackage}|${normalized.isDisabled}`;
                         };
 
+                        // This function might not be strictly necessary if signature comparison is robust enough
                         const areItemsEqual = (item1: ProcessedCellData, item2: ProcessedCellData): boolean => {
-                            if (item1.classKey !== item2.classKey || item1.index !== item2.index || item1.isComposite !== item2.isComposite || item1.isPackage !== item2.isPackage) {
+                            if (item1.classKey !== item2.classKey ||
+                                item1.index !== item2.index ||
+                                item1.isComposite !== item2.isComposite ||
+                                item1.isPackage !== item2.isPackage ||
+                                (item1.isDisabled === true) !== (item2.isDisabled === true)
+                            ) {
                                 return false;
                             }
                             if (Array.isArray(item1.value) && Array.isArray(item2.value)) {
@@ -592,10 +607,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         };
 
                         const existingDataMap = new Map<string, ProcessedCellData>();
-                        existingTableCellData.forEach(item => existingDataMap.set(getComparisonSignature(item), item));
+                        existingTableCellData.forEach(item => {
+                            const sig = getComparisonSignature(item);
+                            existingDataMap.set(sig, item);
+                            console.log(`Existing DB Sig: ${sig}`, item);
+                        });
 
                         const incomingDataMap = new Map<string, ProcessedCellData>();
-                        incomingTableCellDataItems.forEach(item => incomingDataMap.set(getComparisonSignature(item), item));
+                        incomingTableCellDataItems.forEach(item => {
+                            const sig = getComparisonSignature(item);
+                            incomingDataMap.set(sig, item);
+                            console.log(`Incoming FE Sig: ${sig}`, item);
+                        });
 
                         const dataToDelete: ProcessedCellData[] = [];
                         existingDataMap.forEach((value, key) => {

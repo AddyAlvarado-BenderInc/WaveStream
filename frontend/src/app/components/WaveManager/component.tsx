@@ -109,6 +109,8 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [selectedRunOption, setSelectedRunOption] = useState("");
     const [selectedServer, setSelectedServer] = useState("");
     const [server, setServer] = useState("");
+    const [selectedThreads, setSelectedThreads] = useState(1);
+    const [csharpOptions, setCsharpOptions] = useState(false);
     const [automationRunning, setAutomationRunning] = useState(false);
 
     useEffect(() => {
@@ -231,6 +233,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         value: finalValue,
                         isComposite: item.isComposite || false,
                         isPackage: isPackage,
+                        isDisabled: item.isDisabled || false,
                     };
                 }
                 return acc;
@@ -549,6 +552,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         formDataPayload.append('tableCellData', valueToSend);
                         formDataPayload.append('tableCellData', rowItem.isComposite.toString());
                         formDataPayload.append('tableCellData', rowItem.isPackage.toString());
+                        formDataPayload.append('tableCellData', (rowItem.isDisabled === true).toString());
                     } else {
                         console.warn("Skipping invalid rowItem during save:", rowItem);
                     }
@@ -768,6 +772,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 value: finalValue,
                                 isComposite: isComposite,
                                 isPackage: isPackage,
+                                isDisabled: item.isDisabled,
                             };
                         } else {
                             console.warn("Skipping invalid item from serverRowData during hydration:", item);
@@ -834,6 +839,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                         value: item.value || '',
                                         isComposite: item.isComposite || false,
                                         isPackage: item.isPackage || false,
+                                        isDisabled: item.isDisabled || false,
                                     };
                                 }
                                 return acc;
@@ -936,7 +942,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 const cellData = rowMap[header];
 
                 if (cellData) {
-                    if (cellData.isPackage && typeof cellData.value === 'object' && cellData.value !== null && 'dataId' in cellData.value) {
+                    if (cellData.isDisabled) {
+                        rowObject[header] = "";
+                    } else if (cellData.isPackage && typeof cellData.value === 'object' && cellData.value !== null && 'dataId' in cellData.value) {
                         const pkg = cellData.value as IGlobalVariablePackage;
                         let packageContent: { filename: string[]; url: string[] } | string = "[Error retrieving content]";
 
@@ -1008,6 +1016,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
         const formatValueForExport = (cellData: tableCellData | undefined): string => {
             if (!cellData) { return ''; }
+
+            if (cellData.isDisabled) {
+                return '';
+            }
 
             if (cellData.isPackage && typeof cellData.value === 'object' && cellData.value !== null && 'dataId' in cellData.value) {
                 const pkg = cellData.value as IGlobalVariablePackage;
@@ -1158,6 +1170,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     cellOrigin: cellOrigin,
                     files: iconFile,
                     jsonData: jsonData,
+                    threadCount: selectedThreads,
                 }, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
@@ -1169,6 +1182,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     cellOrigin: cellOrigin,
                     files: iconFile,
                     jsonData: jsonData,
+                    threadCount: selectedThreads,
                 });
                 if (response) {
                     const result = await response;
@@ -1189,6 +1203,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 console.error('Error running automation:', error);
             }
         };
+
         if (selectedServer === 'javascript-server') {
             setServer(javascriptServer);
             handleRunPost(`${javascriptServer}/js-server`);
@@ -1315,6 +1330,28 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 <option value="javascript-server">Javascript Server</option>
                                 <option value="csharp-server">C# Server</option>
                             </select>
+                            {selectedServer === "csharp-server" && (
+                                <div
+                                    className={styles.sliderContainer}
+                                    title={selectedThreads <= 2 ? "Caution: Increasing threads can consume more browser and system resources." : ""}
+                                >
+                                    <label htmlFor="threadsSlider">Threads: {selectedThreads}</label>
+                                    <input
+                                        type="range"
+                                        id="threadsSlider"
+                                        min="1"
+                                        max="5"
+                                        value={selectedThreads}
+                                        onChange={(e) => setSelectedThreads(parseInt(e.target.value, 10))}
+                                        className={styles.slider}
+                                    />
+                                    {selectedThreads > 2 && (
+                                        <div className={styles.tooltip}>
+                                            Caution: Increasing threads can consume more browser and system resources.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <div className={styles.runButtonsContainer}>
                                 <button type='submit'>
                                     Run

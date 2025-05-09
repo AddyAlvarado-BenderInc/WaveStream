@@ -46,6 +46,7 @@ class Program
                     var runOption = form["runOption"].FirstOrDefault();
                     var cellOriginJson = form["cellOrigin"].FirstOrDefault();
                     var jsonData = form["jsonData"].FirstOrDefault();
+                    var threadCount = form["threadCount"].FirstOrDefault();
                     var file = form.Files.FirstOrDefault();
 
                     if (string.IsNullOrEmpty(type))
@@ -62,6 +63,10 @@ class Program
                     {
                         logger.LogWarning("Missing 'cellOrigin' data in request.");
                     }
+                    if (string.IsNullOrEmpty(threadCount))
+                    {
+                        threadCount = "1";
+                    }
 
                     logger.LogInformation(
                         "Processing request - Type: {Type}, RunOption: {RunOption}",
@@ -74,6 +79,7 @@ class Program
                         runOption,
                         cellOriginJson,
                         jsonData,
+                        threadCount,
                         file
                     );
 

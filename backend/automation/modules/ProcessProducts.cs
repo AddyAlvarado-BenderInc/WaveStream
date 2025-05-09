@@ -11,9 +11,17 @@ namespace backend.automation.modules
         public async Task WaitForProductItemNameAsync(
             IPage page,
             dynamic product,
-            ProcessProducts processProducts
+            ProcessProducts processProducts,
+            int taskId
         )
         {
+            await page.Locator(
+                    "#ctl00_ctl00_C_Menu_RepeaterCategories_ctl07_RepeaterItems_ctl06_HyperLinkItem"
+                )
+                .ClickAsync();
+            Console.WriteLine(
+                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] WaitForProductItemNameAsync for: {product.ItemName}"
+            );
             ILocator itemNameLocator = page.Locator("td .celldata a.pointerCursor span").Nth(1);
             string itemName = await itemNameLocator.EvaluateAsync<string>("el => el.innerText");
             string expectedItemName = product.ItemName.ToString();
@@ -34,7 +42,7 @@ namespace backend.automation.modules
             if (retries == maxRetries)
             {
                 await page.ReloadAsync();
-                await ProcessProductsAsync(product, page);
+                await ProcessProductsAsync(product, page, taskId);
             }
             else if (totalRetries == maxTotalRetries)
             {
@@ -102,10 +110,14 @@ namespace backend.automation.modules
 
         public async Task<IPage> TryOpenNewPageAsync(
             IPage originalPage,
+            int taskId,
             int maxRetries = 3,
             int newPageTimeoutMs = 20000
         )
         {
+            Console.WriteLine(
+                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] TryOpenNewPageAsync from page: {originalPage.Url}"
+            );
             int retries = 0;
             string clickSelector = "a.pointerCursor.ng-star-inserted";
 
@@ -184,102 +196,116 @@ namespace backend.automation.modules
             );
         }
 
-        public async Task ProcessProductsAsync(dynamic product, IPage page)
+        public async Task<IPage?> ProcessProductsAsync(dynamic product, IPage page, int taskId)
         {
             ProductInfoFill productInfoFill = new ProductInfoFill();
             UploadProductIcon uploadProductIcon = new UploadProductIcon();
-
-            const string anyQuantitiesButton =
-                "#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__AnyQuantities";
-            const string advancedQuantitiesButton =
-                "#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Advanced";
+            IPage? newPage = null;
 
             string productName = product.ItemName;
             string displayName = product.DisplayName;
             string itemTemplate = product.ItemTemplate;
-            string advancedRanges = product.AdvancedRange;
-            string orderQuantities = product.OrderQuantity;
             dynamic icon = product.Icon;
-            dynamic pdf = product.PDFUploadName;
-            string ticketTemplates = product.TicketTemplate;
-            string shippingWidths = product.ShippingWidth;
-            string shippingLengths = product.ShippingLength;
-            string shippingHeights = product.ShippingHeight;
-            string shippingMaxs = product.ShippingMaxQtyPerSub;
-            string buyerConfigs = product.BuyerConfiguration;
             string productType = product.Type;
-            string weightInput = product.WeightInput;
-            string maxQuantity = product.MaxQuantity;
-            string showQtyPrice = product.ShowQtyPrice;
             string briefDescription = product.BriefDescription;
-
-            string startingRange = product.RangeStart;
-            string endingRange = product.RangeEnd;
-            string regularPrices = product.RegularPrice;
-            string setupPrices = product.SetupPrice;
             string skipProduct = product.SkipProduct;
 
-            await WaitForProductItemNameAsync(page, product, this);
-            var newPage = await TryOpenNewPageAsync(page);
+            Console.WriteLine(
+                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] ProcessProductsAsync START for: {productName}"
+            );
 
-            if (skipProduct != null)
+            if (skipProduct != null && skipProduct.ToLower() == "true")
             {
-                Console.WriteLine($"Skipping product: {productName}");
-                return;
+                Console.WriteLine($"[Task {taskId}] Skipping product as per data: {productName}");
+                return null;
             }
+
             try
             {
+                Console.WriteLine(
+                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] Before WaitForProductItemNameAsync for: {productName}"
+                );
+                await WaitForProductItemNameAsync(page, product, this, taskId);
+                Console.WriteLine(
+                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] After WaitForProductItemNameAsync, Before TryOpenNewPageAsync for: {productName}"
+                );
+
+                newPage = await TryOpenNewPageAsync(page, taskId);
+                Console.WriteLine(
+                    $"[Task {taskId}] Detail page ('newPage') opened for product '{productName}'. Current URL: {newPage.Url}"
+                );
+
                 if (!ValidProductTypesAsync(productType))
                 {
-                    throw new Exception($"Invalid product type: {productType}");
+                    throw new Exception(
+                        $"Invalid product type: {productType} for product {productName}"
+                    );
                 }
-                else if (productType == null || productType == "")
+                else if (string.IsNullOrEmpty(productType))
                 {
-                    throw new Exception($"Product type is null or empty: {productType}");
+                    throw new Exception($"Product type is null or empty for {productName}");
                 }
 
-                Console.WriteLine($"Processing product: {productName}");
-                if (productName == "")
+                Console.WriteLine(
+                    $"[Task {taskId}] Processing details for product: {productName} on its detail page."
+                );
+                if (string.IsNullOrEmpty(productName))
                 {
-                    throw new Exception($"Product name is null or empty: {productName}");
+                    throw new Exception($"Product name is null or empty.");
                 }
-                else if (productName != null && productName != "")
-                {
-                    if (productName.Length > 0 && productName.Length < 100)
-                    {
-                        Console.WriteLine($"Valid product name: {productName}");
-                        await SearchProductName(productName, page);
 
-                        await newPage.Locator("body").WaitForAsync();
-                        Console.WriteLine("Found The Page!");
+                await newPage
+                    .Locator("body")
+                    .WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
+                Console.WriteLine(
+                    $"[Task {taskId}] Detail page for '{productName}' appears ready."
+                );
 
-                        await ValidTypeAndNameCheck(productType, productName, newPage);
+                await ValidTypeAndNameCheck(productType, productName, newPage);
 
-                        await productInfoFill.FillProductInfo(
-                            newPage,
-                            displayName,
-                            itemTemplate,
-                            briefDescription
-                        );
-                        await uploadProductIcon.UploadIconsAsync(icon, newPage);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Invalid product name: {productName}");
-                        return;
-                    }
-                }
+                Console.WriteLine(
+                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] Before FillProductInfo for: {productName}"
+                );
+                await productInfoFill.FillProductInfo(
+                    newPage,
+                    productName,
+                    displayName,
+                    itemTemplate,
+                    briefDescription
+                );
+                Console.WriteLine(
+                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] After FillProductInfo for: {productName}"
+                );
+
+                await uploadProductIcon.UploadIconsAsync(productName, icon, newPage);
+
+                Console.WriteLine(
+                    $"[Task {taskId}] Successfully processed data for product: {productName}. Ready for save."
+                );
+                return newPage;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex}");
-            }
-            finally
-            {
-                Console.WriteLine("Saving product...");
-                await newPage.Locator("input[value=\"Save & Exit\"]").ClickAsync();
-                await page.BringToFrontAsync();
-                Console.WriteLine("Product saved successfully and page brought to front.");
+                Console.WriteLine(
+                    $"[Task {taskId}] Error processing product {productName} before save: {ex.ToString()}"
+                );
+                if (newPage != null && !newPage.IsClosed)
+                {
+                    try
+                    {
+                        Console.WriteLine(
+                            $"[Task {taskId}] Closing detail page for {productName} due to processing error."
+                        );
+                        await newPage.CloseAsync();
+                    }
+                    catch (Exception closeEx)
+                    {
+                        Console.WriteLine(
+                            $"[Task {taskId}] Error closing detail page for {productName} after processing error: {closeEx.Message}"
+                        );
+                    }
+                }
+                return null;
             }
         }
     }

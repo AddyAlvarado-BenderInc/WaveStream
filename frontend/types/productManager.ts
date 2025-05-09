@@ -21,6 +21,7 @@ export interface tableCellData {
     isComposite: boolean;
     isDefault?: boolean;
     isPackage: boolean;
+    isDisabled: boolean;
 }
 
 export interface mainKeyString {

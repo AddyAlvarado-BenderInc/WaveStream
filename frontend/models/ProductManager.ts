@@ -20,7 +20,8 @@ const TableCellDataSchema = new Schema({
     classKey: { type: String, required: true },
     value: { type: mongoose.Schema.Types.Mixed, required: true },
     isComposite: { type: Boolean, required: true, default: false },
-    isPackage: { type: Boolean, required: true, default: false }
+    isPackage: { type: Boolean, required: true, default: false },
+    isDisabled: { type: Boolean, required: true, default: false }
 }, { _id: false });
 
 export interface ITableCellData {
@@ -29,6 +30,7 @@ export interface ITableCellData {
     value: string | string[]; 
     isComposite: boolean;
     isPackage: boolean;
+    isDisabled: boolean;
 }
 
 export interface IGlobalVariablePackage {

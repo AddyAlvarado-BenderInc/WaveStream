@@ -60,6 +60,7 @@ namespace backend.automation.modules
 
         public async Task FillProductInfo(
             IPage page,
+            string productName,
             string displayName,
             string itemTemplate,
             string briefDescription
@@ -71,7 +72,7 @@ namespace backend.automation.modules
             bool isDisplay = !string.IsNullOrEmpty(displayName);
             bool isItemTemplate = !string.IsNullOrEmpty(itemTemplate);
 
-            Console.WriteLine("-- Entering FillProductInfo method --");
+            Console.WriteLine($"-- Entering FillProductInfo method for {productName}--");
             await page.EvaluateAsync("window.scrollTo(0, 0);");
 
             if (isDisplay)
@@ -79,7 +80,7 @@ namespace backend.automation.modules
                 Console.WriteLine($"Display name found: {displayName}");
                 if (!ProductQueriedDisplayName(page, displayName) && displayName != "")
                 {
-                    string displayNameSelector = "#ctl00_ctl00_C_M_ctl00_W_ctl01__StorefrontName";
+                    string displayNameSelector = "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$_StorefrontName\"]";
                     await page.Locator(displayNameSelector).FillAsync(displayName);
                     Console.WriteLine($"Display name filled: {displayName}");
                 }
@@ -94,7 +95,7 @@ namespace backend.automation.modules
                 Console.WriteLine($"Item template found: {itemTemplate}");
                 if (!ProductQueriedItemTemplate(page, itemTemplate) && itemTemplate != "")
                 {
-                    string itemTemplateSelector = "#ctl00_ctl00_C_M_ctl00_W_ctl01_txtMISEstimateId";
+                    string itemTemplateSelector = "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$txtMISEstimateId\"]";
                     await page.Locator(itemTemplateSelector).FillAsync(itemTemplate);
                     Console.WriteLine($"Item template filled: {itemTemplate}");
                 }
@@ -115,6 +116,7 @@ namespace backend.automation.modules
             {
                 Console.WriteLine("Brief description is null or empty. Skipping fill.");
             }
+            Console.WriteLine($"-- Exiting FillProductInfo method for {productName}--");
         }
     }
 }
