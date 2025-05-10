@@ -541,7 +541,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                 ...prevData,
                 ...updates
             }));
-            toast.success(`Extended value down ${extendedCount} row(s) in column "${key}".`);
         } else {
             toast.info("Length specified was zero or invalid.");
         }
@@ -600,7 +599,6 @@ const Table: React.FC<TableProps> = ({ productManager, variableRowData, variable
                 ...prevData,
                 ...updates
             }));
-            toast.success(`Filled ${filledCount} empty cell(s) below in column "${key}".`);
         } else {
             toast.info(`No empty cells found below to fill in column "${key}".`);
         }
@@ -1177,6 +1175,11 @@ const ClassKey: React.FC<{
 }> = ({ input, onDelete, onEdit, originAssignment, permanentOrigin, headerOrigin, onTriggerImport, clearCellRow, onSetDefault, disableCellRow }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(input);
+    const [isDisabled, setIsDisabled] = useState(false);
+
+    const handleDisableToggle = () => {
+        setIsDisabled((prev) => !prev);
+    }
 
     const handleEditSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -1251,11 +1254,12 @@ const ClassKey: React.FC<{
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             disableCellRow(input, 0);
+                                            handleDisableToggle();
                                         }}
                                         className={styles.importKeyButton}
                                         title={`Disable row data for ${input}`}
                                     >
-                                        Disable
+                                        {isDisabled ? 'Enable' : 'Disable'}
                                     </button>
                                 </div>
                             </div>

@@ -512,23 +512,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     } else if (tableCellDataFromBody.length === 1 && tableCellDataFromBody[0] === '[]') {
                         console.warn("Received legacy '[]' string marker, treating as empty.");
                         updateData.tableCellData = [];
-                    } else if (tableCellDataFromBody.length % 6 !== 0) { // Expect 6 items now
+                    } else if (tableCellDataFromBody.length % 6 !== 0) { 
                         console.error(`Received tableCellData with incorrect number of items (${tableCellDataFromBody.length}), expected sextuplets (index, key, value, isComposite, isPackage, isDisabled). Skipping update.`, tableCellDataFromBody);
                         processingError = true;
                     } else {
                         const processedItems: ProcessedCellData[] = [];
-                        for (let i = 0; i < tableCellDataFromBody.length; i += 6) { // Iterate by 6
+                        for (let i = 0; i < tableCellDataFromBody.length; i += 6) {
                             const indexStr = tableCellDataFromBody[i];
                             const classKey = tableCellDataFromBody[i + 1];
                             const valueStr = tableCellDataFromBody[i + 2];
                             const isCompositeStr = tableCellDataFromBody[i + 3];
                             const isPackageStr = tableCellDataFromBody[i + 4];
-                            const isDisabledStr = tableCellDataFromBody[i + 5]; // New field
+                            const isDisabledStr = tableCellDataFromBody[i + 5];
 
                             const index = parseInt(indexStr, 10);
                             const isComposite = isCompositeStr === 'true';
                             const isPackage = isPackageStr === 'true';
-                            const isDisabled = isDisabledStr === 'true'; // Parse isDisabled
+                            const isDisabled = isDisabledStr === 'true';
 
                             if (isNaN(index) || typeof classKey !== 'string' || typeof valueStr !== 'string' || typeof isCompositeStr !== 'string' || typeof isPackageStr !== 'string' || typeof isDisabledStr !== 'string') {
                                 console.warn(`Malformed item at index ${i / 6}. Skipping.`, { indexStr, classKey, valueStr, isCompositeStr, isPackageStr, isDisabledStr });
@@ -610,14 +610,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                         existingTableCellData.forEach(item => {
                             const sig = getComparisonSignature(item);
                             existingDataMap.set(sig, item);
-                            console.log(`Existing DB Sig: ${sig}`, item);
                         });
 
                         const incomingDataMap = new Map<string, ProcessedCellData>();
                         incomingTableCellDataItems.forEach(item => {
                             const sig = getComparisonSignature(item);
                             incomingDataMap.set(sig, item);
-                            console.log(`Incoming FE Sig: ${sig}`, item);
                         });
 
                         const dataToDelete: ProcessedCellData[] = [];
@@ -821,14 +819,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                                 const set2 = new Set(tableSheetKeys.map(getComparisonSignature));
 
                                 console.log("Arrays not equivalent - detailed comparison:");
-                                console.log("Database keys:", existingTableSheet.map((key: any) => ({
-                                    ...normalizeKey(key),
-                                    signature: getComparisonSignature(key)
-                                })));
-                                console.log("Frontend keys:", tableSheetKeys.map(key => ({
-                                    ...normalizeKey(key),
-                                    signature: getComparisonSignature(key)
-                                })));
 
                                 console.log("Keys in database not in frontend:",
                                     [...set1].filter((sig: any) => !set2.has(sig)));
@@ -931,11 +921,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
                     const rawGlobalVariableClassData = formFields.globalVariableClassData;
 
-                    console.log('Backend PATCH: Received raw globalVariableClassData:', rawGlobalVariableClassData);
                     console.log('Backend PATCH: Type of raw globalVariableClassData:', typeof rawGlobalVariableClassData);
                     if (Array.isArray(rawGlobalVariableClassData)) {
                         console.log('Backend PATCH: Received as array of length:', rawGlobalVariableClassData.length);
-                        console.log('Backend PATCH: First element:', rawGlobalVariableClassData[0]);
                     }
 
                     if (rawGlobalVariableClassData !== undefined && typeof rawGlobalVariableClassData === 'string') {
@@ -1039,8 +1027,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     let variablePackageParseError = false;
 
                     const rawGlobalVariablePackageData = formFields.globalVariablePackageData;
-
-                    console.log('Backend PATCH: Received raw globalVariablePackageData:', rawGlobalVariablePackageData);
 
                     if (rawGlobalVariablePackageData !== undefined && typeof rawGlobalVariablePackageData === 'string') {
                         try {

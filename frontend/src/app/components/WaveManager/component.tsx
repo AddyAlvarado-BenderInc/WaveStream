@@ -1335,21 +1335,31 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                     className={styles.sliderContainer}
                                     title={selectedThreads <= 2 ? "Caution: Increasing threads can consume more browser and system resources." : ""}
                                 >
-                                    <label htmlFor="threadsSlider">Threads: {selectedThreads}</label>
-                                    <input
-                                        type="range"
-                                        id="threadsSlider"
-                                        min="1"
-                                        max="5"
-                                        value={selectedThreads}
-                                        onChange={(e) => setSelectedThreads(parseInt(e.target.value, 10))}
-                                        className={styles.slider}
-                                    />
-                                    {selectedThreads > 2 && (
-                                        <div className={styles.tooltip}>
-                                            Caution: Increasing threads can consume more browser and system resources.
-                                        </div>
-                                    )}
+                                    <label htmlFor="threadsSelector">Threads </label>
+                                    <div className={styles.numberSelector}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedThreads(prev => Math.max(1, prev - 1))}
+                                            disabled={selectedThreads <= 1}
+                                            className={styles.threadButton}
+                                        >
+                                            &lt;
+                                        </button>
+                                        <span className={styles.threadCountDisplay}>{selectedThreads}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedThreads(prev => Math.min(5, prev + 1))}
+                                            disabled={selectedThreads >= 5}
+                                            className={styles.threadButton}
+                                        >
+                                            &gt;
+                                        </button>
+                                    </div>
+                                    <div
+                                        className={`${styles.tooltip} ${selectedThreads > 2 ? styles.tooltipVisible : ''}`}
+                                    >
+                                        Caution: Increasing threads can consume more browser and system resources.
+                                    </div>
                                 </div>
                             )}
                             <div className={styles.runButtonsContainer}>

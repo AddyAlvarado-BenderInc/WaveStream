@@ -200,6 +200,7 @@ namespace backend.automation.modules
         {
             ProductInfoFill productInfoFill = new ProductInfoFill();
             UploadProductIcon uploadProductIcon = new UploadProductIcon();
+            ProductDetailFill productDetailFill = new ProductDetailFill();
             IPage? newPage = null;
 
             string productName = product.ItemName;
@@ -208,6 +209,7 @@ namespace backend.automation.modules
             dynamic icon = product.Icon;
             string productType = product.Type;
             string briefDescription = product.BriefDescription;
+            string longDescription = product.LongDescription;
             string skipProduct = product.SkipProduct;
 
             Console.WriteLine(
@@ -278,6 +280,7 @@ namespace backend.automation.modules
                 );
 
                 await uploadProductIcon.UploadIconsAsync(productName, icon, newPage);
+                await productDetailFill.FillLongDescription(newPage, longDescription, productName);
 
                 Console.WriteLine(
                     $"[Task {taskId}] Successfully processed data for product: {productName}. Ready for save."

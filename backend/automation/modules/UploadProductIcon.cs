@@ -293,6 +293,11 @@ namespace backend.automation.modules
             {
                 iconFilenames = new JArray(jv.ToString());
             }
+            else if (iconData is null)
+            {
+                Console.WriteLine("Icon data is null. Skipping upload.");
+                return;
+            }
             else
             {
                 var typeName = iconData?.GetType().FullName ?? "null";
