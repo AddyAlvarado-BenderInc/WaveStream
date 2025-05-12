@@ -5,6 +5,7 @@ import { typeTaskReducer } from './productManagerSlice';
 import { parameterReducer } from './productManagerSlice';
 import { iconManagerReducer } from './productManagerSlice';
 import { pdfManagerReducer } from './productManagerSlice';
+import { automationReducer } from './productManagerSlice';
 
 export const store = configureStore({
     reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
         parameter: parameterReducer,
         iconManager: iconManagerReducer,
         pdfManager: pdfManagerReducer,
+        automation: automationReducer,
     },
     devTools: process.env.NODE_ENV !== 'production',
 });

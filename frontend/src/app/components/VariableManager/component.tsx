@@ -19,6 +19,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { PackagerTab } from './PackagerTab/component';
 import { DisplayPackageClass } from './PackageClass/component';
 import { convertToTableFormat } from '@/app/utility/packageDataTransformer';
+import SystemLogging from '../SystemLogging/component';
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
@@ -52,6 +53,11 @@ interface VariableManagerProps {
     setVariableRowData: React.Dispatch<React.SetStateAction<VariableRowDataState>>;
     setApprovedTableCellClear?: React.Dispatch<React.SetStateAction<boolean>>;
     setApprovedTableSheetClear?: React.Dispatch<React.SetStateAction<boolean>>;
+    killAutomation: (server: string) => Promise<void>;
+    runAutomation: () => Promise<void>;
+    automationRunning: boolean;
+    setAutomationRunning: (isRunning: boolean) => void;
+    selectedServerForAutomation: string;
 }
 
 const VariableManager: React.FC<VariableManagerProps> = ({
@@ -62,6 +68,11 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     setVariableRowData,
     setApprovedTableCellClear,
     setApprovedTableSheetClear,
+    killAutomation,
+    runAutomation,
+    automationRunning,
+    setAutomationRunning,
+    selectedServerForAutomation,
 }) => {
     const [parameterizationOpen, setParameterizationOpen] = useState(false);
     const [parameterizationData, setParameterizationData] = useState<object | null>(null);
@@ -199,6 +210,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                         value: itemValue || "",
                         isComposite: false,
                         isPackage: false,
+                        isDisabled: false,
                     };
                     console.log(`Adding to sheet state: Key=${newRowKey}, Value=${itemValue}, RowIndex=${nextRowIndex + index}`);
                 });
@@ -260,6 +272,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                 value: compositeValues,
                 isComposite: true,
                 isPackage: false,
+                isDisabled: false,
             };
             console.log(`Adding composite to sheet state: Key=${newRowKey}, Values=${JSON.stringify(compositeValues)}, RowIndex=${nextRowIndex}`);
 
@@ -331,6 +344,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                 value: packageToSend,
                 isComposite: false,
                 isPackage: true,
+                isDisabled: false,
             };
     
             console.log(`Adding package OBJECT (Table format) to sheet state: CellKey=${newRowKey}, PackageID=${key}, RowIndex=${nextRowIndex}, Value=`, packageToSend);
@@ -976,7 +990,13 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     originAssignment={handleOriginAssignment}
                     submitTableData={handleSubmitTableData}
                     areRowsPopulated={setRowsPopulated}
+                    killAutomation={killAutomation}
+                    runAutomation={runAutomation}
+                    automationRunning={automationRunning}
+                    setAutomationRunning={setAutomationRunning}
+                    selectedServerForAutomation={selectedServerForAutomation}
                 />
+                <SystemLogging />
             </div>
             <ToastContainer />
         </>

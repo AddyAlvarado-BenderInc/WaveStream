@@ -125,6 +125,18 @@ const initialParameterState: ParameterState = {
   parameterBundle: null
 };
 
+interface AutomationState {
+  runOption: string;
+  serverOption: string;
+  isRunning: boolean;
+}
+
+const initialAutomationState: AutomationState = {
+  runOption: "",
+  serverOption: "",
+  isRunning: false,
+};
+
 const iconManagerSlice = createSlice({
   name: 'iconManager',
   initialState: initialIconManagerState,
@@ -297,6 +309,27 @@ const parameterSlice = createSlice({
   },
 });
 
+const automationSlice = createSlice({
+  name: "automation",
+  initialState: initialAutomationState,
+  reducers: {
+    setRunOption: (state, action: PayloadAction<string>) => {
+      state.runOption = action.payload;
+    },
+    setServerOption: (state, action: PayloadAction<string>) => {
+      state.serverOption = action.payload;
+    },
+    setIsRunning: (state, action: PayloadAction<boolean>) => {
+      state.isRunning = action.payload;
+    },
+    clearAllRunOptions: (state) => {
+      state.runOption = "";
+      state.serverOption = "";
+      state.isRunning = false;
+    }
+  },
+})
+
 export const {
   addVariablePackage,
   deleteVariablePackage,
@@ -319,6 +352,7 @@ export const clearParameter = createAction<number | undefined>('parameters/clear
 export const { updateProductManager } = productManagerSlice.actions;
 export const { setIcon, addIcon, clearIcon, deleteIcon } = iconManagerSlice.actions;
 export const { setPDF, addPDF, clearPDF, deletePDF } = pdfManagerSlice.actions;
+export const { setRunOption, setServerOption, setIsRunning, clearAllRunOptions } = automationSlice.actions;
 
 export default productManagerSlice.reducer;
 export const variableReducer = variableSlice.reducer;
@@ -326,3 +360,4 @@ export const typeTaskReducer = typeTaskSlice.reducer;
 export const parameterReducer = parameterSlice.reducer;
 export const iconManagerReducer = iconManagerSlice.reducer;
 export const pdfManagerReducer = pdfManagerSlice.reducer;
+export const automationReducer = automationSlice.reducer;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/app/store/store';
-import { setVariableClassArray, setVariablePackageArray } from "../../store/productManagerSlice";
+import { setVariableClassArray, setVariablePackageArray, setIsRunning } from "../../store/productManagerSlice";
+import { setRunOption, setServerOption } from '../../store/productManagerSlice';
 import { convertToTableFormat } from '../../utility/packageDataTransformer';
 import { ProductManager, IconData, PDFData, tableSheetData, tableCellData, variableClassArray, variablePackageArray, IGlobalVariablePackage } from '../../../../types/productManager';
 import VariableManager from '../VariableManager/component';
@@ -110,8 +111,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [selectedServer, setSelectedServer] = useState("");
     const [server, setServer] = useState("");
     const [selectedThreads, setSelectedThreads] = useState(1);
-    const [csharpOptions, setCsharpOptions] = useState(false);
-    const [automationRunning, setAutomationRunning] = useState(false);
+    const [automationRunning, _setAutomationRunning] = useState(false);
+
+    const setAutomationRunning = (isRunning: boolean) => {
+        _setAutomationRunning(isRunning);
+        dispatch(setIsRunning(isRunning));
+    };
+
+    const isRunningAutomation = useSelector((state: RootState) => state.automation.isRunning);
 
     useEffect(() => {
         console.log("WaveManager: Initializing/Syncing Redux state for globalVariableClassData");
@@ -1094,10 +1101,50 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             alert("Please choose a run option.");
             return;
         }
-        handleRun(selectedRunOption, selectedServer);
+        dispatch(setRunOption(selectedRunOption));
+        dispatch(setServerOption(selectedServer));
+        toast.success('Run option selected successfully!');
+        setRenderRunModal(false);
     }
 
-    const handleRun = async (option: string, selectedServer: string) => {
+    const handleRunAutomationForTable = async () => {
+        if (!selectedServer) {
+            toast.error("Server not selected for automation.");
+            return;
+        }
+        if (!selectedRunOption) {
+            toast.error("Run option not selected.");
+            return;
+        }
+        await handleRun(selectedRunOption, selectedServer);
+    };
+
+    const handleKillAutomationForTable = async () => {
+        if (!selectedServer) {
+            toast.error("Server not selected to stop automation. Please configure automation first.");
+            return;
+        }
+
+        let targetServerUrl = "";
+        if (selectedServer === "csharp-server") {
+            targetServerUrl = csharpServer;
+        } else if (selectedServer === "javascript-server") {
+            targetServerUrl = javascriptServer;
+        } else {
+            toast.error(`Invalid server configured: '${selectedServer}'. Cannot stop automation.`);
+            return;
+        }
+
+        if (!targetServerUrl) {
+            toast.error("Could not determine the server URL. Cannot stop automation.");
+            return;
+        }
+
+        console.log(`Attempting to kill automation on: ${targetServerUrl} via Table/VariableManager button.`);
+        await handleKillAutomation(targetServerUrl);
+    };
+
+    const handleRun = async (option: string, currentSelectedServer: string) => {
         const hasHeaders = variableData.tableSheet.length > 0;
         const hasCellData = Object.keys(variableRowData).length > 0;
         const cellOrigin = variableData.tableSheet.find(item => item.isOrigin);
@@ -1114,7 +1161,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         };
         console.log('iconFile:', iconFile);
 
-        if (!selectedServer) {
+        if (!currentSelectedServer) {
             toast.error('No server is selected', {
                 position: 'bottom-right',
                 autoClose: 5000,
@@ -1145,7 +1192,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
 
         const confirmation = window.confirm(
-            `You are going to run a ${option} automation for ${productManager._id}_${productManager.name} on ${selectedServer} server. Are you sure?`
+            `You are going to run a ${option} automation for ${productManager._id}_${productManager.name} on ${currentSelectedServer} server. Are you sure?`
         );
 
         if (!confirmation) {
@@ -1204,14 +1251,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             }
         };
 
-        if (selectedServer === 'javascript-server') {
+        if (currentSelectedServer === 'javascript-server') {
             setServer(javascriptServer);
             handleRunPost(`${javascriptServer}/js-server`);
-        } else if (selectedServer === 'csharp-server') {
+        } else if (currentSelectedServer === 'csharp-server') {
             setServer(csharpServer);
             handleRunPost(`${csharpServer}/cs-server`);
         } else {
-            toast.error(`Server ${selectedServer} is not supported`, {
+            toast.error(`Server ${currentSelectedServer} is not supported`, {
                 position: 'bottom-right',
                 autoClose: 5000,
             });
@@ -1219,24 +1266,25 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
     };
 
-    const handleKillAutomation = async (server: string) => {
+    const handleKillAutomation = async (serverToKill: string) => {
         try {
-            const response = await fetch(`${server}/kill-automation`, {
+            const response = await fetch(`${serverToKill}/kill-automation`, {
                 method: 'POST',
-            })
+            });
 
             if (response.ok) {
-                console.log('Automation stopped successfully');
+                const result = await response.json();
+                console.log('Automation stop signal sent successfully:', result);
+                toast.success(result.message || 'Automation stop request processed.');
+                setAutomationRunning(false);
             } else {
-                console.error('Failed to stop automation:', response.statusText);
+                const errorText = await response.text();
+                console.error('Failed to stop automation:', response.status, errorText);
+                toast.error(`Failed to stop automation: ${response.statusText} - ${errorText}`);
             }
-
-            const result = await response.json();
-            console.log('Result:', result);
-            alert(result.message);
         } catch (error) {
-            console.error('Error closing the automation:', error);
-            alert('Error closing the automation');
+            console.error('Error sending kill automation request:', error);
+            toast.error('Error sending request to stop automation. Check console.');
         }
     };
 
@@ -1273,9 +1321,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 renderRunModal ? setRenderRunModal(false) : setRenderRunModal(true);
                             }}
                             disabled={variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0}
-                            title="Run Automation"
+                            title="Config Automation"
                         >
-                            Run
+                            Automation
                         </button>
                     </div>
                 </div>
@@ -1288,6 +1336,11 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 setVariableData={setVariableData}
                 setVariableRowData={setVariableRowData}
                 variableRowData={variableRowData}
+                killAutomation={handleKillAutomationForTable}
+                runAutomation={handleRunAutomationForTable}
+                automationRunning={automationRunning}
+                setAutomationRunning={setAutomationRunning}
+                selectedServerForAutomation={selectedServer}
             />
             {showPropertyInterfaces && (
                 <div className={styles.propertyInterfacesContainer}>
@@ -1305,7 +1358,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             {renderRunModal && (
                 <div className={styles.runModal}>
                     <div className={styles.runModalContent}>
-                        <h2>Run Automation</h2>
+                        <h2>Configure Automation</h2>
                         <form
                             className={styles.runForm}
                             onSubmit={(e) => {
@@ -1364,7 +1417,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             )}
                             <div className={styles.runButtonsContainer}>
                                 <button type='submit'>
-                                    Run
+                                    Save
                                 </button>
                                 <button
                                     type="button"
@@ -1377,22 +1430,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             {automationRunning ? (
                                 <div className={styles.automationContainer}>
                                     <div className={styles.automationViewerText}>
-                                        <p>Automation is running...</p>
-                                    </div>
-                                    <div className={styles.viewBackend}>
-                                        <a
-                                            href={selectedServer}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            View Backend
-                                        </a>
+                                        <p>Automation is running on {server}...</p>
                                     </div>
                                     <button
                                         className={styles.stopAutomationButton}
                                         onClick={() => {
-                                            handleKillAutomation(server)
-                                            setAutomationRunning(false);
+                                            if (server) {
+                                                console.log(`Attempting to kill automation on: ${server} via Modal button.`);
+                                                handleKillAutomation(server);
+                                            } else {
+                                                toast.error("Server URL not available to stop automation from modal.");
+                                            }
                                         }}
                                     >
                                         Stop Automation

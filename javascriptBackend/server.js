@@ -247,7 +247,7 @@ const differentializeProductData = async (type, fileData) => {
     return products;
 };
 
-app.post('/close-browser', async (req, res) => {
+app.post('/kill-automation', async (req, res) => {
     try {
         const puppeteerScript = loadPuppeteerScript('automation', 'DSF_product_edit.js');
         await puppeteerScript.closeBrowser();
