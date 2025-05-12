@@ -1219,24 +1219,24 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
     };
 
-    const handleCloseBrowser = async (server: string) => {
+    const handleKillAutomation = async (server: string) => {
         try {
-            const response = await fetch(`${server}/close-browser`, {
+            const response = await fetch(`${server}/kill-automation`, {
                 method: 'POST',
             })
 
             if (response.ok) {
-                console.log('Browser closed successfully');
+                console.log('Automation stopped successfully');
             } else {
-                console.error('Failed to close the browser:', response.statusText);
+                console.error('Failed to stop automation:', response.statusText);
             }
 
             const result = await response.json();
             console.log('Result:', result);
             alert(result.message);
         } catch (error) {
-            console.error('Error closing the browser:', error);
-            alert('Error closing the browser');
+            console.error('Error closing the automation:', error);
+            alert('Error closing the automation');
         }
     };
 
@@ -1389,9 +1389,13 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                         </a>
                                     </div>
                                     <button
-                                        onClick={() => handleCloseBrowser(server)}
+                                        className={styles.stopAutomationButton}
+                                        onClick={() => {
+                                            handleKillAutomation(server)
+                                            setAutomationRunning(false);
+                                        }}
                                     >
-                                        Close Browser
+                                        Stop Automation
                                     </button>
                                 </div>
                             ) : (

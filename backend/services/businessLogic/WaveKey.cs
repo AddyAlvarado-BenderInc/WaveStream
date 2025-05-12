@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Threading;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DotNetEnv;
@@ -24,6 +25,7 @@ public class Wavekey
 
     private IBrowser? browser;
     private IPlaywright? playwright;
+    private CancellationTokenSource? _automationCts;
 
     public Wavekey(ILogger<Wavekey> logger)
     {
@@ -533,7 +535,8 @@ public class Wavekey
         foreach (var p in products)
         {
             var iconContent =
-                p["Icon"] is JObject iconObj
+                p != null
+                && p["Icon"] is JObject iconObj
                 && iconObj["Package"] is JObject packageObj
                 && packageObj["content"] is JObject contentObj
                     ? contentObj
@@ -596,71 +599,85 @@ public class Wavekey
                         })
                     );
                 }
-            }
 
-            var pdfContent =
-                p["PDFUploadName"] is JObject pdfObj
-                && pdfObj != null
-                && pdfObj["Package"] is JObject pdfPackageObj
-                && pdfPackageObj["content"] is JObject pdfContentObj
-                    ? pdfContentObj
-                    : null;
+                var pdfContent =
+                    p != null
+                    && p["PDFUploadName"] is JObject pdfObj
+                    && pdfObj["Package"] is JObject pdfPackageObj
+                    && pdfPackageObj["content"] is JObject pdfContentObj
+                        ? pdfContentObj
+                        : null;
 
-            if (pdfContent != null)
-            {
-                var pdfFilenames = (pdfContent["filename"] as JArray)?.ToObject<List<string>>();
-                var pdfUrls = (pdfContent["url"] as JArray)?.ToObject<List<string>>();
-                if (
-                    pdfFilenames != null
-                    && pdfUrls != null
-                    && pdfFilenames.Count == pdfUrls.Count
-                    && pdfFilenames.Any()
-                )
-                {
-                    logger.LogInformation(
-                        "Processing PDFs for Product: {ProductName}",
-                        (string?)p?["ItemName"] ?? "Unknown"
-                    );
-                    for (int i = 0; i < pdfUrls.Count; i++)
+                if (pdfContent != null)
+                    if (pdfContent != null)
                     {
-                        allDownloadTasks.Add(
-                            DownloadFileAsync(pdfUrls[i], Path.Combine(pdfsDir, pdfFilenames[i]))
-                        );
-                    }
-                    allDownloadTasks.Add(
-                        Task.Run(() =>
+                        var pdfFilenames = (pdfContent["filename"] as JArray)?.ToObject<
+                            List<string>
+                        >();
+                        var pdfUrls = (pdfContent["url"] as JArray)?.ToObject<List<string>>();
+                        if (
+                            pdfFilenames != null
+                            && pdfUrls != null
+                            && pdfFilenames.Count == pdfUrls.Count
+                            && pdfFilenames.Any()
+                        )
                         {
-                            try
+                            logger.LogInformation(
+                                "Processing PDFs for Product: {ProductName}",
+                                (string?)p?["ItemName"] ?? "Unknown"
+                            );
+                            for (int i = 0; i < pdfUrls.Count; i++)
                             {
-                                if (p != null)
-                                {
-                                    p["PDFUploadName"] = JToken.FromObject(
-                                        new { Composite = pdfFilenames }
-                                    );
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.LogWarning(
-                                    ex,
-                                    "Failed to transform PDFUploadName field for {ProductName}",
-                                    (string?)p?["ItemName"] ?? "Unknown"
+                                allDownloadTasks.Add(
+                                    DownloadFileAsync(
+                                        pdfUrls[i],
+                                        Path.Combine(pdfsDir, pdfFilenames[i])
+                                    )
                                 );
                             }
-                        })
-                    );
-                }
+                            allDownloadTasks.Add(
+                                Task.Run(() =>
+                                {
+                                    try
+                                    {
+                                        if (p != null)
+                                        {
+                                            p["PDFUploadName"] = JToken.FromObject(
+                                                new { Composite = pdfFilenames }
+                                            );
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logger.LogWarning(
+                                            ex,
+                                            "Failed to transform PDFUploadName field for {ProductName}",
+                                            (string?)p?["ItemName"] ?? "Unknown"
+                                        );
+                                    }
+                                })
+                            );
+                        }
+                    }
             }
-        }
-        try
-        {
-            await Task.WhenAll(allDownloadTasks);
-            logger.LogInformation("All file downloads/transformations completed for JSON data.");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "One or more download/transformation tasks failed for JSON data.");
-            throw new Exception("Failed during file download/transformation phase for JSON.", ex);
+            try
+            {
+                await Task.WhenAll(allDownloadTasks);
+                logger.LogInformation(
+                    "All file downloads/transformations completed for JSON data."
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "One or more download/transformation tasks failed for JSON data."
+                );
+                throw new Exception(
+                    "Failed during file download/transformation phase for JSON.",
+                    ex
+                );
+            }
         }
     }
 
@@ -772,8 +789,11 @@ public class Wavekey
         }
     }
 
-    private async Task ExecuteAutomationAsync(List<dynamic> products, string? runOption, string? threadCount)
-    
+    private async Task ExecuteAutomationAsync(
+        List<dynamic> products,
+        string? runOption,
+        string? threadCount
+    )
     {
         logger.LogInformation(
             "Executing automation for {ProductCount} products with RunOption: {RunOption}...",
@@ -784,6 +804,8 @@ public class Wavekey
         string benderUsername = Env.GetString("BENDER_USERNAME", "DEFAULT_USERNAME");
         string benderPassword = Env.GetString("BENDER_PASSWORD", "DEFAULT_PASSWORD");
         string benderSite = Env.GetString("BENDER_ADMIN_WEBSITE", "DEFAULT_SITE");
+        string DevAUsername = Env.GetString("DEVA_USERNAME", "DEFAULT_DEV_USERNAME");
+        string DevAPassword = Env.GetString("DEVA_PASSWORD", "DEFAULT_DEV_PASSWORD");
 
         if (
             benderUsername == "DEFAULT_USERNAME"
@@ -796,89 +818,256 @@ public class Wavekey
             );
         }
 
-        IPage? page = null;
-        IBrowserContext? context = null;
+        IPage? initialPage = null;
+        IBrowserContext? mainContext = null;
+
+        _automationCts?.Dispose();
+        _automationCts = new CancellationTokenSource();
+        var cancellationToken = _automationCts.Token;
 
         try
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (playwright == null)
             {
+                logger.LogInformation("Initializing Playwright...");
                 playwright = await Playwright.CreateAsync();
             }
+            cancellationToken.ThrowIfCancellationRequested();
             if (browser == null || !browser.IsConnected)
             {
+                logger.LogInformation("Launching browser...");
                 var launchOptions = new BrowserTypeLaunchOptions { Headless = false };
                 browser = await playwright.Chromium.LaunchAsync(launchOptions);
             }
 
-            context = await browser.NewContextAsync(new BrowserNewContextOptions());
+            cancellationToken.ThrowIfCancellationRequested();
+            logger.LogInformation("Creating new browser context...");
+            mainContext = await browser.NewContextAsync(new BrowserNewContextOptions());
+            initialPage = await mainContext.NewPageAsync();
 
-            page = await context.NewPageAsync();
+            logger.LogInformation("Navigating to login page: {BenderSite}", benderSite);
+            await initialPage.GotoAsync(
+                benderSite,
+                new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 }
+            );
 
-            logger.LogInformation("Navigating to login page...");
-            await page.GotoAsync(benderSite);
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            cancellationToken.ThrowIfCancellationRequested();
+            logger.LogInformation("Attempting to fill login form...");
+            await initialPage.FillAsync(
+                "input[ng-model=\"data.UserName\"]",
+                benderUsername,
+                new PageFillOptions { Timeout = 30000 }
+            );
+            await initialPage.FillAsync(
+                "#loginPwd",
+                benderPassword,
+                new PageFillOptions { Timeout = 30000 }
+            );
+            logger.LogInformation("Clicking login button...");
+            await initialPage.ClickAsync(".login-button", new PageClickOptions { Timeout = 30000 });
 
-            await page.FillAsync("input[ng-model=\"data.UserName\"]", benderUsername);
-            await page.FillAsync("#loginPwd", benderPassword);
-            await page.ClickAsync(".login-button");
-            await page.WaitForNavigationAsync(new PageWaitForNavigationOptions { WaitUntil = WaitUntilState.NetworkIdle });
+            await initialPage.WaitForNavigationAsync(
+                new PageWaitForNavigationOptions
+                {
+                    WaitUntil = WaitUntilState.NetworkIdle,
+                    Timeout = 60000,
+                }
+            );
 
-            if (page.Url.Contains("Login", StringComparison.OrdinalIgnoreCase))
+            if (initialPage.Url.Contains("Login", StringComparison.OrdinalIgnoreCase))
             {
-                logger.LogError("Login failed. Current URL: {Url}", page.Url);
+                logger.LogError("Login failed. Current URL: {Url}", initialPage.Url);
                 throw new Exception("Login failed. Please check credentials or site status.");
             }
-            logger.LogInformation("Logged in successfully!");
+            logger.LogInformation("Logged in successfully! Current URL: {Url}", initialPage.Url);
+            cancellationToken.ThrowIfCancellationRequested();
 
             runAuto automation = new runAuto();
-            await automation.RunAutomation(products, page, browser, threadCount);
+            if (!string.IsNullOrEmpty(threadCount) && products.Any())
+            {
+                await automation.RunAutomation(
+                    products,
+                    initialPage,
+                    browser,
+                    threadCount,
+                    cancellationToken
+                );
+            }
+            else if (!products.Any())
+            {
+                logger.LogInformation("No products to process. Skipping RunAutomation call.");
+            }
 
-            logger.LogInformation("Automation completed successfully.");
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                logger.LogInformation("Automation completed successfully.");
+            }
+            else
+            {
+                logger.LogInformation("Automation was cancelled during execution.");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("Automation execution was cancelled.");
         }
         catch (TimeoutException tex)
         {
             logger.LogError(tex, "Timeout during automation.");
-            throw new Exception("Automation failed due to a timeout.", tex);
         }
         catch (PlaywrightException pex)
         {
             logger.LogError(pex, "Playwright error during automation.");
-            throw new Exception("Automation failed due to a Playwright error.", pex);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during automation execution.");
-            throw;
         }
         finally
         {
-            if (context != null)
+            logger.LogInformation("Starting cleanup in ExecuteAutomationAsync finally block...");
+
+            if (initialPage != null && !initialPage.IsClosed)
             {
-                await context.CloseAsync();
-                logger.LogInformation("Playwright browser context closed.");
+                try
+                {
+                    logger.LogInformation("Closing initial page...");
+                    await initialPage.CloseAsync();
+                    logger.LogInformation("Initial page closed.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Error closing initial page.");
+                }
+            }
+            if (mainContext != null)
+            {
+                try
+                {
+                    logger.LogInformation("Closing main browser context...");
+                    await mainContext.CloseAsync();
+                    logger.LogInformation("Main browser context closed.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Error closing main browser context.");
+                }
             }
 
-            if (browser != null)
+            if (_automationCts != null && _automationCts.IsCancellationRequested)
+            {
+                logger.LogInformation(
+                    "Cancellation was requested, ensuring browser and Playwright are closed."
+                );
+                if (browser != null && browser.IsConnected)
+                {
+                    try
+                    {
+                        await browser.CloseAsync();
+                        logger.LogInformation("Playwright browser closed due to cancellation.");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Error closing browser during cancellation cleanup.");
+                    }
+                    finally
+                    {
+                        browser = null;
+                    }
+                }
+                if (playwright != null)
+                {
+                    try
+                    {
+                        playwright.Dispose();
+                        logger.LogInformation("Playwright instance disposed due to cancellation.");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(
+                            ex,
+                            "Error disposing playwright during cancellation cleanup."
+                        );
+                    }
+                    finally
+                    {
+                        playwright = null;
+                    }
+                }
+            }
+
+            if (_automationCts != null)
+            {
+                _automationCts.Dispose();
+                _automationCts = null;
+                logger.LogInformation("Automation CancellationTokenSource disposed.");
+            }
+            logger.LogInformation("Cleanup in ExecuteAutomationAsync finally block completed.");
+        }
+    }
+
+    public async Task StopAutomationAsync()
+    {
+        if (_automationCts != null && !_automationCts.IsCancellationRequested)
+        {
+            logger.LogInformation("Processing request to stop automation...");
+            _automationCts.Cancel();
+            logger.LogInformation(
+                "Cancellation requested for ongoing automation. Tasks should begin to terminate."
+            );
+        }
+        else if (_automationCts != null && _automationCts.IsCancellationRequested)
+        {
+            logger.LogInformation("Automation cancellation was already requested.");
+        }
+        else
+        {
+            logger.LogInformation(
+                "No active automation to stop (CancellationTokenSource is null or already cancelled)."
+            );
+        }
+
+        if (browser != null && browser.IsConnected)
+        {
+            logger.LogInformation(
+                "Attempting to directly close browser as part of stop request..."
+            );
+            try
             {
                 await browser.CloseAsync();
                 browser = null;
-                logger.LogInformation("Playwright browser closed.");
+                logger.LogInformation("Playwright browser directly closed by StopAutomationAsync.");
             }
-            if (playwright != null)
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error during direct browser close in StopAutomationAsync.");
+            }
+        }
+        if (playwright != null)
+        {
+            try
             {
                 playwright.Dispose();
                 playwright = null;
-                logger.LogInformation("Playwright instance disposed.");
+                logger.LogInformation(
+                    "Playwright instance directly disposed by StopAutomationAsync."
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Error during direct playwright disposal in StopAutomationAsync."
+                );
             }
         }
     }
 
     public Task CloseAutomationBrowserAsync()
     {
-        logger.LogInformation(
-            "Processing request to close automation browser (Placeholder - closing handled in ExecuteAutomationAsync finally block)."
-        );
-        return Task.CompletedTask;
+        logger.LogInformation("CloseAutomationBrowserAsync called, invoking StopAutomationAsync.");
+        return StopAutomationAsync();
     }
 }

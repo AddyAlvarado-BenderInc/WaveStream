@@ -142,18 +142,18 @@ class Program
         );
 
         app.MapPost(
-            "/close-browser",
+            "/kill-automation",
             async (Wavekey wavekey, ILogger<Program> logger) =>
             {
                 try
                 {
-                    await wavekey.CloseAutomationBrowserAsync();
-                    logger.LogInformation("Close browser request processed.");
-                    return Results.Ok(new { message = "Browser close request processed." });
+                    await wavekey.StopAutomationAsync();
+                    logger.LogInformation("Stop automation request processed by endpoint.");
+                    return Results.Ok(new { message = "Automation stop request processed." });
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error processing /close-browser request.");
+                    logger.LogError(ex, "Error processing /kill-automation request.");
                     return Results.Problem("An internal server error occurred.", statusCode: 500);
                 }
             }

@@ -90,7 +90,7 @@
   gap: 15px;
 }
 
-.runModalContent form button {
+.runModalContent form button, .stopAutomationButton {
   padding: 5px 15px;
   cursor: pointer;
   margin: 0 5px;
@@ -103,7 +103,7 @@
   transition: background-color 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out;
 }
 
-.runModalContent form button:hover {
+.runModalContent form button:hover, .stopAutomationButton:hover {
   background-color: var(--button-primary-hover);
   color: var(--button-secondary-hover);
   border: 1px solid var(--button-secondary-hover);

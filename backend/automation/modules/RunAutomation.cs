@@ -16,21 +16,22 @@ class runAuto
         new ConcurrentQueue<Tuple<IPage, IBrowserContext, string, int>>();
 
     public async Task RunAutomation(
-        dynamic products,
+        List<dynamic> productList,
         IPage initialPage,
         IBrowser browser,
-        string threadCount
+        string threadCount,
+        CancellationToken cancellationToken
     )
     {
         string productListUrl = initialPage.Url;
         var initialCookies = await initialPage.Context.CookiesAsync();
-        int maxConcurrentProcessingTasks = threadCount != null ? int.Parse(threadCount) : 1;
+        int maxConcurrentProcessingTasks = int.TryParse(threadCount, out var tc) ? tc : 1;
         Console.WriteLine(
             $"Product list page URL: {productListUrl}. Retrieved {initialCookies.Count} cookies."
         );
 
         Console.WriteLine(
-            $"Total products to process: {products.Count}. Max concurrent processing tasks: {maxConcurrentProcessingTasks}"
+            $"Total products to process: {productList.Count}. Max concurrent processing tasks: {maxConcurrentProcessingTasks}"
         );
 
         processingSemaphore = new SemaphoreSlim(maxConcurrentProcessingTasks);
@@ -38,10 +39,14 @@ class runAuto
         int readyForSaveCount = 0;
         int savedCount = 0;
 
-        List<dynamic> productList = new List<dynamic>(products);
-
         for (int i = 0; i < productList.Count; i += maxConcurrentProcessingTasks)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Console.WriteLine("Cancellation requested before starting new batch processing.");
+                break;
+            }
+
             var batchProducts = productList.Skip(i).Take(maxConcurrentProcessingTasks).ToList();
             var batchProcessingTasks = new List<Task>();
 
@@ -51,7 +56,15 @@ class runAuto
 
             foreach (var product in batchProducts)
             {
-                await processingSemaphore.WaitAsync();
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Console.WriteLine(
+                        $"[Task] Cancellation requested before processing product: {product.ItemName?.ToString() ?? "Unknown Product"}. Halting current batch task creation."
+                    );
+                    break;
+                }
+
+                await processingSemaphore.WaitAsync(cancellationToken);
 
                 batchProcessingTasks.Add(
                     Task.Run(async () =>
@@ -66,10 +79,13 @@ class runAuto
 
                         try
                         {
+                            cancellationToken.ThrowIfCancellationRequested();
                             Console.WriteLine(
                                 $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] Acquired PROCESSING semaphore for: {currentProductName}"
                             );
-                            taskContext = await browser.NewContextAsync();
+                            taskContext = await browser.NewContextAsync(
+                                new BrowserNewContextOptions()
+                            );
                             if (initialCookies.Any())
                                 await taskContext.AddCookiesAsync(
                                     initialCookies.Select(c => new Cookie
@@ -85,6 +101,7 @@ class runAuto
                                     })
                                 );
 
+                            cancellationToken.ThrowIfCancellationRequested();
                             productListPage = await taskContext.NewPageAsync();
                             Console.WriteLine(
                                 $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] Navigating to product list page for {currentProductName}"
@@ -94,8 +111,6 @@ class runAuto
                                 new PageGotoOptions
                                 {
                                     WaitUntil = WaitUntilState.DOMContentLoaded,
-                                    // If DOMContentLoaded is too fast and causes issues, try Load
-                                    // WaitUntil = WaitUntilState.Load,
                                     Timeout = 30000,
                                 }
                             );
@@ -103,6 +118,7 @@ class runAuto
                                 $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] Navigation complete for {currentProductName}"
                             );
 
+                            cancellationToken.ThrowIfCancellationRequested();
                             Console.WriteLine(
                                 $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] Calling ProcessProductsAsync for {currentProductName}"
                             );
@@ -110,8 +126,19 @@ class runAuto
                             detailPageToSave = await processProducts.ProcessProductsAsync(
                                 product,
                                 productListPage,
-                                currentTaskId
+                                currentTaskId,
+                                cancellationToken
                             );
+
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                Console.WriteLine(
+                                    $"[Task {currentTaskId}] Cancellation after ProcessProductsAsync for {currentProductName}. Not queueing."
+                                );
+                                if (detailPageToSave != null && !detailPageToSave.IsClosed)
+                                    await detailPageToSave.CloseAsync();
+                                return;
+                            }
 
                             if (detailPageToSave != null)
                             {
@@ -134,7 +161,21 @@ class runAuto
                                     $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] Product {currentProductName} was skipped or failed processing before save."
                                 );
                                 Interlocked.Increment(ref processedCount);
+                                if (taskContext != null)
+                                {
+                                    await taskContext.CloseAsync();
+                                    taskContext = null;
+                                }
                             }
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            Console.WriteLine(
+                                $"[Task {currentTaskId}] Task for {currentProductName} was cancelled during processing."
+                            );
+                            Interlocked.Increment(ref processedCount);
+                            if (detailPageToSave != null && !detailPageToSave.IsClosed)
+                                await detailPageToSave.CloseAsync();
                         }
                         catch (Exception ex)
                         {
@@ -142,6 +183,8 @@ class runAuto
                                 $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] Error in processing task for {currentProductName}: {ex.ToString()}"
                             );
                             Interlocked.Increment(ref processedCount);
+                            if (detailPageToSave != null && !detailPageToSave.IsClosed)
+                                await detailPageToSave.CloseAsync();
                         }
                         finally
                         {
@@ -168,7 +211,7 @@ class runAuto
                                 catch (Exception ex)
                                 {
                                     Console.WriteLine(
-                                        $"[Task {currentTaskId}] Error closing taskContext: {ex.Message}"
+                                        $"[Task {currentTaskId}] Error closing taskContext in finally: {ex.Message}"
                                     );
                                 }
                             }
@@ -189,23 +232,55 @@ class runAuto
             }
 
             await Task.WhenAll(batchProcessingTasks);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Console.WriteLine(
+                    $"Cancellation detected after batch {i / maxConcurrentProcessingTasks + 1} processing. Draining save queue without saving."
+                );
+                while (pagesToSaveQueue.TryDequeue(out var itemToDiscard))
+                {
+                    Console.WriteLine(
+                        $"[Cancellation] Discarding {itemToDiscard.Item3} from save queue."
+                    );
+                    if (itemToDiscard.Item1 != null && !itemToDiscard.Item1.IsClosed)
+                        await itemToDiscard.Item1.CloseAsync();
+                    if (itemToDiscard.Item2 != null)
+                        await itemToDiscard.Item2.CloseAsync();
+                }
+                break;
+            }
+
             Console.WriteLine(
                 $"Processing phase for batch {i / maxConcurrentProcessingTasks + 1} completed. {pagesToSaveQueue.Count} items currently in save queue."
             );
 
             while (pagesToSaveQueue.TryDequeue(out var saveCandidate))
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Console.WriteLine(
+                        $"[SaveTask] Cancellation requested before saving {saveCandidate.Item3}. Discarding."
+                    );
+                    if (saveCandidate.Item1 != null && !saveCandidate.Item1.IsClosed)
+                        await saveCandidate.Item1.CloseAsync();
+                    if (saveCandidate.Item2 != null)
+                        await saveCandidate.Item2.CloseAsync();
+                    continue;
+                }
+
                 IPage detailPage = saveCandidate.Item1;
                 IBrowserContext contextToClose = saveCandidate.Item2;
                 string productName = saveCandidate.Item3;
                 int originalTaskId = saveCandidate.Item4;
 
-                await saveSemaphore.WaitAsync();
+                await saveSemaphore.WaitAsync(cancellationToken);
                 Console.WriteLine(
                     $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Acquired SAVE semaphore for: {productName}"
                 );
                 try
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (detailPage != null && !detailPage.IsClosed)
                     {
                         Console.WriteLine(
@@ -215,15 +290,12 @@ class runAuto
                             .Locator("input[value=\"Save & Exit\"]")
                             .ClickAsync(new LocatorClickOptions { Timeout = 20000 });
 
-                        int closePollingTimeoutMs = 15000;
-                        int pollIntervalMs = 500;
                         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                        while (
-                            stopwatch.ElapsedMilliseconds < closePollingTimeoutMs
-                            && !detailPage.IsClosed
-                        )
+                        while (stopwatch.ElapsedMilliseconds < 15000 && !detailPage.IsClosed)
                         {
-                            await Task.Delay(pollIntervalMs);
+                            if (cancellationToken.IsCancellationRequested)
+                                break;
+                            await Task.Delay(500, cancellationToken);
                         }
                         stopwatch.Stop();
 
@@ -239,7 +311,8 @@ class runAuto
                             Console.WriteLine(
                                 $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Detail page for {productName} did NOT close. Forcibly closing."
                             );
-                            await detailPage.CloseAsync();
+                            if (!detailPage.IsClosed)
+                                await detailPage.CloseAsync();
                         }
                     }
                     else
@@ -248,6 +321,14 @@ class runAuto
                             $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Detail page for {productName} was null or already closed before save attempt."
                         );
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.WriteLine(
+                        $"[SaveTask (from Task {originalTaskId})] Save for {productName} cancelled."
+                    );
+                    if (detailPage != null && !detailPage.IsClosed)
+                        await detailPage.CloseAsync();
                 }
                 catch (Exception ex)
                 {
@@ -286,7 +367,6 @@ class runAuto
                             );
                         }
                     }
-
                     Interlocked.Increment(ref processedCount);
                     saveSemaphore.Release();
                     Console.WriteLine(
@@ -294,25 +374,22 @@ class runAuto
                     );
                 }
             }
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Console.WriteLine(
+                    "Cancellation detected after save loop. Exiting batch processing."
+                );
+                break;
+            }
             Console.WriteLine(
                 $"Save loop for batch {i / maxConcurrentProcessingTasks + 1} completed."
             );
         }
 
-        await initialPage.CloseAsync();
-
         Console.WriteLine(
-            $"Automation run completed. Products processed: {processedCount}. Products successfully saved: {savedCount}."
+            $"Automation run finished. Products processed: {processedCount}. Products successfully saved: {savedCount}."
         );
-        if (processedCount == productList.Count && readyForSaveCount == savedCount)
-        {
-            Console.WriteLine("All products processed and saved successfully where applicable.");
-        }
-        else
-        {
-            Console.WriteLine(
-                $"Some products may have failed or were skipped. Total Attempted: {productList.Count}, Processed (incl. skips/fails before save): {processedCount}, Queued for Save: {readyForSaveCount}, Successfully Saved: {savedCount}"
-            );
-        }
+        if (cancellationToken.IsCancellationRequested)
+            Console.WriteLine("Automation was cancelled by request.");
     }
 }

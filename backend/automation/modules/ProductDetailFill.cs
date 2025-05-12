@@ -37,7 +37,11 @@ namespace backend.automation.modules
 
         public async Task FillLongDescription(IPage page, string description, string productName)
         {
-            var textarea = await page.QuerySelectorAsync("textarea.reTextArea");
+            string htmlButton =
+                "#ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_ModesWrapper .reMode_html";
+            string textareaSelector =
+                "#ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescriptionWrapper textarea.reTextArea";
+
             try
             {
                 if (description == null)
@@ -47,17 +51,23 @@ namespace backend.automation.modules
                     );
                     return;
                 }
-
                 Console.WriteLine($"-- Filling long description for {productName} --");
                 await MoveToDetailsTab(page);
-                if (textarea != null)
+                await page.Locator(htmlButton).ClickAsync();
+                Console.WriteLine("Switched to HTML mode.");
+
+                var textareaLocator = page.Locator(textareaSelector);
+
+                if (await textareaLocator.IsVisibleAsync())
                 {
-                    await textarea.FillAsync(description);
+                    await textareaLocator.FillAsync(description);
                     Console.WriteLine("Long description filled successfully.");
                 }
                 else
                 {
-                    throw new Exception("Textarea for long description not found!");
+                    throw new Exception(
+                        $"Textarea for long description (selector: {textareaSelector}) not found or not visible after switching to HTML mode!"
+                    );
                 }
             }
             catch (Exception ex)
