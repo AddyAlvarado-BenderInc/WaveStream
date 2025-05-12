@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { tableCellData, ProductManager } from "../../../../types/productManager";
-import { setIsRunning } from "@/app/store/productManagerSlice";
+import { signalRLogService } from "@/app/services/signalRService";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import { IGlobalVariablePackage } from "../../../../types/productManager";

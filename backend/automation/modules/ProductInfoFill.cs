@@ -80,7 +80,8 @@ namespace backend.automation.modules
                 Console.WriteLine($"Display name found: {displayName}");
                 if (!ProductQueriedDisplayName(page, displayName) && displayName != "")
                 {
-                    string displayNameSelector = "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$_StorefrontName\"]";
+                    string displayNameSelector =
+                        "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$_StorefrontName\"]";
                     await page.Locator(displayNameSelector).FillAsync(displayName);
                     Console.WriteLine($"Display name filled: {displayName}");
                 }
@@ -95,7 +96,8 @@ namespace backend.automation.modules
                 Console.WriteLine($"Item template found: {itemTemplate}");
                 if (!ProductQueriedItemTemplate(page, itemTemplate) && itemTemplate != "")
                 {
-                    string itemTemplateSelector = "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$txtMISEstimateId\"]";
+                    string itemTemplateSelector =
+                        "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$txtMISEstimateId\"]";
                     await page.Locator(itemTemplateSelector).FillAsync(itemTemplate);
                     Console.WriteLine($"Item template filled: {itemTemplate}");
                 }
@@ -107,10 +109,10 @@ namespace backend.automation.modules
 
             if (!string.IsNullOrEmpty(briefDescription))
             {
-                Console.WriteLine($"Brief description found: {briefDescription}");
+                Console.WriteLine($"Brief description found!");
                 await secondHtmlItem.ClickAsync();
                 await page.Locator(textAreaSelector).FillAsync(briefDescription);
-                Console.WriteLine($"Brief description filled: {briefDescription}");
+                Console.WriteLine($"Brief description filled for {productName}!");
             }
             else
             {

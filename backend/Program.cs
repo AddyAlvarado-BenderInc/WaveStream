@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using backend.Hubs;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,12 +16,17 @@ class Program
         builder.Services.AddSingleton<DatabaseService>();
         builder.Services.AddSingleton<Wavekey>();
         builder.Services.AddLogging(configure => configure.AddConsole());
+        builder.Services.AddSignalR();
 
         builder.Services.AddCors(options =>
         {
             options.AddDefaultPolicy(policy =>
             {
-                policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                policy
+                    .WithOrigins("http://localhost:3000")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         });
 
@@ -158,6 +164,8 @@ class Program
                 }
             }
         );
+
+        app.MapHub<LogHub>("/logHub");
 
         app.Run();
     }

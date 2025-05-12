@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Threading;
+using backend.Hubs;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DotNetEnv;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using Newtonsoft.Json;
@@ -18,6 +20,7 @@ public class Wavekey
     private readonly string pdfsDir;
     private readonly string uploadsDir;
     private readonly ILogger<Wavekey> logger;
+    private readonly IHubContext<LogHub> _logHubContext;
     private static readonly HttpClient httpClient = new HttpClient();
     private static ILogger _staticLogger = null!;
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> _fileDownloadLocks =
@@ -27,10 +30,11 @@ public class Wavekey
     private IPlaywright? playwright;
     private CancellationTokenSource? _automationCts;
 
-    public Wavekey(ILogger<Wavekey> logger)
+    public Wavekey(ILogger<Wavekey> logger, IHubContext<LogHub> logHubContext)
     {
         this.logger = logger;
         _staticLogger = logger;
+        this._logHubContext = logHubContext;
         baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
         iconsDir = Path.Combine(baseDirectory, "icons");
         pdfsDir = Path.Combine(baseDirectory, "pdfs");
@@ -795,11 +799,10 @@ public class Wavekey
         string? threadCount
     )
     {
-        logger.LogInformation(
-            "Executing automation for {ProductCount} products with RunOption: {RunOption}...",
-            products.Count,
-            runOption ?? "N/A"
-        );
+        var logMessage =
+            $"Executing automation for {products.Count} products with RunOption: {runOption ?? "N/A"}...";
+        logger.LogInformation(logMessage);
+        await _logHubContext.Clients.All.SendAsync("ReceiveLogEntry", $"[Wavekey] {logMessage}");
 
         string benderUsername = Env.GetString("BENDER_USERNAME", "DEFAULT_USERNAME");
         string benderPassword = Env.GetString("BENDER_PASSWORD", "DEFAULT_PASSWORD");
@@ -813,8 +816,12 @@ public class Wavekey
             || benderSite == "DEFAULT_SITE"
         )
         {
-            logger.LogWarning(
-                "One or more environment variables (BENDER_USERNAME, BENDER_PASSWORD, BENDER_ADMIN_WEBSITE) not found or using defaults."
+            logMessage =
+                "One or more environment variables (BENDER_USERNAME, BENDER_PASSWORD, BENDER_ADMIN_WEBSITE) not found or using defaults.";
+            logger.LogWarning(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey WARNING] {logMessage}"
             );
         }
 
@@ -831,30 +838,56 @@ public class Wavekey
 
             if (playwright == null)
             {
-                logger.LogInformation("Initializing Playwright...");
+                logMessage = "Initializing Playwright...";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
+                );
                 playwright = await Playwright.CreateAsync();
             }
             cancellationToken.ThrowIfCancellationRequested();
             if (browser == null || !browser.IsConnected)
             {
-                logger.LogInformation("Launching browser...");
-                var launchOptions = new BrowserTypeLaunchOptions { Headless = false };
+                logMessage = "Launching browser...";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
+                );
+                // We can use either headless or non-headless mode based on the environment
+                var launchOptions = new BrowserTypeLaunchOptions { Headless = true };
                 browser = await playwright.Chromium.LaunchAsync(launchOptions);
             }
 
             cancellationToken.ThrowIfCancellationRequested();
-            logger.LogInformation("Creating new browser context...");
+            logMessage = "Creating new browser context...";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
             mainContext = await browser.NewContextAsync(new BrowserNewContextOptions());
             initialPage = await mainContext.NewPageAsync();
 
-            logger.LogInformation("Navigating to login page: {BenderSite}", benderSite);
+            logMessage = $"Navigating to login page: {benderSite}";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
             await initialPage.GotoAsync(
                 benderSite,
                 new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60000 }
             );
 
             cancellationToken.ThrowIfCancellationRequested();
-            logger.LogInformation("Attempting to fill login form...");
+            logMessage = "Attempting to fill login form...";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
             await initialPage.FillAsync(
                 "input[ng-model=\"data.UserName\"]",
                 benderUsername,
@@ -865,7 +898,12 @@ public class Wavekey
                 benderPassword,
                 new PageFillOptions { Timeout = 30000 }
             );
-            logger.LogInformation("Clicking login button...");
+            logMessage = "Clicking login button...";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
             await initialPage.ClickAsync(".login-button", new PageClickOptions { Timeout = 30000 });
 
             await initialPage.WaitForNavigationAsync(
@@ -878,13 +916,25 @@ public class Wavekey
 
             if (initialPage.Url.Contains("Login", StringComparison.OrdinalIgnoreCase))
             {
-                logger.LogError("Login failed. Current URL: {Url}", initialPage.Url);
+                logMessage = $"Login failed. Current URL: {initialPage.Url}";
+                logger.LogError(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey ERROR] {logMessage}"
+                );
                 throw new Exception("Login failed. Please check credentials or site status.");
             }
-            logger.LogInformation("Logged in successfully! Current URL: {Url}", initialPage.Url);
+            logMessage = $"Logged in successfully! Current URL: {initialPage.Url}";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
             cancellationToken.ThrowIfCancellationRequested();
 
             runAuto automation = new runAuto();
+            Func<string, Task> signalRLogger = async (msg) => await _logHubContext.Clients.All.SendAsync("ReceiveLogEntry", msg);
+
             if (!string.IsNullOrEmpty(threadCount) && products.Any())
             {
                 await automation.RunAutomation(
@@ -892,85 +942,170 @@ public class Wavekey
                     initialPage,
                     browser,
                     threadCount,
-                    cancellationToken
+                    cancellationToken,
+                    signalRLogger
                 );
             }
             else if (!products.Any())
             {
-                logger.LogInformation("No products to process. Skipping RunAutomation call.");
+                logMessage = "No products to process. Skipping RunAutomation call.";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
+                );
             }
 
             if (!cancellationToken.IsCancellationRequested)
             {
-                logger.LogInformation("Automation completed successfully.");
+                logMessage = "Automation completed successfully.";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
+                );
             }
             else
             {
-                logger.LogInformation("Automation was cancelled during execution.");
+                logMessage = "Automation was cancelled during execution.";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
+                );
             }
         }
         catch (OperationCanceledException)
         {
-            logger.LogInformation("Automation execution was cancelled.");
+            logMessage = "Automation execution was cancelled.";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
         }
         catch (TimeoutException tex)
         {
-            logger.LogError(tex, "Timeout during automation.");
+            logMessage = "Timeout during automation.";
+            logger.LogError(tex, logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey ERROR] {logMessage}"
+            );
         }
         catch (PlaywrightException pex)
         {
-            logger.LogError(pex, "Playwright error during automation.");
+            logMessage = "Playwright error during automation.";
+            logger.LogError(pex, logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey ERROR] {logMessage}"
+            );
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error during automation execution.");
+            logMessage = "Error during automation execution.";
+            logger.LogError(ex, logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey ERROR] {logMessage}"
+            );
         }
         finally
         {
-            logger.LogInformation("Starting cleanup in ExecuteAutomationAsync finally block...");
+            logMessage = "Starting cleanup in ExecuteAutomationAsync finally block...";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
 
             if (initialPage != null && !initialPage.IsClosed)
             {
                 try
                 {
-                    logger.LogInformation("Closing initial page...");
+                    logMessage = "Closing initial page...";
+                    logger.LogInformation(logMessage);
+                    await _logHubContext.Clients.All.SendAsync(
+                        "ReceiveLogEntry",
+                        $"[Wavekey] {logMessage}"
+                    );
                     await initialPage.CloseAsync();
-                    logger.LogInformation("Initial page closed.");
+                    logMessage = "Initial page closed.";
+                    logger.LogInformation(logMessage);
+                    await _logHubContext.Clients.All.SendAsync(
+                        "ReceiveLogEntry",
+                        $"[Wavekey] {logMessage}"
+                    );
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Error closing initial page.");
+                    logMessage = "Error closing initial page.";
+                    logger.LogWarning(ex, logMessage);
+                    await _logHubContext.Clients.All.SendAsync(
+                        "ReceiveLogEntry",
+                        $"[Wavekey WARNING] {logMessage}"
+                    );
                 }
             }
             if (mainContext != null)
             {
                 try
                 {
-                    logger.LogInformation("Closing main browser context...");
+                    logMessage = "Closing main browser context...";
+                    logger.LogInformation(logMessage);
+                    await _logHubContext.Clients.All.SendAsync(
+                        "ReceiveLogEntry",
+                        $"[Wavekey] {logMessage}"
+                    );
                     await mainContext.CloseAsync();
-                    logger.LogInformation("Main browser context closed.");
+                    logMessage = "Main browser context closed.";
+                    logger.LogInformation(logMessage);
+                    await _logHubContext.Clients.All.SendAsync(
+                        "ReceiveLogEntry",
+                        $"[Wavekey] {logMessage}"
+                    );
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Error closing main browser context.");
+                    logMessage = "Error closing main browser context.";
+                    logger.LogWarning(ex, logMessage);
+                    await _logHubContext.Clients.All.SendAsync(
+                        "ReceiveLogEntry",
+                        $"[Wavekey WARNING] {logMessage}"
+                    );
                 }
             }
 
             if (_automationCts != null && _automationCts.IsCancellationRequested)
             {
-                logger.LogInformation(
-                    "Cancellation was requested, ensuring browser and Playwright are closed."
+                logMessage =
+                    "Cancellation was requested, ensuring browser and Playwright are closed.";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
                 );
                 if (browser != null && browser.IsConnected)
                 {
                     try
                     {
                         await browser.CloseAsync();
-                        logger.LogInformation("Playwright browser closed due to cancellation.");
+                        logMessage = "Playwright browser closed due to cancellation.";
+                        logger.LogInformation(logMessage);
+                        await _logHubContext.Clients.All.SendAsync(
+                            "ReceiveLogEntry",
+                            $"[Wavekey] {logMessage}"
+                        );
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "Error closing browser during cancellation cleanup.");
+                        logMessage = "Error closing browser during cancellation cleanup.";
+                        logger.LogWarning(ex, logMessage);
+                        await _logHubContext.Clients.All.SendAsync(
+                            "ReceiveLogEntry",
+                            $"[Wavekey WARNING] {logMessage}"
+                        );
                     }
                     finally
                     {
@@ -982,13 +1117,20 @@ public class Wavekey
                     try
                     {
                         playwright.Dispose();
-                        logger.LogInformation("Playwright instance disposed due to cancellation.");
+                        logMessage = "Playwright instance disposed due to cancellation.";
+                        logger.LogInformation(logMessage);
+                        await _logHubContext.Clients.All.SendAsync(
+                            "ReceiveLogEntry",
+                            $"[Wavekey] {logMessage}"
+                        );
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(
-                            ex,
-                            "Error disposing playwright during cancellation cleanup."
+                        logMessage = "Error disposing playwright during cancellation cleanup.";
+                        logger.LogWarning(ex, logMessage);
+                        await _logHubContext.Clients.All.SendAsync(
+                            "ReceiveLogEntry",
+                            $"[Wavekey WARNING] {logMessage}"
                         );
                     }
                     finally
@@ -1002,64 +1144,118 @@ public class Wavekey
             {
                 _automationCts.Dispose();
                 _automationCts = null;
-                logger.LogInformation("Automation CancellationTokenSource disposed.");
+                logMessage = "Automation CancellationTokenSource disposed.";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
+                );
             }
-            logger.LogInformation("Cleanup in ExecuteAutomationAsync finally block completed.");
+            logMessage = "Cleanup in ExecuteAutomationAsync finally block completed.";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
         }
     }
 
     public async Task StopAutomationAsync()
     {
+        string logMessage;
         if (_automationCts != null && !_automationCts.IsCancellationRequested)
         {
-            logger.LogInformation("Processing request to stop automation...");
+            logMessage = "Processing request to stop automation...";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
             _automationCts.Cancel();
-            logger.LogInformation(
-                "Cancellation requested for ongoing automation. Tasks should begin to terminate."
+            logMessage =
+                "Cancellation requested for ongoing automation. Tasks should begin to terminate.";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
             );
         }
         else if (_automationCts != null && _automationCts.IsCancellationRequested)
         {
-            logger.LogInformation("Automation cancellation was already requested.");
+            logMessage = "Automation cancellation was already requested.";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
         }
         else
         {
-            logger.LogInformation(
-                "No active automation to stop (CancellationTokenSource is null or already cancelled)."
+            logMessage =
+                "No active automation to stop (CancellationTokenSource is null or already cancelled).";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
             );
         }
 
         if (browser != null && browser.IsConnected)
         {
-            logger.LogInformation(
-                "Attempting to directly close browser as part of stop request..."
+            logMessage = "Attempting to directly close browser as part of stop request...";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
             );
             try
             {
                 await browser.CloseAsync();
                 browser = null;
-                logger.LogInformation("Playwright browser directly closed by StopAutomationAsync.");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Error during direct browser close in StopAutomationAsync.");
-            }
-        }
-        if (playwright != null)
-        {
-            try
-            {
-                playwright.Dispose();
-                playwright = null;
-                logger.LogInformation(
-                    "Playwright instance directly disposed by StopAutomationAsync."
+                logMessage = "Playwright browser directly closed by StopAutomationAsync.";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
                 );
             }
             catch (Exception ex)
             {
-                logger.LogWarning(
-                    ex,
-                    "Error during direct playwright disposal in StopAutomationAsync."
+                logMessage = "Error during direct browser close in StopAutomationAsync.";
+                logger.LogWarning(ex, logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey WARNING] {logMessage}"
+                );
+            }
+        }
+        if (playwright != null)
+        {
+            logMessage =
+                "Attempting to directly dispose Playwright instance as part of stop request...";
+            logger.LogInformation(logMessage);
+            await _logHubContext.Clients.All.SendAsync(
+                "ReceiveLogEntry",
+                $"[Wavekey] {logMessage}"
+            );
+            try
+            {
+                playwright.Dispose();
+                playwright = null;
+                logMessage = "Playwright instance directly disposed by StopAutomationAsync.";
+                logger.LogInformation(logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey] {logMessage}"
+                );
+            }
+            catch (Exception ex)
+            {
+                logMessage = "Error during direct playwright disposal in StopAutomationAsync.";
+                logger.LogWarning(ex, logMessage);
+                await _logHubContext.Clients.All.SendAsync(
+                    "ReceiveLogEntry",
+                    $"[Wavekey WARNING] {logMessage}"
                 );
             }
         }
