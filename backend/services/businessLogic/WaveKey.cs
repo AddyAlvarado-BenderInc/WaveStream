@@ -361,7 +361,7 @@ public class Wavekey
         if (uploadedFile != null)
         {
             csvFilePath = Path.Combine(uploadsDir, $"{Guid.NewGuid()}_{uploadedFile.FileName}");
-            logger.LogInformation("Saving uploaded file to {FilePath}", (string)csvFilePath);
+            // logger.LogInformation("Saving uploaded file to {FilePath}", (string)csvFilePath);
             try
             {
                 await using (var stream = new FileStream(csvFilePath, FileMode.Create))
@@ -475,7 +475,14 @@ public class Wavekey
             try
             {
                 var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-                { /* ... config ... */
+                {
+                    HasHeaderRecord = true,
+                    MissingFieldFound = null,
+                    BadDataFound = null,
+                    IgnoreBlankLines = true,
+                    TrimOptions = TrimOptions.Trim,
+                    Delimiter = ",",
+                    Encoding = System.Text.Encoding.UTF8,
                 };
                 using (var reader = new StreamReader(fileDataSource.CsvFilePath))
                 using (var csv = new CsvReader(reader, config))
@@ -855,7 +862,7 @@ public class Wavekey
                     "ReceiveLogEntry",
                     $"[Wavekey] {logMessage}"
                 );
-                // We can use either headless or non-headless mode based on the environment
+                // Based on admin permissions, the user can either switch between headless or non-headless mode for the environment
                 var launchOptions = new BrowserTypeLaunchOptions { Headless = true };
                 browser = await playwright.Chromium.LaunchAsync(launchOptions);
             }
@@ -933,7 +940,8 @@ public class Wavekey
             cancellationToken.ThrowIfCancellationRequested();
 
             runAuto automation = new runAuto();
-            Func<string, Task> signalRLogger = async (msg) => await _logHubContext.Clients.All.SendAsync("ReceiveLogEntry", msg);
+            Func<string, Task> signalRLogger = async (msg) =>
+                await _logHubContext.Clients.All.SendAsync("ReceiveLogEntry", msg);
 
             if (!string.IsNullOrEmpty(threadCount) && products.Any())
             {

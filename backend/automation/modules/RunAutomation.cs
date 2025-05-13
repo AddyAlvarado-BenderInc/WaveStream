@@ -50,6 +50,8 @@ class runAuto
         int readyForSaveCount = 0;
         int savedCount = 0;
 
+        int logicalTaskCounter = 0;
+
         for (int i = 0; i < productList.Count; i += maxConcurrentProcessingTasks)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -82,14 +84,16 @@ class runAuto
 
                 await processingSemaphore.WaitAsync(cancellationToken);
 
+                int taskSpecificLogicalId = Interlocked.Increment(ref logicalTaskCounter);
+
                 batchProcessingTasks.Add(
                     Task.Run(async () =>
                     {
                         IBrowserContext? taskContext = null;
                         IPage? productListPage = null;
                         IPage? detailPageToSave = null;
-                        int currentTaskId =
-                            Task.CurrentId ?? System.Threading.Thread.CurrentThread.ManagedThreadId;
+
+                        int currentTaskId = taskSpecificLogicalId;
                         string currentProductName =
                             product.ItemName?.ToString() ?? "Unknown Product";
 
@@ -150,7 +154,8 @@ class runAuto
                                 product,
                                 productListPage,
                                 currentTaskId,
-                                cancellationToken
+                                cancellationToken,
+                                this._signalRLogger
                             );
 
                             if (cancellationToken.IsCancellationRequested)
@@ -329,7 +334,8 @@ class runAuto
                         var saveAttemptMessage =
                             $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Attempting to Save & Exit for product {productName}";
                         Console.WriteLine(saveAttemptMessage);
-                        await _signalRLogger($"[Automation] {saveAttemptMessage}");
+                        await _signalRLogger($"[USER] SAVE_ATTEMPT: Product '{productName}'");
+
                         await detailPage
                             .Locator("input[value=\"Save & Exit\"]")
                             .ClickAsync(new LocatorClickOptions { Timeout = 20000 });
@@ -345,28 +351,34 @@ class runAuto
 
                         if (detailPage.IsClosed)
                         {
-                            var saveSuccessMessage =
-                                $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Detail page for {productName} confirmed closed after Save & Exit.";
-                            Console.WriteLine(saveSuccessMessage);
-                            await _signalRLogger($"[Automation] {saveSuccessMessage}");
+                            var successMsg =
+                                $"[SaveTask (from Task {originalTaskId})] Successfully saved and closed page for {productName}.";
+                            Console.WriteLine(successMsg);
+                            await _signalRLogger(
+                                $"[USER] SAVE_SUCCESS: Product '{productName}' saved."
+                            );
                             Interlocked.Increment(ref savedCount);
                         }
                         else
                         {
-                            var saveFailureMessage =
-                                $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Detail page for {productName} did NOT close. Forcibly closing.";
-                            Console.WriteLine(saveFailureMessage);
-                            await _signalRLogger($"[Automation] {saveFailureMessage}");
+                            var notClosedMsg =
+                                $"[SaveTask (from Task {originalTaskId})] Page for {productName} did not close after save attempt.";
+                            Console.WriteLine(notClosedMsg);
+                            await _signalRLogger(
+                                $"[USER] SAVE_WARN: Product '{productName}' page did not close as expected after save attempt."
+                            );
                             if (!detailPage.IsClosed)
                                 await detailPage.CloseAsync();
                         }
                     }
                     else
                     {
-                        var nullPageMessage =
-                            $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Detail page for {productName} was null or already closed before save attempt.";
-                        Console.WriteLine(nullPageMessage);
-                        await _signalRLogger($"[Automation] {nullPageMessage}");
+                        var noPageMsg =
+                            $"[SaveTask (from Task {originalTaskId})] Detail page for {productName} was null or already closed before save attempt.";
+                        Console.WriteLine(noPageMsg);
+                        await _signalRLogger(
+                            $"[USER] SAVE_FAIL: Product '{productName}' - Page not available for saving."
+                        );
                     }
                 }
                 catch (OperationCanceledException)
@@ -374,7 +386,9 @@ class runAuto
                     var cancelMessage =
                         $"[SaveTask (from Task {originalTaskId})] Operation cancelled while attempting to save {productName}.";
                     Console.WriteLine(cancelMessage);
-                    await _signalRLogger($"[Automation] {cancelMessage}");
+                    await _signalRLogger(
+                        $"[USER] SAVE_CANCELLED: Product '{productName}' - Save cancelled."
+                    );
                     if (detailPage != null && !detailPage.IsClosed)
                     {
                         await detailPage.CloseAsync();
@@ -385,7 +399,9 @@ class runAuto
                     var exMessage =
                         $"[SaveTask (from Task {originalTaskId})] Error saving product {productName}: {ex.Message}";
                     Console.WriteLine(exMessage);
-                    await _signalRLogger($"[Automation ERROR] {exMessage}");
+                    await _signalRLogger(
+                        $"[USER] SAVE_FAIL: Product '{productName}' - Error during save: {ex.Message.Split('\n')[0]}"
+                    );
                     if (detailPage != null && !detailPage.IsClosed)
                     {
                         await detailPage.CloseAsync();

@@ -35,7 +35,12 @@ namespace backend.automation.modules
             return evaluation?.GetBoolean() ?? false;
         }
 
-        public async Task FillLongDescription(IPage page, string description, string productName)
+        public async Task FillLongDescription(
+            IPage page,
+            string description,
+            string productName,
+            Func<string, Task> signalRLogger
+        )
         {
             string htmlButton =
                 "#ctl00_ctl00_C_M_ctl00_W_ctl01__LongDescription_ModesWrapper .reMode_html";
@@ -49,9 +54,13 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         $"-- No long description provided for {productName}. Skipping long description fill --"
                     );
+                    await signalRLogger(
+                        $"-- No long description provided for {productName}. Skipping long description fill --"
+                    );
                     return;
                 }
                 Console.WriteLine($"-- Filling long description for {productName} --");
+                await signalRLogger($"-- Filling long description for {productName} --");
                 await MoveToDetailsTab(page);
                 await page.Locator(htmlButton).ClickAsync();
                 Console.WriteLine("Switched to HTML mode.");
@@ -62,6 +71,9 @@ namespace backend.automation.modules
                 {
                     await textareaLocator.FillAsync(description);
                     Console.WriteLine("Long description filled successfully.");
+                    await signalRLogger(
+                        $"-- Long description filled successfully for {productName} --"
+                    );
                 }
                 else
                 {
@@ -73,6 +85,9 @@ namespace backend.automation.modules
             catch (Exception ex)
             {
                 Console.WriteLine(
+                    $"-- Error filling long description for {productName}: {ex.Message} --"
+                );
+                await signalRLogger(
                     $"-- Error filling long description for {productName}: {ex.Message} --"
                 );
                 throw;

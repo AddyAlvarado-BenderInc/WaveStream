@@ -63,7 +63,8 @@ namespace backend.automation.modules
             string productName,
             string displayName,
             string itemTemplate,
-            string briefDescription
+            string briefDescription,
+            Func<string, Task> signalRLogger
         )
         {
             ILocator htmlElement = page.Locator(".reEditorModes ul li");
@@ -73,6 +74,7 @@ namespace backend.automation.modules
             bool isItemTemplate = !string.IsNullOrEmpty(itemTemplate);
 
             Console.WriteLine($"-- Entering FillProductInfo method for {productName}--");
+            signalRLogger($"-- Entering FillProductInfo method for {productName}--").Wait();
             await page.EvaluateAsync("window.scrollTo(0, 0);");
 
             if (isDisplay)
@@ -84,11 +86,13 @@ namespace backend.automation.modules
                         "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$_StorefrontName\"]";
                     await page.Locator(displayNameSelector).FillAsync(displayName);
                     Console.WriteLine($"Display name filled: {displayName}");
+                    signalRLogger($"Display name filled: {displayName}").Wait();
                 }
             }
             else if (!isDisplay)
             {
                 Console.WriteLine("Display name is null or empty. Skipping fill.");
+                signalRLogger($"Display name is null or empty. Skipping fill.").Wait();
             }
 
             if (isItemTemplate)
@@ -100,11 +104,13 @@ namespace backend.automation.modules
                         "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$txtMISEstimateId\"]";
                     await page.Locator(itemTemplateSelector).FillAsync(itemTemplate);
                     Console.WriteLine($"Item template filled: {itemTemplate}");
+                    signalRLogger($"Item template filled: {itemTemplate}").Wait();
                 }
             }
             else if (!isItemTemplate)
             {
                 Console.WriteLine("Item template is null or empty. Skipping fill.");
+                signalRLogger($"Item template is null or empty. Skipping fill.").Wait();
             }
 
             if (!string.IsNullOrEmpty(briefDescription))
@@ -113,12 +119,15 @@ namespace backend.automation.modules
                 await secondHtmlItem.ClickAsync();
                 await page.Locator(textAreaSelector).FillAsync(briefDescription);
                 Console.WriteLine($"Brief description filled for {productName}!");
+                signalRLogger($"Brief description filled for {productName}!").Wait();
             }
             else
             {
                 Console.WriteLine("Brief description is null or empty. Skipping fill.");
+                signalRLogger($"Brief description is null or empty. Skipping fill.").Wait();
             }
             Console.WriteLine($"-- Exiting FillProductInfo method for {productName}--");
+            signalRLogger($"-- Exiting FillProductInfo method for {productName}--").Wait();
         }
     }
 }

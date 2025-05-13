@@ -112,6 +112,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const [server, setServer] = useState("");
     const [selectedThreads, setSelectedThreads] = useState(1);
     const [automationRunning, _setAutomationRunning] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const setAutomationRunning = (isRunning: boolean) => {
         _setAutomationRunning(isRunning);
@@ -352,7 +353,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
         const normalizeVariablePackageArrayForCompare = (arr: VariablePackageArrayState): VariablePackageArray[] => {
             return arr
-                // TODO: this is filtering over a nested object, need to break it down further before filtering each item
+
                 .filter((item): item is VariablePackageArray => item != null && item !== undefined)
                 .map(item => {
                     const safeVariableData = (item.variableData && typeof item.variableData === 'object')
@@ -484,10 +485,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             return;
         }
 
-        if (saveClicked > 0) {
-            return;
-        };
-        saveClicked++;
+        setIsSaving(true);
 
         try {
             const { productType, _id } = productManager;
@@ -641,7 +639,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 } catch (error) {
                     console.error("Error transforming globalVariablePackage data:", error);
                     toast.error("Failed to prepare package data for saving.");
-                    saveClicked = 0;
+                    setIsSaving(false);
                     return;
                 }
 
@@ -672,6 +670,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 if (shouldPreventUpdate) {
                     console.warn('Server returned empty tableSheet, preventing further state updates.');
                     toast.warn('Warning: Server returned incomplete data. Your changes were saved but please refresh the page.');
+                    setIsSaving(false);
                     return;
                 };
 
@@ -720,9 +719,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 setVariableRowData((prev) => {
                     const serverRowData = updatedProduct.tableCellData;
                     const rawPackageDataArray: variablePackageArray[] | undefined = updatedProduct.globalVariablePackageData;
-
-                    console.log('Server returned globalVariablePackageData as raw package data array:', rawPackageDataArray);
-
                     const packageDataMap = new Map<number, IGlobalVariablePackage>();
 
                     if (Array.isArray(rawPackageDataArray)) {
@@ -731,20 +727,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             if (tableFormattedPkg && typeof tableFormattedPkg.dataId === 'number') {
                                 packageDataMap.set(tableFormattedPkg.dataId, tableFormattedPkg);
                             }
-                            console.log("Hydration: Converted package data to Table format:", tableFormattedPkg);
                         });
-                        console.log("Hydration: Created packageDataMap with Table-formatted objects:", packageDataMap);
                     }
-
-                    console.log('Server returned tableCellData:', serverRowData);
 
                     if (!Array.isArray(serverRowData)) {
                         console.warn('Server did not return valid tableCellData array, keeping existing state.');
                         return prev;
                     }
-
                     const updatedData: VariableRowDataState = {};
-
                     serverRowData.forEach((item: any) => {
                         if (item && typeof item === 'object' && typeof item.classKey === 'string' && typeof item.index === 'number') {
                             const key = `${item.classKey}_row_${item.index}`;
@@ -752,27 +742,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             const isComposite = item.isComposite === true;
                             let finalValue = item.value;
 
-                            if (item.classKey === 'Icon') {
-                                console.log(`Hydration Processing Icon cell (${key}): isPackage=${isPackage}, isComposite=${isComposite}, serverValue=${item.value}`);
-                            }
-
                             if (isPackage && (typeof item.value === 'string' || typeof item.value === 'number') && String(item.value).trim() !== '') {
                                 const packageId = parseInt(String(item.value), 10);
-
                                 if (!isNaN(packageId) && packageDataMap.has(packageId)) {
                                     finalValue = packageDataMap.get(packageId);
-                                    console.log(`Hydration: Mapped package object (Table format, ID: ${packageId}) to cell ${key}`);
                                 } else {
-                                    console.warn(`Hydration Error: Package cell ${key} has isPackage=true, but couldn't find converted package data in map for ID: ${item.value}. Storing original value.`);
                                     finalValue = item.value;
                                 }
-                            } else if (isPackage) {
-                                console.warn(`Hydration Warning: Package cell ${key} has isPackage=true, but value is not a valid string/number ID:`, item.value);
-                                finalValue = item.value;
                             }
-
-                            console.log(`Hydration: Final value for cell ${key}:`, finalValue);
-
                             updatedData[key] = {
                                 classKey: item.classKey,
                                 index: item.index,
@@ -781,22 +758,15 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 isPackage: isPackage,
                                 isDisabled: item.isDisabled,
                             };
-                        } else {
-                            console.warn("Skipping invalid item from serverRowData during hydration:", item);
                         }
                     });
-
-                    console.log('Hydration: Final updated variableRowData state:', updatedData);
                     return updatedData;
                 });
 
-                console.log('Dispatching updates to Redux store');
                 if (updatedProduct.globalVariableClassData || updatedProduct.globalVariablePackageData) {
                     dispatch(setVariableClassArray(updatedProduct.globalVariableClassData || []));
-
                     const processedPackageData = parsePackageValues(updatedProduct.globalVariablePackageData);
                     dispatch(setVariablePackageArray(processedPackageData));
-                    console.log('Processed globalVariablePackageData:', processedPackageData);
                 } else {
                     dispatch(setVariableClassArray([]));
                     dispatch(setVariablePackageArray([]));
@@ -871,10 +841,11 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 }
                 toast.success('Product saved successfully!', {
                     position: 'bottom-right',
-                    autoClose: 5000,
+                    autoClose: 2000,
+                    onClose: () => window.location.reload()
                 });
             } else {
-                saveClicked = 0;
+                setIsSaving(false);
                 const error = await response.json();
                 toast.error(`Error saving product: ${error.message}`, {
                     position: 'bottom-right',
@@ -882,7 +853,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 });
             }
         } catch (error) {
-            saveClicked = 0;
+            setIsSaving(false);
             console.error('Save error:', error);
             toast.error('Failed to save the product. Please try again.');
         }
@@ -955,20 +926,22 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         const pkg = cellData.value as IGlobalVariablePackage;
                         let packageContent: { filename: string[]; url: string[] } | string = "[Error retrieving content]";
 
-                        if (pkg.variableData instanceof Map && pkg.variableData.size > 0) {
-                            const firstEntry = pkg.variableData.values().next().value;
-                            if (firstEntry && typeof firstEntry.value === 'string') {
+                        if (pkg.variableData && pkg.variableData instanceof Map && pkg.variableData.size > 0) {
+                            const firstEntryValue = pkg.variableData.values().next().value;
+                            if (firstEntryValue && typeof firstEntryValue.value === 'string') {
                                 try {
-                                    packageContent = JSON.parse(firstEntry.value);
+                                    packageContent = JSON.parse(firstEntryValue.value);
                                 } catch (e) {
                                     console.error(`Error parsing package content for export (cell ${header}[${i}]):`, e);
-                                    packageContent = `[Error parsing content: ${firstEntry.value}]`;
+                                    packageContent = `[Error parsing content: ${firstEntryValue.value}]`;
                                 }
+                            } else if (firstEntryValue && typeof firstEntryValue.value === 'object') {
+                                packageContent = firstEntryValue.value;
                             } else {
-                                packageContent = "[Invalid content structure]";
+                                packageContent = "[Invalid content structure in package variableData]";
                             }
                         } else {
-                            packageContent = "[No content found]";
+                            packageContent = "[No content found in package variableData]";
                         }
 
                         rowObject[header] = {
@@ -1085,12 +1058,10 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         if (format === 'CSV') {
             await handleCSVUtility(hasHeaders, hasCellData, headers).then((csvContent: string | undefined) => {
                 triggerDownload(csvContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.csv`, 'text/csv;charset=utf-8;');
-                toast.success('CSV export started.');
             })
         } else if (format === 'JSON') {
             await handleJSONUtility(hasHeaders, hasCellData, headers).then((jsonContent: string | undefined) => {
                 triggerDownload(jsonContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.json`, 'application/json;charset=utf-8;');
-                toast.success('JSON export started.');
             })
         }
     };
@@ -1103,7 +1074,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
         dispatch(setRunOption(selectedRunOption));
         dispatch(setServerOption(selectedServer));
-        toast.success('Run option selected successfully!');
         setRenderRunModal(false);
     }
 
@@ -1300,12 +1270,12 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     </button>
                     <div className={styles.operationButtons}>
                         <button
-                            className={`${styles.saveButton} ${!hasChanges || saveClicked > 0 ? styles.saveButtonDisabled : ''}`}
+                            className={`${styles.saveButton} ${!hasChanges || isSaving ? styles.saveButtonDisabled : ''}`}
                             onClick={handleSave}
-                            disabled={!hasChanges}
+                            disabled={!hasChanges || isSaving}
                             title={!hasChanges ? 'No changes to save' : 'Save changes'}
                         >
-                            {hasChanges ? 'Save*' : 'Saved'}
+                            {isSaving ? 'Saving...' : hasChanges ? 'Save*' : 'Saved'}
                         </button>
                         <button
                             className={`${styles.exportButton} ${(variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0) ? styles.exportButtonDisabled : ''}`}

@@ -60,7 +60,11 @@ namespace backend.automation.modules
             }
         }
 
-        public async Task UploadFirstIcon(JArray fileArray, IPage page)
+        public async Task UploadFirstIcon(
+            JArray fileArray,
+            IPage page,
+            Func<string, Task> signalRLogger
+        )
         {
             string editMainIconButtonSelector =
                 "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$_BigIconByItself$EditProductImage\"]";
@@ -89,6 +93,7 @@ namespace backend.automation.modules
             string firstIconName = firstIconToken.ToString();
             if (string.IsNullOrEmpty(firstIconName))
             {
+                signalRLogger("First icon filename is empty in JArray for UploadFirstIcon.").Wait();
                 throw new Exception("First icon filename is empty!");
             }
 
@@ -98,21 +103,28 @@ namespace backend.automation.modules
 
             if (!EnsureFileExists(firstIconPath, "First icon path"))
             {
+                signalRLogger($"First icon file not found at: {firstIconPath}").Wait();
                 throw new System.IO.FileNotFoundException(
                     $"First icon file not found at: {firstIconPath}"
                 );
             }
 
             Console.WriteLine($"Uploading first icon: {firstIconPath}");
+            signalRLogger($"Uploading first icon: {firstIconPath}").Wait();
             await page.Locator(editMainIconButtonSelector).ClickAsync();
             await page.Locator(uploadMainIconRadioSelector).ClickAsync();
             await page.Locator(mainIconUploadInputSelector).SetInputFilesAsync(firstIconPath);
             await page.Locator(useSameImageIconCheckboxSelector).ClickAsync();
             await page.Locator(uploadMainIconButtonSelector).ClickAsync();
             Console.WriteLine($"Main icon uploaded successfully with {firstIconPath}");
+            signalRLogger($"Main icon uploaded successfully with {firstIconPath}").Wait();
         }
 
-        public async Task<bool> UploadMultipleIcons(JArray fileArray, IPage page)
+        public async Task<bool> UploadMultipleIcons(
+            JArray fileArray,
+            IPage page,
+            Func<string, Task> signalRLogger
+        )
         {
             string persistentDeleteButtonSelector =
                 "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$_MultipleImagesUpload$ImagesPreview$ctl01$ctl01\"]";
@@ -137,6 +149,10 @@ namespace backend.automation.modules
                         Console.WriteLine(
                             $"Found {imageCount} existing images. Attempting to delete..."
                         );
+                        signalRLogger(
+                                $"Found {imageCount} existing images. Attempting to delete..."
+                            )
+                            .Wait();
                     }
                 }
                 catch (PlaywrightException)
@@ -144,12 +160,17 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         $"Image preview selector {imagePreviewSelector} not found or evaluation failed. Assuming no images to delete."
                     );
+                    signalRLogger(
+                            $"Image preview selector {imagePreviewSelector} not found or evaluation failed. Assuming no images to delete."
+                        )
+                        .Wait();
                     imageCount = 0;
                 }
 
                 if (imageCount == 0)
                 {
                     Console.WriteLine("No more visible images to delete.");
+                    signalRLogger("No more visible images to delete.").Wait();
                     break;
                 }
 
@@ -158,6 +179,10 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         $"Attempting to click delete button. Attempt #{currentDeleteAttempts + 1}"
                     );
+                    signalRLogger(
+                            $"Attempting to click delete button. Attempt #{currentDeleteAttempts + 1}"
+                        )
+                        .Wait();
 
                     await page.Locator(persistentDeleteButtonSelector)
                         .ClickAsync(new LocatorClickOptions { Timeout = 5000 });
@@ -172,6 +197,10 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         $"Error clicking delete button or waiting after delete. Attempt #{currentDeleteAttempts + 1}: {ex.Message}"
                     );
+                    signalRLogger(
+                            $"Error clicking delete button or waiting after delete. Attempt #{currentDeleteAttempts + 1}: {ex.Message}"
+                        )
+                        .Wait();
 
                     break;
                 }
@@ -183,13 +212,22 @@ namespace backend.automation.modules
                 Console.WriteLine(
                     $"Max delete attempts reached ({maxDeleteAttempts}). Stopping deletion process."
                 );
+                signalRLogger(
+                        $"Max delete attempts reached ({maxDeleteAttempts}). Stopping deletion process."
+                    )
+                    .Wait();
             }
 
             Console.WriteLine(
                 $"Finished deleting images. Current delete attempts: {currentDeleteAttempts}"
             );
+            signalRLogger(
+                    $"Finished deleting images. Current delete attempts: {currentDeleteAttempts}"
+                )
+                .Wait();
             await page.Locator(uploadMultipleImagesRadioSelector).ClickAsync();
             Console.WriteLine("Clicked on upload multiple images radio button");
+            signalRLogger("Clicked on upload multiple images radio button").Wait();
 
             List<string> validFilePaths = new List<string>();
             foreach (JToken fileToken in fileArray)
@@ -199,6 +237,10 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         "Encountered a null token in file JArray for multiple icons. Skipping."
                     );
+                    signalRLogger(
+                            "Encountered a null token in file JArray for multiple icons. Skipping."
+                        )
+                        .Wait();
                     continue;
                 }
                 string currentName = fileToken.ToString();
@@ -207,6 +249,10 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         "Encountered an empty filename in JArray for multiple icons. Skipping."
                     );
+                    signalRLogger(
+                            "Encountered an empty filename in JArray for multiple icons. Skipping."
+                        )
+                        .Wait();
                     continue;
                 }
 
@@ -223,6 +269,8 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         $"File does not exist: {currentPath}. It will not be uploaded."
                     );
+                    signalRLogger($"File does not exist: {currentPath}. It will not be uploaded.")
+                        .Wait();
                 }
             }
 
@@ -272,10 +320,16 @@ namespace backend.automation.modules
             }
         }
 
-        public async Task UploadIconsAsync(string productName, dynamic iconData, IPage page)
+        public async Task UploadIconsAsync(
+            string productName,
+            dynamic iconData,
+            IPage page,
+            Func<string, Task> signalRLogger
+        )
         {
             JArray iconFilenames;
             Console.WriteLine($"-- Entering UploadIconsAsync method for {productName} --");
+            signalRLogger($"-- Entering UploadIconsAsync method for {productName} --").Wait();
 
             if (iconData is JArray ja)
             {
@@ -296,6 +350,7 @@ namespace backend.automation.modules
             else if (iconData is null)
             {
                 Console.WriteLine("Icon data is null. Skipping upload.");
+                signalRLogger($"Icon data is null for {productName}. Skipping upload.").Wait();
                 return;
             }
             else
@@ -304,6 +359,10 @@ namespace backend.automation.modules
                 Console.WriteLine(
                     $"Error: Icon data is of an unexpected type '{typeName}'. Expected JArray, JObject with 'Composite' property, or string of icon filenames."
                 );
+                signalRLogger(
+                        $"Error: Icon data is of an unexpected type '{typeName}'. Expected JArray, JObject with 'Composite' property, or string of icon filenames."
+                    )
+                    .Wait();
                 if (iconData == null)
                     throw new ArgumentNullException(nameof(iconData), "Icon data cannot be null.");
                 throw new ArgumentException(
@@ -328,25 +387,42 @@ namespace backend.automation.modules
                 Console.WriteLine(
                     $"Processing: {iconFilenames.Count} icon(s): {iconFilenames.ToString(Newtonsoft.Json.Formatting.None)}"
                 );
-                await UploadFirstIcon(iconFilenames, page);
+                signalRLogger(
+                        $"Processing: {iconFilenames.Count} icon(s): {iconFilenames.ToString(Newtonsoft.Json.Formatting.None)}"
+                    )
+                    .Wait();
+                await UploadFirstIcon(iconFilenames, page, signalRLogger);
 
                 if (iconFilenames.Count > 1)
                 {
                     Console.WriteLine(
                         $"Uploading {iconFilenames.Count} icons to multiple images section (includes re-uploading first if UI requires)..."
                     );
+                    signalRLogger(
+                            $"Uploading {iconFilenames.Count} icons to multiple images section (includes re-uploading first if UI requires)..."
+                        )
+                        .Wait();
 
                     await page.Locator(detailsTabSelector).ClickAsync();
                     Console.WriteLine("Clicked on Details tab");
-                    bool multipleUploadSuccess = await UploadMultipleIcons(iconFilenames, page);
+                    bool multipleUploadSuccess = await UploadMultipleIcons(
+                        iconFilenames,
+                        page,
+                        signalRLogger
+                    );
 
                     if (multipleUploadSuccess)
                     {
                         Console.WriteLine("Multiple icons part handled successfully.");
+                        signalRLogger(
+                                $"Multiple icons part handled successfully for {productName}."
+                            )
+                            .Wait();
                     }
                     else
                     {
                         Console.WriteLine("Multiple icons part failed.");
+                        signalRLogger($"Multiple icons part failed for {productName}.").Wait();
 
                         throw new Exception("Multiple icons upload failed.");
                     }
@@ -361,10 +437,12 @@ namespace backend.automation.modules
                     );
                 }
                 Console.WriteLine("Icon upload process completed for this product.");
+                signalRLogger($"Icon upload process completed for {productName}.").Wait();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error processing icon(s) for product: {ex.Message}");
+                signalRLogger($"Error processing icon(s) for product: {ex.Message}").Wait();
                 throw;
             }
             finally
@@ -372,6 +450,10 @@ namespace backend.automation.modules
                 Console.WriteLine(
                     $"UploadIconsAsync method completed for {productName}. Cleaning up..."
                 );
+                signalRLogger(
+                        $"UploadIconsAsync method completed for {productName}. Cleaning up..."
+                    )
+                    .Wait();
             }
         }
     }

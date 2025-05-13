@@ -14,7 +14,8 @@ namespace backend.automation.modules
             dynamic product,
             ProcessProducts processProductsInstance,
             int taskId,
-            CancellationToken cancellationToken
+            CancellationToken cancellationToken,
+            Func<string, Task> signalRLogger
         )
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -26,6 +27,9 @@ namespace backend.automation.modules
 
             Console.WriteLine(
                 $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] WaitForProductItemNameAsync for: {product.ItemName}"
+            );
+            await signalRLogger(
+                $"[ProcessProducts Task {taskId}] Waiting for product item name: {product.ItemName}"
             );
 
             ILocator itemNameLocator = page.Locator("td .celldata a.pointerCursor span").Nth(1);
@@ -55,7 +59,14 @@ namespace backend.automation.modules
             catch (TimeoutException)
             {
                 Console.WriteLine(
-                    $"[Task {taskId}] Timeout evaluating item name after initial search for {expectedItemName}. Will proceed to retries."
+                    $"[Task {taskId}] Timeout evaluating item name after initial search for {expectedItemName}. Will proceed to retries if name was previously found."
+                );
+            }
+
+            if (string.IsNullOrEmpty(itemName))
+            {
+                throw new Exception(
+                    $"[Task {taskId}] Product name '{expectedItemName}' not found or locator returned empty/null after initial search. The product may not exist or is not visible."
                 );
             }
 
@@ -65,6 +76,9 @@ namespace backend.automation.modules
                 retries++;
                 Console.WriteLine(
                     $"[Task {taskId}] Attempt {retries}/{maxRetries} - Waiting for product name: {expectedItemName}. Current found: '{itemName}'"
+                );
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Retry {retries}/{maxRetries} for product name: {expectedItemName}. Found: '{itemName}'"
                 );
 
                 await processProductsInstance.SearchProductName(
@@ -97,6 +111,9 @@ namespace backend.automation.modules
             }
 
             Console.WriteLine($"[Task {taskId}] Product name '{expectedItemName}' confirmed.");
+            await signalRLogger(
+                $"[ProcessProducts Task {taskId}] Product name '{expectedItemName}' confirmed."
+            );
         }
 
         public bool ValidProductTypesAsync(string productType)
@@ -174,13 +191,16 @@ namespace backend.automation.modules
             string productName,
             int taskId,
             CancellationToken cancellationToken,
+            Func<string, Task> signalRLogger,
             int maxRetries = 3,
             int newPageTimeoutMs = 20000
         )
         {
-            Console.WriteLine(
-                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] TryOpenNewPageAsync for product '{productName}' from page: {originalPage.Url}"
-            );
+            var logMessage =
+                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] TryOpenNewPageAsync for product '{productName}' from page: {originalPage.Url}";
+            Console.WriteLine(logMessage);
+            await signalRLogger($"[ProcessProducts] {logMessage}");
+
             int retries = 0;
 
             ILocator productLinkLocator = originalPage
@@ -232,6 +252,9 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         $"Attempt {retries}/{maxRetries} to open new page timed out: {tex.Message}"
                     );
+                    await signalRLogger(
+                        $"[ProcessProducts Task {taskId}] Timeout on attempt {retries} for product '{productName}': {tex.Message}"
+                    );
                     if (retries >= maxRetries)
                         throw new Exception(
                             $"Failed to open new page via click on product '{productName}' after {maxRetries} attempts due to timeout.",
@@ -245,11 +268,17 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         $"Attempt {retries}/{maxRetries} to open new page failed: {ex.Message}"
                     );
+                    await signalRLogger(
+                        $"[ProcessProducts Task {taskId}] Error on attempt {retries} for product '{productName}': {ex.Message}"
+                    );
                     if (retries >= maxRetries)
                         throw new Exception(
                             $"Failed to open new page via click on product '{productName}' after {maxRetries} attempts. Last error: {ex.Message}",
                             ex
                         );
+                    await signalRLogger(
+                        $"[USER] SAVE_WARN: Product '{productName}' page failing to open new page via click on product after {maxRetries} attemps. Last error: {ex.Message}."
+                    );
                     await Task.Delay(1000, cancellationToken);
                 }
             }
@@ -260,15 +289,21 @@ namespace backend.automation.modules
             dynamic product,
             IPage page,
             int taskId,
-            CancellationToken cancellationToken
+            CancellationToken cancellationToken,
+            Func<string, Task> signalRLogger
         )
         {
+            string productName = product.ItemName?.ToString() ?? "Unknown Product";
+            var startMessage =
+                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] ProcessProductsAsync START for: {productName}";
+            Console.WriteLine(startMessage);
+            await signalRLogger($"[ProcessProducts] {startMessage}");
+
             ProductInfoFill productInfoFill = new ProductInfoFill();
             UploadProductIcon uploadProductIcon = new UploadProductIcon();
             ProductDetailFill productDetailFill = new ProductDetailFill();
             IPage? newPage = null;
 
-            string productName = product.ItemName;
             string displayName = product.DisplayName;
             string itemTemplate = product.ItemTemplate;
             dynamic icon = product.Icon;
@@ -277,33 +312,46 @@ namespace backend.automation.modules
             string longDescription = product.LongDescription;
             string skipProduct = product.SkipProduct;
 
-            Console.WriteLine(
-                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] ProcessProductsAsync START for: {productName}"
-            );
             cancellationToken.ThrowIfCancellationRequested();
 
             if (skipProduct?.ToLower() == "true")
             {
                 Console.WriteLine($"[Task {taskId}] Skipping product as per data: {productName}");
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Skipping product: {productName}"
+                );
                 return null;
             }
 
             try
             {
-                Console.WriteLine(
-                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] Before WaitForProductItemNameAsync for: {productName}"
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Before WaitForProductItemNameAsync for: {productName}"
                 );
-                await WaitForProductItemNameAsync(page, product, this, taskId, cancellationToken);
+                await WaitForProductItemNameAsync(
+                    page,
+                    product,
+                    this,
+                    taskId,
+                    cancellationToken,
+                    signalRLogger
+                );
 
                 cancellationToken.ThrowIfCancellationRequested();
-                Console.WriteLine(
-                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] After WaitForProductItemNameAsync, Before TryOpenNewPageAsync for: {productName}"
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Before TryOpenNewPageAsync for: {productName}"
                 );
-                newPage = await TryOpenNewPageAsync(page, productName, taskId, cancellationToken);
+                newPage = await TryOpenNewPageAsync(
+                    page,
+                    productName,
+                    taskId,
+                    cancellationToken,
+                    signalRLogger
+                );
 
                 cancellationToken.ThrowIfCancellationRequested();
-                Console.WriteLine(
-                    $"[Task {taskId}] Detail page ('newPage') opened for product '{productName}'. Current URL: {newPage.Url}"
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Detail page opened for product '{productName}'. Current URL: {newPage?.Url}"
                 );
 
                 if (!ValidProductTypesAsync(productType))
@@ -315,40 +363,52 @@ namespace backend.automation.modules
                 if (string.IsNullOrEmpty(productName))
                     throw new Exception($"Product name is null or empty.");
 
+                if (newPage == null)
+                {
+                    throw new InvalidOperationException(
+                        $"[Task {taskId}] Detail page (newPage) is unexpectedly null before waiting for body for product '{productName}'."
+                    );
+                }
                 await newPage
                     .Locator("body")
                     .WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
-                Console.WriteLine(
-                    $"[Task {taskId}] Detail page for '{productName}' appears ready."
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Detail page for '{productName}' appears ready."
                 );
 
                 cancellationToken.ThrowIfCancellationRequested();
                 await ValidTypeAndNameCheck(productType, productName, newPage, cancellationToken);
 
                 cancellationToken.ThrowIfCancellationRequested();
-                Console.WriteLine(
-                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] Before FillProductInfo for: {productName}"
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Before FillProductInfo for: {productName}"
                 );
                 await productInfoFill.FillProductInfo(
                     newPage,
                     productName,
                     displayName,
                     itemTemplate,
-                    briefDescription
+                    briefDescription,
+                    signalRLogger
                 );
 
                 cancellationToken.ThrowIfCancellationRequested();
-                Console.WriteLine(
-                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] After FillProductInfo for: {productName}"
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] After FillProductInfo for: {productName}"
                 );
-                await uploadProductIcon.UploadIconsAsync(productName, icon, newPage);
+                await uploadProductIcon.UploadIconsAsync(productName, icon, newPage, signalRLogger);
 
                 cancellationToken.ThrowIfCancellationRequested();
-                await productDetailFill.FillLongDescription(newPage, longDescription, productName);
+                await productDetailFill.FillLongDescription(
+                    newPage,
+                    longDescription,
+                    productName,
+                    signalRLogger
+                );
 
                 cancellationToken.ThrowIfCancellationRequested();
-                Console.WriteLine(
-                    $"[Task {taskId}] Successfully processed data for product: {productName}. Ready for save."
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Successfully processed data for product: {productName}. Ready for save."
                 );
                 return newPage;
             }
@@ -357,6 +417,9 @@ namespace backend.automation.modules
                 Console.WriteLine(
                     $"[Task {taskId}] Processing for product {productName} was cancelled."
                 );
+                await signalRLogger(
+                    $"[ProcessProducts Task {taskId}] Processing cancelled for product: {productName}"
+                );
                 if (newPage != null && !newPage.IsClosed)
                     await newPage.CloseAsync();
                 throw;
@@ -364,7 +427,10 @@ namespace backend.automation.modules
             catch (Exception ex)
             {
                 Console.WriteLine(
-                    $"[Task {taskId}] Error processing product {productName} before save: {ex.ToString()}"
+                    $"[Task {taskId}] Error processing product {productName} before save: {ex.Message}"
+                );
+                await signalRLogger(
+                    $"[USER] SAVE_FAIL: At Task {taskId} with Product '{productName}' - Error during save: {ex.Message.Split('\n')[0]}"
                 );
                 if (newPage != null && !newPage.IsClosed)
                 {
@@ -377,9 +443,19 @@ namespace backend.automation.modules
                         Console.WriteLine(
                             $"[Task {taskId}] Error closing detail page for {productName} after processing error: {closeEx.Message}"
                         );
+                        await signalRLogger(
+                            $"[ProcessProducts Task {taskId}] Error closing detail page for {productName}: {closeEx.Message}"
+                        );
                     }
                 }
                 return null;
+            }
+            finally
+            {
+                var endMessage =
+                    $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] ProcessProductsAsync END for: {productName}. New page is {(newPage != null && !newPage.IsClosed ? "available" : "null or closed")}.";
+                Console.WriteLine(endMessage);
+                await signalRLogger($"[ProcessProducts] {endMessage}");
             }
         }
     }
