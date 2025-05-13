@@ -153,24 +153,45 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
         </div>
     );
 
-    // TODO: fix
     const integerMKS = () => {
         const safeEvaluate = (expression: string) => {
-            try {
-                const sanitized = expression
-                    .replace(/[^0-9+\-*/().]/g, '')
-                    .replace(/(\d)([+\-*/])/g, '$1 $2 ')
-                    .trim();
-
-                const value = eval(sanitized);
-
-                if (isNaN(value)) throw new Error('Invalid expression');
-
-                setLocalIntegerResult(Number(value));
-                setLocalInteger(value);
+            if (expression.trim() === '') {
+                setLocalIntegerResult(null);
                 setLocalIntegerError('');
-            } catch (err) {
-                setLocalIntegerError('Invalid math expression');
+                return;
+            }
+
+            const segments = expression.split('|');
+            let evaluated = false;
+
+            for (const segment of segments) {
+                const trimmedSegment = segment.trim();
+                if (trimmedSegment === '') continue;
+
+                try {
+                    const sanitizedSegment = trimmedSegment
+                        .replace(/[^0-9+\-*/().]/g, '')
+                        .replace(/(\d)([+\-*/])/g, '$1 $2 ')
+                        .trim();
+
+                    if (sanitizedSegment === '') continue;
+
+                    const value = new Function(`return ${sanitizedSegment}`)();
+
+                    if (typeof value !== 'number' || isNaN(value)) {
+                        continue;
+                    }
+
+                    setLocalIntegerResult(Number(value));
+                    setLocalIntegerError('');
+                    evaluated = true;
+                    break;
+                } catch (err) {
+                }
+            }
+
+            if (!evaluated) {
+                setLocalIntegerError('Invalid or no evaluable math expression segment found');
                 setLocalIntegerResult(null);
             }
         };
@@ -183,17 +204,21 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
                         Result: {localIntegerResult}
                     </div>
                 )}
-                <div className={styles.integer}>
+                <div className={styles.integerInputContainer}>
                     <input
                         type="text"
-                        placeholder="Enter a numerical expression"
+                        placeholder="e.g., 10*2 | 100/4 | 5+5"
                         value={localInteger}
                         onChange={(e) => {
                             setLocalInteger(e.target.value);
                             safeEvaluate(e.target.value);
                         }}
                         className={`${styles.input} ${localIntegerError ? styles.error : ''}`}
+                        aria-describedby="integer-tooltip"
                     />
+                    <div className={styles.customTooltip} id="integer-tooltip" style={{ textAlign: 'left', marginTop: '5px' }}>
+                        Enter numerical expressions. Use " | " to separate multiple numbers or expressions (e.g., 10 | 20+5 | 30). The result of the first valid segment will be shown.
+                    </div>
                 </div>
             </div>
         );
@@ -482,7 +507,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
                                 value={MKSType}
                                 onChange={(e) => setMKSType(e.target.value)}>
                                 <option value='StringMKS'>Single Line</option>
-                                {/* <option value='IntegerMKS'>Number</option> */}
+                                <option value='IntegerMKS'>Number</option>
                                 <option value='TextareaMKS'>Description</option>
                                 <option value='LinkedMKS'>Linked Media</option>
                             </select>

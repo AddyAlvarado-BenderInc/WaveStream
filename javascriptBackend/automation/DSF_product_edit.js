@@ -1072,6 +1072,7 @@ async function processProduct(browser, page, product) {
     // can access, rather than hardcoding it in the function. Or we can have a 
     // database that stores the previously queried values 
 
+    // TODO: Need to make into a composite
     async function productPriceMatches(newPage, startingRange, endingRange, regularPrices, setupPrices) {
         try {
             const beginRangeSelector = `input[value="${startingRange}"]`;

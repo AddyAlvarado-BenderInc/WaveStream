@@ -44,14 +44,12 @@ const SystemLogging: React.FC = () => {
         let generalTaskId: string | null = null;
         let generalProductName: string | null = null;
 
-       
         const taskRegex = /(?:\[Task\s*(\d+)|Task\s*(\d+))/i;
         const taskMatch = message.match(taskRegex);
         if (taskMatch) {
             generalTaskId = taskMatch[1] || taskMatch[2];
         }
 
-       
         if (generalTaskId) {
             const productForTaskRegex = new RegExp(`(?:Task\\s*${generalTaskId}[^']*'([^']*)'|Task\\s*${generalTaskId}.*for:\\s*([^\\n\\r]+))`, "i");
             const productMatch = message.match(productForTaskRegex);
@@ -60,7 +58,6 @@ const SystemLogging: React.FC = () => {
             }
         }
 
-       
         if (message.startsWith("[USER] SAVE_")) {
             status = message.substring("[USER] SAVE_".length).split(':')[0]?.trim().toUpperCase();
 
@@ -86,8 +83,7 @@ const SystemLogging: React.FC = () => {
                 }
             }
         }
-       
-       
+
         if (!generalProductName && productName) {
             generalProductName = productName;
         }
@@ -107,10 +103,8 @@ const SystemLogging: React.FC = () => {
                 return newLogs;
             });
 
-           
             if (generalTaskId) {
                 setLatestTaskInfo(prevInfo => {
-                   
                     if (!prevInfo || prevInfo.taskId !== generalTaskId || (prevInfo.taskId === generalTaskId && generalProductName && !prevInfo.productName)) {
                         return { taskId: generalTaskId, productName: generalProductName || prevInfo?.productName };
                     }
@@ -193,6 +187,36 @@ const SystemLogging: React.FC = () => {
         }
     };
 
+    const triggerDownload = (content: string, filename: string, contentType: string) => {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleExportCSV = () => {
+        if (failedItems.length === 0) return;
+
+        const header = "Task ID,Product Name\n";
+        const csvRows = failedItems.map(item =>
+            `${item.task},"${item.productName.replace(/"/g, '""')}"`
+        );
+        const csvContent = header + csvRows.join("\n");
+        triggerDownload(csvContent, 'failed_items.csv', 'text/csv;charset=utf-8;');
+    };
+
+    const handleExportJSON = () => {
+        if (failedItems.length === 0) return;
+
+        const jsonContent = JSON.stringify(failedItems, null, 2);
+        triggerDownload(jsonContent, 'failed_items.json', 'application/json;charset=utf-8;');
+    };
+
     return (
         <div className={styles.loggingContainer}>
             <div className={styles.header}>
@@ -272,7 +296,15 @@ const SystemLogging: React.FC = () => {
                     {logs.length === 0 && isConnected && <p className={styles.waitingMessage}>Connected. Waiting for log entries...</p>}
 
                     <div className={styles.failedItemsContainer}>
-                        <h3>Failed Items | {failedItems.length}</h3>
+                        <div className={styles.failedItemsHeader}>
+                            <h3>Failed Items | {failedItems.length}</h3>
+                            {failedItems.length > 0 && (
+                                <div className={styles.exportButtonsContainer}>
+                                    <button onClick={handleExportCSV} className={styles.exportButton}>Export CSV</button>
+                                    <button onClick={handleExportJSON} className={styles.exportButton}>Export JSON</button>
+                                </div>
+                            )}
+                        </div>
                         {failedItems.length === 0 ? (
                             <p className={styles.noFailedItems}>No failed items recorded.</p>
                         ) : (

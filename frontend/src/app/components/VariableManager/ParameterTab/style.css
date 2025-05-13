@@ -88,6 +88,17 @@
   text-align: center;
 }
 
+.integer-editor select {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  cursor: pointer;
+  color: var(--button-primary-hover);
+  background-color: var(--button-secondary-hover);
+  border: 1px solid var(--button-primary-hover);
+  border-radius: 5px;
+}
+
 .interpolated-variable-editor button {
   background-color: yellow;
   color: black;

@@ -97,26 +97,14 @@
 
 .customTooltip {
     position: absolute;
-    bottom: calc(100% + 10px);
-    left: 0;
-    background: #fff;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 14px;
-    z-index: 100;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.customTooltip {
-    position: absolute;
     bottom: calc(100% + 8px);
     right: 0;
     color: #333333;
     padding: 8px 12px;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 0.8em;
+    color: #aaa;
+    margin-top: 5px;
     z-index: 1000;
     opacity: 0;
     pointer-events: none;
@@ -199,20 +187,31 @@
     padding: 0.8rem;
     border: 2px solid #ddd;
     border-radius: 8px;
-    width: 300px;
+    width: 100%;
+    box-sizing: border-box;
     font-size: 1rem;
 }
 
+.integerInputContainer {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
 .errorMessage {
-    color: #ff4444;
+    color: var(--vscode-errorForeground);
     margin-top: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    text-align: center;
 }
 
 .resultPreview {
     margin-top: 0.5rem;
     color: #666;
     font-size: 0.9rem;
+    margin-bottom: 5px;
+    font-weight: bold;
 }
 
 .fileList {
@@ -315,7 +314,7 @@
 }
 
 .errorMessage {
-    color: #ff4444;
+    color: var(--vscode-errorForeground);
     font-size: 14px;
     margin-top: 10px;
     text-align: center;

@@ -302,6 +302,9 @@ namespace backend.automation.modules
             ProductInfoFill productInfoFill = new ProductInfoFill();
             UploadProductIcon uploadProductIcon = new UploadProductIcon();
             ProductDetailFill productDetailFill = new ProductDetailFill();
+            SettingsTab settingsTab = new SettingsTab();
+            ProductPricingAndBuyerConfiguration productPricingAndBuyerConfiguration =
+                new ProductPricingAndBuyerConfiguration();
             IPage? newPage = null;
 
             string displayName = product.DisplayName;
@@ -310,6 +313,20 @@ namespace backend.automation.modules
             string productType = product.Type;
             string briefDescription = product.BriefDescription;
             string longDescription = product.LongDescription;
+            string advancedRanges = product.AdvancedRanges;
+            string orderQuantities = product.OrderQuantity;
+            string shippingWidths = product.ShippingWidth;
+            string shippingHeights = product.ShippingHeight;
+            string shippingLengths = product.ShippingLength;
+            string shippingMaxs = product.ShippingMaxQtyPerSub;
+            string weightInput = product.WeightInput;
+            string maxQuantity = product.MaxQuantity;
+            string showQtyPrice = product.ShowQtyPrice;
+            string setupPrice = product.SetupPrice;
+            string regularPrice = product.RegularPrice;
+            string rangeStart = product.RangeStart;
+            string rangeEnd = product.RangeEnd;
+            string buyerConfigs = product.BuyerConfigs;
             string skipProduct = product.SkipProduct;
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -404,6 +421,34 @@ namespace backend.automation.modules
                     longDescription,
                     productName,
                     signalRLogger
+                );
+
+                cancellationToken.ThrowIfCancellationRequested();
+                await productPricingAndBuyerConfiguration.ConfigurePricingAndBuyerSettingsAsync(
+                    newPage,
+                    signalRLogger,
+                    productType,
+                    setupPrice,
+                    regularPrice,
+                    rangeStart,
+                    rangeEnd,
+                    buyerConfigs
+                );
+
+                cancellationToken.ThrowIfCancellationRequested();
+                await settingsTab.SettingsTabAsync(
+                    newPage,
+                    signalRLogger,
+                    productType,
+                    advancedRanges,
+                    orderQuantities,
+                    shippingWidths,
+                    shippingHeights,
+                    shippingLengths,
+                    shippingMaxs,
+                    weightInput,
+                    maxQuantity,
+                    showQtyPrice
                 );
 
                 cancellationToken.ThrowIfCancellationRequested();

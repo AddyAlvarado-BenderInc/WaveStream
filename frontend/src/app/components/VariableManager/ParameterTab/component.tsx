@@ -386,7 +386,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         setTaggingParameter(null);
     };
 
-    // TODO: Will work on later once the handleAddVariable function is working
+    
     const handleSaveVariableClass = (object: Object, param: BundlizedParameters[]) => {
         if (!object) {
             toast.error('Key String is empty');
@@ -449,15 +449,13 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         if (detectedVars.length > 0 && relevantParamsExist) {
             console.log("handleAddVariable - Running COMBINATION logic.");
 
-            // --- MODIFICATION: Group parameters including tags ---
             const groupedParamsWithTags = relevantParams.reduce((acc, item) => {
                 if (!acc[item.variable]) {
                     acc[item.variable] = [];
-                }
-                // Store object with value and tags
+                }                
                 acc[item.variable].push({ value: item.value, tags: item.tags || [] });
                 return acc;
-            }, {} as Record<string, { value: string; tags: string[] }[]>); // Type updated
+            }, {} as Record<string, { value: string; tags: string[] }[]>); 
             console.log("handleAddVariable - Grouped Relevant Params (with tags):", JSON.stringify(groupedParamsWithTags, null, 2));
 
             const hasValuesForAllDetectedVars = detectedVars.every(v => groupedParamsWithTags[v] && groupedParamsWithTags[v].length > 0);
@@ -529,7 +527,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         onClose();
     };
 
-    // TODO: Need to implement the save functionality
+    
     const handleVariableSave = async (id: number, item: Record<string, any>): Promise<void> => {
         alert('Save functionality will save the parameters of the specified variable to the database and allow users to load it later. If the variable is already saved in the database it will be updated, but parameter names with similar values will be in conflict with the existing ones and prompt the user to either ignore or overwrite.');
         const uniqueId = id * Date.now();
@@ -554,7 +552,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
     };
 
-    // TODO: Need to implement the load functionality
+    
     const handleVariableLoad = () => {
         alert('Load functionality will grab relevant data (via variable) from the database and allow users to update the parameterization');
         try {
@@ -578,7 +576,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
     };
 
-    // TODO: this function will display the loaded variables
+    
     const displayLoadedVariables = () => {
 
     };
@@ -768,7 +766,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
     };
 
-    // TODO: this save function will handle the fetch to the mainKeyString database
+    
     const saveMainKeyString = (payload: { mainKeyString: mainKeyString[] }) => {
         const { mainKeyString } = payload;
         const response = fetch('http://localhost:3000/api/productManager/mainKeyString', {
