@@ -6,6 +6,7 @@ import { parameterReducer } from './productManagerSlice';
 import { iconManagerReducer } from './productManagerSlice';
 import { pdfManagerReducer } from './productManagerSlice';
 import { automationReducer } from './productManagerSlice';
+import { systemLoggerReducer } from './productManagerSlice';
 
 export const store = configureStore({
     reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
         iconManager: iconManagerReducer,
         pdfManager: pdfManagerReducer,
         automation: automationReducer,
+        systemLogger: systemLoggerReducer,
     },
     devTools: process.env.NODE_ENV !== 'production',
 });

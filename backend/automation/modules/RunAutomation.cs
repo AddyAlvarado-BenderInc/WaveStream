@@ -442,7 +442,7 @@ class runAuto
         var finalMessage =
             $"Automation run finished. Products processed: {processedCount}. Products successfully saved: {savedCount}.";
         Console.WriteLine(finalMessage);
-        await _signalRLogger($"[Automation] {finalMessage}");
+        await _signalRLogger($"[Automation Completed] {finalMessage}");
         if (cancellationToken.IsCancellationRequested)
         {
             var cancellationMessage = "Automation was cancelled by request.";

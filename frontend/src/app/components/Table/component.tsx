@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { tableCellData, ProductManager } from "../../../../types/productManager";
 import { signalRLogService } from "@/app/services/signalRService";
 import styles from './component.module.css';
 import { ToastContainer, toast } from "react-toastify";
 import { IGlobalVariablePackage } from "../../../../types/productManager";
+import { RootState } from "@/app/store/store";
 import 'react-toastify/dist/ReactToastify.css';
 
 interface tableSheetData {
@@ -58,7 +59,16 @@ const Table: React.FC<TableProps> =
         const [expandedCellKey, setExpandedCellKey] = useState<string | null>(null);
         const [isDisabled, setIsDisabled] = useState<boolean>(false);
 
-        const dispatch = useDispatch();
+        const systemLogSave = useSelector((state: RootState) => state.systemLogger.saved);
+        const systemLogCurrent = useSelector((state: RootState) => state.systemLogger.current);
+        const systemLogFailed = useSelector((state: RootState) => state.systemLogger.failed);
+        const systemLogBatch = useSelector((state: RootState) => state.systemLogger.batch);
+
+        console.log("Table Component - Redux States:");
+        console.log("systemLogSave:", systemLogSave);
+        console.log("systemLogCurrent:", systemLogCurrent);
+        console.log("systemLogFailed:", systemLogFailed);
+        console.log("systemLogBatch:", systemLogBatch);
 
         const toggleExpandComposite = (key: string) => {
             setExpandedCellKey(prevKey => (prevKey === key ? null : key));
@@ -995,199 +1005,232 @@ const Table: React.FC<TableProps> =
                                                         }
                                                     }
                                                 });
-                                                return Array.from({ length: maxArrayLength }).map((_, rowIndex) => (
-                                                    <tr key={`row-${rowIndex}`}>
-                                                        <td className={styles.rowNumberCell}>{rowIndex + 1}</td>
-                                                        {classKeyInputObjects.map((keyObj) => {
-                                                            const cellKey = `${keyObj.value}_row_${rowIndex}`;
-                                                            const cellData = rowDataMap.get(rowIndex)?.get(keyObj.value);
-                                                            const isCompositeCell = cellData?.isComposite ?? false;
-                                                            const isPackage = cellData?.isPackage ?? false;
-                                                            const cellValue = cellData?.value;
-                                                            let isDefaultCell = cellData?.isDefault ?? false;
-                                                            const isDisabledCell = cellData?.isDisabled ?? false; 
-                                                            const isExpanded = expandedCellKey === cellKey;
+                                                return Array.from({ length: maxArrayLength }).map((_, rowIndex) => {
+                                                    const taskID = rowIndex + 1;
+                                                    const classes = [];
 
-                                                            type PackageObject = IGlobalVariablePackage;
+                                                    if (systemLogCurrent === taskID) {
+                                                        classes.push(styles.rowCurrent);
+                                                    }
 
-                                                            let displayContent: React.ReactNode = '';
-                                                            let editActionValue: any = '';
+                                                    if (Array.isArray(systemLogFailed) && systemLogFailed.includes(taskID)) {
+                                                        classes.push(styles.rowFailed);
+                                                    }
 
-                                                            if (cellData) {
-                                                                if (keyObj.value === 'Icon' && rowIndex < 2) {
-                                                                    console.log(`TABLE RENDER (${cellKey}): isPackage=${isPackage}, typeof cellValue=${typeof cellValue}, cellValue=`, cellValue);
-                                                                    if (typeof cellValue === 'object' && cellValue !== null) console.log(`  'dataId' in cellValue: ${'dataId' in cellValue}`);
-                                                                }
+                                                    if (Array.isArray(systemLogBatch) && systemLogBatch.includes(taskID)) {
+                                                        classes.push(styles.rowBatch);
+                                                    }
 
-                                                                if (isCompositeCell && Array.isArray(cellValue)) {
-                                                                    displayContent = `COMP - ${cellData.classKey} (${cellValue.length})`;
-                                                                    editActionValue = JSON.stringify(cellValue);
-                                                                } else if (isPackage && typeof cellValue === 'object' && cellValue !== null && 'dataId' in cellValue) {
-                                                                    const packageObj = cellValue as PackageObject;
-                                                                    let fileCount = 0;
-                                                                    let errorMsg = '';
-                                                                    if (packageObj.variableData) {
-                                                                        if (packageObj.variableData instanceof Map) {
-                                                                            packageObj.variableData.forEach(entry => {
-                                                                                if (entry && typeof entry.value === 'string') {
-                                                                                    try {
-                                                                                        const parsedValue = JSON.parse(entry.value);
-                                                                                        fileCount += parsedValue?.filename?.length ?? 0;
-                                                                                    } catch (e: any) {
-                                                                                        console.error(`Error parsing package entry value in Table (${cellKey}):`, e, entry.value);
-                                                                                        errorMsg = ` Error: ${e.message}`;
-                                                                                    }
-                                                                                }
-                                                                            });
-                                                                        } else {
-                                                                            console.warn(`Expected packageObj.variableData to be a Map for cell ${cellKey}, but got:`, typeof packageObj.variableData, packageObj.variableData);
-                                                                            errorMsg = ` Error: Invalid data format`;
-                                                                            Object.values(packageObj.variableData).forEach((entry: any) => {
-                                                                                if (entry && typeof entry.value === 'string') {
-                                                                                    try {
-                                                                                        const parsedValue = JSON.parse(entry.value);
-                                                                                        fileCount += parsedValue?.filename?.length ?? 0;
-                                                                                    } catch (e) {
-                                                                                        console.error(`Error parsing package entry value in Table (object fallback for ${cellKey}):`, e, entry.value);
-                                                                                    }
-                                                                                }
-                                                                            });
-                                                                        }
-                                                                    } else {
-                                                                        console.warn(`Package object for cell ${cellKey} has no variableData.`);
-                                                                        errorMsg = ` Error: No content`;
+                                                    if (Array.isArray(systemLogSave) && systemLogSave.length > 0) {
+                                                        if (systemLogSave.length >= 1 && systemLogSave[systemLogSave.length - 1] === taskID) {
+                                                            classes.push(styles.rowSavedRecent);
+                                                        } else if (systemLogSave.length >= 2 && systemLogSave[systemLogSave.length - 2] === taskID) {
+                                                            classes.push(styles.rowSavedOlder1);
+                                                        } else if (systemLogSave.length >= 3 && systemLogSave[systemLogSave.length - 3] === taskID) {
+                                                            classes.push(styles.rowSavedOlder2);
+                                                        } else if (systemLogSave.length >= 4 && systemLogSave[systemLogSave.length - 4] === taskID) {
+                                                            classes.push(styles.rowSavedOlder3);
+                                                        } else if (systemLogSave.length >= 5 && systemLogSave[systemLogSave.length - 5] === taskID) {
+                                                            classes.push(styles.rowSavedOlder4);
+                                                        }
+                                                    }
+
+                                                    const rowClassName = classes.join(' ');
+
+                                                    return (
+                                                        <tr key={`row-${rowIndex}`} className={rowClassName}>
+                                                            <td className={styles.rowNumberCell}>{rowIndex + 1}</td>
+                                                            {classKeyInputObjects.map((keyObj) => {
+                                                                const cellKey = `${keyObj.value}_row_${rowIndex}`;
+                                                                const cellData = rowDataMap.get(rowIndex)?.get(keyObj.value);
+                                                                const isCompositeCell = cellData?.isComposite ?? false;
+                                                                const isPackage = cellData?.isPackage ?? false;
+                                                                const cellValue = cellData?.value;
+                                                                let isDefaultCell = cellData?.isDefault ?? false;
+                                                                const isDisabledCell = cellData?.isDisabled ?? false;
+                                                                const isExpanded = expandedCellKey === cellKey;
+
+                                                                type PackageObject = IGlobalVariablePackage;
+
+                                                                let displayContent: React.ReactNode = '';
+                                                                let editActionValue: any = '';
+
+                                                                if (cellData) {
+                                                                    if (keyObj.value === 'Icon' && rowIndex < 2) {
+                                                                        console.log(`TABLE RENDER (${cellKey}): isPackage=${isPackage}, typeof cellValue=${typeof cellValue}, cellValue=`, cellValue);
+                                                                        if (typeof cellValue === 'object' && cellValue !== null) console.log(`  'dataId' in cellValue: ${'dataId' in cellValue}`);
                                                                     }
-                                                                    displayContent = `PKG: ${packageObj.name || `ID ${packageObj.dataId}`} (${fileCount} files)`;
-                                                                    editActionValue = packageObj;
-                                                                } else if (typeof cellValue === 'string') {
-                                                                    displayContent = cellValue;
-                                                                    editActionValue = cellValue;
-                                                                } else if (cellValue === undefined || cellValue === null || cellValue === '') {
+
+                                                                    if (isCompositeCell && Array.isArray(cellValue)) {
+                                                                        displayContent = `COMP - ${cellData.classKey} (${cellValue.length})`;
+                                                                        editActionValue = JSON.stringify(cellValue);
+                                                                    } else if (isPackage && typeof cellValue === 'object' && cellValue !== null && 'dataId' in cellValue) {
+                                                                        const packageObj = cellValue as PackageObject;
+                                                                        let fileCount = 0;
+                                                                        let errorMsg = '';
+                                                                        if (packageObj.variableData) {
+                                                                            if (packageObj.variableData instanceof Map) {
+                                                                                packageObj.variableData.forEach(entry => {
+                                                                                    if (entry && typeof entry.value === 'string') {
+                                                                                        try {
+                                                                                            const parsedValue = JSON.parse(entry.value);
+                                                                                            fileCount += parsedValue?.filename?.length ?? 0;
+                                                                                        } catch (e: any) {
+                                                                                            console.error(`Error parsing package entry value in Table (${cellKey}):`, e, entry.value);
+                                                                                            errorMsg = ` Error: ${e.message}`;
+                                                                                        }
+                                                                                    }
+                                                                                });
+                                                                            } else {
+                                                                                console.warn(`Expected packageObj.variableData to be a Map for cell ${cellKey}, but got:`, typeof packageObj.variableData, packageObj.variableData);
+                                                                                errorMsg = ` Error: Invalid data format`;
+                                                                                Object.values(packageObj.variableData).forEach((entry: any) => {
+                                                                                    if (entry && typeof entry.value === 'string') {
+                                                                                        try {
+                                                                                            const parsedValue = JSON.parse(entry.value);
+                                                                                            fileCount += parsedValue?.filename?.length ?? 0;
+                                                                                        } catch (e) {
+                                                                                            console.error(`Error parsing package entry value in Table (object fallback for ${cellKey}):`, e, entry.value);
+                                                                                        }
+                                                                                    }
+                                                                                });
+                                                                            }
+                                                                        } else {
+                                                                            console.warn(`Package object for cell ${cellKey} has no variableData.`);
+                                                                            errorMsg = ` Error: No content`;
+                                                                        }
+                                                                        displayContent = `PKG: ${packageObj.name || `ID ${packageObj.dataId}`} (${fileCount} files)`;
+                                                                        editActionValue = packageObj;
+                                                                    } else if (typeof cellValue === 'string') {
+                                                                        displayContent = cellValue;
+                                                                        editActionValue = cellValue;
+                                                                    } else if (cellValue === undefined || cellValue === null || cellValue === '') {
+                                                                        displayContent = '';
+                                                                        editActionValue = '';
+                                                                    } else {
+                                                                        if (typeof cellValue === 'object') {
+                                                                            displayContent = '[object Object]';
+                                                                            console.warn(`Cell ${cellKey} has object value but isPackage flag is false or structure is wrong.`);
+                                                                        } else {
+                                                                            displayContent = '[Invalid Data]';
+                                                                            console.warn(`Unexpected cellValue type for key ${cellKey}:`, cellValue);
+                                                                        }
+                                                                        editActionValue = String(cellValue);
+                                                                    }
+                                                                } else {
                                                                     displayContent = '';
                                                                     editActionValue = '';
-                                                                } else {
-                                                                    if (typeof cellValue === 'object') {
-                                                                        displayContent = '[object Object]';
-                                                                        console.warn(`Cell ${cellKey} has object value but isPackage flag is false or structure is wrong.`);
-                                                                    } else {
-                                                                        displayContent = '[Invalid Data]';
-                                                                        console.warn(`Unexpected cellValue type for key ${cellKey}:`, cellValue);
-                                                                    }
-                                                                    editActionValue = String(cellValue);
                                                                 }
-                                                            } else {
-                                                                displayContent = '';
-                                                                editActionValue = '';
-                                                            }
 
-                                                            return (
-                                                                <td
-                                                                    key={`${keyObj.index}-${rowIndex}`}
-                                                                    className={`${isDefaultCell ? styles.tableCellDefault : styles.tableCell} ${isDisabledCell ? styles.disabledCell : ''}`}
-                                                                    id={`${keyObj.value}-${rowIndex}`}
-                                                                >
-                                                                    <div className={styles.tableContainer}>
-                                                                        <span
-                                                                            onClick={() => (isCompositeCell || (isPackage && typeof cellValue === 'object')) && toggleExpandComposite(cellKey)}
-                                                                            className={(isCompositeCell || (isPackage && typeof cellValue === 'object')) ? styles.compositeDisplay : ''}
-                                                                            title={(isCompositeCell || (isPackage && typeof cellValue === 'object')) ? "Click to view/hide details" : ""}
-                                                                        >
-                                                                            {displayContent}
-                                                                        </span>
-                                                                        <div className={styles.cellButtons}>
-                                                                            {cellValue !== undefined && cellValue !== null && cellValue !== '' && (
-                                                                                <>
-                                                                                    {(isCompositeCell || isPackage) && (
+                                                                return (
+                                                                    <td
+                                                                        key={`${keyObj.index}-${rowIndex}`}
+                                                                        className={`${isDefaultCell ? styles.tableCellDefault : styles.tableCell} ${isDisabledCell ? styles.disabledCell : ''}`}
+                                                                        id={`${keyObj.value}-${rowIndex}`}
+                                                                    >
+                                                                        <div className={styles.tableContainer}>
+                                                                            <span
+                                                                                onClick={() => (isCompositeCell || (isPackage && typeof cellValue === 'object')) && toggleExpandComposite(cellKey)}
+                                                                                className={(isCompositeCell || (isPackage && typeof cellValue === 'object')) ? styles.compositeDisplay : ''}
+                                                                                title={(isCompositeCell || (isPackage && typeof cellValue === 'object')) ? "Click to view/hide details" : ""}
+                                                                            >
+                                                                                {displayContent}
+                                                                            </span>
+                                                                            <div className={styles.cellButtons}>
+                                                                                {cellValue !== undefined && cellValue !== null && cellValue !== '' && (
+                                                                                    <>
+                                                                                        {(isCompositeCell || isPackage) && (
+                                                                                            <button
+                                                                                                onClick={(e) => { e.stopPropagation(); toggleExpandComposite(cellKey); }}
+                                                                                                className={styles.cellExpand}
+                                                                                                title={isExpanded ? 'Minimize' : 'Expand details'}
+                                                                                            >
+                                                                                                {isExpanded ? 'Min' : 'Exp'}
+                                                                                            </button>
+                                                                                        )}
+                                                                                        {!isPackage && !isCompositeCell && (
+                                                                                            <button
+                                                                                                onClick={(e) => { e.stopPropagation(); handleEditCellValue(keyObj.value, rowIndex, editActionValue); }}
+                                                                                                className={styles.cellEdit} title="Edit cell data"
+                                                                                            > Edit </button>
+                                                                                        )}
                                                                                         <button
-                                                                                            onClick={(e) => { e.stopPropagation(); toggleExpandComposite(cellKey); }}
-                                                                                            className={styles.cellExpand}
-                                                                                            title={isExpanded ? 'Minimize' : 'Expand details'}
-                                                                                        >
-                                                                                            {isExpanded ? 'Min' : 'Exp'}
-                                                                                        </button>
-                                                                                    )}
-                                                                                    {!isPackage && !isCompositeCell && (
+                                                                                            onClick={(e) => {
+                                                                                                e.stopPropagation();
+                                                                                                const actionValue = isCompositeCell && Array.isArray(cellValue) ? cellValue :
+                                                                                                    isPackage && typeof cellValue === 'object' ? cellValue :
+                                                                                                        String(cellValue ?? '');
+                                                                                                setActionTargetCell({ key: keyObj.value, rowIndex, value: actionValue, isComposite: isCompositeCell, isPackage: isPackage });
+                                                                                                setCurrentAction(null); setActionInputValue(''); setActionModalOpen(true);
+                                                                                            }}
+                                                                                            className={styles.cellAction} title="Perform action on cell data"
+                                                                                        > Action </button>
                                                                                         <button
-                                                                                            onClick={(e) => { e.stopPropagation(); handleEditCellValue(keyObj.value, rowIndex, editActionValue); }}
-                                                                                            className={styles.cellEdit} title="Edit cell data"
-                                                                                        > Edit </button>
-                                                                                    )}
-                                                                                    <button
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            const actionValue = isCompositeCell && Array.isArray(cellValue) ? cellValue :
-                                                                                                isPackage && typeof cellValue === 'object' ? cellValue :
-                                                                                                    String(cellValue ?? '');
-                                                                                            setActionTargetCell({ key: keyObj.value, rowIndex, value: actionValue, isComposite: isCompositeCell, isPackage: isPackage });
-                                                                                            setCurrentAction(null); setActionInputValue(''); setActionModalOpen(true);
-                                                                                        }}
-                                                                                        className={styles.cellAction} title="Perform action on cell data"
-                                                                                    > Action </button>
-                                                                                    <button
-                                                                                        onClick={(e) => { e.stopPropagation(); handleDeleteCell(keyObj.value, rowIndex); }}
-                                                                                        className={styles.cellDelete} title="Delete cell data"
-                                                                                        disabled={isDisabledCell} 
-                                                                                    > &times; </button>
-                                                                                </>
+                                                                                            onClick={(e) => { e.stopPropagation(); handleDeleteCell(keyObj.value, rowIndex); }}
+                                                                                            className={styles.cellDelete} title="Delete cell data"
+                                                                                            disabled={isDisabledCell}
+                                                                                        > &times; </button>
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+
+                                                                            {isCompositeCell && isExpanded && Array.isArray(cellValue) && (
+                                                                                <div className={styles.compositeExpandedView}>
+                                                                                    <ul> {cellValue.map((val, idx) => <li key={`${cellKey}-val-${idx}`}>{val}</li>)} </ul>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {isPackage && isExpanded && typeof cellValue === 'object' && cellValue !== null && 'variableData' in cellValue && (
+                                                                                <div className={styles.compositeExpandedView}>
+                                                                                    {(() => {
+                                                                                        const pkgObjForExpand = cellValue as PackageObject;
+                                                                                        if (!pkgObjForExpand.variableData) return <div className={styles.packageItemDetail}>No variable data found.</div>;
+
+                                                                                        const entriesToRender: React.ReactNode[] = [];
+                                                                                        if (pkgObjForExpand.variableData instanceof Map) {
+                                                                                            pkgObjForExpand.variableData.forEach((entry, pkgContentKey) => {
+                                                                                                if (entry && typeof entry.value === 'string') {
+                                                                                                    try {
+                                                                                                        const parsedValue = JSON.parse(entry.value);
+                                                                                                        if (parsedValue && parsedValue.filename) {
+                                                                                                            entriesToRender.push(
+                                                                                                                <div key={`${cellKey}-pkg-${pkgContentKey}`} className={styles.packageItemDetail}>
+                                                                                                                    <strong>{pkgContentKey}:</strong>
+                                                                                                                    {parsedValue.filename.map((fname: string, fileIdx: number) => (
+                                                                                                                        <div key={`${cellKey}-pkg-${pkgContentKey}-file-${fileIdx}`} className={styles.fileUrlPair}>
+                                                                                                                            <span>File: {fname}</span>
+                                                                                                                            {parsedValue.url?.[fileIdx] && (
+                                                                                                                                <>
+                                                                                                                                    <span> | URL: {parsedValue.url[fileIdx]}</span>
+                                                                                                                                    <a href={parsedValue.url[fileIdx]} target="_blank" rel="noopener noreferrer" title={parsedValue.url[fileIdx]}> (Link) </a>
+                                                                                                                                </>
+                                                                                                                            )}
+                                                                                                                        </div>
+                                                                                                                    ))}
+                                                                                                                </div>
+                                                                                                            );
+                                                                                                        }
+                                                                                                    } catch (e) {
+                                                                                                        console.error(`Error parsing package entry for expand view (${cellKey}):`, e, entry.value);
+                                                                                                        entriesToRender.push(<div key={`${cellKey}-pkg-${pkgContentKey}-error`} className={styles.packageItemDetail}>Error parsing data for {pkgContentKey}</div>);
+                                                                                                    }
+                                                                                                }
+                                                                                            });
+                                                                                        } else {
+                                                                                            console.warn(`Expected variableData to be a Map for expanded view cell ${cellKey}`);
+                                                                                            entriesToRender.push(<div className={styles.packageItemDetail}>Error: Invalid package data structure (not a Map).</div>);
+                                                                                        }
+                                                                                        return entriesToRender.length > 0 ? entriesToRender : <div className={styles.packageItemDetail}>No files found in package data.</div>;
+                                                                                    })()}
+                                                                                </div>
                                                                             )}
                                                                         </div>
-
-                                                                        {isCompositeCell && isExpanded && Array.isArray(cellValue) && (
-                                                                            <div className={styles.compositeExpandedView}>
-                                                                                <ul> {cellValue.map((val, idx) => <li key={`${cellKey}-val-${idx}`}>{val}</li>)} </ul>
-                                                                            </div>
-                                                                        )}
-
-                                                                        {isPackage && isExpanded && typeof cellValue === 'object' && cellValue !== null && 'variableData' in cellValue && (
-                                                                            <div className={styles.compositeExpandedView}>
-                                                                                {(() => {
-                                                                                    const pkgObjForExpand = cellValue as PackageObject;
-                                                                                    if (!pkgObjForExpand.variableData) return <div className={styles.packageItemDetail}>No variable data found.</div>;
-
-                                                                                    const entriesToRender: React.ReactNode[] = [];
-                                                                                    if (pkgObjForExpand.variableData instanceof Map) {
-                                                                                        pkgObjForExpand.variableData.forEach((entry, pkgContentKey) => {
-                                                                                            if (entry && typeof entry.value === 'string') {
-                                                                                                try {
-                                                                                                    const parsedValue = JSON.parse(entry.value);
-                                                                                                    if (parsedValue && parsedValue.filename) {
-                                                                                                        entriesToRender.push(
-                                                                                                            <div key={`${cellKey}-pkg-${pkgContentKey}`} className={styles.packageItemDetail}>
-                                                                                                                <strong>{pkgContentKey}:</strong>
-                                                                                                                {parsedValue.filename.map((fname: string, fileIdx: number) => (
-                                                                                                                    <div key={`${cellKey}-pkg-${pkgContentKey}-file-${fileIdx}`} className={styles.fileUrlPair}>
-                                                                                                                        <span>File: {fname}</span>
-                                                                                                                        {parsedValue.url?.[fileIdx] && (
-                                                                                                                            <>
-                                                                                                                                <span> | URL: {parsedValue.url[fileIdx]}</span>
-                                                                                                                                <a href={parsedValue.url[fileIdx]} target="_blank" rel="noopener noreferrer" title={parsedValue.url[fileIdx]}> (Link) </a>
-                                                                                                                            </>
-                                                                                                                        )}
-                                                                                                                    </div>
-                                                                                                                ))}
-                                                                                                            </div>
-                                                                                                        );
-                                                                                                    }
-                                                                                                } catch (e) {
-                                                                                                    console.error(`Error parsing package entry for expand view (${cellKey}):`, e, entry.value);
-                                                                                                    entriesToRender.push(<div key={`${cellKey}-pkg-${pkgContentKey}-error`} className={styles.packageItemDetail}>Error parsing data for {pkgContentKey}</div>);
-                                                                                                }
-                                                                                            }
-                                                                                        });
-                                                                                    } else {
-                                                                                        console.warn(`Expected variableData to be a Map for expanded view cell ${cellKey}`);
-                                                                                        entriesToRender.push(<div className={styles.packageItemDetail}>Error: Invalid package data structure (not a Map).</div>);
-                                                                                    }
-                                                                                    return entriesToRender.length > 0 ? entriesToRender : <div className={styles.packageItemDetail}>No files found in package data.</div>;
-                                                                                })()}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </td>
-                                                            );
-                                                        })}
-                                                    </tr>
-                                                ));
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    );
+                                                });
                                             })()
                                         ) : (
                                             <tr className={Object.keys(variableData).length > 0 ? 'show-default-unavailable-data' : 'hide-default-unavailable-data'}>

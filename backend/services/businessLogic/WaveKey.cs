@@ -863,7 +863,7 @@ public class Wavekey
                     $"[Wavekey] {logMessage}"
                 );
                 // Based on admin permissions, the user can either switch between headless or non-headless mode for the environment
-                var launchOptions = new BrowserTypeLaunchOptions { Headless = false };
+                var launchOptions = new BrowserTypeLaunchOptions { Headless = true };
                 browser = await playwright.Chromium.LaunchAsync(launchOptions);
             }
 

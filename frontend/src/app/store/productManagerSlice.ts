@@ -137,6 +137,20 @@ const initialAutomationState: AutomationState = {
   isRunning: false,
 };
 
+interface SystemLoggerTasks {
+  current: number;
+  saved: number[];
+  failed: number[];
+  batch: number[];
+};
+
+const initialSystemLoggerTasks: SystemLoggerTasks = {
+  current: 0,
+  saved: [],
+  failed: [],
+  batch: [],
+};
+
 const iconManagerSlice = createSlice({
   name: 'iconManager',
   initialState: initialIconManagerState,
@@ -328,7 +342,37 @@ const automationSlice = createSlice({
       state.isRunning = false;
     }
   },
-})
+});
+
+const systemLoggerSlice = createSlice({
+  name: "systemLogger",
+  initialState: initialSystemLoggerTasks,
+  reducers: {
+    setCurrentTask: (state, action: PayloadAction<number>) => {
+      state.current = action.payload;
+    },
+    addSavedTask: (state, action: PayloadAction<number>) => {
+      state.saved.push(action.payload);
+      if (state.saved.length > 5) {
+        state.saved.shift();
+      }
+    },
+    addFailedTask: (state, action: PayloadAction<number>) => {
+      if (!state.failed.includes(action.payload)) {
+        state.failed.push(action.payload);
+      }
+    },
+    setBatchTasks: (state, action: PayloadAction<number[]>) => {
+      state.batch = action.payload;
+    },
+    clearAllTasks: (state) => {
+      state.current = 0;
+      state.saved = [];
+      state.failed = [];
+      state.batch = [];
+    },
+  },
+});
 
 export const {
   addVariablePackage,
@@ -353,6 +397,7 @@ export const { updateProductManager } = productManagerSlice.actions;
 export const { setIcon, addIcon, clearIcon, deleteIcon } = iconManagerSlice.actions;
 export const { setPDF, addPDF, clearPDF, deletePDF } = pdfManagerSlice.actions;
 export const { setRunOption, setServerOption, setIsRunning, clearAllRunOptions } = automationSlice.actions;
+export const { setCurrentTask, addSavedTask, addFailedTask, setBatchTasks, clearAllTasks } = systemLoggerSlice.actions;
 
 export default productManagerSlice.reducer;
 export const variableReducer = variableSlice.reducer;
@@ -361,3 +406,4 @@ export const parameterReducer = parameterSlice.reducer;
 export const iconManagerReducer = iconManagerSlice.reducer;
 export const pdfManagerReducer = pdfManagerSlice.reducer;
 export const automationReducer = automationSlice.reducer;
+export const systemLoggerReducer = systemLoggerSlice.reducer;

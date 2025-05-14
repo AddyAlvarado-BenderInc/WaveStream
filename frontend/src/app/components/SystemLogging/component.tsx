@@ -1,5 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
 import { signalRLogService } from "../../services/signalRService";
+import {
+    setCurrentTask,
+    addSavedTask,
+    addFailedTask,
+    setBatchTasks,
+    clearAllTasks,
+} from "@/app/store/productManagerSlice";
+import { useDispatch } from "react-redux";
 import styles from './component.module.css';
 
 interface LogEntry {
@@ -25,11 +33,20 @@ const SystemLogging: React.FC = () => {
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [failedItems, setFailedItems] = useState<FailedItem[]>([]);
     const [latestTaskInfo, setLatestTaskInfo] = useState<LatestTaskInfo | null>(null);
+    const [latestBatchInfo, setLatestBatchInfo] = useState<LatestTaskInfo | null>(null);
     const logsEndRef = useRef<HTMLDivElement>(null);
     const logsContainerRef = useRef<HTMLDivElement>(null);
     const logIdCounter = useRef<number>(0);
     const [hide, setHide] = useState<boolean>(false);
     const [userScrolledUp, setUserScrolledUp] = useState(false);
+
+    const dispatch = useDispatch();
+
+    const [automationStartTime, setAutomationStartTime] = useState<number | null>(null);
+    const [automationEndTime, setAutomationEndTime] = useState<number | null>(null);
+    const [displayedElapsedTime, setDisplayedElapsedTime] = useState<string>("00:00:00");
+
+    const [searchTerm, setSearchTerm] = useState<string>("");
 
     const getLogDetails = (message: string): {
         status: string | null,
@@ -43,6 +60,11 @@ const SystemLogging: React.FC = () => {
         let saveTaskId: string | null = null;
         let generalTaskId: string | null = null;
         let generalProductName: string | null = null;
+
+        const automationCompletedRegex = /^\[Automation Completed\] Automation run finished\. Products processed: \d+\. Products successfully saved: \d+\.$/;
+        if (automationCompletedRegex.test(message)) {
+            status = "AUTOMATION_SUMMARY";
+        }
 
         const taskRegex = /(?:\[Task\s*(\d+)|Task\s*(\d+))/i;
         const taskMatch = message.match(taskRegex);
@@ -58,7 +80,7 @@ const SystemLogging: React.FC = () => {
             }
         }
 
-        if (message.startsWith("[USER] SAVE_")) {
+        if (message.startsWith("[USER] SAVE_") && status !== "AUTOMATION_SUMMARY") {
             status = message.substring("[USER] SAVE_".length).split(':')[0]?.trim().toUpperCase();
 
             if (status === "FAIL") {
@@ -91,9 +113,58 @@ const SystemLogging: React.FC = () => {
         return { status, productName, taskId: saveTaskId, generalTaskId, generalProductName };
     };
 
+
+    const formatElapsedTime = (ms: number): string => {
+        if (ms < 0) ms = 0;
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
+
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout | undefined = undefined;
+
+        if (automationStartTime !== null) {
+            intervalId = setInterval(() => {
+                const endTime = automationEndTime || Date.now();
+                const elapsed = endTime - automationStartTime;
+                setDisplayedElapsedTime(formatElapsedTime(elapsed));
+            }, 1000);
+        } else {
+
+            setDisplayedElapsedTime("00:00:00");
+        }
+
+
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, [automationStartTime, automationEndTime]);
+
     useEffect(() => {
         signalRLogService.onLogReceived = (logEntryMessage, timestamp) => {
             const { status, productName, taskId, generalTaskId, generalProductName } = getLogDetails(logEntryMessage);
+
+            setAutomationStartTime(prevStartTime => {
+                if (prevStartTime === null) {
+                    setAutomationEndTime(null);
+                    dispatch(clearAllTasks());
+                    return Date.now();
+                }
+                return prevStartTime;
+            });
+
+            if (status === "AUTOMATION_SUMMARY") {
+                setAutomationEndTime(Date.now());
+                dispatch(setCurrentTask(0));
+                dispatch(setBatchTasks([]));
+            }
 
             setLogs(prevLogs => {
                 const newLogs = [
@@ -104,10 +175,63 @@ const SystemLogging: React.FC = () => {
             });
 
             if (generalTaskId) {
+                const numericGeneralTaskId = parseInt(generalTaskId, 10);
+                if (!isNaN(numericGeneralTaskId)) {
+                    dispatch(setCurrentTask(numericGeneralTaskId));
+
+                    if (status === "SUCCESS") {
+                        dispatch(addSavedTask(numericGeneralTaskId));
+                    }
+
+                    if (status === "FAIL") {
+                        dispatch(addFailedTask(numericGeneralTaskId));
+                    }
+
+                    dispatch(setBatchTasks([numericGeneralTaskId]));
+                }
+            }
+
+            if (generalTaskId) {
                 setLatestTaskInfo(prevInfo => {
                     if (!prevInfo || prevInfo.taskId !== generalTaskId || (prevInfo.taskId === generalTaskId && generalProductName && !prevInfo.productName)) {
                         return { taskId: generalTaskId, productName: generalProductName || prevInfo?.productName };
                     }
+                    return prevInfo;
+                });
+                setLatestBatchInfo(prevInfo => {
+
+                    if (!generalTaskId) {
+                        return prevInfo;
+                    }
+
+                    const currentNumericTaskId = parseInt(generalTaskId, 10);
+
+                    if (isNaN(currentNumericTaskId)) {
+                        return prevInfo;
+                    }
+
+                    if (!prevInfo) {
+
+                        return { taskId: generalTaskId, productName: generalProductName ?? undefined };
+                    }
+
+                    const prevNumericTaskId = parseInt(prevInfo.taskId, 10);
+
+                    if (isNaN(prevNumericTaskId)) {
+                        return { taskId: generalTaskId, productName: generalProductName ?? undefined };
+                    }
+
+                    if (currentNumericTaskId > prevNumericTaskId) {
+
+                        return { taskId: generalTaskId, productName: generalProductName ?? undefined };
+                    } else if (currentNumericTaskId === prevNumericTaskId) {
+
+                        return {
+                            taskId: generalTaskId,
+                            productName: generalProductName !== undefined && generalProductName !== null ? generalProductName : prevInfo.productName
+                        };
+                    }
+
                     return prevInfo;
                 });
             }
@@ -150,7 +274,7 @@ const SystemLogging: React.FC = () => {
             signalRLogService.onLogReceived = null;
             signalRLogService.onConnectionStateChanged = null;
         };
-    }, []);
+    }, [dispatch]);
 
     useEffect(() => {
         const container = logsContainerRef.current;
@@ -183,6 +307,7 @@ const SystemLogging: React.FC = () => {
             case "WARN": return styles.logWarn;
             case "ATTEMPT": return styles.logAttempt;
             case "CANCELLED": return styles.logCancelled;
+            case "AUTOMATION_SUMMARY": return styles.logAutomationSummary;
             default: return "";
         }
     };
@@ -217,6 +342,10 @@ const SystemLogging: React.FC = () => {
         triggerDownload(jsonContent, 'failed_items.json', 'application/json;charset=utf-8;');
     };
 
+    const filteredLogs = logs.filter(log =>
+        log.message.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className={styles.loggingContainer}>
             <div className={styles.header}>
@@ -241,7 +370,7 @@ const SystemLogging: React.FC = () => {
                             {latestTaskInfo && (
                                 <span className={styles.latestTaskText}>
                                     <span className={styles.latestTaskId}>
-                                       @ <strong style={{ color: "white" }}>{latestTaskInfo.taskId}</strong> Tasks {" "}
+                                        @ <strong style={{ color: "white" }}>{latestTaskInfo.taskId}</strong> {" "} from <strong style={{ color: "white" }}>{latestBatchInfo?.taskId}</strong> Tasks
                                         {failedItems.length > 0 && (
                                             <span className={styles.failedItemsCount}>
                                                 w/ <strong style={{ color: "white" }}>{failedItems.length}</strong> Failed
@@ -257,8 +386,17 @@ const SystemLogging: React.FC = () => {
             </div>
             {hide && (
                 <div className={styles.logger}>
+                    <div className={styles.logSearchContainer}>
+                        <input
+                            type="text"
+                            placeholder="Search logs..."
+                            className={styles.logSearchInput}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                     <div className={styles.logsDisplay} ref={logsContainerRef} onScroll={handleScroll}>
-                        {logs.map((log) => (
+                        {filteredLogs.map((log) => (
                             <div key={log.id} className={styles.logEntry}>
                                 <span className={styles.logTimestamp}>[{log.timestamp}]</span>
                                 <pre className={`${styles.logMessage} ${getLogEntryClass(log.status)}`}>
@@ -266,31 +404,48 @@ const SystemLogging: React.FC = () => {
                                 </pre>
                             </div>
                         ))}
+                        {filteredLogs.length === 0 && logs.length > 0 && (
+                            <p className={styles.noSearchResults}>No logs match your search criteria.</p>
+                        )}
                         <div ref={logsEndRef} />
                     </div>
-                    <div className={styles.logButtonContainer}>
-                        {logs.length > 0 && (
-                            <button className={styles.clearButton} onClick={() => {
-                                setLogs([]);
-                                setFailedItems([]);
-                                setCompletedTasks([]);
-                                setLatestTaskInfo(null);
-                                setUserScrolledUp(false);
-                            }}>
-                                Clear Logs & Data
-                            </button>
-                        )}
-                        {userScrolledUp && logs.length > 0 && (
-                            <button
-                                className={userScrolledUp ? styles.scrollToBottomButton : styles.scrollToBottomHidden}
-                                onClick={() => {
-                                    logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                    <div className={styles.logBottomSection}>
+                        <div className={styles.logButtonContainer}>
+                            {logs.length > 0 && (
+                                <button className={styles.clearButton} onClick={() => {
+                                    setLogs([]);
+                                    setFailedItems([]);
+                                    setCompletedTasks([]);
+                                    setLatestTaskInfo(null);
+                                    setLatestBatchInfo(null);
                                     setUserScrolledUp(false);
-                                }}
-                            >
-                                Scroll to Latest
-                            </button>
-                        )}
+                                    setAutomationStartTime(null);
+                                    setAutomationEndTime(null);
+                                    dispatch(clearAllTasks());
+                                }}>
+                                    Clear Logs & Data
+                                </button>
+                            )}
+                            {userScrolledUp && logs.length > 0 && (
+                                <button
+                                    className={userScrolledUp ? styles.scrollToBottomButton : styles.scrollToBottomHidden}
+                                    onClick={() => {
+                                        logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+                                        setUserScrolledUp(false);
+                                    }}
+                                >
+                                    Scroll to Latest
+                                </button>
+                            )}
+                        </div>
+                        <div className={styles.timerContainer}>
+                            <span className={styles.timerText}>Elapsed Time - </span>
+                            <span className={styles.timerValue}>
+                                <strong>
+                                    {displayedElapsedTime}
+                                </strong>
+                            </span>
+                        </div>
                     </div>
                     {logs.length === 0 && !isConnected && <p className={styles.waitingMessage}>Attempting to connect to logging server...</p>}
                     {logs.length === 0 && isConnected && <p className={styles.waitingMessage}>Connected. Waiting for log entries...</p>}

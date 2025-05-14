@@ -108,6 +108,8 @@
 .logsDisplay {
   height: 450px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff transparent;
   border: 1px solid var(#fff);
   padding: 15px;
   background-color: var(#000);
@@ -265,4 +267,47 @@
 .scrollToBottomButton:hover {
   background-color: #fff;
   color: #000;
+}
+
+.logBottomSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.logAutomationSummary {
+  background-color: #e0e0ff;
+  color: #333;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.logSearchContainer {
+  padding: 5px 10px;
+  background-color: var(--background-secondary); 
+  border-bottom: 1px solid var(--border-color-light); 
+}
+
+.logSearchInput {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color-medium);
+  background-color: var(--background-primary);
+  color: var(--text-primary);
+  box-sizing: border-box; 
+}
+
+.logSearchInput:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color-transparent);
+}
+
+.noSearchResults {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary);
 }
