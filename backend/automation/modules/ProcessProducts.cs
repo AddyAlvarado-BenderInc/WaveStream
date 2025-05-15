@@ -305,11 +305,15 @@ namespace backend.automation.modules
             SettingsTab settingsTab = new SettingsTab();
             ProductPricingAndBuyerConfiguration productPricingAndBuyerConfiguration =
                 new ProductPricingAndBuyerConfiguration();
+            UploadProductPDF uploadProductPDF = new UploadProductPDF();
+            TicketTemplateContainer ticketTemplateContainer = new TicketTemplateContainer();
+
             IPage? newPage = null;
 
             string displayName = product.DisplayName;
             string itemTemplate = product.ItemTemplate;
             dynamic icon = product.Icon;
+            dynamic pdf = product.PDFUploadName;
             string productType = product.Type;
             string briefDescription = product.BriefDescription;
             string longDescription = product.LongDescription;
@@ -401,6 +405,7 @@ namespace backend.automation.modules
                     $"[ProcessProducts Task {taskId}] Before FillProductInfo for: {productName}"
                 );
                 await productInfoFill.FillProductInfo(
+                    taskId,
                     newPage,
                     productName,
                     displayName,
@@ -413,10 +418,17 @@ namespace backend.automation.modules
                 await signalRLogger(
                     $"[ProcessProducts Task {taskId}] After FillProductInfo for: {productName}"
                 );
-                await uploadProductIcon.UploadIconsAsync(productName, icon, newPage, signalRLogger);
+                await uploadProductIcon.UploadIconsAsync(
+                    taskId,
+                    productName,
+                    icon,
+                    newPage,
+                    signalRLogger
+                );
 
                 cancellationToken.ThrowIfCancellationRequested();
                 await productDetailFill.FillLongDescription(
+                    taskId,
                     newPage,
                     longDescription,
                     productName,
@@ -424,7 +436,14 @@ namespace backend.automation.modules
                 );
 
                 cancellationToken.ThrowIfCancellationRequested();
+                // TODO: Need to work on this more, as it is not working as expected.
+                // Any pricing deletion causes a bug where it over deletes and causes the website
+                // to not be able to save the product. For now, prevent user from moving forward
+                // with this option.
+
+                /*
                 await productPricingAndBuyerConfiguration.ConfigurePricingAndBuyerSettingsAsync(
+                    taskId,
                     newPage,
                     signalRLogger,
                     productType,
@@ -434,9 +453,11 @@ namespace backend.automation.modules
                     rangeEnd,
                     buyerConfigs
                 );
+                */
 
                 cancellationToken.ThrowIfCancellationRequested();
                 await settingsTab.SettingsTabAsync(
+                    taskId,
                     newPage,
                     signalRLogger,
                     productType,
@@ -452,6 +473,26 @@ namespace backend.automation.modules
                 );
 
                 cancellationToken.ThrowIfCancellationRequested();
+                await uploadProductPDF.UploadPDFAsync(
+                    taskId,
+                    newPage,
+                    productName,
+                    productType,
+                    pdf,
+                    signalRLogger
+                );
+
+                cancellationToken.ThrowIfCancellationRequested();
+                await ticketTemplateContainer.TicketTemplateSelectorAsync(
+                    taskId,
+                    newPage,
+                    productName,
+                    productType,
+                    signalRLogger
+                );
+
+                cancellationToken.ThrowIfCancellationRequested();
+                Console.WriteLine($"[Task {taskId}] Product {productName} processing completed.");
                 await signalRLogger(
                     $"[ProcessProducts Task {taskId}] Successfully processed data for product: {productName}. Ready for save."
                 );

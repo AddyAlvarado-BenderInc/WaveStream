@@ -14,7 +14,7 @@ interface ProductIconManagerProps {
     onUpload: (files: File[]) => void;
 }
 
-const MAX_IMAGES = 5;
+const MAX_IMAGES = 30;
 
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({
     icon, label, onUpload, onDelete
@@ -39,7 +39,7 @@ const ProductIconManager: React.FC<ProductIconManagerProps> = ({
             }
 
             if (icon.length + validFiles.length > MAX_IMAGES) {
-                alert("You can only add up to 5 images.");
+                alert("You can only add up to 30 images.");
                 return;
             }
 

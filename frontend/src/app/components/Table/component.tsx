@@ -928,7 +928,8 @@ const Table: React.FC<TableProps> =
                                                         await runAutomation();
                                                     }
                                                 }}
-                                                className={styles.runAutomationButton}
+                                                className={`${styles.runAutomationButton} ${(variableData.length === 0 && Object.keys(variableRowData).length === 0) ? styles.runButtonDisabled : ''}`}
+                                                disabled={variableData.length === 0 && Object.keys(variableRowData).length === 0}
                                             >
                                                 {automationRunning ? 'Stop Automation' : 'Run Automation'}
                                             </button>

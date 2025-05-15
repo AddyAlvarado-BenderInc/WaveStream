@@ -43,14 +43,12 @@ interface variableClassProps {
 const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, onPackage }) => {
     const [MKSType, setMKSType] = useState<string>('StringMKS');
     const [IntVar, setIntVar] = useState<string[]>([]);
-    const [showImageName, setShowImageName] = useState(false);
 
     useEffect(() => {
         setLocalString('');
         setLocalTextarea('');
         setLocalInteger('');
         setLocalIntegerResult(null);
-        setLocalFile([]);
         setLocalIntegerError('');
         setIntVar([]);
     }, [MKSType]);
@@ -64,10 +62,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
     const [localInteger, setLocalInteger] = useState<string>(integerInput);
     const [localIntegerResult, setLocalIntegerResult] = useState<number | null>(null);
     const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
-    const [localFilename, setLocalFilename] = useState<string[]>([]);
-    const [localFile, setLocalFile] = useState<string[]>([]);
     const [localIntegerError, setLocalIntegerError] = useState('');
-
 
     const selectMKSType = (type: string) => {
         switch (type) {
@@ -187,6 +182,8 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
                     evaluated = true;
                     break;
                 } catch (err) {
+                    console.error('Error evaluating expression:', err);
+                    setLocalIntegerError('Invalid math expression');
                 }
             }
 
@@ -507,7 +504,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
                                 value={MKSType}
                                 onChange={(e) => setMKSType(e.target.value)}>
                                 <option value='StringMKS'>Single Line</option>
-                                <option value='IntegerMKS'>Number</option>
+                                {/* <option value='IntegerMKS'>Number</option> */}
                                 <option value='TextareaMKS'>Description</option>
                                 <option value='LinkedMKS'>Linked Media</option>
                             </select>

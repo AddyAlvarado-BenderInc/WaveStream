@@ -1371,15 +1371,15 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                         <span className={styles.threadCountDisplay}>{selectedThreads}</span>
                                         <button
                                             type="button"
-                                            onClick={() => setSelectedThreads(prev => Math.min(5, prev + 1))}
-                                            disabled={selectedThreads >= 5}
+                                            onClick={() => setSelectedThreads(prev => Math.min(12, prev + 1))}
+                                            disabled={selectedThreads >= 12}
                                             className={styles.threadButton}
                                         >
                                             &gt;
                                         </button>
                                     </div>
                                     <div
-                                        className={`${styles.tooltip} ${selectedThreads > 2 ? styles.tooltipVisible : ''}`}
+                                        className={`${styles.tooltip} ${selectedThreads > 4 ? styles.tooltipVisible : ''}`}
                                     >
                                         Caution: Increasing threads can consume more browser and system resources.
                                     </div>

@@ -5,12 +5,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using backend.automation.modules;
+using DotNetEnv;
 using Microsoft.Playwright;
 
 class runAuto
 {
     private SemaphoreSlim? processingSemaphore;
     private SemaphoreSlim saveSemaphore = new SemaphoreSlim(1, 1);
+    private bool _criticalFailureEmailSentThisRun = false;
 
     private ConcurrentQueue<Tuple<IPage, IBrowserContext, string, int>> pagesToSaveQueue =
         new ConcurrentQueue<Tuple<IPage, IBrowserContext, string, int>>();
@@ -30,6 +32,9 @@ class runAuto
     )
     {
         this._signalRLogger = signalRLogger ?? (async (msg) => await Task.CompletedTask);
+        this._criticalFailureEmailSentThisRun = false;
+
+        var emailService = new SendEmailResults(this._signalRLogger);
 
         string productListUrl = initialPage.Url;
         var initialCookies = await initialPage.Context.CookiesAsync();
@@ -220,6 +225,21 @@ class runAuto
                             Interlocked.Increment(ref processedCount);
                             if (detailPageToSave != null && !detailPageToSave.IsClosed)
                                 await detailPageToSave.CloseAsync();
+
+                            if (
+                                !_criticalFailureEmailSentThisRun
+                                && !cancellationToken.IsCancellationRequested
+                            )
+                            {
+                                _criticalFailureEmailSentThisRun = true;
+                                await emailService.SendNotificationEmailAsync(
+                                    logicalTaskCounter,
+                                    productList,
+                                    true,
+                                    ex.ToString(),
+                                    currentProductName
+                                );
+                            }
                         }
                         finally
                         {
@@ -448,6 +468,10 @@ class runAuto
             var cancellationMessage = "Automation was cancelled by request.";
             Console.WriteLine(cancellationMessage);
             await _signalRLogger($"[Automation] {cancellationMessage}");
+        }
+        else if (!_criticalFailureEmailSentThisRun && savedCount > 0)
+        {
+            await emailService.SendNotificationEmailAsync(savedCount, productList, false);
         }
     }
 }

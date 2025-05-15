@@ -96,6 +96,18 @@
   color: var(--button-secondary-hover);
 }
 
+.topRightContainer .runButtonDisabled {
+  background-color: var(--gray-alpha-100);
+  color: var(--gray-alpha-200);
+  border: 1px solid var(--gray-alpha-200);
+  cursor: not-allowed;
+}
+
+.topRightContainer .runButtonDisabled:hover {
+  background-color: #2a2a2a;
+  color: var(--gray-alpha-200);
+}
+
 .currentOriginContainer {
   display: flex;
   justify-content: space-between;
@@ -739,8 +751,8 @@ tbody tr .hide-default-unavailable-data {
 }
 
 .table tbody tr.rowFailed td {
-  background-color: #ffdddd !important;
-  color: #2a2a2a !important;
+  background-color: #420909 !important;
+  color: #ffffff !important;
   /* transition: background-color 0.2s ease-in-out; */
 }
 
