@@ -221,7 +221,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     };
 
     const handleTagging = (parameterToTag: AddedParameter) => {
-        console.log("Opening tagging for:", parameterToTag);
+
         setTaggingParameter(parameterToTag);
         setShowTaggingModal(true);
     };
@@ -342,7 +342,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     };
 
     const configureInterpolatedVariables = (variable: string) => {
-        console.log(`Configuring variable: ${variable}`);
+
         setShowParameterModal(true);
     }
 
@@ -386,7 +386,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         setTaggingParameter(null);
     };
 
-    
+
     const handleSaveVariableClass = (object: Object, param: BundlizedParameters[]) => {
         if (!object) {
             toast.error('Key String is empty');
@@ -401,7 +401,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 type: key,
                 value: value.toString(),
             }));
-        console.log('Main Key String: ', mainKeyString);
+
 
         const transformedParams = param.map((p) => ({
             id: p.id,
@@ -431,32 +431,32 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             inputString = stringInput;
         }
 
-        console.log('handleAddVariable - Determined Input String:', inputString);
-        console.log('handleAddVariable - Parameters Received (param):', JSON.stringify(param, null, 2));
+
+
 
 
         const detectedVars = inputString.match(/\%\{(.*?)\}/g)?.map(v => v.replace(/[%{}]/g, '')) || [];
-        console.log("handleAddVariable - Detected variables in inputString:", detectedVars);
+
 
         const relevantParams = addedParameters.filter(p => detectedVars.includes(p.variable));
         const relevantParamsExist = detectedVars.length > 0 && relevantParams.length > 0;
-        console.log("handleAddVariable - Relevant parameters from state (with tags):", JSON.stringify(relevantParams, null, 2));
-        console.log("handleAddVariable - Relevant parameters exist:", relevantParamsExist);
+
+
 
         let variableData: string[] = [];
         let dataLength = 0;
 
         if (detectedVars.length > 0 && relevantParamsExist) {
-            console.log("handleAddVariable - Running COMBINATION logic.");
+
 
             const groupedParamsWithTags = relevantParams.reduce((acc, item) => {
                 if (!acc[item.variable]) {
                     acc[item.variable] = [];
-                }                
+                }
                 acc[item.variable].push({ value: item.value, tags: item.tags || [] });
                 return acc;
-            }, {} as Record<string, { value: string; tags: string[] }[]>); 
-            console.log("handleAddVariable - Grouped Relevant Params (with tags):", JSON.stringify(groupedParamsWithTags, null, 2));
+            }, {} as Record<string, { value: string; tags: string[] }[]>);
+
 
             const hasValuesForAllDetectedVars = detectedVars.every(v => groupedParamsWithTags[v] && groupedParamsWithTags[v].length > 0);
 
@@ -465,7 +465,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 variableData = [inputString];
             } else {
                 const combinations = generateCombinations(groupedParamsWithTags);
-                console.log("handleAddVariable - Generated Combinations (from tagged logic):", JSON.stringify(combinations, null, 2));
+
 
                 if (!combinations || combinations.length === 0) {
                     console.warn("handleAddVariable - generateCombinations returned empty or invalid result. Treating as single item.");
@@ -477,20 +477,20 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                             if (combo.hasOwnProperty(variableKey)) {
                                 const replacementValue = combo[variableKey];
                                 const regex = new RegExp(String.raw`\%\{${variableKey}\}`, 'g');
-                                console.log(`---> Replacing '%{${variableKey}}' with '${replacementValue}' in: '${result}'`); 
+
                                 result = result.replace(regex, String(replacementValue));
-                                console.log(`---> Result after replace: '${result}'`); 
+
                             } else {
                                 console.warn(`---> Combo object missing expected key from inputString: ${variableKey}`, combo);
                             }
-                         });
+                        });
                         return result;
                     });
-                    console.log("handleAddVariable - Final Generated variableData array:", variableData);
+
                 }
             }
         } else {
-            console.log("handleAddVariable - Running SINGLE item logic (no vars or no params).");
+
             variableData = [inputString];
         }
 
@@ -518,16 +518,16 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         };
 
         if (editingItemId !== null && editingItemId !== undefined) {
-            console.log(`Editing: Deleting old item with ID ${editingItemId}`);
+
             dispatch(deleteVariableClassArray(editingItemId));
         }
-        console.log(`Dispatching addVariableClassArray with ID ${uniqueDataId}`);
-        console.log("Final Payload:", JSON.stringify(payload, null, 2));
+
+
         dispatch(addVariableClassArray(payload));
         onClose();
     };
 
-    
+
     const handleVariableSave = async (id: number, item: Record<string, any>): Promise<void> => {
         alert('Save functionality will save the parameters of the specified variable to the database and allow users to load it later. If the variable is already saved in the database it will be updated, but parameter names with similar values will be in conflict with the existing ones and prompt the user to either ignore or overwrite.');
         const uniqueId = id * Date.now();
@@ -544,7 +544,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         });
         if (response.ok) {
             const data = await response.json();
-            console.log('Save successful:', data);
+
         } else {
             const error = await response.json();
             console.error('Save failed:', error);
@@ -552,7 +552,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
     };
 
-    
+
     const handleVariableLoad = () => {
         alert('Load functionality will grab relevant data (via variable) from the database and allow users to update the parameterization');
         try {
@@ -572,11 +572,11 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             console.error('Load failed:', error);
             toast.error('Failed to load variable.');
         } finally {
-            console.log('Load completed');
+
         }
     };
 
-    
+
     const displayLoadedVariables = () => {
 
     };
@@ -591,13 +591,16 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         fileInputRef.current?.click();
     }
 
-    const parseCsvForImport = (content: string): string[] => {
+    const parseCsvForImport = (content: string): Array<{ value: string; tag: string }> => {
         const lines = content.split(/[\r\n]+/).filter(line => line.trim() !== '');
         if (lines.length < 1) return [];
+
         return lines.slice(1).map(line => {
             const columns = line.split(',');
-            return columns[0]?.trim();
-        }).filter((value): value is string => !!value);
+            const value = columns[0]?.trim() || '';
+            const tag = columns[1]?.trim() || '';
+            return { value, tag };
+        }).filter(item => item.value !== '');
     };
 
     const parseTxtForImport = (content: string): string[] => {
@@ -620,13 +623,13 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
     };
 
-    const addImportedParameters = (values: string[], variable: string) => {
-        const newParameters: AddedParameter[] = values.map(valueStr => ({
+    const addImportedParameters = (items: Array<{ value: string; tag: string }>, variable: string) => {
+        const newParameters: AddedParameter[] = items.map(item => ({
             id: Date.now() + Math.random(),
             variable: variable,
-            name: valueStr,
-            value: valueStr,
-            tags: []
+            name: item.value,
+            value: item.value,
+            tags: item.tag ? [item.tag] : []
         }));
 
         setAddedParameters(prevParams => {
@@ -634,9 +637,10 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             const uniqueNewParams = newParameters.filter(newP => !existingSignatures.has(`${newP.variable}|${newP.name}|${newP.value}`));
 
             if (uniqueNewParams.length === 0) {
-                toast.info(`All imported values for %{${variable}} are already present.`);
+                toast.info(`All imported values for %{${variable}} are already present or have no value.`);
                 return prevParams;
             }
+            toast.success(`${uniqueNewParams.length} new parameter(s) added for %{${variable}}.`);
             return [...prevParams, ...uniqueNewParams];
         });
     };
@@ -667,25 +671,39 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
             }
 
             try {
-                let importedValues: string[] = [];
+                let importedValues: Array<{ value: string; tag: string }> | string[] = [];
 
                 if (fileName.endsWith('.csv')) {
                     importedValues = parseCsvForImport(content);
+                    if (importedValues.length === 0) {
+                        toast.warn("No valid data (value in first column) extracted from the CSV file.");
+                        return;
+                    }
+
+                    addImportedParameters(importedValues as Array<{ value: string; tag: string }>, selectedInterpolatedVariables);
                 } else if (fileName.endsWith('.txt')) {
-                    importedValues = parseTxtForImport(content);
+                    const txtValues = parseTxtForImport(content);
+                    if (txtValues.length === 0) {
+                        toast.warn("No valid values extracted from the TXT file.");
+                        return;
+                    }
+
+                    const structuredTxtValues = txtValues.map(val => ({ value: val, tag: '' }));
+                    addImportedParameters(structuredTxtValues, selectedInterpolatedVariables);
                 } else if (fileName.endsWith('.json')) {
-                    importedValues = parseJsonForImport(content);
+                    const jsonValues = parseJsonForImport(content);
+                    if (jsonValues.length === 0) {
+                        toast.warn("No valid values extracted from the JSON file.");
+                        return;
+                    }
+
+                    const structuredJsonValues = jsonValues.map(val => ({ value: val, tag: '' }));
+                    addImportedParameters(structuredJsonValues, selectedInterpolatedVariables);
                 } else {
                     toast.error("Unsupported file type. Please use .csv, .txt, or .json");
                     return;
                 }
 
-                if (importedValues.length === 0) {
-                    toast.warn("No valid values extracted from the file.");
-                    return;
-                }
-
-                addImportedParameters(importedValues, selectedInterpolatedVariables);
             } catch (error: any) {
                 console.error("Error processing file:", error);
                 toast.error(`Failed to process file: ${error.message || 'Unknown error'}`);
@@ -700,7 +718,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
     };
 
     const handleVariableSelect = (selectedValue: string) => {
-        console.log(`Handling selection for: ${selectedValue}`);
+
 
         if (!selectedInterpolatedVariables) {
             toast.warn('Please select a placeholder (like %{item}) to configure before adding parameters.');
@@ -728,7 +746,6 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
                 .map(valueObj => valueObj?.value)
                 .filter((value): value is string => typeof value === 'string');
 
-            console.log('Extracted Values to Add:', extractedValues);
 
             if (extractedValues.length === 0) {
                 toast.info(`No values found in the selected variable "${selectedValue}".`);
@@ -766,7 +783,7 @@ const ParameterizationTab: React.FC<ParameterizationTabProps> = ({ variableClass
         }
     };
 
-    
+
     const saveMainKeyString = (payload: { mainKeyString: mainKeyString[] }) => {
         const { mainKeyString } = payload;
         const response = fetch('http://localhost:3000/api/productManager/mainKeyString', {

@@ -791,3 +791,37 @@ tbody tr .hide-default-unavailable-data {
 .table tbody tr td {
   transition: background-color 0.05s ease-out;
 }
+
+.inlineEditInput {
+  width: calc(100% - 10px); /* Adjust as needed */
+  padding: 5px;
+  border: 1px solid #007bff;
+  box-sizing: border-box;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.tableCell .tableContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Or as per your layout */
+}
+
+.cellDisplaySpan {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default; /* Default cursor for span */
+}
+
+/* Optional: Style for the cell being edited */
+.editingCell {
+  padding: 0 !important; /* Override existing padding to make input fit well */
+}
+
+.editingCell .tableContainer {
+  display: none; /* Hide normal content when editing */
+}

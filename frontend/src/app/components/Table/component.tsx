@@ -64,11 +64,17 @@ const Table: React.FC<TableProps> =
         const systemLogFailed = useSelector((state: RootState) => state.systemLogger.failed);
         const systemLogBatch = useSelector((state: RootState) => state.systemLogger.batch);
 
-        console.log("Table Component - Redux States:");
-        console.log("systemLogSave:", systemLogSave);
-        console.log("systemLogCurrent:", systemLogCurrent);
-        console.log("systemLogFailed:", systemLogFailed);
-        console.log("systemLogBatch:", systemLogBatch);
+        
+        const [editingCellKey, setEditingCellKey] = useState<string | null>(null);
+        const [editingCellValue, setEditingCellValue] = useState<string>("");
+        const inlineInputRef = useRef<HTMLInputElement>(null);
+
+
+        
+        
+        
+        
+        
 
         const toggleExpandComposite = (key: string) => {
             setExpandedCellKey(prevKey => (prevKey === key ? null : key));
@@ -89,7 +95,7 @@ const Table: React.FC<TableProps> =
         const [targetImportColumn, setTargetImportColumn] = useState<string | null>(null);
 
         const triggerRowImport = (columnKey: string) => {
-            console.log(`Setting target import column: ${columnKey}`);
+            
             setTargetImportColumn(columnKey);
             const fileInput = document.getElementById('row-sheet-upload');
             if (fileInput) {
@@ -120,7 +126,7 @@ const Table: React.FC<TableProps> =
         }, [variableData, areRowsPopulated]);
 
         useEffect(() => {
-            console.log('variableRowData updated: ', variableRowData);
+            
 
             if (tableContainerRef.current) {
                 tableContainerRef.current.style.transform = `scale(${zoomLevel / 100})`;
@@ -130,6 +136,13 @@ const Table: React.FC<TableProps> =
                 areRowsPopulated(false);
             }
         }, [zoomLevel]);
+
+        useEffect(() => {
+            if (editingCellKey && inlineInputRef.current) {
+                inlineInputRef.current.focus();
+                inlineInputRef.current.select();
+            }
+        }, [editingCellKey]);
 
         const processTableSheet = (data: any[]): tableSheetData[] => {
             return data.map((item, index) => {
@@ -214,7 +227,7 @@ const Table: React.FC<TableProps> =
                 return;
             }
 
-            console.log(`Importing row data for column: ${targetImportColumn}`);
+            
 
             try {
                 const file = event.target.files?.[0];
@@ -249,7 +262,7 @@ const Table: React.FC<TableProps> =
                                 };
                             });
 
-                            console.log(`Prepared updates for ${targetImportColumn}:`, updates);
+                            
 
                             setVariableClassData((prevData: VariableRowDataState) => ({
                                 ...prevData,
@@ -326,11 +339,11 @@ const Table: React.FC<TableProps> =
 
                 if (updatedData[dataKey]) {
                     delete updatedData[dataKey];
-                    console.log(`Deleted row-specific data for ${key} at row ${rowIndex}`);
+                    
                 }
                 else if (rowIndex === 0 && updatedData[key]) {
                     delete updatedData[key];
-                    console.log(`Deleted column data for ${key}`);
+                    
                 }
 
                 return updatedData;
@@ -359,7 +372,7 @@ const Table: React.FC<TableProps> =
                             allCurrentlyDisabled = false;
                         }
                     } else {
-                        console.log(`No cells found for column ${columnKey} to toggle disable state.`);
+                        
                         toast.info(`No cells found in column ${columnKey}.`);
                         return prevData;
                     }
@@ -383,7 +396,7 @@ const Table: React.FC<TableProps> =
                     };
                 }
 
-                console.log(`${newDisabledState ? 'Disabled' : 'Enabled'} all cells in column ${columnKey}`);
+                
                 return updatedData;
             });
             setIsDisabled(!isDisabled);
@@ -396,7 +409,7 @@ const Table: React.FC<TableProps> =
             if (confirmation) {
                 setVariableClassData({});
                 setApprovedTableCellClear && setApprovedTableCellClear(true);
-                console.log(`Cleared all cell data for ${productType}/${_id}`);
+                
             }
         };
 
@@ -417,7 +430,7 @@ const Table: React.FC<TableProps> =
                     });
 
                     if (clearedCount > 0) {
-                        console.log(`Cleared ${clearedCount} data points for column ${columnKey}`);
+                        
                     } else {
                         toast.info(`No data found to clear in column "${columnKey}".`);
                     }
@@ -547,7 +560,7 @@ const Table: React.FC<TableProps> =
             const { key, rowIndex, value: valueToExtend, isComposite: isTargetComposite, isPackage: isTargetIsPackage } = actionTargetCell;
 
             const logValue = isTargetIsPackage ? `Package (ID: ${(valueToExtend as unknown as IGlobalVariablePackage)?.dataId})` : valueToExtend;
-            console.log(`Action Extend: Extending column "${key}" with value:`, logValue, `(isComposite=${isTargetComposite}, isPackage=${isTargetIsPackage})`);
+            
 
 
             const updates: VariableRowDataState = {};
@@ -569,7 +582,7 @@ const Table: React.FC<TableProps> =
             }
 
             if (extendedCount > 0) {
-                console.log(`Action Extend: Applying updates:`, updates);
+                
                 setVariableClassData((prevData: VariableRowDataState) => ({
                     ...prevData,
                     ...updates
@@ -596,7 +609,7 @@ const Table: React.FC<TableProps> =
             let filledCount = 0;
 
             const logValue = isTargetIsPackage ? `Package (ID: ${(valueToFill as unknown as IGlobalVariablePackage)?.dataId})` : valueToFill;
-            console.log(`Action Fill: Filling empty cells below row ${rowIndex} in column "${key}" with value:`, logValue, `(isComposite=${isTargetComposite}, isPackage=${isTargetIsPackage})`);
+            
 
             if (maxRowIndex <= rowIndex) {
                 toast.info("No rows below the selected cell to fill.");
@@ -627,7 +640,7 @@ const Table: React.FC<TableProps> =
             }
 
             if (filledCount > 0) {
-                console.log(`Action Fill: Applying updates:`, updates);
+                
                 setVariableClassData((prevData: VariableRowDataState) => ({
                     ...prevData,
                     ...updates
@@ -722,7 +735,7 @@ const Table: React.FC<TableProps> =
                     formDataPayload.append('approvedTableCellClear', 'true');
 
 
-                    console.log(`Sending PATCH to clear table data for ${productType}/${_id}`);
+                    
                     const response = await fetch(`/api/productManager/${productType}/${_id}`, {
                         method: 'PATCH',
                         body: formDataPayload,
@@ -1057,11 +1070,6 @@ const Table: React.FC<TableProps> =
                                                                 let editActionValue: any = '';
 
                                                                 if (cellData) {
-                                                                    if (keyObj.value === 'Icon' && rowIndex < 2) {
-                                                                        console.log(`TABLE RENDER (${cellKey}): isPackage=${isPackage}, typeof cellValue=${typeof cellValue}, cellValue=`, cellValue);
-                                                                        if (typeof cellValue === 'object' && cellValue !== null) console.log(`  'dataId' in cellValue: ${'dataId' in cellValue}`);
-                                                                    }
-
                                                                     if (isCompositeCell && Array.isArray(cellValue)) {
                                                                         displayContent = `COMP - ${cellData.classKey} (${cellValue.length})`;
                                                                         editActionValue = JSON.stringify(cellValue);

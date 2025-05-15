@@ -104,7 +104,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     }, [variableRowData]);
 
     const handleOpenParameterizationTab = (variableClasses: object) => {
-        console.log('Open Parameterization Tab', variableClasses);
+
         setParameterizationData(variableClasses);
         setParameterizationOpen(true);
         setEditingItemId(null);
@@ -112,7 +112,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const handlePackagedData = (dataFromVariableClass: PendingPackageData) => {
-        console.log('Packaged Data received from VariableClass:', dataFromVariableClass);
+
         if (!dataFromVariableClass || !dataFromVariableClass.variableData || Object.values(dataFromVariableClass.variableData).length === 0) {
             toast.error("No files selected to package.");
             return;
@@ -166,7 +166,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         selectedKey: string,
         id: number | null | undefined
     ) => {
-        console.log(`HANDLESENDTOSHEET: Received ID=${id}, Key=${selectedKey}, Data=`, variableDataRecord);
+
         if (!selectedKey) {
             toast.error('Please select a class key');
             return;
@@ -199,7 +199,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     }
                 }
             });
-            console.log(`Next available row index for key "${selectedKey}" is ${nextRowIndex}`);
+
 
             if (dataToAdd.length > 0) {
                 dataToAdd.forEach((itemValue, index) => {
@@ -212,12 +212,12 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                         isPackage: false,
                         isDisabled: false,
                     };
-                    console.log(`Adding to sheet state: Key=${newRowKey}, Value=${itemValue}, RowIndex=${nextRowIndex + index}`);
+
                 });
             } else {
                 console.warn("No data values found in variableDataRecord to add to the sheet.");
             }
-            console.log("Updated variableClassData state:", updatedData);
+
             return updatedData;
         });
         setSendToSheetModal(false);
@@ -225,74 +225,150 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const handleSendComposite = (
-        variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
+        variableDataRecord: Record<string, { dataId: number; value: string } | null>,
         selectedKey: string,
         id: number | null | undefined
     ) => {
-        console.log(`handleSendComposite: Received ID=${id}, Key=${selectedKey}, Data=`, variableDataRecord);
+
+
         if (!selectedKey) {
-            toast.error('Please select a class key for the composite');
+            toast.error('Please select a class key (column) for the composite.');
             return;
         }
         if (id === null || id === undefined) {
-            toast.error('Invalid source item ID for composite');
+            toast.error('Invalid source item ID for composite. Cannot identify Variable Class.');
             return;
         }
 
-        const compositeValues: string[] = Object.values(variableDataRecord)
-            .filter(item => item !== null && item.value !== undefined && item.value !== null)
-            .map(item => item!.value);
-
-        if (compositeValues.length === 0) {
-            toast.warn("No data values found in the source to create a composite.");
+        const currentItem = globalVariableClass.find(item => item?.dataId === id);
+        if (!currentItem) {
+            toast.error("Could not find the Variable Class definition.");
+            console.error("handleSendComposite: currentItem not found for ID:", id);
             return;
         }
+        const mksString = currentItem.name;
 
-        setVariableRowData(prevData => {
-            const updatedData = { ...prevData };
 
-            let nextRowIndex = 0;
-            Object.keys(updatedData).forEach(key => {
-                const match = key.match(/^(.+)_row_(\d+)$/);
-                if (match) {
-                    const baseKey = match[1];
-                    const rowNum = parseInt(match[2], 10);
-                    if (baseKey === selectedKey && !isNaN(rowNum)) {
-                        nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+        const compRegex = /^\$COMP<([^>]+)>$/;
+        const allDirectCompositeValues: string[][] = [];
+
+        for (const param of Object.values(variableDataRecord)) {
+            if (param && typeof param.value === 'string') {
+                const valueStr = param.value;
+                const regexMatch = compRegex.exec(valueStr);
+
+                if (regexMatch) {
+
+                    const valuesStringInsideBrackets = regexMatch[1];
+                    const directValues = valuesStringInsideBrackets
+                        .split('-')
+                        .map(val => val.trim())
+                        .filter(val => val.length > 0);
+
+                    if (directValues.length > 0) {
+                        allDirectCompositeValues.push(directValues);
+
+                    } else {
+                        console.warn(`handleSendComposite: Found a $COMP<> directive in parameter value "${valueStr}" that yielded no values after splitting by '-'. Content: "${valuesStringInsideBrackets}". Skipping.`);
                     }
                 }
+            }
+        }
+
+        if (allDirectCompositeValues.length > 0) {
+
+            let compositesSuccessfullyAdded = 0;
+
+            allDirectCompositeValues.forEach((currentCompositeValues, compBlockIndex) => {
+
+
+
+                setVariableRowData(prevData => {
+                    const updatedData = { ...prevData };
+                    let nextRowIndex = 0;
+                    Object.keys(updatedData).forEach(keyInTable => {
+                        const rowMatch = keyInTable.match(/^(.+)_row_(\d+)$/);
+                        if (rowMatch) {
+                            const baseKey = rowMatch[1];
+                            const rowNum = parseInt(rowMatch[2], 10);
+                            if (baseKey === selectedKey && !isNaN(rowNum)) {
+                                nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+                            }
+                        }
+                    });
+
+                    const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
+                    updatedData[newRowKey] = {
+                        classKey: selectedKey,
+                        index: nextRowIndex,
+                        value: currentCompositeValues,
+                        isComposite: true,
+                        isPackage: false,
+                        isDisabled: false,
+                    };
+
+                    return updatedData;
+                });
+                compositesSuccessfullyAdded++;
             });
-            console.log(`Next available row index for composite key "${selectedKey}" is ${nextRowIndex}`);
 
-            const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
+            if (compositesSuccessfullyAdded > 0) {
+                toast.success(`${compositesSuccessfullyAdded} composite item(s) added to column "${selectedKey}" based on $COMP directives in parameter values.`);
+            } else {
 
-            updatedData[newRowKey] = {
-                classKey: selectedKey,
-                index: nextRowIndex,
-                value: compositeValues,
-                isComposite: true,
-                isPackage: false,
-                isDisabled: false,
-            };
-            console.log(`Adding composite to sheet state: Key=${newRowKey}, Values=${JSON.stringify(compositeValues)}, RowIndex=${nextRowIndex}`);
 
-            console.log("Updated variableRowData state (after composite add):", updatedData);
-            return updatedData;
-        });
+                toast.info("No composite data could be generated from the $COMP directives found in parameter values.");
+            }
+        } else {
+            const fallbackCompositeValues: string[] = Object.values(variableDataRecord)
+                .map(item => item?.value)
+                .filter((value): value is string => typeof value === 'string' && value.trim() !== '');
+
+            if (fallbackCompositeValues.length === 0) {
+                toast.warn('No valid string data found in the Variable Class parameters (variableDataRecord) to form a composite.');
+            } else {
+                setVariableRowData(prevData => {
+                    const updatedData = { ...prevData };
+                    let nextRowIndex = 0;
+                    Object.keys(updatedData).forEach(keyInTable => {
+                        const rowMatch = keyInTable.match(/^(.+)_row_(\d+)$/);
+                        if (rowMatch) {
+                            const baseKey = rowMatch[1];
+                            const rowNum = parseInt(rowMatch[2], 10);
+                            if (baseKey === selectedKey && !isNaN(rowNum)) {
+                                nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+                            }
+                        }
+                    });
+
+                    const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
+                    updatedData[newRowKey] = {
+                        classKey: selectedKey,
+                        index: nextRowIndex,
+                        value: fallbackCompositeValues,
+                        isComposite: true,
+                        isPackage: false,
+                        isDisabled: false,
+                    };
+
+                    return updatedData;
+                });
+                toast.success(`Composite data (from all string parameters) added to column "${selectedKey}".`);
+            }
+        }
 
         setSendToSheetModal(false);
         setVariableClassIdentifier(null);
-        toast.success(`Composite data added under key "${selectedKey}"`);
     };
 
     const handleSendPackage = (
         selectedKey: string,
-        key: number | null | undefined 
+        key: number | null | undefined
     ) => {
         const sourcePackageObject: variablePackageArray | null | undefined = packageItemForModal;
-    
-        console.log(`handleSendPackage: Attempting to send Package ID=${key} to column Key=${selectedKey}`);
-    
+
+
+
         if (!selectedKey) {
             toast.error('Please select a class key (column) for the package.');
             return;
@@ -302,15 +378,15 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             console.error("handleSendPackage: Received invalid package ID (null or undefined).");
             return;
         }
-    
+
         if (!sourcePackageObject || sourcePackageObject.dataId !== key) {
             toast.error("Internal error: Could not find the package data object to send.");
             console.error(`handleSendPackage: Mismatch or missing packageItemForModal. Expected ID: ${key}, Found:`, sourcePackageObject);
             return;
         }
-    
+
         const packageToSend: IGlobalVariablePackage | null = convertToTableFormat(sourcePackageObject);
-    
+
         if (!packageToSend) {
             toast.error("Internal error: Failed to prepare package data for the table.");
             console.error(`handleSendPackage: convertToTableFormat returned null for source package ID ${key}`);
@@ -319,10 +395,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         if (!sourcePackageObject.variableData || Object.keys(sourcePackageObject.variableData).length === 0) {
             console.warn(`handleSendPackage: Source Package ID ${key} had no variableData content. Sending converted structure anyway.`);
         }
-    
+
         setVariableRowData(prevData => {
             const updatedData = { ...prevData };
-    
+
             let nextRowIndex = 0;
             Object.keys(updatedData).forEach(dataKey => {
                 const match = dataKey.match(/^(.+)_row_(\d+)$/);
@@ -334,10 +410,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     }
                 }
             });
-            console.log(`Next available row index for package key "${selectedKey}" is ${nextRowIndex}`);
-    
+
+
             const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
-    
+
             updatedData[newRowKey] = {
                 classKey: selectedKey,
                 index: nextRowIndex,
@@ -346,15 +422,15 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                 isPackage: true,
                 isDisabled: false,
             };
-    
-            console.log(`Adding package OBJECT (Table format) to sheet state: CellKey=${newRowKey}, PackageID=${key}, RowIndex=${nextRowIndex}, Value=`, packageToSend);
-            console.log("New variableRowData state (after package add):", updatedData);
+
+
+
             return updatedData;
         });
-    
+
         setSendToSheetModal(false);
         setPackageIdentifier(null);
-        console.log(`Package object reference (Table format) added to table state under column "${selectedKey}"`);
+
     };
 
     const handleConcatOption = (
@@ -377,7 +453,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         id: number | null | undefined,
         option: string
     ) => {
-        console.log("Concatenate to sheet triggered");
+
         setConcatModal(false);
         setSendToSheetModal(false);
     }
@@ -472,7 +548,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                         handleDeleteVariableClass(key);
                                         setVariableClassIdentifier(-1);
                                         handleSendToSheet(object, selectedClassKey, variableClassIdentifier);
-                                        console.log("Deleted variable class with key:", key);
+
                                         setSendToSheetModal(false);
                                     }}
                                 >
@@ -542,7 +618,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                 valuesToDisplay = firstEntry.value.filename.filter((fname): fname is string => fname !== undefined);
             }
         }
-        console.log("Values to display:", valuesToDisplay);
+
 
         return (
             <div className={styles.modal}>
@@ -607,7 +683,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
 
     const handleDeletePackage = (id: number | null | undefined) => {
         if (id === null || id === undefined) return;
-        console.log("Dispatching deleteVariablePackage with ID:", id);
+
         dispatch(deleteVariablePackage(id));
         if (packageIdentifier === id) {
             setPackageIdentifier(null);
@@ -623,7 +699,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
 
     const handleClearAllPackages = () => {
         if (window.confirm("Are you sure you want to delete all variable packages?")) {
-            console.log("Dispatching clearAllVariablePackages");
+
             dispatch(clearAllVariablePackage());
             setPackageIdentifier(null);
         } else {
@@ -816,10 +892,10 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                     {globalVariableClass.map((currentVariableClassData) => {
                                         const variableClassDataId = currentVariableClassData?.dataId;
                                         const variableClassData = currentVariableClassData?.variableData || {};
-                                        console.log(`MAP: Rendering item ID=${variableClassDataId} at ${Date.now()}`, currentVariableClassData?.variableData);
-                                        console.log("Variable Class Data ID", variableClassDataId);
+
+
                                         if (sendToSheetModal && variableClassIdentifier === variableClassDataId) {
-                                            console.log(`MAP: Modal condition TRUE for ID=${variableClassDataId}, preparing to call modalOptions with:`, variableClassData);
+
                                         }
                                         return (
                                             <div key={variableClassDataId} className={styles.variableClassRow + `_row_${variableClassDataId}`}>

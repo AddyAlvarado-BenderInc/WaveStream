@@ -4,6 +4,7 @@ import { RootState } from "@/app/store/store";
 import { ToastContainer, toast } from 'react-toastify';
 import { ProductManager } from "../../../../../types/productManager";
 import ImageMagnifier from "./utility/ImageMagnifier";
+import { directiveMap } from "./utility/DirectiveMapper";
 import styles from './component.module.css';
 import 'react-toastify/dist/ReactToastify.css';
 import React from 'react';
@@ -43,6 +44,7 @@ interface variableClassProps {
 const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, onPackage }) => {
     const [MKSType, setMKSType] = useState<string>('StringMKS');
     const [IntVar, setIntVar] = useState<string[]>([]);
+    const [directiveEffect, setdirectiveEffect] = useState<string>('');
 
     useEffect(() => {
         setLocalString('');
@@ -81,14 +83,25 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
 
     function detectInterpolatedVariables(text: string) {
         const detectVariable = text.match(/\%\{(.*?)\}/g);
+        const detectCompdirective = text.match(/\$COMP<([^>]+)>/);
+
+        const variables: string[] = [];
+
         if (detectVariable) {
             const cleanVariable = detectVariable.map((variable) =>
                 variable.replace(/^\%\{|\}$/g, '')
             );
-            setIntVar(cleanVariable);
-        } else {
-            setIntVar([]);
+            variables.push(...cleanVariable);
         }
+
+        if (detectCompdirective) {
+            const compArgs = detectCompdirective[1]
+                .split(/\s+/)
+                .map(arg => arg.replace(/^\%\{|\}$/g, ''));
+            variables.push(...compArgs);
+        }
+
+        setIntVar(variables);
     };
 
     const handleInterpolatedVariables = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -102,7 +115,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
             detectInterpolatedVariables(newText);
         }
     };
-
+    /*
     const highlightInterVar = (text: string) => {
         return text.split(/(\%\{.*?\})/g).map((word, index) => {
             if (word.match(/^\%\{.*?\}$/)) {
@@ -114,16 +127,133 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
         });
     };
 
-    // TODO: eventually add this function
-    const loadVariableClasses = (e: React.FormEvent) => {
-        e.preventDefault();
+    const highlightInlinedirective = (text: string): React.JSX.Element[] => {
+        const directiveKeys = Object.keys(directiveMap);
+        const regex = new RegExp(`(${directiveKeys.join('|')})<([^>]+)>`, 'g');
+
+        const elements: React.JSX.Element[] = [];
+        let match: RegExpExecArray | null;
+
+        while ((match = regex.exec(text)) !== null) {
+            const [fullMatch, directiveName, args] = match;
+            const directiveEffect = directiveMap[directiveName]?.effect || '';
+
+            elements.push(
+                <span key={match.index} className={styles.highlighteddirectiveProtocol}>
+                    {`${directiveName}<${args}>`}
+                </span>
+            );
+        }
+
+        return elements;
+    };
+    */
+
+    const renderInterpolatedVariablesInString = (text: string, baseKey: string): React.ReactNode[] => {
+        const argElements: React.ReactNode[] = [];
+        let lastArgIndex = 0;
+        const intVarRegex = /(\%\{.*?\})/g;
+        let argMatch;
+
+        while ((argMatch = intVarRegex.exec(text)) !== null) {
+
+            if (argMatch.index > lastArgIndex) {
+                argElements.push(text.substring(lastArgIndex, argMatch.index));
+            }
+
+            argElements.push(
+                <span key={`${baseKey}-ivar-${argMatch.index}`} className={styles.highlightedInterpolatedVariables}>
+                    {argMatch[0]}
+                </span>
+            );
+            lastArgIndex = intVarRegex.lastIndex;
+        }
+
+        if (lastArgIndex < text.length) {
+            argElements.push(text.substring(lastArgIndex));
+        }
+        return argElements;
+    };
+
+    const renderHighlightedText = (text: string): React.ReactNode[] => {
+        const elements: React.ReactNode[] = [];
+        let lastIndex = 0;
+
+        const escapeddirectiveKeys = Object.keys(directiveMap).map(key =>
+            key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        );
+        const directiveNamesPatternPart = `(?:${escapeddirectiveKeys.join('|')})`;
+        const combinedRegex = new RegExp(
+            `(\%\{.*?\})|(${directiveNamesPatternPart})(<)([^>]*)(>)`,
+            'g'
+        );
+
+        let match;
+        while ((match = combinedRegex.exec(text)) !== null) {
+
+            if (match.index > lastIndex) {
+                elements.push(text.substring(lastIndex, match.index));
+            }
+
+            const matchedInterpolatedVar = match[1];
+            const matcheddirectiveName = match[2];
+            const matcheddirectiveOpeningBracket = match[3];
+            const matcheddirectiveArgs = match[4];
+            const matcheddirectiveClosingBracket = match[5];
+
+            if (matchedInterpolatedVar) {
+
+                elements.push(
+                    <span key={`inter-${match.index}`} className={styles.highlightedInterpolatedVariables}>
+                        {matchedInterpolatedVar}
+                    </span>
+                );
+            } else if (matcheddirectiveName) {
+
+
+                elements.push(
+                    <span key={`directive-name-${match.index}`} className={styles.highlighteddirectiveProtocol}>
+                        {matcheddirectiveName}
+                    </span>
+                );
+
+                elements.push(
+                    <span key={`directive-open-${match.index}`} className={styles.highlighteddirectiveProtocol}>
+                        {matcheddirectiveOpeningBracket}
+                    </span>
+                );
+
+
+                if (matcheddirectiveArgs !== undefined) {
+                    const argNodes = renderInterpolatedVariablesInString(matcheddirectiveArgs, `directive-arg-${match.index}`);
+                    elements.push(...argNodes);
+                }
+
+
+                elements.push(
+                    <span key={`directive-close-${match.index}`} className={styles.highlighteddirectiveProtocol}>
+                        {matcheddirectiveClosingBracket}
+                    </span>
+                );
+            }
+            lastIndex = combinedRegex.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            elements.push(text.substring(lastIndex));
+        }
+        if (elements.length === 0 && text.length > 0) {
+            return [text];
+        }
+
+        return elements;
     };
 
     const stringMKS = () => (
         <div className={styles.containerMKS}>
             {localString.length !== 0 ? (
                 <div className={styles.highlightTextContent}>
-                    {highlightInterVar(localString)}
+                    {renderHighlightedText(localString)}
                 </div>
             ) : null}
             <div className={styles.tooltipContainer}>
@@ -223,6 +353,11 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
 
     const textareaMKS = () => (
         <div className={styles.descriptionMKS}>
+            {localTextarea.length !== 0 ? (
+                <div className={styles.highlightTextContent} style={{ whiteSpace: 'pre-wrap', marginBottom: '10px' }}>
+                    {renderHighlightedText(localTextarea)}
+                </div>
+            ) : null}
             <textarea
                 className={styles.textareaMKS}
                 placeholder="Enter text..."
@@ -471,8 +606,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
                 }
             }
         };
-
-        console.log("Packaging variables:", dataToSend);
 
         if (onPackage) {
             onPackage(dataToSend as unknown as IconPackageClass);

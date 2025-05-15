@@ -142,6 +142,10 @@
     font-weight: bold;
 }
 
+.highlightedMethodProtocol {
+    color: orange;
+}
+
 .extractedVariablesList {
     display: flex;
     flex-direction: column;
