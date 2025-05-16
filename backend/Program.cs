@@ -15,7 +15,11 @@ class Program
 
         builder.Services.AddSingleton<DatabaseService>();
         builder.Services.AddSingleton<Wavekey>();
-        builder.Services.AddLogging(configure => configure.AddConsole());
+        builder.Services.AddLogging(loggingBuilder =>
+        {
+            loggingBuilder.AddConsole();
+            loggingBuilder.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+        });
         builder.Services.AddSignalR();
 
         builder.Services.AddCors(options =>

@@ -197,63 +197,218 @@
   padding: 0;
 }
 
-.zoomControls {
+.tableLayoutContainer {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
+  flex-direction: column;
 }
 
-.zoomButton {
+.tableAndMinimapWrapper {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  color: var(--button-primary-hover);
-  background-color: inherit;
-  border: 1px solid var(--button-primary-hover);
-  cursor: pointer;
-  font-size: 18px;
+  flex-direction: row;
+  width: 100%;
+}
+
+.tableOverflowContainer {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.table {
+  min-width: 400px;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.1rem 0.75rem;
+  border: 1px solid var(--gray-alpha-200);
+  vertical-align: top;
+  line-height: 1.3;
+}
+
+.table td {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.table th {
+  background-color: #3a3a3a;
+  color: var(--text-primary);
   font-weight: bold;
-  transition: 0.2s ease-in-out;
+  min-width: 120px;
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
 }
 
-.zoomButton:hover {
-  background-color: var(--button-primary-hover);
-  color: var(--button-secondary-hover);
+.table .tableContainer {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
 }
 
-.zoomDisplay {
+.inputHeader {
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
 }
 
-.zoomDisplay span {
+.inputHeader span {
+  position: absolute;
+}
+
+.classKeyContainer:hover span {
+  opacity: 0;
+  z-index: -1;
+}
+
+.classKeyContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rowContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topRightContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row-reverse;
+  margin-left: auto;
+  gap: 10px;
+}
+
+.topRightContainer button {
+  background-color: var(--button-secondary-hover);
   color: var(--button-primary-hover);
-  font-size: 14px;
-}
-
-.zoomSlider {
-  width: 80px;
-}
-
-.zoomResetButton {
-  padding: 5px 10px;
-  color: var(--button-primary-hover);
-  background-color: inherit;
   border: 1px solid var(--button-primary-hover);
-  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 12px;
-  transition: 0.2s ease-in-out;
+  font-size: 1rem;
+  text-align: center;
+  transition: background-color 0.3s ease;
 }
 
-.zoomResetButton:hover {
+.topRightContainer button:hover {
   background-color: var(--button-primary-hover);
   color: var(--button-secondary-hover);
+}
+
+.topRightContainer .runButtonDisabled {
+  background-color: var(--gray-alpha-100);
+  color: var(--gray-alpha-200);
+  border: 1px solid var(--gray-alpha-200);
+  cursor: not-allowed;
+}
+
+.topRightContainer .runButtonDisabled:hover {
+  background-color: #2a2a2a;
+  color: var(--gray-alpha-200);
+}
+
+.currentOriginContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  align-items: end;
+}
+
+.currentOriginContainer button {
+  background-color: var(--button-secondary-hover);
+  color: var(--button-primary-hover);
+  border: 1px solid var(--button-primary-hover);
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  text-align: center;
+  transition: background-color 0.3s ease;
+  margin: 20px 0 0 0;
+}
+
+.currentOriginContainer button:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.table th:hover {
+  background-color: var(--button-secondary-hover);
+  cursor: pointer;
+}
+
+.table td:hover {
+  background-color: var(--gray-alpha-100);
+}
+
+.keyButtons,
+.cellButtons {
+  opacity: 0;
+  visibility: hidden;
+  transition: ease-in-out 0.2s;
+}
+
+.table th:hover .keyButtons,
+.table td:hover .cellButtons {
+  opacity: 1;
+  visibility: visible;
+  width: 100%;
+}
+
+.table th .keyButtons button {
+  margin: 0 5px;
+}
+
+.deleteKeyButton,
+.editKeyButton,
+.importKeyButton,
+.cellDelete {
+  background-color: var(--button-secondary-hover);
+  color: var(--button-primary-hover);
+  border: 1px solid var(--button-primary-hover);
+  border-radius: 5px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background-color 0.3s ease;
+}
+
+.deleteKeyButton:hover,
+.editKeyButton:hover,
+.importKeyButton:hover,
+.cellDelete:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.wavekeyTable {
+  padding: 15px 20px 40px 20px;
+  border-radius: 8px;
+  border-top: 1px solid var(--button-primary-hover);
+  border-bottom: 1px solid var(--button-primary-hover);
+}
+
+.wavekeyTable .header {
+  font-weight: 200;
+  color: var(--gray-alpha-200);
+  margin-bottom: 5px;
+  padding: 0;
 }
 
 .header {
@@ -283,9 +438,12 @@
 }
 
 .table {
-  min-width: 100%;
-  padding: 0;
-  margin: 0;
+  min-width: 400px;
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-family: Arial, sans-serif;
 }
 
 .wavekeyTable form {
@@ -747,45 +905,37 @@ tbody tr .hide-default-unavailable-data {
 
 .table tbody tr.rowCurrent td {
   background-color: #e0e0e0 !important;
-  /* transition: background-color 0.2s ease-in-out; */
 }
 
 .table tbody tr.rowFailed td {
   background-color: #420909 !important;
   color: #ffffff !important;
-  /* transition: background-color 0.2s ease-in-out; */
 }
 
 .table tbody tr.rowBatch td {
   background-color: #d0e0ff !important;
   color: #2a2a2a !important;
-  /* transition: background-color 0.2s ease-in-out; */
 }
 
 .table tbody tr.rowSavedRecent td {
   background-color: greenyellow !important;
   color: #2a2a2a !important;
-  /* transition: background-color 0.2s ease-in-out; */
 }
 .table tbody tr.rowSavedOlder1 td {
   background-color: rgba(172, 255, 47, 0.759) !important;
   color: #2a2a2a !important;
-  /* transition: background-color 0.2s ease-in-out; */
 }
 .table tbody tr.rowSavedOlder2 td {
   background-color: rgba(172, 255, 47, 0.523) !important;
   color: #4d4d4d !important;
-  /* transition: background-color 0.2s ease-in-out; */
 }
 .table tbody tr.rowSavedOlder3 td {
   background-color: rgba(172, 255, 47, 0.273) !important;
   color: #838383 !important;
-  /* transition: background-color 0.2s ease-in-out; */
 }
 .table tbody tr.rowSavedOlder4 td {
   background-color: rgba(172, 255, 47, 0.11) !important;
   color: #c4c4c4 !important;
-  /* transition: background-color 0.2s ease-in-out; */
 }
 
 .table tbody tr td {
@@ -793,7 +943,7 @@ tbody tr .hide-default-unavailable-data {
 }
 
 .inlineEditInput {
-  width: calc(100% - 10px); /* Adjust as needed */
+  width: calc(100% - 10px);
   padding: 5px;
   border: 1px solid #007bff;
   box-sizing: border-box;
@@ -806,7 +956,7 @@ tbody tr .hide-default-unavailable-data {
   height: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Or as per your layout */
+  justify-content: space-between;
 }
 
 .cellDisplaySpan {
@@ -814,14 +964,31 @@ tbody tr .hide-default-unavailable-data {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  cursor: default; /* Default cursor for span */
+  cursor: default;
 }
 
-/* Optional: Style for the cell being edited */
 .editingCell {
-  padding: 0 !important; /* Override existing padding to make input fit well */
+  padding: 0 !important;
 }
 
 .editingCell .tableContainer {
-  display: none; /* Hide normal content when editing */
+  display: none;
+}
+
+.tableLayoutContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableAndMinimapWrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.tableOverflowContainer {
+  flex-grow: 1;
+  overflow: auto;
 }

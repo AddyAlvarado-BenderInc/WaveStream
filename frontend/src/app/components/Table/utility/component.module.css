@@ -1,0 +1,112 @@
+.minimapContainer {
+  width: 20px;
+  min-width: 20px;
+  height: 100%;
+  background-color: #2c2c2c;
+  padding: 2px 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #444;
+}
+
+.minimapRow {
+  flex-grow: 1;
+  min-height: 1px;
+  width: 100%;
+  cursor: pointer;
+  background-color: #505050;
+  margin-bottom: 1px;
+  transition: background-color 0.1s ease-out;
+}
+
+.minimapRow:last-child {
+  margin-bottom: 0;
+}
+
+.minimapRow.current {
+  background-color: #007bff !important;
+}
+.minimapRow.failed {
+  background-color: #e74c3c !important;
+}
+.minimapRow.batch {
+  background-color: #f39c12 !important;
+}
+.minimapRow.savedRecent {
+  background-color: #2ecc71 !important;
+}
+.minimapRow.savedOlder1 {
+  background-color: #27ae60 !important;
+}
+.minimapRow.savedOlder2 {
+  background-color: #1e8449 !important;
+}
+.minimapRow.savedOlder3 {
+  background-color: #196f3d !important;
+}
+.minimapRow.savedOlder4 {
+  background-color: #145a32 !important;
+}
+
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.zoomButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--button-primary-hover);
+  background-color: inherit;
+  border: 1px solid var(--button-primary-hover);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: 0.2s ease-in-out;
+}
+
+.zoomButton:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}
+
+.zoomDisplay {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.zoomDisplay span {
+  color: var(--button-primary-hover);
+  font-size: 14px;
+  min-width: 35px;
+  text-align: right;
+}
+
+.zoomSlider {
+  width: 80px;
+  cursor: pointer;
+}
+
+.zoomResetButton {
+  padding: 5px 10px;
+  color: var(--button-primary-hover);
+  background-color: inherit;
+  border: 1px solid var(--button-primary-hover);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: 0.2s ease-in-out;
+}
+
+.zoomResetButton:hover {
+  background-color: var(--button-primary-hover);
+  color: var(--button-secondary-hover);
+}

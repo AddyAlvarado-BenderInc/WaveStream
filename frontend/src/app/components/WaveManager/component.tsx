@@ -1,23 +1,36 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/app/store/store';
-import { setVariableClassArray, setVariablePackageArray, setIsRunning } from "../../store/productManagerSlice";
-import { setRunOption, setServerOption } from '../../store/productManagerSlice';
-import { convertToTableFormat } from '../../utility/packageDataTransformer';
-import { ProductManager, IconData, PDFData, tableSheetData, tableCellData, variableClassArray, variablePackageArray, IGlobalVariablePackage } from '../../../../types/productManager';
-import VariableManager from '../VariableManager/component';
-import PropertyInterfaceTable from '../PropertyInterfaces/component';
-import { BASE_URL } from '../../config';
-import styles from './component.module.css';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { isEqual, set } from 'lodash';
-import axios from 'axios';
-import dotenv from 'dotenv';
+import React, { useState, useEffect, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/app/store/store";
+import {
+    setVariableClassArray,
+    setVariablePackageArray,
+    setIsRunning,
+} from "../../store/productManagerSlice";
+import { setRunOption, setServerOption } from "../../store/productManagerSlice";
+import { convertToTableFormat } from "../../utility/packageDataTransformer";
+import {
+    ProductManager,
+    IconData,
+    PDFData,
+    tableSheetData,
+    tableCellData,
+    variableClassArray,
+    variablePackageArray,
+    IGlobalVariablePackage,
+} from "../../../../types/productManager";
+import VariableManager from "../VariableManager/component";
+import PropertyInterfaceTable from "../PropertyInterfaces/component";
+import { BASE_URL } from "../../config";
+import styles from "./component.module.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { isEqual, set } from "lodash";
+import axios from "axios";
+import dotenv from "dotenv";
 import path from "path";
 
 dotenv.config({
-    path: path.resolve(process.cwd(), '../../../../', '.env')
+    path: path.resolve(process.cwd(), "../../../../", ".env"),
 });
 
 interface FormDataState {
@@ -46,23 +59,29 @@ interface VariableClassArray {
     dataId: number;
     name: string;
     dataLength: number;
-    variableData: Record<string, {
-        dataId: number;
-        value: string;
-    } | null>;
+    variableData: Record<
+        string,
+        {
+            dataId: number;
+            value: string;
+        } | null
+    >;
 }
 
 interface VariablePackageArray {
     dataId: number;
     name: string;
     dataLength: number;
-    variableData: Record<string, {
-        dataId: number;
-        value: {
-            filename: string[];
-            url: string[];
-        };
-    } | null>;
+    variableData: Record<
+        string,
+        {
+            dataId: number;
+            value: {
+                filename: string[];
+                url: string[];
+            };
+        } | null
+    >;
 }
 
 type VariableClassArrayState = Array<variableClassArray | null | undefined>;
@@ -76,7 +95,10 @@ interface VariableDataState {
 type VariableRowDataState = Record<string, tableCellData>;
 
 interface WaveManagerProps {
-    productManager: ProductManager & { globalVariableClass?: VariableClassArray, globalVariablePackage?: VariablePackageArray };
+    productManager: ProductManager & {
+        globalVariableClass?: VariableClassArray;
+        globalVariablePackage?: VariablePackageArray;
+    };
 }
 
 interface OriginalData {
@@ -89,12 +111,12 @@ interface OriginalData {
     variablePackageArray: VariablePackageArrayState;
 }
 
-const csharpServer = process.env.CS_SERVER_URL || 'http://localhost:5000';
+const csharpServer = process.env.CS_SERVER_URL || "http://localhost:5000";
 
 const now = new Date(Date.now());
 
-const month = (now.getMonth() + 1).toString().padStart(2, '0');
-const day = now.getDate().toString().padStart(2, '0');
+const month = (now.getMonth() + 1).toString().padStart(2, "0");
+const day = now.getDate().toString().padStart(2, "0");
 const year = now.getFullYear().toString().slice(-2);
 
 const formattedDate = `${month}-${day}-${year}`;
@@ -118,10 +140,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         dispatch(setIsRunning(isRunning));
     };
 
-    const isRunningAutomation = useSelector((state: RootState) => state.automation.isRunning);
+    const isRunningAutomation = useSelector(
+        (state: RootState) => state.automation.isRunning
+    );
 
     useEffect(() => {
-        console.log("WaveManager: Initializing/Syncing Redux state for globalVariableClassData");
+        console.log(
+            "WaveManager: Initializing/Syncing Redux state for globalVariableClassData"
+        );
         const parseAndClone = (data: any): VariableClassArrayState => {
             if (Array.isArray(data)) {
                 try {
@@ -132,12 +158,15 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     return [];
                 }
             }
-            if (typeof data === 'string') {
+            if (typeof data === "string") {
                 try {
                     const parsed = JSON.parse(data);
                     return Array.isArray(parsed) ? parsed : [];
                 } catch (e) {
-                    console.error("Failed to parse variableClassArray string for Redux init:", e);
+                    console.error(
+                        "Failed to parse variableClassArray string for Redux init:",
+                        e
+                    );
                     return [];
                 }
             }
@@ -145,44 +174,62 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             return [];
         };
 
-        const initialVariableClassData = parseAndClone(productManager.globalVariableClassData);
-        const initialVariablePackageData = parseAndClone(productManager.globalVariablePackageData);
+        const initialVariableClassData = parseAndClone(
+            productManager.globalVariableClassData
+        );
+        const initialVariablePackageData = parseAndClone(
+            productManager.globalVariablePackageData
+        );
 
         dispatch(setVariableClassArray(initialVariableClassData));
         dispatch(setVariablePackageArray(initialVariablePackageData));
 
-        setOriginalData(prevOriginal => ({
+        setOriginalData((prevOriginal) => ({
             ...prevOriginal,
-            variableClassArray: initialVariableClassData
+            variableClassArray: initialVariableClassData,
         }));
-
     }, [productManager.globalVariableClassData, dispatch]);
 
     const [originalData, setOriginalData] = useState<OriginalData>(() => {
-
         const initialRawPackages = productManager.globalVariablePackageData;
         const initialPackageDataMap = new Map<number, IGlobalVariablePackage>();
 
         if (Array.isArray(initialRawPackages)) {
-            console.log("Initial Load: Processing raw packages for map:", initialRawPackages);
-            initialRawPackages.forEach(rawPkg => {
-                const tableFormattedPkg = convertToTableFormat(rawPkg as variablePackageArray);
-                if (tableFormattedPkg && typeof tableFormattedPkg.dataId === 'number') {
-                    initialPackageDataMap.set(tableFormattedPkg.dataId, tableFormattedPkg);
+            console.log(
+                "Initial Load: Processing raw packages for map:",
+                initialRawPackages
+            );
+            initialRawPackages.forEach((rawPkg) => {
+                const tableFormattedPkg = convertToTableFormat(
+                    rawPkg as variablePackageArray
+                );
+                if (tableFormattedPkg && typeof tableFormattedPkg.dataId === "number") {
+                    initialPackageDataMap.set(
+                        tableFormattedPkg.dataId,
+                        tableFormattedPkg
+                    );
                 } else {
-                    console.warn("Initial Load: Failed to convert package or invalid ID", rawPkg);
+                    console.warn(
+                        "Initial Load: Failed to convert package or invalid ID",
+                        rawPkg
+                    );
                 }
             });
-            console.log("Initial Load: Created packageDataMap:", initialPackageDataMap);
+            console.log(
+                "Initial Load: Created packageDataMap:",
+                initialPackageDataMap
+            );
         } else {
-            console.warn("Initial Load: productManager.globalVariablePackageData is not an array.");
+            console.warn(
+                "Initial Load: productManager.globalVariablePackageData is not an array."
+            );
         }
 
         const parseVariableClassArray = (data: any): VariableClassArrayState => {
             if (Array.isArray(data)) {
                 return data;
             }
-            if (typeof data === 'string') {
+            if (typeof data === "string") {
                 try {
                     const parsed = JSON.parse(data);
                     return Array.isArray(parsed) ? parsed : [];
@@ -194,21 +241,25 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             return [];
         };
 
-        const parseVariablePackageArray = (data: any): VariablePackageArrayState => {
+        const parseVariablePackageArray = (
+            data: any
+        ): VariablePackageArrayState => {
             if (Array.isArray(data)) {
                 return data;
             }
-            if (typeof data === 'object' && data !== null) {
-                Object.values(data).filter((item: any) => item != null && item !== undefined);
+            if (typeof data === "object" && data !== null) {
+                Object.values(data).filter(
+                    (item: any) => item != null && item !== undefined
+                );
                 return Object.values(data).map((item: any) => ({
                     dataId: item.dataId,
                     name: item.name,
                     dataLength: item.dataLength,
-                    variableData: item.variableData || {}
+                    variableData: item.variableData || {},
                 }));
             }
             return [];
-        }
+        };
 
         const normalizeTableCellData = (
             cellDataArray: any,
@@ -217,21 +268,38 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             if (!Array.isArray(cellDataArray)) return {};
 
             return cellDataArray.reduce((acc: VariableRowDataState, item: any) => {
-                if (item && typeof item === 'object' && item.classKey != null && item.index != null) {
+                if (
+                    item &&
+                    typeof item === "object" &&
+                    item.classKey != null &&
+                    item.index != null
+                ) {
                     const key = `${item.classKey}_row_${item.index}`;
                     const isPackage = item.isPackage === true;
-                    let finalValue = item.value || '';
+                    let finalValue = item.value || "";
 
-                    if (isPackage && (typeof item.value === 'string' || typeof item.value === 'number') && String(item.value).trim() !== '') {
+                    if (
+                        isPackage &&
+                        (typeof item.value === "string" ||
+                            typeof item.value === "number") &&
+                        String(item.value).trim() !== ""
+                    ) {
                         const packageId = parseInt(String(item.value), 10);
                         if (!isNaN(packageId) && packageMap.has(packageId)) {
                             finalValue = packageMap.get(packageId)!;
-                            console.log(`Initial Load: Mapped package object (ID: ${packageId}) to cell ${key}`);
+                            console.log(
+                                `Initial Load: Mapped package object (ID: ${packageId}) to cell ${key}`
+                            );
                         } else {
-                            console.warn(`Initial Load: Package cell ${key} ID ${item.value} not found in package map. Storing ID string.`);
+                            console.warn(
+                                `Initial Load: Package cell ${key} ID ${item.value} not found in package map. Storing ID string.`
+                            );
                         }
                     } else if (isPackage) {
-                        console.warn(`Initial Load: Package cell ${key} has invalid ID:`, item.value);
+                        console.warn(
+                            `Initial Load: Package cell ${key} has invalid ID:`,
+                            item.value
+                        );
                     }
 
                     acc[key] = {
@@ -250,14 +318,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         const normalizeTableSheet = (data: any): tableSheetData[] => {
             if (!Array.isArray(data)) return [];
             return data.map((item: any, index: number) => {
-                if (typeof item === 'object' && item !== null) {
+                if (typeof item === "object" && item !== null) {
                     return {
                         index: item.index ?? index,
-                        value: item.value || '',
+                        value: item.value || "",
                         isOrigin: item.isOrigin === true,
                     };
                 } else {
-                    console.warn(`Unexpected tableSheet item format at index ${index}:`, item);
+                    console.warn(
+                        `Unexpected tableSheet item format at index ${index}:`,
+                        item
+                    );
                     return { index, value: String(item), isOrigin: false };
                 }
             });
@@ -265,78 +336,134 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
         return {
             formData: {
-                itemName: productManager.itemName || '',
-                productId: productManager.productId || '',
-                description: productManager.description || '',
-                initialJS: productManager.initialJS || '',
-                initialCSS: productManager.initialCSS || '',
-                initialHTML: productManager.initialHTML || '',
-                label: productManager.label || '',
+                itemName: productManager.itemName || "",
+                productId: productManager.productId || "",
+                description: productManager.description || "",
+                initialJS: productManager.initialJS || "",
+                initialCSS: productManager.initialCSS || "",
+                initialHTML: productManager.initialHTML || "",
+                label: productManager.label || "",
             },
             iconData: {
                 icon: (productManager.icon || []).map((icon: IconData) => ({
-                    filename: icon?.filename || '',
-                    url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
+                    filename: icon?.filename || "",
+                    url:
+                        icon?.url ||
+                        `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || "")}`,
                 })),
-                iconPreview: (productManager.iconPreview || productManager.icon || []).map((icon: IconData) => ({
-                    filename: icon?.filename || '',
-                    url: icon?.url || `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || '')}`
+                iconPreview: (
+                    productManager.iconPreview ||
+                    productManager.icon ||
+                    []
+                ).map((icon: IconData) => ({
+                    filename: icon?.filename || "",
+                    url:
+                        icon?.url ||
+                        `${BASE_URL}/api/files/${encodeURIComponent(icon?.filename || "")}`,
                 })),
-                newFiles: []
+                newFiles: [],
             },
             pdfData: {
                 pdf: (productManager.pdf || []).map((pdf: PDFData) => ({
-                    filename: pdf?.filename || '',
-                    url: pdf?.url || `${BASE_URL}/api/files/${encodeURIComponent(pdf?.filename || '')}`
+                    filename: pdf?.filename || "",
+                    url:
+                        pdf?.url ||
+                        `${BASE_URL}/api/files/${encodeURIComponent(pdf?.filename || "")}`,
                 })),
-                pdfPreview: (productManager.pdfPreview || productManager.pdf || []).map((pdf: PDFData) => ({
-                    filename: pdf?.filename || '',
-                    url: pdf?.url || `${BASE_URL}/api/files/${encodeURIComponent(pdf?.filename || '')}`
-                })),
-                newFiles: []
+                pdfPreview: (productManager.pdfPreview || productManager.pdf || []).map(
+                    (pdf: PDFData) => ({
+                        filename: pdf?.filename || "",
+                        url:
+                            pdf?.url ||
+                            `${BASE_URL}/api/files/${encodeURIComponent(
+                                pdf?.filename || ""
+                            )}`,
+                    })
+                ),
+                newFiles: [],
             },
             variableData: {
-                tableSheet: normalizeTableSheet(productManager.tableSheet)
+                tableSheet: normalizeTableSheet(productManager.tableSheet),
             },
-            variableRowData: normalizeTableCellData(productManager.tableCellData, initialPackageDataMap),
-            variableClassArray: parseVariableClassArray(productManager.globalVariableClassData),
-            variablePackageArray: parseVariablePackageArray(productManager.globalVariablePackageData)
+            variableRowData: normalizeTableCellData(
+                productManager.tableCellData,
+                initialPackageDataMap
+            ),
+            variableClassArray: parseVariableClassArray(
+                productManager.globalVariableClassData
+            ),
+            variablePackageArray: parseVariablePackageArray(
+                productManager.globalVariablePackageData
+            ),
         };
     });
 
-    const [formData, setFormData] = useState<FormDataState>({ ...originalData.formData });
-    const [iconData, setIconData] = useState<IconDataState>({ ...originalData.iconData });
-    const [pdfData, setPDFData] = useState<PDFDataState>({ ...originalData.pdfData });
-    const [variableData, setVariableData] = useState<VariableDataState>({ ...originalData.variableData });
-    const [variableRowData, setVariableRowData] = useState<VariableRowDataState>({ ...originalData.variableRowData });
+    const [formData, setFormData] = useState<FormDataState>({
+        ...originalData.formData,
+    });
+    const [iconData, setIconData] = useState<IconDataState>({
+        ...originalData.iconData,
+    });
+    const [pdfData, setPDFData] = useState<PDFDataState>({
+        ...originalData.pdfData,
+    });
+    const [variableData, setVariableData] = useState<VariableDataState>({
+        ...originalData.variableData,
+    });
+    const [variableRowData, setVariableRowData] = useState<VariableRowDataState>({
+        ...originalData.variableRowData,
+    });
     const [hasChanges, setHasChanges] = useState(false);
     const [showPropertyInterfaces, setShowPropertyInterfaces] = useState(false);
 
-    const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
-    const globalVariablePackage = useSelector((state: RootState) => state.variables.variableIconPackage);
+    const globalVariableClass = useSelector(
+        (state: RootState) => state.variables.variableClassArray
+    );
+    const globalVariablePackage = useSelector(
+        (state: RootState) => state.variables.variableIconPackage
+    );
 
-    console.log('data for globalVariableClass:', globalVariableClass);
-    console.log('data for globalVariablePackage:', globalVariablePackage);
+    console.log("data for globalVariableClass:", globalVariableClass);
+    console.log("data for globalVariablePackage:", globalVariablePackage);
 
     const checkForChanges = useCallback(() => {
         const normalizeTableSheetForCompare = (tableSheet: tableSheetData[]) => {
-            return tableSheet.map(item => ({
-                value: item.value,
-                isOrigin: item.isOrigin
-            })).sort((a, b) => (a.value + a.isOrigin).localeCompare(b.value + b.isOrigin));
+            return tableSheet
+                .map((item) => ({
+                    value: item.value,
+                    isOrigin: item.isOrigin,
+                }))
+                .sort((a, b) =>
+                    (a.value + a.isOrigin).localeCompare(b.value + b.isOrigin)
+                );
         };
 
-        const normalizeVariableRowDataForCompare = (data: VariableRowDataState): Array<{ classKey: string, index: number, value: string | string[], isComposite: boolean }> => {
-            return Object.values(data).sort((a, b) => `${a.classKey}_${a.index}`.localeCompare(`${b.classKey}_${b.index}`));
+        const normalizeVariableRowDataForCompare = (
+            data: VariableRowDataState
+        ): Array<{
+            classKey: string;
+            index: number;
+            value: string | string[];
+            isComposite: boolean;
+        }> => {
+            return Object.values(data).sort((a, b) =>
+                `${a.classKey}_${a.index}`.localeCompare(`${b.classKey}_${b.index}`)
+            );
         };
 
-        const normalizeVariableClassArrayForCompare = (arr: VariableClassArrayState): VariableClassArray[] => {
+        const normalizeVariableClassArrayForCompare = (
+            arr: VariableClassArrayState
+        ): VariableClassArray[] => {
             return arr
-                .filter((item): item is VariableClassArray => item != null && item !== undefined)
-                .map(item => {
-                    const safeVariableData = (item.variableData && typeof item.variableData === 'object')
-                        ? item.variableData
-                        : {};
+                .filter(
+                    (item): item is VariableClassArray =>
+                        item != null && item !== undefined
+                )
+                .map((item) => {
+                    const safeVariableData =
+                        item.variableData && typeof item.variableData === "object"
+                            ? item.variableData
+                            : {};
                     return {
                         ...item,
                         variableData: Object.entries(safeVariableData)
@@ -344,20 +471,26 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             .reduce((acc, [key, value]) => {
                                 acc[key] = value;
                                 return acc;
-                            }, {} as typeof item.variableData)
+                            }, {} as typeof item.variableData),
                     };
                 })
                 .sort((a, b) => a.dataId - b.dataId);
         };
 
-        const normalizeVariablePackageArrayForCompare = (arr: VariablePackageArrayState): VariablePackageArray[] => {
+        const normalizeVariablePackageArrayForCompare = (
+            arr: VariablePackageArrayState
+        ): VariablePackageArray[] => {
             return arr
 
-                .filter((item): item is VariablePackageArray => item != null && item !== undefined)
-                .map(item => {
-                    const safeVariableData = (item.variableData && typeof item.variableData === 'object')
-                        ? item.variableData
-                        : {};
+                .filter(
+                    (item): item is VariablePackageArray =>
+                        item != null && item !== undefined
+                )
+                .map((item) => {
+                    const safeVariableData =
+                        item.variableData && typeof item.variableData === "object"
+                            ? item.variableData
+                            : {};
                     return {
                         ...item,
                         variableData: Object.entries(safeVariableData)
@@ -365,17 +498,25 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             .reduce((acc, [key, value]) => {
                                 acc[key] = value;
                                 return acc;
-                            }, {} as typeof item.variableData)
+                            }, {} as typeof item.variableData),
                     };
                 })
                 .sort((a, b) => a.dataId - b.dataId);
-        }
+        };
 
         const formDataChanged = !isEqual(formData, originalData.formData);
-        const iconDataChanged = iconData.newFiles.length > 0 ||
-            !isEqual(iconData.icon.map(i => i.filename).sort(), originalData.iconData.icon.map(i => i.filename).sort());
-        const pdfDataChanged = pdfData.newFiles.length > 0 ||
-            !isEqual(pdfData.pdf.map(i => i.filename).sort(), originalData.pdfData.pdf.map(i => i.filename).sort());
+        const iconDataChanged =
+            iconData.newFiles.length > 0 ||
+            !isEqual(
+                iconData.icon.map((i) => i.filename).sort(),
+                originalData.iconData.icon.map((i) => i.filename).sort()
+            );
+        const pdfDataChanged =
+            pdfData.newFiles.length > 0 ||
+            !isEqual(
+                pdfData.pdf.map((i) => i.filename).sort(),
+                originalData.pdfData.pdf.map((i) => i.filename).sort()
+            );
 
         const tableSheetChanged = !isEqual(
             normalizeTableSheetForCompare(variableData.tableSheet),
@@ -397,12 +538,19 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             normalizeVariablePackageArrayForCompare(originalData.variablePackageArray)
         );
 
-        const dataChanged = formDataChanged || iconDataChanged || pdfDataChanged || tableSheetChanged || variableRowDataChanged || variableClassArrayChanged || variablePackageArrayChanged;
+        const dataChanged =
+            formDataChanged ||
+            iconDataChanged ||
+            pdfDataChanged ||
+            tableSheetChanged ||
+            variableRowDataChanged ||
+            variableClassArrayChanged ||
+            variablePackageArrayChanged;
 
         setHasChanges(dataChanged);
 
         if (dataChanged) {
-            console.log('Changes detected:', {
+            console.log("Changes detected:", {
                 formDataChanged,
                 iconDataChanged,
                 pdfDataChanged,
@@ -411,74 +559,134 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 variableClassArrayChanged,
             });
             if (variableClassArrayChanged) {
-                console.log('Original VariableClassArray:', normalizeVariableClassArrayForCompare(originalData.variableClassArray));
-                console.log('Current VariableClassArray:', normalizeVariableClassArrayForCompare(globalVariableClass));
+                console.log(
+                    "Original VariableClassArray:",
+                    normalizeVariableClassArrayForCompare(originalData.variableClassArray)
+                );
+                console.log(
+                    "Current VariableClassArray:",
+                    normalizeVariableClassArrayForCompare(globalVariableClass)
+                );
             }
             if (variablePackageArrayChanged) {
-                console.log('Original VariablePackageArray:', normalizeVariablePackageArrayForCompare(originalData.variablePackageArray));
-                console.log('Current VariablePackageArray:', normalizeVariablePackageArrayForCompare(globalVariablePackage));
+                console.log(
+                    "Original VariablePackageArray:",
+                    normalizeVariablePackageArrayForCompare(
+                        originalData.variablePackageArray
+                    )
+                );
+                console.log(
+                    "Current VariablePackageArray:",
+                    normalizeVariablePackageArrayForCompare(globalVariablePackage)
+                );
             }
         }
-    }, [formData, iconData, pdfData, variableData, variableRowData, globalVariablePackage, globalVariableClass, originalData]);
+    }, [
+        formData,
+        iconData,
+        pdfData,
+        variableData,
+        variableRowData,
+        globalVariablePackage,
+        globalVariableClass,
+        originalData,
+    ]);
 
     useEffect(() => {
         checkForChanges();
     }, [checkForChanges]);
 
-    const parsePackageValues = (packageDataArray: any[] | undefined): VariablePackageArrayState => {
+    const parsePackageValues = (
+        packageDataArray: any[] | undefined
+    ): VariablePackageArrayState => {
         if (!Array.isArray(packageDataArray)) {
-            console.warn("parsePackageValues received non-array input, returning empty array.");
+            console.warn(
+                "parsePackageValues received non-array input, returning empty array."
+            );
             return [];
         }
 
-        return packageDataArray.map((item) => {
-            if (typeof item !== 'object' || item === null || typeof item.dataId !== 'number' || typeof item.variableData !== 'object' || item.variableData === null) {
-                console.warn("Skipping invalid package item structure during frontend parsing:", item);
-                return null;
-            }
+        return packageDataArray
+            .map((item) => {
+                if (
+                    typeof item !== "object" ||
+                    item === null ||
+                    typeof item.dataId !== "number" ||
+                    typeof item.variableData !== "object" ||
+                    item.variableData === null
+                ) {
+                    console.warn(
+                        "Skipping invalid package item structure during frontend parsing:",
+                        item
+                    );
+                    return null;
+                }
 
-            const processedVariableData: Record<string, any> = {};
+                const processedVariableData: Record<string, any> = {};
 
-            Object.entries(item.variableData).forEach(([key, entry]) => {
-                if (entry && typeof entry === 'object' && 'value' in entry) {
-                    const valueFromSource = entry.value;
+                Object.entries(item.variableData).forEach(([key, entry]) => {
+                    if (entry && typeof entry === "object" && "value" in entry) {
+                        const valueFromSource = entry.value;
 
-                    if (typeof valueFromSource === 'string') {
-                        try {
-                            const parsedValue = JSON.parse(valueFromSource);
+                        if (typeof valueFromSource === "string") {
+                            try {
+                                const parsedValue = JSON.parse(valueFromSource);
 
-                            if (typeof parsedValue === 'object' && parsedValue !== null && Array.isArray(parsedValue.filename) && Array.isArray(parsedValue.url)) {
-                                processedVariableData[key] = { ...entry, value: parsedValue };
-                            } else {
-                                console.warn(`Frontend parsed value for pkg ${item.dataId}, key ${key}, not expected object structure. Keeping string.`);
-                                processedVariableData[key] = { ...entry, value: valueFromSource };
+                                if (
+                                    typeof parsedValue === "object" &&
+                                    parsedValue !== null &&
+                                    Array.isArray(parsedValue.filename) &&
+                                    Array.isArray(parsedValue.url)
+                                ) {
+                                    processedVariableData[key] = { ...entry, value: parsedValue };
+                                } else {
+                                    console.warn(
+                                        `Frontend parsed value for pkg ${item.dataId}, key ${key}, not expected object structure. Keeping string.`
+                                    );
+                                    processedVariableData[key] = {
+                                        ...entry,
+                                        value: valueFromSource,
+                                    };
+                                }
+                            } catch (parseError) {
+                                console.error(
+                                    `Frontend failed to parse value for pkg ${item.dataId}, key ${key}. Keeping string. Error:`,
+                                    parseError
+                                );
+                                processedVariableData[key] = {
+                                    ...entry,
+                                    value: valueFromSource,
+                                };
                             }
-                        } catch (parseError) {
-                            console.error(`Frontend failed to parse value for pkg ${item.dataId}, key ${key}. Keeping string. Error:`, parseError);
+                        } else if (
+                            typeof valueFromSource === "object" &&
+                            valueFromSource !== null
+                        ) {
+                            processedVariableData[key] = { ...entry, value: valueFromSource };
+                        } else {
                             processedVariableData[key] = { ...entry, value: valueFromSource };
                         }
-                    } else if (typeof valueFromSource === 'object' && valueFromSource !== null) {
-                        processedVariableData[key] = { ...entry, value: valueFromSource };
                     } else {
-                        processedVariableData[key] = { ...entry, value: valueFromSource };
+                        console.warn(
+                            `Invalid entry structure for pkg ${item.dataId}, key ${key}:`,
+                            entry
+                        );
+                        processedVariableData[key] = entry;
                     }
-                } else {
-                    console.warn(`Invalid entry structure for pkg ${item.dataId}, key ${key}:`, entry);
-                    processedVariableData[key] = entry;
-                }
-            });
+                });
 
-            return {
-                ...item,
-                variableData: processedVariableData
-            };
-        }).filter(item => item !== null);
+                return {
+                    ...item,
+                    variableData: processedVariableData,
+                };
+            })
+            .filter((item) => item !== null);
     };
 
     const handleSave = async () => {
         if (!hasChanges) {
-            toast.info('No changes to save', {
-                position: 'bottom-right',
+            toast.info("No changes to save", {
+                position: "bottom-right",
                 autoClose: 3000,
             });
             return;
@@ -490,34 +698,56 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             const { productType, _id } = productManager;
             const formDataPayload = new FormData();
 
-            const tableSheetClearApproved = variableData.tableSheet.length === 0 && approvedTableSheetClear;
-            formDataPayload.append('approvedTableSheetClear', tableSheetClearApproved.toString());
+            const tableSheetClearApproved =
+                variableData.tableSheet.length === 0 && approvedTableSheetClear;
+            formDataPayload.append(
+                "approvedTableSheetClear",
+                tableSheetClearApproved.toString()
+            );
 
             console.log("FormData Payload:", tableSheetClearApproved);
 
             if (variableData.tableSheet.length > 0) {
-                console.log("Sending tableSheet data:", variableData.tableSheet.length, "items");
+                console.log(
+                    "Sending tableSheet data:",
+                    variableData.tableSheet.length,
+                    "items"
+                );
                 variableData.tableSheet.forEach((item) => {
-                    formDataPayload.append('tableSheet', item.index.toString());
-                    formDataPayload.append('tableSheet', item.value);
-                    formDataPayload.append('tableSheet', item.isOrigin.valueOf().toString());
+                    formDataPayload.append("tableSheet", item.index.toString());
+                    formDataPayload.append("tableSheet", item.value);
+                    formDataPayload.append(
+                        "tableSheet",
+                        item.isOrigin.valueOf().toString()
+                    );
                 });
             } else {
-                console.error("WARNING: tableSheet is empty! Checking if this is intentional...");
+                console.error(
+                    "WARNING: tableSheet is empty! Checking if this is intentional..."
+                );
 
-                const previousTableSheetSize = originalData.variableData.tableSheet.length;
+                const previousTableSheetSize =
+                    originalData.variableData.tableSheet.length;
                 if (previousTableSheetSize > 0 && !approvedTableSheetClear) {
-                    console.error("CRITICAL: Attempting to send empty tableSheet when we had data before. Using original data instead.");
+                    console.error(
+                        "CRITICAL: Attempting to send empty tableSheet when we had data before. Using original data instead."
+                    );
                     originalData.variableData.tableSheet.forEach((item) => {
-                        formDataPayload.append('tableSheet', item.index.toString());
-                        formDataPayload.append('tableSheet', item.value);
-                        formDataPayload.append('tableSheet', item.isOrigin.valueOf().toString());
+                        formDataPayload.append("tableSheet", item.index.toString());
+                        formDataPayload.append("tableSheet", item.value);
+                        formDataPayload.append(
+                            "tableSheet",
+                            item.isOrigin.valueOf().toString()
+                        );
                     });
 
-                    toast.warn("Prevented potential data loss. Please check your changes carefully.", {
-                        position: 'bottom-right',
-                        autoClose: 5000,
-                    });
+                    toast.warn(
+                        "Prevented potential data loss. Please check your changes carefully.",
+                        {
+                            position: "bottom-right",
+                            autoClose: 5000,
+                        }
+                    );
                 } else {
                     console.log("Empty tableSheet appears to be intentional.");
                 }
@@ -526,51 +756,82 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             if (Object.keys(variableRowData).length > 0 || approvedTableCellClear) {
                 if (approvedTableCellClear) {
                     console.log("Sending approvedTableCellClear flag");
-                    formDataPayload.append('approvedTableCellClear', approvedTableCellClear.toString());
+                    formDataPayload.append(
+                        "approvedTableCellClear",
+                        approvedTableCellClear.toString()
+                    );
                 }
-                console.log("Sending variableRowData data:", Object.keys(variableRowData).length, "items");
+                console.log(
+                    "Sending variableRowData data:",
+                    Object.keys(variableRowData).length,
+                    "items"
+                );
                 Object.entries(variableRowData).forEach(([_, rowItem]) => {
-                    if (rowItem && typeof rowItem.index === 'number' && typeof rowItem.classKey === 'string' && rowItem.value !== undefined && typeof rowItem.isComposite === 'boolean') {
-                        formDataPayload.append('tableCellData', rowItem.index.toString());
-                        formDataPayload.append('tableCellData', rowItem.classKey);
+                    if (
+                        rowItem &&
+                        typeof rowItem.index === "number" &&
+                        typeof rowItem.classKey === "string" &&
+                        rowItem.value !== undefined &&
+                        typeof rowItem.isComposite === "boolean"
+                    ) {
+                        formDataPayload.append("tableCellData", rowItem.index.toString());
+                        formDataPayload.append("tableCellData", rowItem.classKey);
 
                         let valueToSend: string;
                         if (rowItem.isComposite && Array.isArray(rowItem.value)) {
                             valueToSend = JSON.stringify(rowItem.value);
                         } else if (rowItem.isPackage) {
                             let packageIdValue: string | number | undefined;
-                            if (typeof rowItem.value === 'object' && rowItem.value !== null && 'dataId' in rowItem.value) {
+                            if (
+                                typeof rowItem.value === "object" &&
+                                rowItem.value !== null &&
+                                "dataId" in rowItem.value
+                            ) {
                                 packageIdValue = (rowItem.value as any).dataId;
-                            } else if (typeof rowItem.value === 'string' || typeof rowItem.value === 'number') {
+                            } else if (
+                                typeof rowItem.value === "string" ||
+                                typeof rowItem.value === "number"
+                            ) {
                                 packageIdValue = rowItem.value;
                             }
-                            valueToSend = String(packageIdValue ?? '');
+                            valueToSend = String(packageIdValue ?? "");
                         } else {
-                            valueToSend = String(rowItem.value ?? '');
+                            valueToSend = String(rowItem.value ?? "");
                         }
 
-                        if (rowItem.classKey === 'Icon') {
-                            console.log(`>>> Sending Icon cell (${rowItem.classKey}_row_${rowItem.index}): isPackage=${rowItem.isPackage}, isComposite=${rowItem.isComposite}, valueToSend=${valueToSend}`);
+                        if (rowItem.classKey === "Icon") {
+                            console.log(
+                                `>>> Sending Icon cell (${rowItem.classKey}_row_${rowItem.index}): isPackage=${rowItem.isPackage}, isComposite=${rowItem.isComposite}, valueToSend=${valueToSend}`
+                            );
                         }
 
-                        formDataPayload.append('tableCellData', valueToSend);
-                        formDataPayload.append('tableCellData', rowItem.isComposite.toString());
-                        formDataPayload.append('tableCellData', rowItem.isPackage.toString());
-                        formDataPayload.append('tableCellData', (rowItem.isDisabled === true).toString());
+                        formDataPayload.append("tableCellData", valueToSend);
+                        formDataPayload.append(
+                            "tableCellData",
+                            rowItem.isComposite.toString()
+                        );
+                        formDataPayload.append(
+                            "tableCellData",
+                            rowItem.isPackage.toString()
+                        );
+                        formDataPayload.append(
+                            "tableCellData",
+                            (rowItem.isDisabled === true).toString()
+                        );
                     } else {
                         console.warn("Skipping invalid rowItem during save:", rowItem);
                     }
                 });
             } else if (approvedTableCellClear) {
                 console.log("Sending approvedTableCellClear flag for empty data.");
-                formDataPayload.append('approvedTableCellClear', 'false');
-            }
-            else {
+                formDataPayload.append("approvedTableCellClear", "false");
+            } else {
                 console.log("No cell data to send and clear flag not set.");
             }
 
             Object.entries(formData).forEach(([key, value]) => {
-                if (key === 'icon' || key === 'newFiles' || key === 'iconPreview') return;
+                if (key === "icon" || key === "newFiles" || key === "iconPreview")
+                    return;
 
                 if (value !== null && value !== undefined) {
                     if (Array.isArray(value)) {
@@ -581,50 +842,95 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 }
             });
 
-            if (Array.isArray(variableData.tableSheet) && variableData.tableSheet.length > 0) {
-                console.log("Sending tableSheet data:", variableData.tableSheet.length, "items");
+            if (
+                Array.isArray(variableData.tableSheet) &&
+                variableData.tableSheet.length > 0
+            ) {
+                console.log(
+                    "Sending tableSheet data:",
+                    variableData.tableSheet.length,
+                    "items"
+                );
                 variableData.tableSheet.forEach((item) => {
-                    formDataPayload.append('tableSheet', item.index.toString());
-                    formDataPayload.append('tableSheet', item.value);
-                    formDataPayload.append('tableSheet', item.isOrigin.valueOf().toString());
+                    formDataPayload.append("tableSheet", item.index.toString());
+                    formDataPayload.append("tableSheet", item.value);
+                    formDataPayload.append(
+                        "tableSheet",
+                        item.isOrigin.valueOf().toString()
+                    );
                 });
             } else {
                 console.error("WARNING: tableSheet is empty or not an array!");
             }
 
-            formDataPayload.append('existingIconsJson', JSON.stringify(iconData.icon.map(i => i.filename)));
-            formDataPayload.append('existingPdfsJson', JSON.stringify(pdfData.pdf.map(p => p.filename)));
+            formDataPayload.append(
+                "existingIconsJson",
+                JSON.stringify(iconData.icon.map((i) => i.filename))
+            );
+            formDataPayload.append(
+                "existingPdfsJson",
+                JSON.stringify(pdfData.pdf.map((p) => p.filename))
+            );
 
-            iconData.newFiles.forEach(file => {
-                formDataPayload.append('files', file, file.name);
+            iconData.newFiles.forEach((file) => {
+                formDataPayload.append("files", file, file.name);
             });
-            pdfData.newFiles.forEach(file => {
-                formDataPayload.append('files', file, file.name);
+            pdfData.newFiles.forEach((file) => {
+                formDataPayload.append("files", file, file.name);
             });
 
-            if (Array.isArray(globalVariableClass) && globalVariableClass.length > 0) {
-                console.log("Sending globalVariableClass data array:", globalVariableClass.length, "items");
-                formDataPayload.append('globalVariableClassData', JSON.stringify(globalVariableClass));
+            if (
+                Array.isArray(globalVariableClass) &&
+                globalVariableClass.length > 0
+            ) {
+                console.log(
+                    "Sending globalVariableClass data array:",
+                    globalVariableClass.length,
+                    "items"
+                );
+                formDataPayload.append(
+                    "globalVariableClassData",
+                    JSON.stringify(globalVariableClass)
+                );
             } else {
-                console.log("No globalVariableClass data to send, sending empty array string.");
-                formDataPayload.append('globalVariableClassData', '[]');
-            };
+                console.log(
+                    "No globalVariableClass data to send, sending empty array string."
+                );
+                formDataPayload.append("globalVariableClassData", "[]");
+            }
 
             let packageDataToSendString: string;
 
-            if (Array.isArray(globalVariablePackage) && globalVariablePackage.length > 0) {
-                console.log("Transforming globalVariablePackage data array before sending:", globalVariablePackage.length, "items");
+            if (
+                Array.isArray(globalVariablePackage) &&
+                globalVariablePackage.length > 0
+            ) {
+                console.log(
+                    "Transforming globalVariablePackage data array before sending:",
+                    globalVariablePackage.length,
+                    "items"
+                );
 
                 try {
                     const transformedPackageData = globalVariablePackage
-                        .filter((item): item is variablePackageArray => item != null && item !== undefined)
-                        .map(pkgItem => {
+                        .filter(
+                            (item): item is variablePackageArray =>
+                                item != null && item !== undefined
+                        )
+                        .map((pkgItem) => {
                             const newItem = JSON.parse(JSON.stringify(pkgItem));
 
-                            if (newItem.variableData && typeof newItem.variableData === 'object') {
-                                Object.keys(newItem.variableData).forEach(key => {
+                            if (
+                                newItem.variableData &&
+                                typeof newItem.variableData === "object"
+                            ) {
+                                Object.keys(newItem.variableData).forEach((key) => {
                                     const entry = newItem.variableData[key];
-                                    if (entry && typeof entry.value === 'object' && entry.value !== null) {
+                                    if (
+                                        entry &&
+                                        typeof entry.value === "object" &&
+                                        entry.value !== null
+                                    ) {
                                         entry.value = JSON.stringify(entry.value);
                                     }
                                 });
@@ -633,45 +939,71 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         });
 
                     packageDataToSendString = JSON.stringify(transformedPackageData);
-                    console.log("Sending transformed globalVariablePackage data string:", packageDataToSendString);
-
+                    console.log(
+                        "Sending transformed globalVariablePackage data string:",
+                        packageDataToSendString
+                    );
                 } catch (error) {
-                    console.error("Error transforming globalVariablePackage data:", error);
+                    console.error(
+                        "Error transforming globalVariablePackage data:",
+                        error
+                    );
                     toast.error("Failed to prepare package data for saving.");
                     setIsSaving(false);
                     return;
                 }
-
             } else {
-                console.log("No globalVariablePackage data to send, sending empty array string.");
-                packageDataToSendString = '[]';
+                console.log(
+                    "No globalVariablePackage data to send, sending empty array string."
+                );
+                packageDataToSendString = "[]";
             }
 
-            formDataPayload.append('globalVariablePackageData', packageDataToSendString);
+            formDataPayload.append(
+                "globalVariablePackageData",
+                packageDataToSendString
+            );
 
-            console.log("FormData Payload before sending:", Array.from(formDataPayload.entries()));
+            console.log(
+                "FormData Payload before sending:",
+                Array.from(formDataPayload.entries())
+            );
 
-            console.log('Current variableRowData:', variableRowData);
-            console.log('FormData tableCellData:', Array.from(formDataPayload.getAll('tableCellData')));
+            console.log("Current variableRowData:", variableRowData);
+            console.log(
+                "FormData tableCellData:",
+                Array.from(formDataPayload.getAll("tableCellData"))
+            );
 
-            const response = await fetch(`/api/productManager/${productType}/${_id}`, {
-                method: 'PATCH',
-                body: formDataPayload,
-            });
+            const response = await fetch(
+                `/api/productManager/${productType}/${_id}`,
+                {
+                    method: "PATCH",
+                    body: formDataPayload,
+                }
+            );
 
             if (response.ok) {
                 const updatedProduct = await response.json();
-                console.log('Updated Product:', updatedProduct);
-                console.log('Server returned tableCellData:', updatedProduct.tableCellData);
-                console.log('Server returned tableSheet:', updatedProduct.tableSheet);
+                console.log("Updated Product:", updatedProduct);
+                console.log(
+                    "Server returned tableCellData:",
+                    updatedProduct.tableCellData
+                );
+                console.log("Server returned tableSheet:", updatedProduct.tableSheet);
 
-                const shouldPreventUpdate = !updatedProduct.tableSheet || updatedProduct.tableSheet.length === 0;
+                const shouldPreventUpdate =
+                    !updatedProduct.tableSheet || updatedProduct.tableSheet.length === 0;
                 if (shouldPreventUpdate) {
-                    console.warn('Server returned empty tableSheet, preventing further state updates.');
-                    toast.warn('Warning: Server returned incomplete data. Your changes were saved but please refresh the page.');
+                    console.warn(
+                        "Server returned empty tableSheet, preventing further state updates."
+                    );
+                    toast.warn(
+                        "Warning: Server returned incomplete data. Your changes were saved but please refresh the page."
+                    );
                     setIsSaving(false);
                     return;
-                };
+                }
 
                 setFormData((prev) => ({
                     ...prev,
@@ -681,67 +1013,89 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 setIconData((prev) => ({
                     ...prev,
                     icon: updatedProduct.icon,
-                    newFiles: []
+                    newFiles: [],
                 }));
 
                 setPDFData((prev) => ({
                     ...prev,
                     pdf: updatedProduct.pdf,
-                    newFiles: []
+                    newFiles: [],
                 }));
 
                 setVariableData((prev) => {
-                    console.log('Updating tableSheet from:', prev.tableSheet.length, 'items');
-                    console.log('To:', updatedProduct.tableSheet?.length || 0, 'items');
+                    console.log(
+                        "Updating tableSheet from:",
+                        prev.tableSheet.length,
+                        "items"
+                    );
+                    console.log("To:", updatedProduct.tableSheet?.length || 0, "items");
                     return {
                         ...prev,
-                        tableSheet: Array.isArray(updatedProduct.tableSheet) && updatedProduct.tableSheet.length > 0
-                            ? updatedProduct.tableSheet.map((item: any, index: number) => {
-                                if (typeof item === 'object' && item !== null) {
-                                    return {
-                                        index: item.index || index,
-                                        value: item.value || '',
-                                        isOrigin: item.isOrigin === true,
-                                    };
-                                } else {
-                                    return {
-                                        index,
-                                        value: String(item),
-                                        isOrigin: false,
-                                    };
-                                }
-                            })
-                            : prev.tableSheet,
+                        tableSheet:
+                            Array.isArray(updatedProduct.tableSheet) &&
+                                updatedProduct.tableSheet.length > 0
+                                ? updatedProduct.tableSheet.map((item: any, index: number) => {
+                                    if (typeof item === "object" && item !== null) {
+                                        return {
+                                            index: item.index || index,
+                                            value: item.value || "",
+                                            isOrigin: item.isOrigin === true,
+                                        };
+                                    } else {
+                                        return {
+                                            index,
+                                            value: String(item),
+                                            isOrigin: false,
+                                        };
+                                    }
+                                })
+                                : prev.tableSheet,
                     };
                 });
 
                 setVariableRowData((prev) => {
                     const serverRowData = updatedProduct.tableCellData;
-                    const rawPackageDataArray: variablePackageArray[] | undefined = updatedProduct.globalVariablePackageData;
+                    const rawPackageDataArray: variablePackageArray[] | undefined =
+                        updatedProduct.globalVariablePackageData;
                     const packageDataMap = new Map<number, IGlobalVariablePackage>();
 
                     if (Array.isArray(rawPackageDataArray)) {
-                        rawPackageDataArray.forEach(rawPkgItem => {
+                        rawPackageDataArray.forEach((rawPkgItem) => {
                             const tableFormattedPkg = convertToTableFormat(rawPkgItem);
-                            if (tableFormattedPkg && typeof tableFormattedPkg.dataId === 'number') {
+                            if (
+                                tableFormattedPkg &&
+                                typeof tableFormattedPkg.dataId === "number"
+                            ) {
                                 packageDataMap.set(tableFormattedPkg.dataId, tableFormattedPkg);
                             }
                         });
                     }
 
                     if (!Array.isArray(serverRowData)) {
-                        console.warn('Server did not return valid tableCellData array, keeping existing state.');
+                        console.warn(
+                            "Server did not return valid tableCellData array, keeping existing state."
+                        );
                         return prev;
                     }
                     const updatedData: VariableRowDataState = {};
                     serverRowData.forEach((item: any) => {
-                        if (item && typeof item === 'object' && typeof item.classKey === 'string' && typeof item.index === 'number') {
+                        if (
+                            item &&
+                            typeof item === "object" &&
+                            typeof item.classKey === "string" &&
+                            typeof item.index === "number"
+                        ) {
                             const key = `${item.classKey}_row_${item.index}`;
                             const isPackage = item.isPackage === true;
                             const isComposite = item.isComposite === true;
                             let finalValue = item.value;
 
-                            if (isPackage && (typeof item.value === 'string' || typeof item.value === 'number') && String(item.value).trim() !== '') {
+                            if (
+                                isPackage &&
+                                (typeof item.value === "string" ||
+                                    typeof item.value === "number") &&
+                                String(item.value).trim() !== ""
+                            ) {
                                 const packageId = parseInt(String(item.value), 10);
                                 if (!isNaN(packageId) && packageDataMap.has(packageId)) {
                                     finalValue = packageDataMap.get(packageId);
@@ -762,122 +1116,161 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                     return updatedData;
                 });
 
-                if (updatedProduct.globalVariableClassData || updatedProduct.globalVariablePackageData) {
-                    dispatch(setVariableClassArray(updatedProduct.globalVariableClassData || []));
-                    const processedPackageData = parsePackageValues(updatedProduct.globalVariablePackageData);
+                if (
+                    updatedProduct.globalVariableClassData ||
+                    updatedProduct.globalVariablePackageData
+                ) {
+                    dispatch(
+                        setVariableClassArray(updatedProduct.globalVariableClassData || [])
+                    );
+                    const processedPackageData = parsePackageValues(
+                        updatedProduct.globalVariablePackageData
+                    );
                     dispatch(setVariablePackageArray(processedPackageData));
                 } else {
                     dispatch(setVariableClassArray([]));
                     dispatch(setVariablePackageArray([]));
                 }
 
-                console.log('Updating original data references');
+                console.log("Updating original data references");
 
                 if (hasChanges) {
-                    console.log('Updating original data references');
+                    console.log("Updating original data references");
 
                     const newOriginalData = {
                         formData: {
-                            itemName: updatedProduct.itemName || '',
-                            productId: updatedProduct.productId || '',
-                            description: updatedProduct.description || '',
-                            initialJS: updatedProduct.initialJS || '',
-                            initialCSS: updatedProduct.initialCSS || '',
-                            initialHTML: updatedProduct.initialHTML || '',
-                            label: updatedProduct.label || '',
+                            itemName: updatedProduct.itemName || "",
+                            productId: updatedProduct.productId || "",
+                            description: updatedProduct.description || "",
+                            initialJS: updatedProduct.initialJS || "",
+                            initialCSS: updatedProduct.initialCSS || "",
+                            initialHTML: updatedProduct.initialHTML || "",
+                            label: updatedProduct.label || "",
                         },
                         iconData: {
-                            icon: (updatedProduct.icon || []).map((icon: IconData) => ({ filename: icon?.filename || '', url: icon?.url || '' })),
+                            icon: (updatedProduct.icon || []).map((icon: IconData) => ({
+                                filename: icon?.filename || "",
+                                url: icon?.url || "",
+                            })),
                             iconPreview: [],
-                            newFiles: []
+                            newFiles: [],
                         },
                         pdfData: {
-                            pdf: (updatedProduct.pdf || []).map((pdf: PDFData) => ({ filename: pdf?.filename || '', url: pdf?.url || '' })),
+                            pdf: (updatedProduct.pdf || []).map((pdf: PDFData) => ({
+                                filename: pdf?.filename || "",
+                                url: pdf?.url || "",
+                            })),
                             pdfPreview: [],
-                            newFiles: []
+                            newFiles: [],
                         },
                         variableData: {
                             tableSheet: Array.isArray(updatedProduct.tableSheet)
-                                ? updatedProduct.tableSheet.map((value: any, index: number) => ({
-                                    index: value.index ?? index,
-                                    value: value.value || '',
-                                    isOrigin: Boolean(value.isOrigin),
-                                }))
-                                : []
+                                ? updatedProduct.tableSheet.map(
+                                    (value: any, index: number) => ({
+                                        index: value.index ?? index,
+                                        value: value.value || "",
+                                        isOrigin: Boolean(value.isOrigin),
+                                    })
+                                )
+                                : [],
                         },
                         variableRowData: updatedProduct.tableCellData
-                            ? updatedProduct.tableCellData.reduce((acc: VariableRowDataState, item: any) => {
-                                if (item && typeof item === 'object' && item.classKey != null && item.index != null) {
-                                    const key = `${item.classKey}_row_${item.index}`;
-                                    acc[key] = {
-                                        classKey: item.classKey,
-                                        index: item.index,
-                                        value: item.value || '',
-                                        isComposite: item.isComposite || false,
-                                        isPackage: item.isPackage || false,
-                                        isDisabled: item.isDisabled || false,
-                                    };
-                                }
-                                return acc;
-                            }, {})
+                            ? updatedProduct.tableCellData.reduce(
+                                (acc: VariableRowDataState, item: any) => {
+                                    if (
+                                        item &&
+                                        typeof item === "object" &&
+                                        item.classKey != null &&
+                                        item.index != null
+                                    ) {
+                                        const key = `${item.classKey}_row_${item.index}`;
+                                        acc[key] = {
+                                            classKey: item.classKey,
+                                            index: item.index,
+                                            value: item.value || "",
+                                            isComposite: item.isComposite || false,
+                                            isPackage: item.isPackage || false,
+                                            isDisabled: item.isDisabled || false,
+                                        };
+                                    }
+                                    return acc;
+                                },
+                                {}
+                            )
                             : {},
-                        variablePackageArray: Array.isArray(updatedProduct.globalVariablePackageData)
+                        variablePackageArray: Array.isArray(
+                            updatedProduct.globalVariablePackageData
+                        )
                             ? updatedProduct.globalVariablePackageData
                             : [],
-                        variableClassArray: Array.isArray(updatedProduct.globalVariableClassData)
+                        variableClassArray: Array.isArray(
+                            updatedProduct.globalVariableClassData
+                        )
                             ? updatedProduct.globalVariableClassData
-                            : []
+                            : [],
                     };
                     setOriginalData(newOriginalData);
                     setHasChanges(false);
                 }
 
-                const confirmReload = window.confirm('Product data updated. Do you want to refresh the page now? (Recommended if UI seems inconsistent)');
+                const confirmReload = window.confirm(
+                    "Product data updated. Do you want to refresh the page now? (Recommended if UI seems inconsistent)"
+                );
                 if (confirmReload) {
                     window.location.reload();
                 } else {
-                    toast.info('Manual refresh recommended if UI appears inconsistent.');
+                    toast.info("Manual refresh recommended if UI appears inconsistent.");
                 }
-                toast.success('Product saved successfully!', {
-                    position: 'bottom-right',
+                toast.success("Product saved successfully!", {
+                    position: "bottom-right",
                     autoClose: 2000,
-                    onClose: () => window.location.reload()
+                    onClose: () => window.location.reload(),
                 });
             } else {
                 setIsSaving(false);
                 const error = await response.json();
                 toast.error(`Error saving product: ${error.message}`, {
-                    position: 'bottom-right',
+                    position: "bottom-right",
                     autoClose: 5000,
                 });
             }
         } catch (error) {
             setIsSaving(false);
-            console.error('Save error:', error);
-            toast.error('Failed to save the product. Please try again.');
+            console.error("Save error:", error);
+            toast.error("Failed to save the product. Please try again.");
         }
     };
 
-    const escapeCsvField = (field: string | number | undefined | null): string => {
+    const escapeCsvField = (
+        field: string | number | undefined | null
+    ): string => {
         if (field === undefined || field === null) {
-            return '';
+            return "";
         }
         const stringField = String(field);
-        if (stringField.includes(',') || stringField.includes('\n') || stringField.includes('"')) {
+        if (
+            stringField.includes(",") ||
+            stringField.includes("\n") ||
+            stringField.includes('"')
+        ) {
             const escapedField = stringField.replace(/"/g, '""');
             return `"${escapedField}"`;
         }
         return stringField;
     };
 
-    const triggerDownload = (content: string | undefined, filename: string, contentType: string) => {
+    const triggerDownload = (
+        content: string | undefined,
+        filename: string,
+        contentType: string
+    ) => {
         if (content === undefined || content === "") {
             console.warn("Download skipped: content is undefined or empty.");
             return;
         }
         const blob = new Blob([content], { type: contentType });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
         a.download = filename;
         document.body.appendChild(a);
@@ -886,17 +1279,26 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         URL.revokeObjectURL(url);
     };
 
-    const handleJSONUtility = async (hasHeaders: boolean, hasCellData: boolean, headers: string[] | undefined) => {
+    const handleJSONUtility = async (
+        hasHeaders: boolean,
+        hasCellData: boolean,
+        headers: string[] | undefined
+    ) => {
         if (!hasHeaders && !hasCellData) {
-            toast.info('No data to export'); return;
+            toast.info("No data to export");
+            return;
         }
 
         let maxRowIndex = -1;
         const rowDataMap = new Map<number, Record<string, tableCellData>>();
 
         Object.entries(variableRowData).forEach(([key, cell]) => {
-            if (typeof cell.index !== 'number' || typeof cell.classKey !== 'string') {
-                console.warn("Skipping cell with missing index or classKey:", key, cell);
+            if (typeof cell.index !== "number" || typeof cell.classKey !== "string") {
+                console.warn(
+                    "Skipping cell with missing index or classKey:",
+                    key,
+                    cell
+                );
                 return;
             }
             maxRowIndex = Math.max(maxRowIndex, cell.index);
@@ -907,7 +1309,18 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         });
         const numRows = maxRowIndex + 1;
 
-        type JsonRowObject = Record<string, string | { Composite: string[] } | { Package: { id: number; name: string; content?: { filename: string[]; url: string[] } | string } }>;
+        type JsonRowObject = Record<
+            string,
+            | string
+            | { Composite: string[] }
+            | {
+                Package: {
+                    id: number;
+                    name: string;
+                    content?: { filename: string[]; url: string[] } | string;
+                };
+            }
+        >;
 
         const jsonData: JsonRowObject[] = [];
 
@@ -915,29 +1328,49 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             const rowObject: JsonRowObject = {};
             const rowMap = rowDataMap.get(i) || {};
 
-            headers?.forEach(header => {
+            headers?.forEach((header) => {
                 const cellData = rowMap[header];
 
                 if (cellData) {
                     if (cellData.isDisabled) {
                         rowObject[header] = "";
-                    } else if (cellData.isPackage && typeof cellData.value === 'object' && cellData.value !== null && 'dataId' in cellData.value) {
+                    } else if (
+                        cellData.isPackage &&
+                        typeof cellData.value === "object" &&
+                        cellData.value !== null &&
+                        "dataId" in cellData.value
+                    ) {
                         const pkg = cellData.value as IGlobalVariablePackage;
-                        let packageContent: { filename: string[]; url: string[] } | string = "[Error retrieving content]";
+                        let packageContent: { filename: string[]; url: string[] } | string =
+                            "[Error retrieving content]";
 
-                        if (pkg.variableData && pkg.variableData instanceof Map && pkg.variableData.size > 0) {
+                        if (
+                            pkg.variableData &&
+                            pkg.variableData instanceof Map &&
+                            pkg.variableData.size > 0
+                        ) {
                             const firstEntryValue = pkg.variableData.values().next().value;
-                            if (firstEntryValue && typeof firstEntryValue.value === 'string') {
+                            if (
+                                firstEntryValue &&
+                                typeof firstEntryValue.value === "string"
+                            ) {
                                 try {
                                     packageContent = JSON.parse(firstEntryValue.value);
                                 } catch (e) {
-                                    console.error(`Error parsing package content for export (cell ${header}[${i}]):`, e);
+                                    console.error(
+                                        `Error parsing package content for export (cell ${header}[${i}]):`,
+                                        e
+                                    );
                                     packageContent = `[Error parsing content: ${firstEntryValue.value}]`;
                                 }
-                            } else if (firstEntryValue && typeof firstEntryValue.value === 'object') {
+                            } else if (
+                                firstEntryValue &&
+                                typeof firstEntryValue.value === "object"
+                            ) {
                                 packageContent = firstEntryValue.value;
                             } else {
-                                packageContent = "[Invalid content structure in package variableData]";
+                                packageContent =
+                                    "[Invalid content structure in package variableData]";
                             }
                         } else {
                             packageContent = "[No content found in package variableData]";
@@ -947,15 +1380,18 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                             Package: {
                                 id: pkg.dataId,
                                 name: pkg.name || `ID ${pkg.dataId}`,
-                                content: packageContent
-                            }
+                                content: packageContent,
+                            },
                         };
                     } else if (cellData.isComposite && Array.isArray(cellData.value)) {
                         rowObject[header] = { Composite: cellData.value };
-                    } else if (typeof cellData.value === 'string') {
+                    } else if (typeof cellData.value === "string") {
                         rowObject[header] = cellData.value;
                     } else {
-                        console.warn(`Unexpected value type for cell ${header}[${i}] during JSON export:`, cellData.value);
+                        console.warn(
+                            `Unexpected value type for cell ${header}[${i}] during JSON export:`,
+                            cellData.value
+                        );
                         rowObject[header] = JSON.stringify(cellData.value);
                     }
                 } else {
@@ -966,23 +1402,33 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         }
         const jsonContent = JSON.stringify(jsonData, null, 2);
         return jsonContent;
-    }
+    };
 
-    const handleCSVUtility = async (hasHeaders: boolean, hasCellData: boolean, headers: string[]) => {
+    const handleCSVUtility = async (
+        hasHeaders: boolean,
+        hasCellData: boolean,
+        headers: string[]
+    ) => {
         if (!hasHeaders && !hasCellData) {
-            toast.info('No data to export'); return;
+            toast.info("No data to export");
+            return;
         }
 
         if (headers?.length === 0) {
-            toast.error('Cannot export CSV without headers.'); return;
+            toast.error("Cannot export CSV without headers.");
+            return;
         }
 
         let maxRowIndex = -1;
         const rowDataMap = new Map<number, Record<string, tableCellData>>();
 
         Object.entries(variableRowData).forEach(([key, cell]) => {
-            if (typeof cell.index !== 'number' || typeof cell.classKey !== 'string') {
-                console.warn("Skipping cell with missing index or classKey:", key, cell);
+            if (typeof cell.index !== "number" || typeof cell.classKey !== "string") {
+                console.warn(
+                    "Skipping cell with missing index or classKey:",
+                    key,
+                    cell
+                );
                 return;
             }
             maxRowIndex = Math.max(maxRowIndex, cell.index);
@@ -993,75 +1439,104 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         });
         const numRows = maxRowIndex + 1;
 
-        const formatValueForExport = (cellData: tableCellData | undefined): string => {
-            if (!cellData) { return ''; }
-
-            if (cellData.isDisabled) {
-                return '';
+        const formatValueForExport = (
+            cellData: tableCellData | undefined
+        ): string => {
+            if (!cellData) {
+                return "";
             }
 
-            if (cellData.isPackage && typeof cellData.value === 'object' && cellData.value !== null && 'dataId' in cellData.value) {
+            if (cellData.isDisabled) {
+                return "";
+            }
+
+            if (
+                cellData.isPackage &&
+                typeof cellData.value === "object" &&
+                cellData.value !== null &&
+                "dataId" in cellData.value
+            ) {
                 const pkg = cellData.value as IGlobalVariablePackage;
                 let contentString = "[No content]";
 
                 if (pkg.variableData instanceof Map && pkg.variableData.size > 0) {
                     const firstEntry = pkg.variableData.values().next().value;
-                    if (firstEntry && typeof firstEntry.value === 'string') {
+                    if (firstEntry && typeof firstEntry.value === "string") {
                         contentString = firstEntry.value;
                     } else {
                         contentString = "[Invalid content structure]";
                     }
                 }
                 return `PACK: ${contentString}`;
-
             } else if (cellData.isComposite && Array.isArray(cellData.value)) {
-                return `COMP: ${cellData.value.join(' [/&/] ')}`;
-            } else if (typeof cellData.value === 'string') {
+                return `COMP: ${cellData.value.join(" [/&/] ")}`;
+            } else if (typeof cellData.value === "string") {
                 return cellData.value;
             } else {
-                console.warn("Unexpected cell value type during CSV export:", cellData.value);
+                console.warn(
+                    "Unexpected cell value type during CSV export:",
+                    cellData.value
+                );
                 return `[Unknown Type: ${typeof cellData.value}]`;
             }
         };
 
         const csvRows: string[] = [];
-        csvRows.push(headers?.map(escapeCsvField).join(','));
+        csvRows.push(headers?.map(escapeCsvField).join(","));
 
         for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
             const rowMap = rowDataMap.get(rowIndex) || {};
-            const rowValues = headers?.map(header => {
+            const rowValues = headers?.map((header) => {
                 const cellData = rowMap[header];
                 const formattedValue = formatValueForExport(cellData);
                 return escapeCsvField(formattedValue);
             });
-            csvRows.push(rowValues?.join(','));
+            csvRows.push(rowValues?.join(","));
         }
-        const csvContent = csvRows.join('\n');
+        const csvContent = csvRows.join("\n");
         return csvContent;
-    }
+    };
 
     const handleExport = async () => {
         const hasHeaders = variableData.tableSheet.length > 0;
         const hasCellData = Object.keys(variableRowData).length > 0;
 
         if (!hasHeaders && !hasCellData) {
-            toast.info('No data to export'); return;
+            toast.info("No data to export");
+            return;
         }
 
-        const format = window.prompt('Enter export format (CSV or JSON):', 'csv')?.toUpperCase();
-        if (format !== 'CSV' && format !== 'JSON') {
-            toast.error('Invalid format. Use CSV or JSON.'); return;
+        const format = window
+            .prompt("Enter export format (CSV or JSON):", "csv")
+            ?.toUpperCase();
+        if (format !== "CSV" && format !== "JSON") {
+            toast.error("Invalid format. Use CSV or JSON.");
+            return;
         }
 
-        const headers = variableData.tableSheet.map(item => item.value);
-        if (format === 'CSV') {
-            await handleCSVUtility(hasHeaders, hasCellData, headers).then((csvContent: string | undefined) => {
-                triggerDownload(csvContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.csv`, 'text/csv;charset=utf-8;');
-            })
-        } else if (format === 'JSON') {
-            await handleJSONUtility(hasHeaders, hasCellData, headers).then((jsonContent: string | undefined) => {
-                triggerDownload(jsonContent, `export_${productManager._id || 'data'}_${productManager.name}_${formattedDate}.json`, 'application/json;charset=utf-8;');
-            })
+        const headers = variableData.tableSheet.map((item) => item.value);
+        if (format === "CSV") {
+            await handleCSVUtility(hasHeaders, hasCellData, headers).then(
+                (csvContent: string | undefined) => {
+                    triggerDownload(
+                        csvContent,
+                        `export_${productManager._id || "data"}_${productManager.name
+                        }_${formattedDate}.csv`,
+                        "text/csv;charset=utf-8;"
+                    );
+                }
+            );
+        } else if (format === "JSON") {
+            await handleJSONUtility(hasHeaders, hasCellData, headers).then(
+                (jsonContent: string | undefined) => {
+                    triggerDownload(
+                        jsonContent,
+                        `export_${productManager._id || "data"}_${productManager.name
+                        }_${formattedDate}.json`,
+                        "application/json;charset=utf-8;"
+                    );
+                }
+            );
         }
     };
 
@@ -1074,7 +1549,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         dispatch(setRunOption(selectedRunOption));
         dispatch(setServerOption(selectedServer));
         setRenderRunModal(false);
-    }
+    };
 
     const handleRunAutomationForTable = async () => {
         if (!selectedServer) {
@@ -1090,7 +1565,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
     const handleKillAutomationForTable = async () => {
         if (!selectedServer) {
-            toast.error("Server not selected to stop automation. Please configure automation first.");
+            toast.error(
+                "Server not selected to stop automation. Please configure automation first."
+            );
             return;
         }
 
@@ -1098,61 +1575,78 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         if (selectedServer === "csharp-server") {
             targetServerUrl = csharpServer;
         } else {
-            toast.error(`Invalid server configured: '${selectedServer}'. Cannot stop automation.`);
+            toast.error(
+                `Invalid server configured: '${selectedServer}'. Cannot stop automation.`
+            );
             return;
         }
 
         if (!targetServerUrl) {
-            toast.error("Could not determine the server URL. Cannot stop automation.");
+            toast.error(
+                "Could not determine the server URL. Cannot stop automation."
+            );
             return;
         }
 
-        console.log(`Attempting to kill automation on: ${targetServerUrl} via Table/VariableManager button.`);
+        console.log(
+            `Attempting to kill automation on: ${targetServerUrl} via Table/VariableManager button.`
+        );
         await handleKillAutomation(targetServerUrl);
     };
 
     const handleRun = async (option: string, currentSelectedServer: string) => {
         const hasHeaders = variableData.tableSheet.length > 0;
         const hasCellData = Object.keys(variableRowData).length > 0;
-        const cellOrigin = variableData.tableSheet.find(item => item.isOrigin);
-        const iconName = (productManager.icon).map(item => ({ item }).item.filename).toString().split(',').filter(Boolean);
-        const iconFile = iconName.map(item => `${BASE_URL}/api/files/${item}`);
+        const cellOrigin = variableData.tableSheet.find((item) => item.isOrigin);
+        const iconName = productManager.icon
+            .map((item) => ({ item }.item.filename))
+            .toString()
+            .split(",")
+            .filter(Boolean);
+        const iconFile = iconName.map((item) => `${BASE_URL}/api/files/${item}`);
 
-        console.log('Found icon files:', iconFile);
+        console.log("Found icon files:", iconFile);
 
         if (iconFile.length === 0) {
-        } else if (iconFile.some(item => item.includes(' '))) {
-            console.warn('Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png');
-            toast.error('Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png"');
+        } else if (iconFile.some((item) => item.includes(" "))) {
+            console.warn(
+                'Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png'
+            );
+            toast.error(
+                'Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png"'
+            );
             return;
-        };
-        console.log('iconFile:', iconFile);
+        }
+        console.log("iconFile:", iconFile);
 
         if (!currentSelectedServer) {
-            toast.error('No server is selected', {
-                position: 'bottom-right',
+            toast.error("No server is selected", {
+                position: "bottom-right",
                 autoClose: 5000,
             });
             return;
         }
 
         if (!hasHeaders && !hasCellData) {
-            toast.info('No data to run', {
-                position: 'bottom-right',
+            toast.info("No data to run", {
+                position: "bottom-right",
                 autoClose: 3000,
             });
             return;
         }
         if (!cellOrigin) {
-            toast.warn('No origin is set to run. This warning is to prevent risking an unspecified initialization at an unspecified automation point.', {
-                position: 'bottom-right',
-                autoClose: 5000,
-            });
+            toast.warn(
+                "No origin is set to run. This warning is to prevent risking an unspecified initialization at an unspecified automation point.",
+                {
+                    position: "bottom-right",
+                    autoClose: 5000,
+                }
+            );
             return;
         }
-        if (option === '') {
-            toast.error('Please select a run option', {
-                position: 'bottom-right',
+        if (option === "") {
+            toast.error("Please select a run option", {
+                position: "bottom-right",
                 autoClose: 5000,
             });
             return;
@@ -1166,10 +1660,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             return;
         }
 
-        const jsonData = await handleJSONUtility(hasHeaders, hasCellData, variableData.tableSheet.map(item => item.value));
+        const jsonData = await handleJSONUtility(
+            hasHeaders,
+            hasCellData,
+            variableData.tableSheet.map((item) => item.value)
+        );
         if (!jsonData) {
-            toast.error('Error generating JSON data for the run', {
-                position: 'bottom-right',
+            toast.error("Error generating JSON data for the run", {
+                position: "bottom-right",
                 autoClose: 5000,
             });
             return;
@@ -1178,20 +1676,24 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         const handleRunPost = async (server: string) => {
             setAutomationRunning(true);
             try {
-                const response = await axios.post(server, {
-                    type: 'json-type',
-                    runOption: option,
-                    cellOrigin: cellOrigin,
-                    files: iconFile,
-                    jsonData: jsonData,
-                    threadCount: selectedThreads,
-                }, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
+                const response = await axios.post(
+                    server,
+                    {
+                        type: "json-type",
+                        runOption: option,
+                        cellOrigin: cellOrigin,
+                        files: iconFile,
+                        jsonData: jsonData,
+                        threadCount: selectedThreads,
                     },
-                });
+                    {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                    }
+                );
                 console.log("Payload being sent:", {
-                    type: 'json-type',
+                    type: "json-type",
                     runOption: option,
                     cellOrigin: cellOrigin,
                     files: iconFile,
@@ -1200,30 +1702,30 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                 });
                 if (response) {
                     const result = await response;
-                    console.log('Run result:', result);
-                    toast.success('Automation run successfully!', {
-                        position: 'bottom-right',
+                    console.log("Run result:", result);
+                    toast.success("Automation run successfully!", {
+                        position: "bottom-right",
                         autoClose: 5000,
                     });
                 } else {
                     const error = await response;
-                    console.error('Error running automation:', error);
+                    console.error("Error running automation:", error);
                     toast.error(`Error running automation: ${error}`, {
-                        position: 'bottom-right',
+                        position: "bottom-right",
                         autoClose: 5000,
                     });
                 }
             } catch (error) {
-                console.error('Error running automation:', error);
+                console.error("Error running automation:", error);
             }
         };
 
-        if (currentSelectedServer === 'csharp-server') {
+        if (currentSelectedServer === "csharp-server") {
             setServer(csharpServer);
             handleRunPost(`${csharpServer}/cs-server`);
         } else {
             toast.error(`Server ${currentSelectedServer} is not supported`, {
-                position: 'bottom-right',
+                position: "bottom-right",
                 autoClose: 5000,
             });
             return;
@@ -1233,22 +1735,24 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
     const handleKillAutomation = async (serverToKill: string) => {
         try {
             const response = await fetch(`${serverToKill}/kill-automation`, {
-                method: 'POST',
+                method: "POST",
             });
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('Automation stop signal sent successfully:', result);
-                toast.success(result.message || 'Automation stop request processed.');
+                console.log("Automation stop signal sent successfully:", result);
+                toast.success(result.message || "Automation stop request processed.");
                 setAutomationRunning(false);
             } else {
                 const errorText = await response.text();
-                console.error('Failed to stop automation:', response.status, errorText);
-                toast.error(`Failed to stop automation: ${response.statusText} - ${errorText}`);
+                console.error("Failed to stop automation:", response.status, errorText);
+                toast.error(
+                    `Failed to stop automation: ${response.statusText} - ${errorText}`
+                );
             }
         } catch (error) {
-            console.error('Error sending kill automation request:', error);
-            toast.error('Error sending request to stop automation. Check console.');
+            console.error("Error sending kill automation request:", error);
+            toast.error("Error sending request to stop automation. Check console.");
         }
     };
 
@@ -1260,31 +1764,50 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                         className={styles.propertyInterfacesButton}
                         onClick={() => setShowPropertyInterfaces(!showPropertyInterfaces)}
                     >
-                        {showPropertyInterfaces ? 'Close Property Interface' : 'Open Property Interface'}
+                        {showPropertyInterfaces
+                            ? "Close Property Interface"
+                            : "Open Property Interface"}
                     </button>
                     <div className={styles.operationButtons}>
                         <button
-                            className={`${styles.saveButton} ${!hasChanges || isSaving ? styles.saveButtonDisabled : ''}`}
+                            className={`${styles.saveButton} ${!hasChanges || isSaving ? styles.saveButtonDisabled : ""
+                                }`}
                             onClick={handleSave}
                             disabled={!hasChanges || isSaving}
-                            title={!hasChanges ? 'No changes to save' : 'Save changes'}
+                            title={!hasChanges ? "No changes to save" : "Save changes"}
                         >
-                            {isSaving ? 'Saving...' : hasChanges ? 'Save*' : 'Saved'}
+                            {isSaving ? "Saving..." : hasChanges ? "Save*" : "Saved"}
                         </button>
                         <button
-                            className={`${styles.exportButton} ${(variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0) ? styles.exportButtonDisabled : ''}`}
+                            className={`${styles.exportButton} ${variableData.tableSheet.length === 0 &&
+                                Object.keys(variableRowData).length === 0
+                                ? styles.exportButtonDisabled
+                                : ""
+                                }`}
                             onClick={handleExport}
-                            disabled={variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0}
+                            disabled={
+                                variableData.tableSheet.length === 0 &&
+                                Object.keys(variableRowData).length === 0
+                            }
                             title="Export table data as CSV or JSON"
                         >
                             Export
                         </button>
                         <button
-                            className={`${styles.runButton} ${(variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0) ? styles.runButtonDisabled : ''}`}
+                            className={`${styles.runButton} ${variableData.tableSheet.length === 0 &&
+                                Object.keys(variableRowData).length === 0
+                                ? styles.runButtonDisabled
+                                : ""
+                                }`}
                             onClick={() => {
-                                renderRunModal ? setRenderRunModal(false) : setRenderRunModal(true);
+                                renderRunModal
+                                    ? setRenderRunModal(false)
+                                    : setRenderRunModal(true);
                             }}
-                            disabled={variableData.tableSheet.length === 0 && Object.keys(variableRowData).length === 0}
+                            disabled={
+                                variableData.tableSheet.length === 0 &&
+                                Object.keys(variableRowData).length === 0
+                            }
                             title="Config Automation"
                         >
                             Automation
@@ -1335,7 +1858,9 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 value={selectedRunOption}
                                 onChange={(e) => setSelectedRunOption(e.target.value)}
                             >
-                                <option value="" disabled>Choose Run Option</option>
+                                <option value="" disabled>
+                                    Choose Run Option
+                                </option>
                                 <option value="dsf-edit-product">DSF - Edit Product</option>
                             </select>
                             <select
@@ -1343,28 +1868,40 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 value={selectedServer}
                                 onChange={(e) => setSelectedServer(e.target.value)}
                             >
-                                <option value="" disabled>Choose Server</option>
+                                <option value="" disabled>
+                                    Choose Server
+                                </option>
                                 <option value="csharp-server">C# Server</option>
                             </select>
                             {selectedServer === "csharp-server" && (
                                 <div
                                     className={styles.sliderContainer}
-                                    title={selectedThreads <= 2 ? "Caution: Increasing threads can consume more browser and system resources." : ""}
+                                    title={
+                                        selectedThreads <= 2
+                                            ? "Caution: Increasing threads can consume more browser and system resources."
+                                            : ""
+                                    }
                                 >
                                     <label htmlFor="threadsSelector">Threads </label>
                                     <div className={styles.numberSelector}>
                                         <button
                                             type="button"
-                                            onClick={() => setSelectedThreads(prev => Math.max(1, prev - 1))}
+                                            onClick={() =>
+                                                setSelectedThreads((prev) => Math.max(1, prev - 1))
+                                            }
                                             disabled={selectedThreads <= 1}
                                             className={styles.threadButton}
                                         >
                                             &lt;
                                         </button>
-                                        <span className={styles.threadCountDisplay}>{selectedThreads}</span>
+                                        <span className={styles.threadCountDisplay}>
+                                            {selectedThreads}
+                                        </span>
                                         <button
                                             type="button"
-                                            onClick={() => setSelectedThreads(prev => Math.min(12, prev + 1))}
+                                            onClick={() =>
+                                                setSelectedThreads((prev) => Math.min(12, prev + 1))
+                                            }
                                             disabled={selectedThreads >= 12}
                                             className={styles.threadButton}
                                         >
@@ -1372,19 +1909,17 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                         </button>
                                     </div>
                                     <div
-                                        className={`${styles.tooltip} ${selectedThreads > 4 ? styles.tooltipVisible : ''}`}
+                                        className={`${styles.tooltip} ${selectedThreads > 4 ? styles.tooltipVisible : ""
+                                            }`}
                                     >
-                                        Caution: Increasing threads can consume more browser and system resources.
+                                        Caution: Increasing threads can consume more browser and
+                                        system resources.
                                     </div>
                                 </div>
                             )}
                             <div className={styles.runButtonsContainer}>
-                                <button type='submit'>
-                                    Save
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setRenderRunModal(false)}>
+                                <button type="submit">Save</button>
+                                <button type="button" onClick={() => setRenderRunModal(false)}>
                                     Cancel
                                 </button>
                             </div>
@@ -1399,10 +1934,14 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                         className={styles.stopAutomationButton}
                                         onClick={() => {
                                             if (server) {
-                                                console.log(`Attempting to kill automation on: ${server} via Modal button.`);
+                                                console.log(
+                                                    `Attempting to kill automation on: ${server} via Modal button.`
+                                                );
                                                 handleKillAutomation(server);
                                             } else {
-                                                toast.error("Server URL not available to stop automation from modal.");
+                                                toast.error(
+                                                    "Server URL not available to stop automation from modal."
+                                                );
                                             }
                                         }}
                                     >

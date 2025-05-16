@@ -477,6 +477,10 @@ namespace backend.automation.modules
                 taskId,
                 "RangeEnd"
             );
+            string ticketTemplate = ConvertDynamicToString(
+                product.TicketTemplate,
+                "TicketTemplate"
+            );
 
             string buyerConfigsStr = ConvertDynamicToString(product.BuyerConfigs, "BuyerConfigs");
             string skipProductStr =
@@ -632,7 +636,7 @@ namespace backend.automation.modules
                 await ticketTemplateContainer.TicketTemplateSelectorAsync(
                     taskId,
                     newPage,
-                    productName,
+                    ticketTemplate,
                     productType,
                     signalRLogger
                 );
