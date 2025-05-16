@@ -50,18 +50,12 @@ namespace backend.automation.modules
 
                 if (!string.IsNullOrEmpty(valueToType))
                 {
-                    Console.WriteLine(
-                        $"[Task {taskId}] Filled {fieldNameForLogging} with: {valueToType}"
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] Filled {fieldNameForLogging} with: {valueToType}"
                     );
                 }
                 else
                 {
-                    Console.WriteLine(
-                        $"[Task {taskId}] {fieldNameForLogging} is to be empty, field cleared."
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] {fieldNameForLogging} is to be empty, field cleared."
                     );
@@ -69,9 +63,6 @@ namespace backend.automation.modules
             }
             catch (Exception ex)
             {
-                Console.WriteLine(
-                    $"[Task {taskId}] [Error] Failed to fill {fieldNameForLogging} ('{selector}') with '{valueToType}'. Error: {ex.Message}"
-                );
                 await signalRLogger(
                     $"[Task {taskId}] [Error] Failed to fill {fieldNameForLogging} ('{selector}') with '{valueToType}'. Error: {ex.Message}"
                 );
@@ -105,9 +96,6 @@ namespace backend.automation.modules
         {
             if (productType == "Product Matrix" || productType == "Non Printed Products")
             {
-                Console.WriteLine(
-                    $"[Task {taskId}] Product Type is '{productType}', skipping Settings Tab."
-                );
                 await signalRLogger(
                     $"[Task {taskId}] Product Type is '{productType}', skipping Settings Tab."
                 );
@@ -116,33 +104,23 @@ namespace backend.automation.modules
 
             if (!string.IsNullOrEmpty(orderQuantities))
             {
-                Console.WriteLine($"[Task {taskId}] Order Quantities: {orderQuantities}");
                 await signalRLogger($"[Task {taskId}] Order Quantities: {orderQuantities}");
                 switch (orderQuantities)
                 {
                     case "AnyQuantity":
                         await page.Locator(anyQuantitiesButton).ClickAsync();
-                        Console.WriteLine(
-                            $"[Task {taskId}] Clicked Any Quantity for selected quantity: {orderQuantities}"
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] Clicked Any Quantity for selected quantity: {orderQuantities}"
                         );
                         break;
                     case "SpecificQuantity":
                         await page.Locator(advancedQuantitiesButton).ClickAsync();
-                        Console.WriteLine(
-                            $"[Task {taskId}] Clicked Advanced Quantities for selected quantity: {orderQuantities}"
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] Clicked Advanced Quantities for selected quantity: {orderQuantities}"
                         );
                         var advancedRangesInputElement = page.Locator(inputElement);
                         if (await advancedRangesInputElement.IsVisibleAsync())
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] Found input element for Advanced Ranges"
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Found input element for Advanced Ranges"
                             );
@@ -151,27 +129,18 @@ namespace backend.automation.modules
                                     "#ctl00_ctl00_C_M_ctl00_W\\$ctl01_OrderQuantitiesCtrl_btnDone"
                                 )
                                 .ClickAsync();
-                            Console.WriteLine(
-                                $"[Task {taskId}] Filled Advanced Ranges with: {advancedRanges}"
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Filled Advanced Ranges with: {advancedRanges}"
                             );
                         }
                         else
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] [Error] Input Element for Advanced Ranges not found"
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] [Error] Input Element for Advanced Ranges not found"
                             );
                         }
                         break;
                     default:
-                        Console.WriteLine(
-                            $"[Task {taskId}] Order Quantities: '{orderQuantities}' - Default case, assuming skip or specific action. Clicked Advanced Button."
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] Order Quantities: '{orderQuantities}' - Default case, Clicked Advanced Button. Assuming skip or specific action."
                         );
@@ -181,9 +150,6 @@ namespace backend.automation.modules
             }
             else
             {
-                Console.WriteLine(
-                    $"[Task {taskId}] Order Quantities not found or not provided, skipping"
-                );
                 await signalRLogger(
                     $"[Task {taskId}] Order Quantities not found or not provided, skipping"
                 );
@@ -197,9 +163,6 @@ namespace backend.automation.modules
                 if (await maxQtyLocator.IsVisibleAsync())
                 {
                     var actualFieldValue = (await maxQtyLocator.InputValueAsync() ?? "").Trim();
-                    Console.WriteLine(
-                        $"[Task {taskId}] Max Quantity field current value: '{actualFieldValue}'"
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] Max Quantity field current value: '{actualFieldValue}'"
                     );
@@ -214,14 +177,6 @@ namespace backend.automation.modules
 
                     if (actualFieldValue == currentMaxQuantityValueToSet)
                     {
-                        Console.WriteLine(
-                            $"[Task {taskId}] Max Quantity is already set to: "
-                                + (
-                                    string.IsNullOrEmpty(currentMaxQuantityValueToSet)
-                                        ? "empty"
-                                        : currentMaxQuantityValueToSet
-                                )
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] Max Quantity is already set to: "
                                 + (
@@ -233,9 +188,6 @@ namespace backend.automation.modules
                     }
                     else
                     {
-                        Console.WriteLine(
-                            $"[Task {taskId}] Max Quantity: Current '{actualFieldValue}', Desired '{currentMaxQuantityValueToSet}'. Updating."
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] Max Quantity: Current '{actualFieldValue}', Desired '{currentMaxQuantityValueToSet}'. Updating."
                         );
@@ -251,9 +203,6 @@ namespace backend.automation.modules
                 }
                 else
                 {
-                    Console.WriteLine(
-                        $"[Task {taskId}] [Error] Max Quantity selector ('{maxQtySelector}') not found, skipping"
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] [Error] Max Quantity selector ('{maxQtySelector}') not found, skipping"
                     );
@@ -261,7 +210,6 @@ namespace backend.automation.modules
             }
             else
             {
-                Console.WriteLine($"[Task {taskId}] Max Quantity input not provided, skipping");
                 await signalRLogger($"[Task {taskId}] Max Quantity input not provided, skipping");
             }
 
@@ -274,18 +222,12 @@ namespace backend.automation.modules
                     if (await showQtyPriceLocator.IsVisibleAsync())
                     {
                         var isCurrentlyChecked = await showQtyPriceLocator.IsCheckedAsync();
-                        Console.WriteLine(
-                            $"[Task {taskId}] Show Quantity Price current state: {isCurrentlyChecked}, Desired state: {desiredState}"
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] Show Quantity Price current state: {isCurrentlyChecked}, Desired state: {desiredState}"
                         );
 
                         if (isCurrentlyChecked != desiredState)
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] Clicking Show Quantity Price checkbox."
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Clicking Show Quantity Price checkbox."
                             );
@@ -293,9 +235,6 @@ namespace backend.automation.modules
                         }
                         else
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] Show Quantity Price already set to desired state."
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Show Quantity Price already set to desired state."
                             );
@@ -303,9 +242,6 @@ namespace backend.automation.modules
                     }
                     else
                     {
-                        Console.WriteLine(
-                            $"[Task {taskId}] [Error] Show Quantity Price selector ('{showQtyPriceSelector}') not found, skipping."
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] [Error] Show Quantity Price selector ('{showQtyPriceSelector}') not found, skipping."
                         );
@@ -313,9 +249,6 @@ namespace backend.automation.modules
                 }
                 else
                 {
-                    Console.WriteLine(
-                        $"[Task {taskId}] [Error] Invalid value for showQtyPrice: {showQtyPrice}. Expected 'true' or 'false'. Skipping."
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] [Error] Invalid value for showQtyPrice: {showQtyPrice}. Skipping."
                     );
@@ -325,7 +258,6 @@ namespace backend.automation.modules
             await page.EvaluateAsync("() => document.activeElement?.blur()");
             await page.Mouse.ClickAsync(0, 0);
 
-            Console.WriteLine($"[Task {taskId}] Scrolling page...");
             await signalRLogger($"[Task {taskId}] Scrolling page...");
             if (productType != "Non Printed Products")
             {
@@ -338,7 +270,6 @@ namespace backend.automation.modules
                 await page.EvaluateAsync("() => window.scrollTo(0, document.body.scrollHeight)");
             }
             await Task.Delay(200);
-            Console.WriteLine($"[Task {taskId}] Scrolling complete.");
             await signalRLogger($"[Task {taskId}] Scrolling complete.");
 
             string effectiveWeightInput = string.IsNullOrEmpty(weightInput) ? "0.02" : weightInput;
@@ -354,15 +285,11 @@ namespace backend.automation.modules
                 var printWeightMeasurementLocator = page.Locator(PrintWeightMeasurementConst);
                 if (await printWeightMeasurementLocator.IsVisibleAsync() && productType != "Ad Hoc")
                 {
-                    Console.WriteLine($"[Task {taskId}] Print weight measurement selector found");
                     await signalRLogger($"[Task {taskId}] Print weight measurement selector found");
                     var currentMeasurementValue =
                         await printWeightMeasurementLocator.InputValueAsync();
                     if (currentMeasurementValue == "0")
                     {
-                        Console.WriteLine(
-                            $"[Task {taskId}] Print weight measurement is oz, changing to lb."
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] Print weight measurement is oz, changing to lb."
                         );
@@ -372,9 +299,6 @@ namespace backend.automation.modules
                     }
                     else
                     {
-                        Console.WriteLine(
-                            $"[Task {taskId}] Print weight measurement already set to lb (or not '0'). Current value: {currentMeasurementValue}"
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] Print weight measurement already set to lb (or not '0'). Current value: {currentMeasurementValue}"
                         );
@@ -382,18 +306,12 @@ namespace backend.automation.modules
                 }
                 else if (productType == "Ad Hoc")
                 {
-                    Console.WriteLine(
-                        $"[Task {taskId}] Print weight measurement selector does not exist on Ad Hoc, skipping related weight input logic."
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] Print weight measurement selector does not exist on Ad Hoc, skipping related weight input logic."
                     );
                 }
                 else
                 {
-                    Console.WriteLine(
-                        $"[Task {taskId}] [Error] Print weight measurement selector ('{PrintWeightMeasurementConst}') not found, critical for weight input. Potential error."
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] [Error] Print weight measurement selector ('{PrintWeightMeasurementConst}') not found, critical for weight input. Potential error."
                     );
@@ -401,7 +319,6 @@ namespace backend.automation.modules
 
                 if (!string.IsNullOrEmpty(weightInput) && productType != "Ad Hoc")
                 {
-                    Console.WriteLine($"[Task {taskId}] Weight input provided: {weightInput}");
                     await signalRLogger($"[Task {taskId}] Weight input provided: {weightInput}");
                     var printWeightCheckboxLocator = page.Locator(PrintWeightCheckboxConst);
                     var printWeightInputLocator = page.Locator(PrintWeightInputConst);
@@ -418,9 +335,6 @@ namespace backend.automation.modules
 
                         if (!isCheckboxChecked && currentInputValue == "0")
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] Print weight checkbox not checked and input is 0. Clicking checkbox and setting weight to '{effectiveWeightInput}'."
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Print weight checkbox not checked and input is 0. Clicking checkbox and setting weight to '{effectiveWeightInput}'."
                             );
@@ -446,18 +360,12 @@ namespace backend.automation.modules
                         }
                         else if (isCheckboxChecked && currentInputValue == effectiveWeightInput)
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] Print weight checkbox already checked and weight is correctly set to '{effectiveWeightInput}'. Skipping."
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Print weight checkbox already checked and weight is correctly set to '{effectiveWeightInput}'. Skipping."
                             );
                         }
                         else if (isCheckboxChecked && currentInputValue != effectiveWeightInput)
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] Print weight checkbox checked, but input value '{currentInputValue}' differs from desired '{effectiveWeightInput}'. Updating weight."
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Print weight checkbox checked, but input value '{currentInputValue}' differs from desired '{effectiveWeightInput}'. Updating weight."
                             );
@@ -472,9 +380,6 @@ namespace backend.automation.modules
                         }
                         else if (!isCheckboxChecked && currentInputValue != "0")
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] Print weight checkbox not checked, but input value is '{currentInputValue}'. Clicking checkbox and ensuring weight is '{effectiveWeightInput}'."
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Print weight checkbox not checked, but input value is '{currentInputValue}'. Clicking checkbox and ensuring weight is '{effectiveWeightInput}'."
                             );
@@ -491,9 +396,6 @@ namespace backend.automation.modules
                         }
                         else
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] Print weight state: Checkbox={isCheckboxChecked}, Input='{currentInputValue}'. Desired weight='{effectiveWeightInput}'. Defaulting to ensure correct state."
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] Print weight state: Checkbox={isCheckboxChecked}, Input='{currentInputValue}'. Desired weight='{effectiveWeightInput}'. Defaulting to ensure correct state."
                             );
@@ -511,9 +413,6 @@ namespace backend.automation.modules
                     }
                     else
                     {
-                        Console.WriteLine(
-                            $"[Task {taskId}] [Error] Print weight checkbox ('{PrintWeightCheckboxConst}') or input ('{PrintWeightInputConst}') not found, skipping weight input."
-                        );
                         await signalRLogger(
                             $"[Task {taskId}] [Error] Print weight checkbox or input not found, skipping weight input."
                         );
@@ -521,18 +420,12 @@ namespace backend.automation.modules
                 }
                 else if (productType == "Ad Hoc")
                 {
-                    Console.WriteLine(
-                        $"[Task {taskId}] WeightInput skipped for Ad Hoc product type."
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] WeightInput skipped for Ad Hoc product type."
                     );
                 }
                 else
                 {
-                    Console.WriteLine(
-                        $"[Task {taskId}] WeightInput not provided, skipping print weight input field."
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] WeightInput not provided, skipping print weight input field."
                     );
@@ -574,7 +467,6 @@ namespace backend.automation.modules
                 {
                     if (!string.IsNullOrEmpty(field.Value))
                     {
-                        Console.WriteLine($"[Task {taskId}] {field.Name} found: {field.Value}");
                         await signalRLogger($"[Task {taskId}] {field.Name} found: {field.Value}");
                         var fieldLocator = page.Locator(field.Selector);
                         if (await fieldLocator.IsVisibleAsync())
@@ -584,9 +476,6 @@ namespace backend.automation.modules
                             ).Trim();
                             if (currentFieldValue != field.Value)
                             {
-                                Console.WriteLine(
-                                    $"[Task {taskId}] Processing {field.Name}. Current: '{currentFieldValue}', Desired: '{field.Value}'"
-                                );
                                 await signalRLogger(
                                     $"[Task {taskId}] Processing {field.Name}. Current: '{currentFieldValue}', Desired: '{field.Value}'"
                                 );
@@ -621,18 +510,12 @@ namespace backend.automation.modules
                                 ).Trim();
                                 if (filledValue == field.Value)
                                 {
-                                    Console.WriteLine(
-                                        $"[Task {taskId}] Completed filling {field.Name} with: {field.Value}"
-                                    );
                                     await signalRLogger(
                                         $"[Task {taskId}] Completed filling {field.Name} with: {field.Value}"
                                     );
                                 }
                                 else
                                 {
-                                    Console.WriteLine(
-                                        $"[Task {taskId}] [Error] Failed to fill {field.Name}. Expected: {field.Value}, Got: {filledValue}"
-                                    );
                                     await signalRLogger(
                                         $"[Task {taskId}] [Error] Failed to fill {field.Name}. Expected: {field.Value}, Got: {filledValue}"
                                     );
@@ -640,9 +523,6 @@ namespace backend.automation.modules
                             }
                             else
                             {
-                                Console.WriteLine(
-                                    $"[Task {taskId}] {field.Name} is already set to: {field.Value}"
-                                );
                                 await signalRLogger(
                                     $"[Task {taskId}] {field.Name} is already set to: {field.Value}"
                                 );
@@ -650,9 +530,6 @@ namespace backend.automation.modules
                         }
                         else
                         {
-                            Console.WriteLine(
-                                $"[Task {taskId}] [Error] {field.Name} selector '{field.Selector}' not visible, skipping."
-                            );
                             await signalRLogger(
                                 $"[Task {taskId}] [Error] {field.Name} selector '{field.Selector}' not visible, skipping."
                             );
@@ -660,7 +537,6 @@ namespace backend.automation.modules
                     }
                     else
                     {
-                        Console.WriteLine($"[Task {taskId}] {field.Name} not provided, skipping.");
                         await signalRLogger(
                             $"[Task {taskId}] {field.Name} not provided, skipping."
                         );
@@ -669,15 +545,11 @@ namespace backend.automation.modules
             }
             else
             {
-                Console.WriteLine(
-                    $"[Task {taskId}] No weight or shipping dimensions provided, skipping this section."
-                );
                 await signalRLogger(
                     $"[Task {taskId}] No weight or shipping dimensions provided, skipping this section."
                 );
             }
 
-            Console.WriteLine($"[Task {taskId}] SettingsTabAsync processing finished.");
             await signalRLogger($"[Task {taskId}] SettingsTabAsync processing finished.");
         }
     }

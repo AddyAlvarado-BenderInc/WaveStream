@@ -74,11 +74,9 @@ namespace backend.automation.modules
             bool isDisplay = !string.IsNullOrEmpty(displayName);
             bool isItemTemplate = !string.IsNullOrEmpty(itemTemplate);
 
-            Console.WriteLine($"-- Entering FillProductInfo method for {productName}--");
-            signalRLogger(
-                    $"[Task {taskId}] -- Entering FillProductInfo method for Product {productName}--"
-                )
-                .Wait();
+            await signalRLogger(
+                $"[Task {taskId}] -- Entering FillProductInfo method for Product {productName}--"
+            );
             await page.EvaluateAsync("window.scrollTo(0, 0);");
 
             if (isDisplay)
@@ -89,15 +87,14 @@ namespace backend.automation.modules
                     string displayNameSelector =
                         "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$_StorefrontName\"]";
                     await page.Locator(displayNameSelector).FillAsync(displayName);
-                    Console.WriteLine($"Display name filled: {displayName}");
-                    signalRLogger($"[Task {taskId}] Display name filled: {displayName}").Wait();
+                    await signalRLogger($"[Task {taskId}] Display name filled: {displayName}");
                 }
             }
-            else if (!isDisplay)
+            else
             {
-                Console.WriteLine("Display name is null or empty. Skipping fill.");
-                signalRLogger($"[Task {taskId}] Display name is null or empty. Skipping fill.")
-                    .Wait();
+                await signalRLogger(
+                    $"[Task {taskId}] Display name is null or empty. Skipping fill."
+                );
             }
 
             if (isItemTemplate)
@@ -108,15 +105,14 @@ namespace backend.automation.modules
                     string itemTemplateSelector =
                         "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$txtMISEstimateId\"]";
                     await page.Locator(itemTemplateSelector).FillAsync(itemTemplate);
-                    Console.WriteLine($"Item template filled: {itemTemplate}");
-                    signalRLogger($"[Task {taskId}] Item template filled: {itemTemplate}").Wait();
+                    await signalRLogger($"[Task {taskId}] Item template filled: {itemTemplate}");
                 }
             }
-            else if (!isItemTemplate)
+            else
             {
-                Console.WriteLine("Item template is null or empty. Skipping fill.");
-                signalRLogger($"[Task {taskId}] Item template is null or empty. Skipping fill.")
-                    .Wait();
+                await signalRLogger(
+                    $"[Task {taskId}] Item template is null or empty. Skipping fill."
+                );
             }
 
             if (!string.IsNullOrEmpty(briefDescription))
@@ -124,19 +120,17 @@ namespace backend.automation.modules
                 Console.WriteLine($"Brief description found!");
                 await secondHtmlItem.ClickAsync();
                 await page.Locator(textAreaSelector).FillAsync(briefDescription);
-                Console.WriteLine($"Brief description filled for {productName}!");
-                signalRLogger($"[Task {taskId}] Brief description filled for {productName}!")
-                    .Wait();
+                await signalRLogger($"[Task {taskId}] Brief description filled for {productName}!");
             }
             else
             {
-                Console.WriteLine("Brief description is null or empty. Skipping fill.");
-                signalRLogger($"[Task {taskId}] Brief description is null or empty. Skipping fill.")
-                    .Wait();
+                await signalRLogger(
+                    $"[Task {taskId}] Brief description is null or empty. Skipping fill."
+                );
             }
-            Console.WriteLine($"-- Exiting FillProductInfo method for {productName}--");
-            signalRLogger($"[Task {taskId}] -- Exiting FillProductInfo method for {productName}--")
-                .Wait();
+            await signalRLogger(
+                $"[Task {taskId}] -- Exiting FillProductInfo method for {productName}--"
+            );
         }
     }
 }

@@ -35,9 +35,6 @@ namespace backend.automation.modules
             {
                 if (productType is "Non Printed Products" or "Product Matrix" or "Fusion Products")
                 {
-                    Console.WriteLine(
-                        $"No ticket template needed due to {productType} product type."
-                    );
                     await signalRLogger(
                         $"[Task {taskId}] No ticket template needed due to {productType} product type."
                     );
@@ -45,25 +42,40 @@ namespace backend.automation.modules
                 }
                 if (string.IsNullOrEmpty(templates))
                 {
-                    Console.WriteLine("No template selected.");
                     await signalRLogger($"[Task {taskId}] No template selected.");
                     return;
                 }
-                await page.Locator(ticketSelector)
-                    .SelectOptionAsync(
-                        new SelectOptionValue { Label = ticketSelectorOptions[templates] }
+
+                if (ticketSelectorOptions.TryGetValue(templates, out string? templateValue))
+                {
+                    await page.Locator(ticketSelector)
+                        .SelectOptionAsync(new SelectOptionValue { Label = templateValue });
+                    await signalRLogger(
+                        $"[Task {taskId}] Ticket template selected: {templates} (Value/Label: {templateValue})"
                     );
-                Console.WriteLine($"Ticket template selected: {ticketSelectorOptions[templates]}");
+                }
+                else
+                {
+                    await signalRLogger(
+                        $"[Task {taskId}] [Error] Ticket template key '{templates}' not found in options. Available keys: {string.Join(", ", ticketSelectorOptions.Keys)}"
+                    );
+
+                    return;
+                }
+            }
+            catch (KeyNotFoundException knfEx)
+            {
                 await signalRLogger(
-                    $"[Task {taskId}] Ticket template selected: {ticketSelectorOptions[templates]}"
+                    $"[Task {taskId}] [Error] Ticket template key '{templates}' not found in predefined options: {knfEx.Message}. Available keys: {string.Join(", ", ticketSelectorOptions.Keys)}"
                 );
+                return;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error waiting for ticket selector: {ex.Message}");
                 await signalRLogger(
-                    $"[Task {taskId}] [Error] Error waiting for ticket selector: {ex.Message}"
+                    $"[Task {taskId}] [Error] Error during ticket template selection: {ex.Message}"
                 );
+
                 return;
             }
         }
