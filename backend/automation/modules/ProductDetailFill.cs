@@ -92,7 +92,7 @@ namespace backend.automation.modules
                     $"-- Error filling long description for {productName}: {ex.Message} --"
                 );
                 await signalRLogger(
-                    $"[Task {taskId}] Error filling long description for {productName}: {ex.Message}"
+                    $"[Task {taskId}] [Error] Error filling long description for {productName}: {ex.Message}"
                 );
                 throw;
             }

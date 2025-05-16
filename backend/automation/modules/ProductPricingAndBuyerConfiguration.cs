@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using Newtonsoft.Json.Linq;
 
 namespace backend.automation.modules
 {
@@ -19,8 +20,13 @@ namespace backend.automation.modules
             "img[onclick^='Javascript:delRow'][height='17'][width='16']";
         private const string AddRangeButtonSelector =
             "#ctl00_ctl00_C_M_ctl00_W_ctl01_GridViewPricesheets_ctl02_PriceItemFrame_imageplushid_PriceCatalog";
-        private const string CopyRangeButtonSelector = "img[title='Copy Range']";
-        private const string PasteAllButtonSelector = "img[title='Paste All']";
+
+        private const string GenericCopyRangeButtonSelector = "img[title='Copy Range']";
+
+        private const string GenericPasteAllButtonSelector = "img[title='Paste All']";
+
+        private const string PasteAllButtonEnabledSrc =
+            "https://store.bender-inc.com/dsf/images/icon/icon_paste_all.gif";
 
         private const string BeginRangeInputBaseSelector = "#tbl_0_PriceCatalog_rngbegin_";
         private const string EndRangeInputBaseSelector = "#tbl_0_PriceCatalog_rngend_";
@@ -86,40 +92,77 @@ namespace backend.automation.modules
             int taskId,
             IPage page,
             string selector,
-            string value,
+            string valueToSet,
             Func<string, Task> signalRLogger,
             string fieldName
         )
         {
             var locator = page.Locator(selector);
-            try
+            string currentValue;
+            int maxRetries = 3;
+            int attempt = 0;
+
+            do
             {
-                await locator.FillAsync(value ?? "");
-                await signalRLogger(
-                    $"[Task {taskId}] [ClearAndFillAsync] Successfully filled {fieldName} ('{selector}') with '{value}'."
-                );
-                Console.WriteLine(
-                    $"[ClearAndFillAsync] Successfully filled {fieldName} ('{selector}') with '{value}'."
-                );
-            }
-            catch (Exception ex)
-            {
-                await signalRLogger(
-                    $"[Task {taskId}] [ClearAndFillAsync] Error filling {fieldName} ('{selector}'): {ex.Message}"
-                );
-                Console.WriteLine(
-                    $"[ClearAndFillAsync] Error filling {fieldName} ('{selector}'): {ex.Message}"
-                );
-            }
+                attempt++;
+                try
+                {
+                    await locator.FillAsync(valueToSet ?? "");
+
+                    await page.WaitForTimeoutAsync(100);
+                    currentValue = await locator.InputValueAsync() ?? "";
+
+                    if (currentValue == (valueToSet ?? ""))
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ClearAndFillAsync] Successfully filled and verified {fieldName} ('{selector}') with '{valueToSet}' on attempt {attempt}."
+                        );
+                        Console.WriteLine(
+                            $"[ClearAndFillAsync] Successfully filled and verified {fieldName} ('{selector}') with '{valueToSet}' on attempt {attempt}."
+                        );
+                        return;
+                    }
+                    else
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ClearAndFillAsync] Attempt {attempt}: {fieldName} ('{selector}') filled with '{valueToSet}', but current value is '{currentValue}'. Retrying..."
+                        );
+                        Console.WriteLine(
+                            $"[ClearAndFillAsync] Attempt {attempt}: {fieldName} ('{selector}') filled with '{valueToSet}', but current value is '{currentValue}'. Retrying..."
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await signalRLogger(
+                        $"[Task {taskId}] [ClearAndFillAsync] Attempt {attempt}: Error filling {fieldName} ('{selector}'): {ex.Message}"
+                    );
+                    Console.WriteLine(
+                        $"[ClearAndFillAsync] Attempt {attempt}: Error filling {fieldName} ('{selector}'): {ex.Message}"
+                    );
+                    if (attempt >= maxRetries)
+                        throw;
+                }
+            } while (attempt < maxRetries);
+
+            await signalRLogger(
+                $"[Task {taskId}] [ClearAndFillAsync] Failed to set {fieldName} ('{selector}') to '{valueToSet}' after {maxRetries} attempts. Final value: '{await locator.InputValueAsync() ?? ""}'."
+            );
+            Console.WriteLine(
+                $"[ClearAndFillAsync] Failed to set {fieldName} ('{selector}') to '{valueToSet}' after {maxRetries} attempts. Final value: '{await locator.InputValueAsync() ?? ""}'."
+            );
+            throw new Exception(
+                $"Failed to set {fieldName} ('{selector}') to '{valueToSet}' after {maxRetries} attempts."
+            );
         }
 
         private async Task<bool> ProductPriceMatchesAsync(
             int taskId,
             IPage page,
-            string startingRange,
-            string endingRange,
-            string regularPrices,
-            string setupPrices,
+            JArray startingRanges,
+            JArray endingRanges,
+            JArray regularPricesArr,
+            JArray setupPricesArr,
             Func<string, Task> signalRLogger
         )
         {
@@ -132,78 +175,136 @@ namespace backend.automation.modules
 
             try
             {
-                string beginRangeSelector = $"input[value=\"{startingRange}\"]";
-                string endRangeSelector = $"input[value=\"{endingRange}\"]";
-                string regularPriceSelector = $"input[value=\"{regularPrices}\"]";
-                string setupPriceSelector = $"input[value=\"{setupPrices}\"]";
-
-                var srLocator = page.Locator(beginRangeSelector);
-                var erLocator = page.Locator(endRangeSelector);
-                var rpLocator = page.Locator(regularPriceSelector);
-                var spLocator = page.Locator(setupPriceSelector);
+                int expectedTierCount = startingRanges.Count;
 
                 if (
-                    await srLocator.CountAsync() == 0
-                    || await erLocator.CountAsync() == 0
-                    || await rpLocator.CountAsync() == 0
-                    || await spLocator.CountAsync() == 0
+                    expectedTierCount > 0
+                    && (
+                        endingRanges.Count != expectedTierCount
+                        || regularPricesArr.Count != expectedTierCount
+                        || setupPricesArr.Count != expectedTierCount
+                    )
                 )
                 {
                     await signalRLogger(
-                        $"[Task {taskId}] [ProductPriceMatchesAsync] One or more price input elements not found with the expected values. Prices do not match."
-                    );
-                    Console.WriteLine(
-                        "[ProductPriceMatchesAsync] One or more price input elements not found with the expected values. Prices do not match."
+                        $"[Task {taskId}] [ProductPriceMatchesAsync] Mismatch in tier counts among input JArrays. SR:{startingRanges.Count}, ER:{endingRanges.Count}, RP:{regularPricesArr.Count}, SP:{setupPricesArr.Count}. Prices do not match."
                     );
                     return false;
                 }
 
-                string startingRangeEvaluation = (
-                    await srLocator.First.InputValueAsync() ?? ""
-                ).Trim();
-                string endingRangeEvaluation = (
-                    await erLocator.First.InputValueAsync() ?? ""
-                ).Trim();
-                string regularPriceEvaluation = (
-                    await rpLocator.First.InputValueAsync() ?? ""
-                ).Trim();
-                string setupPriceEvaluation = (
-                    await spLocator.First.InputValueAsync() ?? ""
-                ).Trim();
+                if (expectedTierCount == 0)
+                {
+                    var firstTierBeginRangeLocator = page.Locator(
+                        $"{BeginRangeInputBaseSelector}1"
+                    );
+                    if (await firstTierBeginRangeLocator.CountAsync() == 0)
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ProductPriceMatchesAsync] No price tiers expected (JArrays empty) and no first-tier inputs found on page. Prices match (as in, nothing to mismatch)."
+                        );
+                        return true;
+                    }
+                    else
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ProductPriceMatchesAsync] No price tiers expected (JArrays empty), but first-tier inputs found on page. Prices do not match."
+                        );
+                        return false;
+                    }
+                }
 
-                if (
-                    startingRangeEvaluation == startingRange
-                    && endingRangeEvaluation == endingRange
-                    && regularPriceEvaluation == regularPrices
-                    && setupPriceEvaluation == setupPrices
-                )
+                for (int i = 0; i < expectedTierCount; i++)
                 {
-                    await signalRLogger(
-                        $"[Task {taskId}] [ProductPriceMatchesAsync] Product matches price range and prices: {startingRange} - {endingRange}, Regular: {regularPriceEvaluation}, Setup: {setupPriceEvaluation}. Skipping!"
-                    );
-                    Console.WriteLine(
-                        $"[ProductPriceMatchesAsync] Product matches price range and prices: {startingRange} - {endingRange}, Regular: {regularPriceEvaluation}, Setup: {setupPriceEvaluation}. Skipping!"
-                    );
-                    return true;
+                    string tierSuffix = (i + 1).ToString();
+                    string expectedSR = startingRanges[i]?.ToString().Trim() ?? "";
+                    string expectedER = endingRanges[i]?.ToString().Trim() ?? "";
+                    string expectedRP = regularPricesArr[i]?.ToString().Trim() ?? "";
+                    string expectedSP = setupPricesArr[i]?.ToString().Trim() ?? "";
+
+                    string srSelector = $"{BeginRangeInputBaseSelector}{tierSuffix}";
+                    string erSelector = $"{EndRangeInputBaseSelector}{tierSuffix}";
+                    string rpSelector = $"{RegularPriceInputBaseSelector}{tierSuffix}";
+                    string spSelector = $"{SetupPriceInputBaseSelector}{tierSuffix}";
+
+                    var srLocator = page.Locator(srSelector);
+                    var erLocator = page.Locator(erSelector);
+                    var rpLocator = page.Locator(rpSelector);
+                    var spLocator = page.Locator(spSelector);
+
+                    if (await srLocator.CountAsync() == 0)
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ProductPriceMatchesAsync] Tier {i + 1}: Starting Range input ('{srSelector}') not found. Prices do not match."
+                        );
+                        return false;
+                    }
+                    if (await erLocator.CountAsync() == 0)
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ProductPriceMatchesAsync] Tier {i + 1}: Ending Range input ('{erSelector}') not found. Prices do not match."
+                        );
+                        return false;
+                    }
+                    if (await rpLocator.CountAsync() == 0)
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ProductPriceMatchesAsync] Tier {i + 1}: Regular Price input ('{rpSelector}') not found. Prices do not match."
+                        );
+                        return false;
+                    }
+                    if (await spLocator.CountAsync() == 0)
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ProductPriceMatchesAsync] Tier {i + 1}: Setup Price input ('{spSelector}') not found. Prices do not match."
+                        );
+                        return false;
+                    }
+
+                    string actualSR = (await srLocator.First.InputValueAsync() ?? "").Trim();
+                    string actualER = (await erLocator.First.InputValueAsync() ?? "").Trim();
+                    string actualRP = (await rpLocator.First.InputValueAsync() ?? "").Trim();
+                    string actualSP = (await spLocator.First.InputValueAsync() ?? "").Trim();
+
+                    if (
+                        actualSR != expectedSR
+                        || actualER != expectedER
+                        || actualRP != expectedRP
+                        || actualSP != expectedSP
+                    )
+                    {
+                        await signalRLogger(
+                            $"[Task {taskId}] [ProductPriceMatchesAsync] Tier {i + 1}: Values do not match. "
+                                + $"SR: Expected='{expectedSR}', Got='{actualSR}'. "
+                                + $"ER: Expected='{expectedER}', Got='{actualER}'. "
+                                + $"RP: Expected='{expectedRP}', Got='{actualRP}'. "
+                                + $"SP: Expected='{expectedSP}', Got='{actualSP}'."
+                        );
+                        Console.WriteLine(
+                            $"[ProductPriceMatchesAsync] Tier {i + 1}: Values do not match. "
+                                + $"SR: Expected='{expectedSR}', Got='{actualSR}'. "
+                                + $"ER: Expected='{expectedER}', Got='{actualER}'. "
+                                + $"RP: Expected='{expectedRP}', Got='{actualRP}'. "
+                                + $"SP: Expected='{expectedSP}', Got='{actualSP}'."
+                        );
+                        return false;
+                    }
                 }
-                else
-                {
-                    await signalRLogger(
-                        $"[Task {taskId}] [ProductPriceMatchesAsync] Values retrieved do not perfectly match. Prices do not match."
-                    );
-                    Console.WriteLine(
-                        $"[ProductPriceMatchesAsync] Values retrieved do not perfectly match. Prices do not match."
-                    );
-                    return false;
-                }
+
+                await signalRLogger(
+                    $"[Task {taskId}] [ProductPriceMatchesAsync] All {expectedTierCount} price tiers match the values on the page."
+                );
+                Console.WriteLine(
+                    $"[ProductPriceMatchesAsync] All {expectedTierCount} price tiers match the values on the page."
+                );
+                return true;
             }
             catch (Exception ex)
             {
                 await signalRLogger(
-                    $"[Task {taskId}] [ProductPriceMatchesAsync] Exception occurred: Product does not match price range and prices. Error: {ex.Message}"
+                    $"[Task {taskId}] [ProductPriceMatchesAsync] Exception occurred: {ex.Message}. Assuming prices do not match."
                 );
                 Console.WriteLine(
-                    $"[ProductPriceMatchesAsync] Exception occurred: Product does not match price range and prices. Error: {ex.Message}"
+                    $"[ProductPriceMatchesAsync] Exception occurred: {ex.Message}. Assuming prices do not match."
                 );
                 return false;
             }
@@ -236,7 +337,7 @@ namespace backend.automation.modules
                 $"[FillPricingFormAsync] Current ranges: {currentRanges}, Target ranges based on endingRange: {targetRanges}"
             );
 
-            if (currentRanges != targetRanges)
+            if (currentRanges != targetRanges && !string.IsNullOrEmpty(endingRange))
             {
                 await signalRLogger(
                     $"[Task {taskId}] [FillPricingFormAsync] Mismatch detected. Adjusting ranges. Current: {currentRanges}, Target: {targetRanges}"
@@ -263,24 +364,42 @@ namespace backend.automation.modules
                         Console.WriteLine($"[FillPricingFormAsync] Deleted range offset: {i + 1}");
                     }
                 }
-                else
+                else if (currentRanges < targetRanges && !string.IsNullOrEmpty(endingRange))
                 {
-                    int rangesToAdd = targetRanges - currentRanges;
                     await signalRLogger(
-                        $"[Task {taskId}] [FillPricingFormAsync] Adding {rangesToAdd} missing range(s)."
+                        $"[Task {taskId}] [FillPricingFormAsync] Adding {targetRanges - currentRanges} missing range(s)."
                     );
                     Console.WriteLine(
-                        $"[FillPricingFormAsync] Adding {rangesToAdd} missing range(s)."
+                        $"[FillPricingFormAsync] Adding {targetRanges - currentRanges} missing range(s)."
                     );
-                    for (int i = 0; i < rangesToAdd; i++)
-                    {
-                        await page.Locator(AddRangeButtonSelector).ClickAsync();
+                }
+            }
+            else
+            {
+                await signalRLogger(
+                    $"[Task {taskId}] [FillPricingFormAsync] Starting range and ending range are empty or not found. Skipping."
+                );
+                Console.WriteLine(
+                    "[FillPricingFormAsync] Starting range and ending range are empty or not found. Skipping."
+                );
+            }
 
-                        await signalRLogger(
-                            $"[Task {taskId}] [FillPricingFormAsync] Added range offset: {i + 1}"
-                        );
-                        Console.WriteLine($"[FillPricingFormAsync] Added range offset: {i + 1}");
-                    }
+            if (currentRanges != targetRanges && !string.IsNullOrEmpty(endingRange))
+            {
+                int rangesToAdd = targetRanges;
+                await signalRLogger(
+                    $"[Task {taskId}] [FillPricingFormAsync] Adding {rangesToAdd} missing range(s)."
+                );
+                Console.WriteLine($"[FillPricingFormAsync] Adding {rangesToAdd} missing range(s).");
+
+                for (int i = 0; i < rangesToAdd - 1; i++)
+                {
+                    await page.Locator(AddRangeButtonSelector).ClickAsync();
+
+                    await signalRLogger(
+                        $"[Task {taskId}] [FillPricingFormAsync] Added range offset: {i + 1}"
+                    );
+                    Console.WriteLine($"[FillPricingFormAsync] Added range offset: {i + 1}");
                 }
             }
             else
@@ -365,7 +484,8 @@ namespace backend.automation.modules
                     Console.WriteLine(
                         $"[FillPricingFormAsync] Composite ending range detected ({erTierCount} tiers)."
                     );
-                    for (int i = 0; i < erTierCount; i++)
+
+                    for (int i = 0; i < erTierCount - 1; i++)
                     {
                         string selector = $"{EndRangeInputBaseSelector}{i + 1}";
                         await ClearAndFillAsync(
@@ -517,13 +637,113 @@ namespace backend.automation.modules
                 );
             }
 
-            await page.Locator(CopyRangeButtonSelector).ClickAsync();
-            await signalRLogger($"[Task {taskId}] [FillPricingFormAsync] Clicked 'Copy Range'.");
-            Console.WriteLine("[FillPricingFormAsync] Clicked 'Copy Range'.");
+            var firstCopyButtonLocator = page.Locator(GenericCopyRangeButtonSelector).First;
 
-            await page.Locator(PasteAllButtonSelector).ClickAsync();
-            await signalRLogger($"[Task {taskId}] [FillPricingFormAsync] Clicked 'Paste All'.");
-            Console.WriteLine("[FillPricingFormAsync] Clicked 'Paste All'.");
+            await signalRLogger(
+                $"[Task {taskId}] [FillPricingFormAsync] Targeting first 'Copy Range' button using selector: '{GenericCopyRangeButtonSelector}'."
+            );
+            Console.WriteLine($"[FillPricingFormAsync] Targeting first 'Copy Range' button.");
+
+            try
+            {
+                await firstCopyButtonLocator.WaitForAsync(
+                    new LocatorWaitForOptions
+                    {
+                        State = WaitForSelectorState.Visible,
+                        Timeout = 5000,
+                    }
+                );
+                await Assertions
+                    .Expect(firstCopyButtonLocator)
+                    .ToBeEnabledAsync(new LocatorAssertionsToBeEnabledOptions { Timeout = 5000 });
+                await signalRLogger(
+                    $"[Task {taskId}] [FillPricingFormAsync] First 'Copy Range' button is visible and enabled."
+                );
+
+                await firstCopyButtonLocator.ClickAsync();
+                await signalRLogger(
+                    $"[Task {taskId}] [FillPricingFormAsync] Clicked first 'Copy Range' button."
+                );
+                Console.WriteLine("[FillPricingFormAsync] Clicked first 'Copy Range' button.");
+            }
+            catch (PlaywrightException ex)
+            {
+                string copyErrorMsg =
+                    $"[Task {taskId}] [FillPricingFormAsync] Error with first 'Copy Range' button (selector '{GenericCopyRangeButtonSelector}'). It might not be visible/enabled or another issue occurred. Error: {ex.Message}";
+                await signalRLogger(copyErrorMsg);
+                Console.WriteLine(copyErrorMsg);
+                throw new Exception("First 'Copy Range' button was not actionable.", ex);
+            }
+
+            var firstPasteAllButtonLocator = page.Locator(GenericPasteAllButtonSelector).First;
+
+            await signalRLogger(
+                $"[Task {taskId}] [FillPricingFormAsync] Targeting first 'Paste All' button using selector: '{GenericPasteAllButtonSelector}'. Waiting for it to become 'enabled' (src change)."
+            );
+            Console.WriteLine(
+                $"[FillPricingFormAsync] Targeting first 'Paste All' button. Waiting for src change."
+            );
+
+            try
+            {
+                await firstPasteAllButtonLocator.WaitForAsync(
+                    new LocatorWaitForOptions
+                    {
+                        State = WaitForSelectorState.Visible,
+                        Timeout = 5000,
+                    }
+                );
+                await signalRLogger(
+                    $"[Task {taskId}] [FillPricingFormAsync] First 'Paste All' button is visible."
+                );
+
+                const float attributeTimeout = 10000f;
+                await Assertions
+                    .Expect(firstPasteAllButtonLocator)
+                    .ToHaveAttributeAsync(
+                        "src",
+                        PasteAllButtonEnabledSrc,
+                        new LocatorAssertionsToHaveAttributeOptions { Timeout = attributeTimeout }
+                    );
+
+                await signalRLogger(
+                    $"[Task {taskId}] [FillPricingFormAsync] First 'Paste All' button 'src' attribute updated to enabled version. Assuming it's clickable."
+                );
+                Console.WriteLine(
+                    "[FillPricingFormAsync] First 'Paste All' button 'src' attribute updated. Assuming it's clickable."
+                );
+
+                await firstPasteAllButtonLocator.ClickAsync();
+                await signalRLogger(
+                    $"[Task {taskId}] [FillPricingFormAsync] Clicked first 'Paste All' button."
+                );
+                Console.WriteLine("[FillPricingFormAsync] Clicked first 'Paste All' button.");
+            }
+            catch (PlaywrightException ex)
+            {
+                string currentSrc = "attribute not found or error";
+                try
+                {
+                    if (await firstPasteAllButtonLocator.CountAsync() > 0)
+                    {
+                        currentSrc =
+                            await firstPasteAllButtonLocator.GetAttributeAsync("src") ?? "null";
+                    }
+                }
+                catch (Exception getAttributeEx)
+                {
+                    currentSrc = $"error getting attribute: {getAttributeEx.Message}";
+                }
+
+                string pasteErrorMsg =
+                    $"[Task {taskId}] [FillPricingFormAsync] First 'Paste All' button (selector '{GenericPasteAllButtonSelector}') did not update its 'src' attribute to '{PasteAllButtonEnabledSrc}' within timeout or other error. Current src: '{currentSrc}'. Error: {ex.Message}";
+                await signalRLogger(pasteErrorMsg);
+                Console.WriteLine(pasteErrorMsg);
+                throw new Exception(
+                    "First 'Paste All' button did not become actionable (src attribute check failed).",
+                    ex
+                );
+            }
         }
 
         public async Task ConfigurePricingAndBuyerSettingsAsync(
@@ -563,37 +783,40 @@ namespace backend.automation.modules
                             await signalRLogger($"[Task {taskId}] Pricing tab clicked!");
                             Console.WriteLine("Pricing tab clicked!");
 
+                            Func<string, JArray> convertToJArray = (priceString) =>
+                                new JArray(
+                                    (priceString ?? "")
+                                        .Split(',')
+                                        .Select(s => s.Trim())
+                                        .Where(s => !string.IsNullOrEmpty(s))
+                                        .Cast<object>()
+                                        .ToArray()
+                                );
+
+                            JArray rangeStartJA = convertToJArray(rangeStart);
+                            JArray rangeEndJA = convertToJArray(rangeEnd);
+                            JArray regularPriceJA = convertToJArray(regularPrice);
+                            JArray setupPriceJA = convertToJArray(setupPrice);
+
                             bool pricesMatch = await ProductPriceMatchesAsync(
                                 taskId,
                                 page,
-                                rangeStart,
-                                rangeEnd,
-                                regularPrice,
-                                setupPrice,
+                                rangeStartJA,
+                                rangeEndJA,
+                                regularPriceJA,
+                                setupPriceJA,
                                 signalRLogger
                             );
 
-                            float.TryParse(rangeStart, out float flRangeStart);
-                            float.TryParse(rangeEnd, out float flRangeEnd);
-                            float.TryParse(regularPrice, out float flRegularPrice);
-                            float.TryParse(setupPrice, out float flSetupPrice);
+                            bool shouldFillForm = !pricesMatch;
+                            if (!shouldFillForm && rangeStartJA.Count > 0) { }
 
-                            if (
-                                !pricesMatch
-                                || (
-                                    flRangeStart != 0
-                                    && flRangeEnd != 0
-                                    && flRegularPrice != 0
-                                    && flSetupPrice != 0
-                                )
-                            )
+                            if (shouldFillForm)
                             {
                                 await signalRLogger(
-                                    $"[Task {taskId}] Prices do not match or are non-zero and provided. Filling pricing form."
+                                    $"[Task {taskId}] Prices do not match. Filling pricing form."
                                 );
-                                Console.WriteLine(
-                                    "Prices do not match or are non-zero and provided. Filling pricing form."
-                                );
+                                Console.WriteLine("Prices do not match. Filling pricing form.");
                                 await FillPricingFormAsync(
                                     taskId,
                                     page,
@@ -607,11 +830,9 @@ namespace backend.automation.modules
                             else
                             {
                                 await signalRLogger(
-                                    $"[Task {taskId}] Prices match or relevant fields are zero/empty. Skipping pricing form fill."
+                                    $"[Task {taskId}] Prices match. Skipping pricing form fill."
                                 );
-                                Console.WriteLine(
-                                    "Prices match or relevant fields are zero/empty. Skipping pricing form fill."
-                                );
+                                Console.WriteLine("Prices match. Skipping pricing form fill.");
                             }
                         }
                         else

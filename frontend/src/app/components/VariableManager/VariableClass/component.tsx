@@ -139,7 +139,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
             const directiveEffect = directiveMap[directiveName]?.effect || '';
 
             elements.push(
-                <span key={match.index} className={styles.highlighteddirectiveProtocol}>
+                <span key={match.index} className={styles.highlightedDirectiveProtocol}>
                     {`${directiveName}<${args}>`}
                 </span>
             );
@@ -212,13 +212,13 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
 
 
                 elements.push(
-                    <span key={`directive-name-${match.index}`} className={styles.highlighteddirectiveProtocol}>
+                    <span key={`directive-name-${match.index}`} className={styles.highlightedDirectiveProtocol}>
                         {matcheddirectiveName}
                     </span>
                 );
 
                 elements.push(
-                    <span key={`directive-open-${match.index}`} className={styles.highlighteddirectiveProtocol}>
+                    <span key={`directive-open-${match.index}`} className={styles.highlightedDirectiveProtocol}>
                         {matcheddirectiveOpeningBracket}
                     </span>
                 );
@@ -231,7 +231,7 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
 
 
                 elements.push(
-                    <span key={`directive-close-${match.index}`} className={styles.highlighteddirectiveProtocol}>
+                    <span key={`directive-close-${match.index}`} className={styles.highlightedDirectiveProtocol}>
                         {matcheddirectiveClosingBracket}
                     </span>
                 );

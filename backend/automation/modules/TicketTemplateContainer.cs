@@ -62,7 +62,7 @@ namespace backend.automation.modules
             {
                 Console.WriteLine($"Error waiting for ticket selector: {ex.Message}");
                 await signalRLogger(
-                    $"[Task {taskId}] Error waiting for ticket selector: {ex.Message}"
+                    $"[Task {taskId}] [Error] Error waiting for ticket selector: {ex.Message}"
                 );
                 return;
             }

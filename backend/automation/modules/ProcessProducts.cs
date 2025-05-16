@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using Newtonsoft.Json.Linq;
 
 namespace backend.automation.modules
 {
@@ -25,16 +26,22 @@ namespace backend.automation.modules
                 )
                 .ClickAsync(new LocatorClickOptions { Timeout = 10000 });
 
+            string logProductName = ConvertDynamicToString(
+                product.ItemName,
+                "ItemName",
+                "Unknown Product"
+            );
+
             Console.WriteLine(
-                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] WaitForProductItemNameAsync for: {product.ItemName}"
+                $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] WaitForProductItemNameAsync for: {logProductName}"
             );
             await signalRLogger(
-                $"[ProcessProducts Task {taskId}] Waiting for product item name: {product.ItemName}"
+                $"[ProcessProducts Task {taskId}] Waiting for product item name: {logProductName}"
             );
 
             ILocator itemNameLocator = page.Locator("td .celldata a.pointerCursor span").Nth(1);
             string itemName = "";
-            string expectedItemName = product.ItemName.ToString();
+            string expectedItemName = logProductName;
             int retries = 0;
             const int maxRetries = 3;
 
@@ -59,14 +66,14 @@ namespace backend.automation.modules
             catch (TimeoutException)
             {
                 Console.WriteLine(
-                    $"[Task {taskId}] Timeout evaluating item name after initial search for {expectedItemName}. Will proceed to retries if name was previously found."
+                    $"[Task {taskId}] [Error] Timeout evaluating item name after initial search for {expectedItemName}. Will proceed to retries if name was previously found."
                 );
             }
 
             if (string.IsNullOrEmpty(itemName))
             {
                 throw new Exception(
-                    $"[Task {taskId}] Product name '{expectedItemName}' not found or locator returned empty/null after initial search. The product may not exist or is not visible."
+                    $"[Task {taskId}] [Error] Product name '{expectedItemName}' not found or locator returned empty/null after initial search and evaluation. The product may not exist or is not visible."
                 );
             }
 
@@ -98,7 +105,7 @@ namespace backend.automation.modules
                 catch (TimeoutException)
                 {
                     Console.WriteLine(
-                        $"[Task {taskId}] Timeout evaluating item name on attempt {retries} for {expectedItemName}."
+                        $"[Task {taskId}] [Error] Timeout evaluating item name on attempt {retries} for {expectedItemName}."
                     );
                 }
             }
@@ -106,7 +113,7 @@ namespace backend.automation.modules
             if (itemName != expectedItemName)
             {
                 throw new Exception(
-                    $"[Task {taskId}] Failed to find product name '{expectedItemName}' after {maxRetries} search attempts. Last found: '{itemName}'."
+                    $"[Task {taskId}] [Error] Failed to find product name '{expectedItemName}' after {maxRetries} search attempts. Last found: '{itemName}'."
                 );
             }
 
@@ -244,20 +251,23 @@ namespace backend.automation.modules
                         await newPage.SetViewportSizeAsync(1920, 1080);
                         return newPage;
                     }
-                    throw new Exception("RunAndWaitForPageAsync returned null.");
+
+                    throw new Exception(
+                        $"[Task {taskId}] [Error] RunAndWaitForPageAsync returned null for product '{productName}'."
+                    );
                 }
                 catch (TimeoutException tex)
                 {
                     retries++;
                     Console.WriteLine(
-                        $"Attempt {retries}/{maxRetries} to open new page timed out: {tex.Message}"
+                        $"[Task {taskId}] [Error] Attempt {retries}/{maxRetries} to open new page timed out: {tex.Message}"
                     );
                     await signalRLogger(
-                        $"[ProcessProducts Task {taskId}] Timeout on attempt {retries} for product '{productName}': {tex.Message}"
+                        $"[ProcessProducts Task {taskId}] [Error] Timeout on attempt {retries} for product '{productName}': {tex.Message.Split('\n')[0]}"
                     );
                     if (retries >= maxRetries)
                         throw new Exception(
-                            $"Failed to open new page via click on product '{productName}' after {maxRetries} attempts due to timeout.",
+                            $"[Task {taskId}] [Error] Failed to open new page via click on product '{productName}' after {maxRetries} attempts due to timeout.",
                             tex
                         );
                     await Task.Delay(1000, cancellationToken);
@@ -266,23 +276,117 @@ namespace backend.automation.modules
                 {
                     retries++;
                     Console.WriteLine(
-                        $"Attempt {retries}/{maxRetries} to open new page failed: {ex.Message}"
+                        $"[Task {taskId}] [Error] Attempt {retries}/{maxRetries} to open new page failed: {ex.Message}"
                     );
                     await signalRLogger(
-                        $"[ProcessProducts Task {taskId}] Error on attempt {retries} for product '{productName}': {ex.Message}"
+                        $"[ProcessProducts Task {taskId}] [Error] Error on attempt {retries} for product '{productName}': {ex.Message.Split('\n')[0]}"
                     );
                     if (retries >= maxRetries)
+                    {
+                        await signalRLogger(
+                            $"[USER] SAVE_FAIL: [Task {taskId}] [Error] Product '{productName}' page failed to open after {maxRetries} attempts. Last error: {ex.Message.Split('\n')[0]}."
+                        );
                         throw new Exception(
-                            $"Failed to open new page via click on product '{productName}' after {maxRetries} attempts. Last error: {ex.Message}",
+                            $"[Task {taskId}] [Error] Failed to open new page via click on product '{productName}' after {maxRetries} attempts. Last error: {ex.Message}",
                             ex
                         );
+                    }
                     await signalRLogger(
-                        $"[USER] SAVE_WARN: Product '{productName}' page failing to open new page via click on product after {maxRetries} attemps. Last error: {ex.Message}."
+                        $"[USER] SAVE_WARN: [Task {taskId}] [Error] Product '{productName}' page failing to open on attempt {retries}. Error: {ex.Message.Split('\n')[0]}."
                     );
                     await Task.Delay(1000, cancellationToken);
                 }
             }
-            throw new Exception("Max retries exceeded for TryOpenNewPageAsync.");
+            throw new Exception(
+                $"[Task {taskId}] [Error] Max retries exceeded for TryOpenNewPageAsync for product '{productName}'."
+            );
+        }
+
+        private string ConvertDynamicToString(
+            dynamic? value,
+            string fieldNameForLog = "",
+            string defaultValue = ""
+        )
+        {
+            if (value == null)
+                return defaultValue;
+
+            if (value is JValue jv)
+            {
+                return jv.Value?.ToString() ?? defaultValue;
+            }
+            if (value is string s)
+            {
+                return s;
+            }
+
+            if (value is JObject || value is JArray)
+            {
+                Console.WriteLine(
+                    $"Warning: ConvertDynamicToString for field '{fieldNameForLog}' received complex type {value.GetType().Name} where a simple string was expected. Value: {value.ToString(Newtonsoft.Json.Formatting.None)}. Returning default."
+                );
+
+                return defaultValue;
+            }
+
+            return value.ToString() ?? defaultValue;
+        }
+
+        private string ConvertDynamicPriceDataToString(
+            dynamic? priceData,
+            Func<string, Task> signalRLogger,
+            int taskId,
+            string fieldName
+        )
+        {
+            if (priceData == null)
+                return "";
+
+            if (priceData is string s)
+            {
+                return s;
+            }
+            if (priceData is JValue jv)
+            {
+                return jv.Value?.ToString() ?? "";
+            }
+            if (priceData is JArray ja)
+            {
+                return string.Join(
+                    ",",
+                    ja.Select(token =>
+                        (token is JValue jtVal ? jtVal.Value?.ToString() : token.ToString())?.Trim()
+                        ?? ""
+                    )
+                );
+            }
+            if (priceData is JObject jo && jo["Composite"] is JArray compositeArray)
+            {
+                return string.Join(
+                    ",",
+                    compositeArray.Select(token =>
+                        (token is JValue jtVal ? jtVal.Value?.ToString() : token.ToString())?.Trim()
+                        ?? ""
+                    )
+                );
+            }
+
+            if (
+                priceData is int
+                || priceData is long
+                || priceData is double
+                || priceData is decimal
+                || priceData is float
+            )
+            {
+                return priceData.ToString();
+            }
+
+            string unexpectedTypeMessage =
+                $"[Task {taskId}] Warning: ConvertDynamicPriceDataToString for field '{fieldName}' encountered an unhandled data type '{priceData.GetType().FullName}'. Value: '{priceData.ToString()}'. Returning empty string.";
+            Console.WriteLine(unexpectedTypeMessage);
+
+            return "";
         }
 
         public async Task<IPage?> ProcessProductsAsync(
@@ -293,7 +397,11 @@ namespace backend.automation.modules
             Func<string, Task> signalRLogger
         )
         {
-            string productName = product.ItemName?.ToString() ?? "Unknown Product";
+            string productName = ConvertDynamicToString(
+                product.ItemName,
+                "ItemName",
+                "Unknown Product"
+            );
             var startMessage =
                 $"[Task {taskId} - {DateTime.Now:HH:mm:ss.fff}] ProcessProductsAsync START for: {productName}";
             Console.WriteLine(startMessage);
@@ -310,32 +418,73 @@ namespace backend.automation.modules
 
             IPage? newPage = null;
 
-            string displayName = product.DisplayName;
-            string itemTemplate = product.ItemTemplate;
+            string displayName = ConvertDynamicToString(product.DisplayName, "DisplayName");
+            string itemTemplate = ConvertDynamicToString(product.ItemTemplate, "ItemTemplate");
             dynamic icon = product.Icon;
             dynamic pdf = product.PDFUploadName;
-            string productType = product.Type;
-            string briefDescription = product.BriefDescription;
-            string longDescription = product.LongDescription;
-            string advancedRanges = product.AdvancedRanges;
-            string orderQuantities = product.OrderQuantity;
-            string shippingWidths = product.ShippingWidth;
-            string shippingHeights = product.ShippingHeight;
-            string shippingLengths = product.ShippingLength;
-            string shippingMaxs = product.ShippingMaxQtyPerSub;
-            string weightInput = product.WeightInput;
-            string maxQuantity = product.MaxQuantity;
-            string showQtyPrice = product.ShowQtyPrice;
-            string setupPrice = product.SetupPrice;
-            string regularPrice = product.RegularPrice;
-            string rangeStart = product.RangeStart;
-            string rangeEnd = product.RangeEnd;
-            string buyerConfigs = product.BuyerConfigs;
-            string skipProduct = product.SkipProduct;
+            string productType = ConvertDynamicToString(product.Type, "Type");
+            string briefDescription = ConvertDynamicToString(
+                product.BriefDescription,
+                "BriefDescription"
+            );
+            string longDescription = ConvertDynamicToString(
+                product.LongDescription,
+                "LongDescription"
+            );
+            string advancedRanges = ConvertDynamicToString(
+                product.AdvancedRanges,
+                "AdvancedRanges"
+            );
+            string orderQuantities = ConvertDynamicToString(product.OrderQuantity, "OrderQuantity");
+            string shippingWidths = ConvertDynamicToString(product.ShippingWidth, "ShippingWidth");
+            string shippingHeights = ConvertDynamicToString(
+                product.ShippingHeight,
+                "ShippingHeight"
+            );
+            string shippingLengths = ConvertDynamicToString(
+                product.ShippingLength,
+                "ShippingLength"
+            );
+            string shippingMaxs = ConvertDynamicToString(
+                product.ShippingMaxQtyPerSub,
+                "ShippingMaxQtyPerSub"
+            );
+            string weightInput = ConvertDynamicToString(product.WeightInput, "WeightInput");
+            string maxQuantity = ConvertDynamicToString(product.MaxQuantity, "MaxQuantity");
+            string showQtyPrice = ConvertDynamicToString(product.ShowQtyPrice, "ShowQtyPrice");
+
+            string setupPriceStr = ConvertDynamicPriceDataToString(
+                product.SetupPrice,
+                signalRLogger,
+                taskId,
+                "SetupPrice"
+            );
+            string regularPriceStr = ConvertDynamicPriceDataToString(
+                product.RegularPrice,
+                signalRLogger,
+                taskId,
+                "RegularPrice"
+            );
+            string rangeStartStr = ConvertDynamicPriceDataToString(
+                product.RangeStart,
+                signalRLogger,
+                taskId,
+                "RangeStart"
+            );
+            string rangeEndStr = ConvertDynamicPriceDataToString(
+                product.RangeEnd,
+                signalRLogger,
+                taskId,
+                "RangeEnd"
+            );
+
+            string buyerConfigsStr = ConvertDynamicToString(product.BuyerConfigs, "BuyerConfigs");
+            string skipProductStr =
+                ConvertDynamicToString(product.SkipProduct, "SkipProduct")?.ToLower() ?? "false";
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (skipProduct?.ToLower() == "true")
+            if (skipProductStr == "true")
             {
                 Console.WriteLine($"[Task {taskId}] Skipping product as per data: {productName}");
                 await signalRLogger(
@@ -377,19 +526,22 @@ namespace backend.automation.modules
 
                 if (!ValidProductTypesAsync(productType))
                     throw new Exception(
-                        $"Invalid product type: {productType} for product {productName}"
+                        $"[Task {taskId}] [Error] Invalid product type: {productType} for product {productName}"
                     );
                 if (string.IsNullOrEmpty(productType))
-                    throw new Exception($"Product type is null or empty for {productName}");
+                    throw new Exception(
+                        $"[Task {taskId}] [Error] Product type is null or empty for {productName}"
+                    );
                 if (string.IsNullOrEmpty(productName))
-                    throw new Exception($"Product name is null or empty.");
+                    throw new Exception($"[Task {taskId}] [Error] Product name is null or empty.");
 
                 if (newPage == null)
                 {
                     throw new InvalidOperationException(
-                        $"[Task {taskId}] Detail page (newPage) is unexpectedly null before waiting for body for product '{productName}'."
+                        $"[Task {taskId}] [Error] Detail page (newPage) is unexpectedly null for product '{productName}'."
                     );
                 }
+
                 await newPage
                     .Locator("body")
                     .WaitForAsync(new LocatorWaitForOptions { Timeout = 15000 });
@@ -436,24 +588,18 @@ namespace backend.automation.modules
                 );
 
                 cancellationToken.ThrowIfCancellationRequested();
-                // TODO: Need to work on this more, as it is not working as expected.
-                // Any pricing deletion causes a bug where it over deletes and causes the website
-                // to not be able to save the product. For now, prevent user from moving forward
-                // with this option.
 
-                /*
                 await productPricingAndBuyerConfiguration.ConfigurePricingAndBuyerSettingsAsync(
                     taskId,
                     newPage,
                     signalRLogger,
                     productType,
-                    setupPrice,
-                    regularPrice,
-                    rangeStart,
-                    rangeEnd,
-                    buyerConfigs
+                    setupPriceStr,
+                    regularPriceStr,
+                    rangeStartStr,
+                    rangeEndStr,
+                    buyerConfigsStr
                 );
-                */
 
                 cancellationToken.ThrowIfCancellationRequested();
                 await settingsTab.SettingsTabAsync(
@@ -501,10 +647,10 @@ namespace backend.automation.modules
             catch (OperationCanceledException)
             {
                 Console.WriteLine(
-                    $"[Task {taskId}] Processing for product {productName} was cancelled."
+                    $"[Task {taskId}] [Error] Processing for product {productName} was cancelled."
                 );
                 await signalRLogger(
-                    $"[ProcessProducts Task {taskId}] Processing cancelled for product: {productName}"
+                    $"[ProcessProducts Task {taskId}] [Error] Processing cancelled for product: {productName}"
                 );
                 if (newPage != null && !newPage.IsClosed)
                     await newPage.CloseAsync();
@@ -513,10 +659,10 @@ namespace backend.automation.modules
             catch (Exception ex)
             {
                 Console.WriteLine(
-                    $"[Task {taskId}] Error processing product {productName} before save: {ex.Message}"
+                    $"[Task {taskId}] [Error] Error processing product {productName} before save: {ex.Message}"
                 );
                 await signalRLogger(
-                    $"[USER] SAVE_FAIL: At Task {taskId} with Product '{productName}' - Error during save: {ex.Message.Split('\n')[0]}"
+                    $"[USER] SAVE_FAIL: [Task {taskId}] [Error] Product '{productName}' - Error during save: {ex.Message.Split('\n')[0]}"
                 );
                 if (newPage != null && !newPage.IsClosed)
                 {
@@ -527,10 +673,10 @@ namespace backend.automation.modules
                     catch (Exception closeEx)
                     {
                         Console.WriteLine(
-                            $"[Task {taskId}] Error closing detail page for {productName} after processing error: {closeEx.Message}"
+                            $"[Task {taskId}] [Error] Error closing detail page for {productName} after processing error: {closeEx.Message}"
                         );
                         await signalRLogger(
-                            $"[ProcessProducts Task {taskId}] Error closing detail page for {productName}: {closeEx.Message}"
+                            $"[ProcessProducts Task {taskId}] [Error] Error closing detail page for {productName}: {closeEx.Message.Split('\n')[0]}"
                         );
                     }
                 }

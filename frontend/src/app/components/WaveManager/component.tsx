@@ -89,7 +89,6 @@ interface OriginalData {
     variablePackageArray: VariablePackageArrayState;
 }
 
-const javascriptServer = process.env.JS_SERVER_URL || 'http://localhost:3002';
 const csharpServer = process.env.CS_SERVER_URL || 'http://localhost:5000';
 
 const now = new Date(Date.now());
@@ -1098,8 +1097,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
         let targetServerUrl = "";
         if (selectedServer === "csharp-server") {
             targetServerUrl = csharpServer;
-        } else if (selectedServer === "javascript-server") {
-            targetServerUrl = javascriptServer;
         } else {
             toast.error(`Invalid server configured: '${selectedServer}'. Cannot stop automation.`);
             return;
@@ -1221,10 +1218,7 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
             }
         };
 
-        if (currentSelectedServer === 'javascript-server') {
-            setServer(javascriptServer);
-            handleRunPost(`${javascriptServer}/js-server`);
-        } else if (currentSelectedServer === 'csharp-server') {
+        if (currentSelectedServer === 'csharp-server') {
             setServer(csharpServer);
             handleRunPost(`${csharpServer}/cs-server`);
         } else {
@@ -1350,7 +1344,6 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
                                 onChange={(e) => setSelectedServer(e.target.value)}
                             >
                                 <option value="" disabled>Choose Server</option>
-                                <option value="javascript-server">Javascript Server</option>
                                 <option value="csharp-server">C# Server</option>
                             </select>
                             {selectedServer === "csharp-server" && (

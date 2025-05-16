@@ -61,9 +61,11 @@ class runAuto
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                Console.WriteLine("Cancellation requested before starting new batch processing.");
+                Console.WriteLine(
+                    "[Automation] [Error] Cancellation requested before starting new batch processing."
+                );
                 await _signalRLogger(
-                    "[Automation] Cancellation requested before starting new batch processing."
+                    "[Automation] [Error] Cancellation requested before starting new batch processing."
                 );
                 break;
             }
@@ -81,7 +83,7 @@ class runAuto
                 if (cancellationToken.IsCancellationRequested)
                 {
                     var cancellationMessage =
-                        $"[Task] Cancellation requested before processing product: {product.ItemName?.ToString() ?? "Unknown Product"}. Halting current batch task creation.";
+                        $"[Task] [Error] Cancellation requested before processing product: {product.ItemName?.ToString() ?? "Unknown Product"}. Halting current batch task creation.";
                     Console.WriteLine(cancellationMessage);
                     await _signalRLogger($"[Automation] {cancellationMessage}");
                     break;
@@ -166,7 +168,7 @@ class runAuto
                             if (cancellationToken.IsCancellationRequested)
                             {
                                 var cancellationAfterProcessMessage =
-                                    $"[Task {currentTaskId}] Cancellation after ProcessProductsAsync for {currentProductName}. Not queueing.";
+                                    $"[Task {currentTaskId}] [Error] Cancellation after ProcessProductsAsync for {currentProductName}. Not queueing.";
                                 Console.WriteLine(cancellationAfterProcessMessage);
                                 await _signalRLogger(
                                     $"[Automation] {cancellationAfterProcessMessage}"
@@ -195,7 +197,7 @@ class runAuto
                             else
                             {
                                 var skippedMessage =
-                                    $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] Product {currentProductName} was skipped or failed processing before save.";
+                                    $"[Task {currentTaskId}] [Error] Product {currentProductName} was skipped or failed processing before save.";
                                 Console.WriteLine(skippedMessage);
                                 await _signalRLogger($"[Automation] {skippedMessage}");
                                 Interlocked.Increment(ref processedCount);
@@ -209,7 +211,7 @@ class runAuto
                         catch (OperationCanceledException)
                         {
                             var cancelledTaskMessage =
-                                $"[Task {currentTaskId}] Task for {currentProductName} was cancelled during processing.";
+                                $"[Task {currentTaskId}] [Error] Task for {currentProductName} was cancelled during processing.";
                             Console.WriteLine(cancelledTaskMessage);
                             await _signalRLogger($"[Automation] {cancelledTaskMessage}");
                             Interlocked.Increment(ref processedCount);
@@ -219,7 +221,7 @@ class runAuto
                         catch (Exception ex)
                         {
                             var errorMessage =
-                                $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] Error in processing task for {currentProductName}: {ex.ToString()}";
+                                $"[Task {currentTaskId} - {DateTime.Now:HH:mm:ss.fff}] [Error] Error in processing task for {currentProductName}: {ex.ToString()}";
                             Console.WriteLine(errorMessage);
                             await _signalRLogger($"[Automation] {errorMessage}");
                             Interlocked.Increment(ref processedCount);
@@ -252,7 +254,7 @@ class runAuto
                                 catch (Exception ex)
                                 {
                                     var closeErrorMessage =
-                                        $"[Task {currentTaskId}] Error closing productListPage: {ex.Message}";
+                                        $"[Task {currentTaskId}] [Error] Error closing productListPage: {ex.Message}";
                                     Console.WriteLine(closeErrorMessage);
                                     await _signalRLogger($"[Automation] {closeErrorMessage}");
                                 }
@@ -267,7 +269,7 @@ class runAuto
                                 catch (Exception ex)
                                 {
                                     var contextCloseErrorMessage =
-                                        $"[Task {currentTaskId}] Error closing taskContext in finally: {ex.Message}";
+                                        $"[Task {currentTaskId}] [Error] Error closing taskContext in finally when detailPageToSave is null: {ex.Message}";
                                     Console.WriteLine(contextCloseErrorMessage);
                                     await _signalRLogger(
                                         $"[Automation] {contextCloseErrorMessage}"
@@ -299,13 +301,13 @@ class runAuto
             if (cancellationToken.IsCancellationRequested)
             {
                 var cancellationAfterBatchMessage =
-                    $"Cancellation detected after batch {i / maxConcurrentProcessingTasks + 1} processing. Draining save queue without saving.";
+                    $"[Automation] [Error] Cancellation detected after batch {i / maxConcurrentProcessingTasks + 1} processing. Draining save queue without saving.";
                 Console.WriteLine(cancellationAfterBatchMessage);
-                await _signalRLogger($"[Automation] {cancellationAfterBatchMessage}");
+                await _signalRLogger(cancellationAfterBatchMessage);
                 while (pagesToSaveQueue.TryDequeue(out var itemToDiscard))
                 {
                     var discardMessage =
-                        $"[Cancellation] Discarding {itemToDiscard.Item3} from save queue.";
+                        $"[Cancellation] [Error] Discarding {itemToDiscard.Item3} from save queue due to cancellation.";
                     Console.WriteLine(discardMessage);
                     await _signalRLogger($"[Automation] {discardMessage}");
                     if (itemToDiscard.Item1 != null && !itemToDiscard.Item1.IsClosed)
@@ -326,7 +328,7 @@ class runAuto
                 if (cancellationToken.IsCancellationRequested)
                 {
                     var saveCancellationMessage =
-                        $"[SaveTask] Cancellation requested before saving {saveCandidate.Item3}. Discarding.";
+                        $"[SaveTask] [Error] Cancellation requested before saving {saveCandidate.Item3}. Discarding.";
                     Console.WriteLine(saveCancellationMessage);
                     await _signalRLogger($"[Automation] {saveCancellationMessage}");
                     if (saveCandidate.Item1 != null && !saveCandidate.Item1.IsClosed)
@@ -354,7 +356,9 @@ class runAuto
                         var saveAttemptMessage =
                             $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Attempting to Save & Exit for product {productName}";
                         Console.WriteLine(saveAttemptMessage);
-                        await _signalRLogger($"[USER] SAVE_ATTEMPT: Product '{productName}'");
+                        await _signalRLogger(
+                            $"[USER] SAVE_ATTEMPT: Product '{productName}' (Task {originalTaskId})"
+                        );
 
                         await detailPage
                             .Locator("input[value=\"Save & Exit\"]")
@@ -375,17 +379,17 @@ class runAuto
                                 $"[SaveTask (from Task {originalTaskId})] Successfully saved and closed page for {productName}.";
                             Console.WriteLine(successMsg);
                             await _signalRLogger(
-                                $"[USER] SAVE_SUCCESS: Product '{productName}' saved."
+                                $"[USER] SAVE_SUCCESS: Product '{productName}' (Task {originalTaskId}) saved."
                             );
                             Interlocked.Increment(ref savedCount);
                         }
                         else
                         {
                             var notClosedMsg =
-                                $"[SaveTask (from Task {originalTaskId})] Page for {productName} did not close after save attempt.";
+                                $"[SaveTask (from Task {originalTaskId})] [Error] Page for {productName} did not close after save attempt.";
                             Console.WriteLine(notClosedMsg);
                             await _signalRLogger(
-                                $"[USER] SAVE_WARN: Product '{productName}' page did not close as expected after save attempt."
+                                $"[USER] [Error] SAVE_WARN: Product '{productName}' (Task {originalTaskId}) page did not close as expected after save attempt."
                             );
                             if (!detailPage.IsClosed)
                                 await detailPage.CloseAsync();
@@ -394,20 +398,20 @@ class runAuto
                     else
                     {
                         var noPageMsg =
-                            $"[SaveTask (from Task {originalTaskId})] Detail page for {productName} was null or already closed before save attempt.";
+                            $"[SaveTask (from Task {originalTaskId})] [Error] Detail page for {productName} was null or already closed before save attempt.";
                         Console.WriteLine(noPageMsg);
                         await _signalRLogger(
-                            $"[USER] SAVE_FAIL: Product '{productName}' - Page not available for saving."
+                            $"[USER] [Error] SAVE_FAIL: Product '{productName}' (Task {originalTaskId}) - Page not available for saving."
                         );
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     var cancelMessage =
-                        $"[SaveTask (from Task {originalTaskId})] Operation cancelled while attempting to save {productName}.";
+                        $"[SaveTask (from Task {originalTaskId})] [Error] Operation cancelled while attempting to save {productName}.";
                     Console.WriteLine(cancelMessage);
                     await _signalRLogger(
-                        $"[USER] SAVE_CANCELLED: Product '{productName}' - Save cancelled."
+                        $"[USER] [Error] SAVE_CANCELLED: Product '{productName}' (Task {originalTaskId}) - Save cancelled."
                     );
                     if (detailPage != null && !detailPage.IsClosed)
                     {
@@ -417,10 +421,10 @@ class runAuto
                 catch (Exception ex)
                 {
                     var exMessage =
-                        $"[SaveTask (from Task {originalTaskId})] Error saving product {productName}: {ex.Message}";
+                        $"[SaveTask (from Task {originalTaskId})] [Error] Error saving product {productName}: {ex.Message}";
                     Console.WriteLine(exMessage);
                     await _signalRLogger(
-                        $"[USER] SAVE_FAIL: Product '{productName}' - Error during save: {ex.Message.Split('\n')[0]}"
+                        $"[USER] [Error] SAVE_FAIL: Product '{productName}' (Task {originalTaskId}) - Error during save: {ex.Message.Split('\n')[0]}"
                     );
                     if (detailPage != null && !detailPage.IsClosed)
                     {
@@ -435,22 +439,33 @@ class runAuto
                             $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Closing browser context for {productName}.";
                         Console.WriteLine(contextCloseMessage);
                         await _signalRLogger($"[Automation] {contextCloseMessage}");
-                        await contextToClose.CloseAsync();
+                        try
+                        {
+                            await contextToClose.CloseAsync();
+                        }
+                        catch (Exception ctxCloseEx)
+                        {
+                            var ctxCloseErrorMessage =
+                                $"[SaveTask (from Task {originalTaskId})] [Error] Error closing contextToClose for {productName}: {ctxCloseEx.Message}";
+                            Console.WriteLine(ctxCloseErrorMessage);
+                            await _signalRLogger($"[Automation] {ctxCloseErrorMessage}");
+                        }
                     }
                     saveSemaphore.Release();
                     var saveSemaphoreReleaseMessage =
                         $"[SaveTask (from Task {originalTaskId}) - {DateTime.Now:HH:mm:ss.fff}] Released SAVE semaphore for: {productName}";
                     Console.WriteLine(saveSemaphoreReleaseMessage);
                     await _signalRLogger($"[Automation] {saveSemaphoreReleaseMessage}");
+                    Interlocked.Increment(ref processedCount);
                 }
             }
 
             if (cancellationToken.IsCancellationRequested)
             {
                 var cancellationAfterSaveMessage =
-                    "Cancellation detected after save loop. Exiting batch processing.";
+                    "[Automation] [Error] Cancellation detected after save loop. Exiting batch processing.";
                 Console.WriteLine(cancellationAfterSaveMessage);
-                await _signalRLogger($"[Automation] {cancellationAfterSaveMessage}");
+                await _signalRLogger(cancellationAfterSaveMessage);
                 break;
             }
             var saveLoopCompleteMessage =
@@ -460,14 +475,14 @@ class runAuto
         }
 
         var finalMessage =
-            $"Automation run finished. Products processed: {processedCount}. Products successfully saved: {savedCount}.";
+            $"Automation run finished. Products processed (attempted save or skipped): {processedCount}. Products successfully saved: {savedCount}.";
         Console.WriteLine(finalMessage);
         await _signalRLogger($"[Automation Completed] {finalMessage}");
         if (cancellationToken.IsCancellationRequested)
         {
-            var cancellationMessage = "Automation was cancelled by request.";
+            var cancellationMessage = "[Automation] [Error] Automation was cancelled by request.";
             Console.WriteLine(cancellationMessage);
-            await _signalRLogger($"[Automation] {cancellationMessage}");
+            await _signalRLogger(cancellationMessage);
         }
         else if (!_criticalFailureEmailSentThisRun && savedCount > 0)
         {

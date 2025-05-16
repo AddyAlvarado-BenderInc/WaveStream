@@ -286,8 +286,8 @@
 
 .logSearchContainer {
   padding: 5px 10px;
-  background-color: var(--background-secondary); 
-  border-bottom: 1px solid var(--border-color-light); 
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--border-color-light);
 }
 
 .logSearchInput {
@@ -297,7 +297,7 @@
   border: 1px solid var(--border-color-medium);
   background-color: var(--background-primary);
   color: var(--text-primary);
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
 .logSearchInput:focus {
@@ -310,4 +310,68 @@
   text-align: center;
   padding: 20px;
   color: var(--text-secondary);
+}
+
+.logErrorHighlight {
+  color: #ffa500 !important;
+}
+
+.errorItemsContainer {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #444;
+}
+
+.errorItemsHeader h3 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  color: var(--button-primary-hover, #55b7ff);
+}
+
+.errorItemsHeader h3.hasErrors {
+  color: #ffa500 !important;
+}
+
+.errorItemsHeader h3.hasErrors .errorCount {
+  font-weight: bold;
+}
+
+.noErrorItems {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.errorItemsTable {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 5px;
+  background-color: rgba(255, 165, 0, 0.05);
+}
+
+.errorItemRow {
+  padding: 4px 8px;
+  border-bottom: 1px solid #4a4a4a;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.errorItemRow:last-child {
+  border-bottom: none;
+}
+
+.errorItemRow strong {
+  color: #ffa500;
+}
+
+.errorItemMessage {
+  display: block;
+  font-size: 0.85em;
+  color: #aaa;
+  margin-top: 2px;
+  white-space: pre-wrap;
+  word-break: break-all;
 }

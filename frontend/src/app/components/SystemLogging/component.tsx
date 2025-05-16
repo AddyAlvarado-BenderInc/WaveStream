@@ -22,6 +22,12 @@ interface FailedItem {
     productName: string;
 }
 
+interface ErrorItem {
+    task: string;
+    productName: string;
+    message: string;
+}
+
 interface LatestTaskInfo {
     taskId: string;
     productName?: string;
@@ -32,6 +38,7 @@ const SystemLogging: React.FC = () => {
     const [completedTasks, setCompletedTasks] = useState<string[]>([]);
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [failedItems, setFailedItems] = useState<FailedItem[]>([]);
+    const [errorItems, setErrorItems] = useState<ErrorItem[]>([]);
     const [latestTaskInfo, setLatestTaskInfo] = useState<LatestTaskInfo | null>(null);
     const [latestBatchInfo, setLatestBatchInfo] = useState<LatestTaskInfo | null>(null);
     const logsEndRef = useRef<HTMLDivElement>(null);
@@ -64,6 +71,12 @@ const SystemLogging: React.FC = () => {
         const automationCompletedRegex = /^\[Automation Completed\] Automation run finished\. Products processed: \d+\. Products successfully saved: \d+\.$/;
         if (automationCompletedRegex.test(message)) {
             status = "AUTOMATION_SUMMARY";
+        }
+
+
+        const errorLogRegex = /\[Error\]/i;
+        if (errorLogRegex.test(message)) {
+            status = "ERROR_LOG";
         }
 
         const taskRegex = /(?:\[Task\s*(\d+)|Task\s*(\d+))/i;
@@ -257,6 +270,18 @@ const SystemLogging: React.FC = () => {
                     }
                     return prevFailed;
                 });
+            } else if (status === "ERROR_LOG") {
+                const taskForError = generalTaskId || "N/A";
+                const productForError = generalProductName || "Unknown Product";
+                setErrorItems(prevErrorItems => {
+
+
+
+                    if (!prevErrorItems.some(item => item.task === taskForError && item.productName === productForError && item.message === logEntryMessage)) {
+                        return [...prevErrorItems, { task: taskForError, productName: productForError, message: logEntryMessage }];
+                    }
+                    return prevErrorItems;
+                });
             }
         };
 
@@ -308,6 +333,7 @@ const SystemLogging: React.FC = () => {
             case "ATTEMPT": return styles.logAttempt;
             case "CANCELLED": return styles.logCancelled;
             case "AUTOMATION_SUMMARY": return styles.logAutomationSummary;
+            case "ERROR_LOG": return styles.logErrorHighlight;
             default: return "";
         }
     };
@@ -415,6 +441,7 @@ const SystemLogging: React.FC = () => {
                                 <button className={styles.clearButton} onClick={() => {
                                     setLogs([]);
                                     setFailedItems([]);
+                                    setErrorItems([]);
                                     setCompletedTasks([]);
                                     setLatestTaskInfo(null);
                                     setLatestBatchInfo(null);
@@ -467,6 +494,26 @@ const SystemLogging: React.FC = () => {
                                 {failedItems.map((item, index) => (
                                     <div key={index} className={styles.failedItemRow}>
                                         Task {item.task}: <strong style={{ marginLeft: '5px' }}>{item.productName}</strong>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className={styles.errorItemsContainer}>
+                        <div className={styles.errorItemsHeader}>
+                            <h3 className={errorItems.length > 0 ? styles.hasErrors : ''}>
+                                Detected Errors | <span className={errorItems.length > 0 ? styles.errorCount : ''}>{errorItems.length}</span>
+                            </h3>
+                        </div>
+                        {errorItems.length === 0 ? (
+                            <p className={styles.noErrorItems}>No specific errors flagged.</p>
+                        ) : (
+                            <div className={styles.errorItemsTable}>
+                                {errorItems.map((item, index) => (
+                                    <div key={index} className={styles.errorItemRow}>
+                                        Task {item.task}: <strong style={{ marginLeft: '5px' }}>{item.productName}</strong>
+                                        <span className={styles.errorItemMessage}>{item.message.substring(0, 100)}...</span>
                                     </div>
                                 ))}
                             </div>

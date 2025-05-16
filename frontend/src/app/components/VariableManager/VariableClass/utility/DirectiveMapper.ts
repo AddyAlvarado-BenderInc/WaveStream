@@ -46,4 +46,12 @@ export const directiveMap: DirectiveMap = {
         type: "attribute",
         effect: "Length"
     },
+    "$REPEAT" : {
+        type: "attribute",
+        effect: "Repeat"
+    },
+    "$REPLACE" : {
+        type: "attribute",
+        effect: "Replace"
+    },
 };

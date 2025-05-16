@@ -674,9 +674,9 @@ public class Wavekey
             try
             {
                 await Task.WhenAll(allDownloadTasks);
-                logger.LogInformation(
-                    "All file downloads/transformations completed for JSON data."
-                );
+                // logger.LogInformation(
+                //     "All file downloads/transformations completed for JSON data."
+                // );
             }
             catch (Exception ex)
             {
@@ -785,7 +785,7 @@ public class Wavekey
         try
         {
             await Task.WhenAll(allDownloadTasks);
-            logger.LogInformation("All file downloads/transformations completed for dynamic data.");
+            // logger.LogInformation("All file downloads/transformations completed for dynamic data.");
         }
         catch (Exception ex)
         {

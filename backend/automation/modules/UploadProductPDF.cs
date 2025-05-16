@@ -76,10 +76,10 @@ namespace backend.automation.modules
                         catch (Exception ex)
                         {
                             await signalRLogger(
-                                $"[Task {taskId}] Error accepting dialog: {ex.Message}"
+                                $"[Task {taskId}] [Error] Error accepting dialog: {ex.Message}"
                             );
                             Console.WriteLine(
-                                $"[Task {taskId}] Error accepting dialog: {ex.Message}"
+                                $"[Task {taskId}] [Error] Error accepting dialog: {ex.Message}"
                             );
                         }
                         finally
@@ -118,10 +118,10 @@ namespace backend.automation.modules
                     catch (Exception ex)
                     {
                         await signalRLogger(
-                            $"[Task {taskId}] Error clicking delete button or during post-click operation (Attempt {currentDeleteAttempt + 1}): {ex.Message}"
+                            $"[Task {taskId}] [Error] Error clicking delete button or during post-click operation (Attempt {currentDeleteAttempt + 1}): {ex.Message}"
                         );
                         Console.WriteLine(
-                            $"[Task {taskId}] Error clicking delete button or during post-click operation (Attempt {currentDeleteAttempt + 1}): {ex.Message}"
+                            $"[Task {taskId}] [Error] Error clicking delete button or during post-click operation (Attempt {currentDeleteAttempt + 1}): {ex.Message}"
                         );
                         if (page != null && !page.IsClosed && dialogHandler != null)
                         {
@@ -135,10 +135,10 @@ namespace backend.automation.modules
                 if (currentDeleteAttempt >= maxDeleteAttempts)
                 {
                     await signalRLogger(
-                        $"[Task {taskId}] Reached max PDF delete attempts ({maxDeleteAttempts}). There might still be files left."
+                        $"[Task {taskId}] [Error] Reached max PDF delete attempts ({maxDeleteAttempts}). There might still be files left."
                     );
                     Console.WriteLine(
-                        $"[Task {taskId}] Reached max PDF delete attempts ({maxDeleteAttempts}). There might still be files left."
+                        $"[Task {taskId}] [Error] Reached max PDF delete attempts ({maxDeleteAttempts}). There might still be files left."
                     );
                 }
                 else
@@ -154,10 +154,10 @@ namespace backend.automation.modules
             catch (Exception ex)
             {
                 await signalRLogger(
-                    $"[Task {taskId}] General error in ClearAllPDFs: {ex.Message}."
+                    $"[Task {taskId}] [Error] General error in ClearAllPDFs: {ex.Message}."
                 );
                 Console.WriteLine(
-                    $"[Task {taskId}] General error in ClearAllPDFs: {ex.Message}. StackTrace: {ex.StackTrace}"
+                    $"[Task {taskId}] [Error] General error in ClearAllPDFs: {ex.Message}. StackTrace: {ex.StackTrace}"
                 );
 
                 throw;
@@ -200,7 +200,14 @@ namespace backend.automation.modules
             }
             else if (pdfData is string s && !string.IsNullOrEmpty(s))
             {
-                pdfFilenames = new JArray(s);
+                try
+                {
+                    pdfFilenames = JArray.Parse(s);
+                }
+                catch (Newtonsoft.Json.JsonReaderException)
+                {
+                    pdfFilenames = new JArray(s);
+                }
             }
             else if (
                 pdfData is JValue jv
@@ -209,6 +216,30 @@ namespace backend.automation.modules
             )
             {
                 pdfFilenames = new JArray(jv.ToString());
+            }
+            else if (pdfData is null)
+            {
+                await signalRLogger(
+                    $"[Task {taskId}] PDF data is null for {productName}. Skipping upload."
+                );
+                Console.WriteLine(
+                    $"[Task {taskId}] PDF data is null for {productName}. Skipping upload."
+                );
+                return;
+            }
+            else
+            {
+                var typeName = pdfData?.GetType().FullName ?? "null";
+                await signalRLogger(
+                    $"[Task {taskId}] [Error] PDF data is of an unexpected type '{typeName}' for {productName}. Expected JArray, JObject with 'Composite', or string."
+                );
+                Console.WriteLine(
+                    $"[Task {taskId}] [Error] PDF data is of an unexpected type '{typeName}' for {productName}. Expected JArray, JObject with 'Composite', or string."
+                );
+                throw new ArgumentException(
+                    $"Unexpected PDF data type: {typeName}",
+                    nameof(pdfData)
+                );
             }
 
             if (pdfFilenames == null || !pdfFilenames.HasValues)
@@ -236,12 +267,13 @@ namespace backend.automation.modules
             catch (Exception ex)
             {
                 await signalRLogger(
-                    $"[Task {taskId}] Failed to clear existing PDFs for {productName}. Aborting upload. Error: {ex.Message}"
+                    $"[Task {taskId}] [Error] Failed to clear existing PDFs for {productName}. Aborting upload. Error: {ex.Message}"
                 );
                 Console.WriteLine(
-                    $"[Task {taskId}] Failed to clear existing PDFs for {productName}. Aborting upload. Error: {ex.Message}"
+                    $"[Task {taskId}] [Error] Failed to clear existing PDFs for {productName}. Aborting upload. Error: {ex.Message}"
                 );
-                return;
+
+                throw;
             }
 
             List<string> validFilePathsToUpload = new List<string>();
@@ -251,10 +283,10 @@ namespace backend.automation.modules
                 if (string.IsNullOrEmpty(filename))
                 {
                     await signalRLogger(
-                        $"[Task {taskId}] Encountered an empty PDF filename for {productName}. Skipping this entry."
+                        $"[Task {taskId}] [Error] Encountered an empty PDF filename for {productName}. Skipping this entry."
                     );
                     Console.WriteLine(
-                        $"[Task {taskId}] Encountered an empty PDF filename for {productName}. Skipping this entry."
+                        $"[Task {taskId}] [Error] Encountered an empty PDF filename for {productName}. Skipping this entry."
                     );
                     continue;
                 }
@@ -270,10 +302,10 @@ namespace backend.automation.modules
                 else
                 {
                     await signalRLogger(
-                        $"[Task {taskId}] PDF file not found at '{filePath}' for {productName}. Skipping this file."
+                        $"[Task {taskId}] [Error] PDF file not found at '{filePath}' for {productName}. Skipping this file."
                     );
                     Console.WriteLine(
-                        $"[Task {taskId}] PDF file not found at '{filePath}' for {productName}. Skipping this file."
+                        $"[Task {taskId}] [Error] PDF file not found at '{filePath}' for {productName}. Skipping this file."
                     );
                 }
             }
@@ -281,10 +313,10 @@ namespace backend.automation.modules
             if (!validFilePathsToUpload.Any())
             {
                 await signalRLogger(
-                    $"[Task {taskId}] No valid PDF files found to upload for {productName} after checking paths."
+                    $"[Task {taskId}] [Error] No valid PDF files found to upload for {productName} after checking paths. All specified files were missing or invalid."
                 );
                 Console.WriteLine(
-                    $"[Task {taskId}] No valid PDF files found to upload for {productName} after checking paths."
+                    $"[Task {taskId}] [Error] No valid PDF files found to upload for {productName} after checking paths. All specified files were missing or invalid."
                 );
                 return;
             }
@@ -350,10 +382,10 @@ namespace backend.automation.modules
                 catch (Exception ex)
                 {
                     await signalRLogger(
-                        $"[Task {taskId}] Error uploading PDF '{Path.GetFileName(filePathToUpload)}' for {productName}. Error: {ex.Message}"
+                        $"[Task {taskId}] [Error] Error uploading PDF '{Path.GetFileName(filePathToUpload)}' for {productName}. Error: {ex.Message}"
                     );
                     Console.WriteLine(
-                        $"[Task {taskId}] Error uploading PDF '{Path.GetFileName(filePathToUpload)}' for {productName}. Error: {ex.Message}"
+                        $"[Task {taskId}] [Error] Error uploading PDF '{Path.GetFileName(filePathToUpload)}' for {productName}. Error: {ex.Message}"
                     );
                 }
             }
