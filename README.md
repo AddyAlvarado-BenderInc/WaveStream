@@ -10,7 +10,7 @@ The frontend feels like a sleeker, more automation-oriented version of Excel or 
 
 ## Synopsis
 
-**(Space reserved for your project synopsis - describe what the project does in a few sentences here.)**
+WaveStream is an open-source business automation project designed to streamline data-intensive processes. It features a powerful Next.js frontend that functions like an advanced spreadsheet for creating and managing data (exportable as CSV or JSON), and a robust ASP.NET Core backend boilerplate for building custom automation workflows using tools like Playwright. Initially focused on tasks like data entry and product management, WaveStream has evolved into a versatile, table-centric tool adaptable to various business automation needs, with plans for future REST API integration for automatic data updates.
 
 ## Key Features
 

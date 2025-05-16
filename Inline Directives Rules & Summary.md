@@ -1,4 +1,3 @@
-````markdown
 # Main Key String Inline Operations Syntax and Examples
 
 ## Overview
@@ -214,7 +213,8 @@ Invalid: Syntax Error: $INIT cannot pair with another manager directive ($COMP)
 
 Feel free to use this document as a reference when configuring the Variable Manager.
 
-```
 ## Final Thoughts and Mission Statement
 
-As more cases for directives are built, there will be a requirement to put more thought into the logic as the only data type most of these directives accept are Array, String, and Number. A good use case for each directive is building effects on the table, this prevents needing to create new object entries in the table, saving performance and database/storage space while keeping the codebase more maintainable and the table feature-rich. As the codebase scales, inline directives prevent the need to create new object data and future-bloat.
+As more cases for directives are developed, greater attention will need to be paid to the underlying logic. This is especially important since most directives primarily accept three data types: Array, String, and Number. A key strength of these directives is their ability to create table effects directly. This approach eliminates the need to create new object entries in the table, which not only enhances performance but also reduces database and storage requirements.
+
+Additionally, this method helps maintain a more manageable codebase while keeping the table feature-rich. As the project scales, inline directives play a crucial role in avoiding the creation of unnecessary object data, thereby mitigating future bloat and ensuring long-term maintainability.
