@@ -1,13 +1,15 @@
-using Npgsql;
 using dotenv.net;
+using Npgsql;
 
 public class DatabaseService
 {
-    private string _connectionString;
+    private readonly string _connectionString =
+        Environment.GetEnvironmentVariable("DATABASE_URI") ?? string.Empty;
+
     public DatabaseService()
     {
         DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { ".env" }));
-        _connectionString = DotEnv.Read()["DATABASE_URI"];
+
         try
         {
             using var connection = new NpgsqlConnection(_connectionString);
@@ -23,6 +25,7 @@ public class DatabaseService
             Console.WriteLine($"Error: {ex.Message}");
         }
     }
+
     public void Connect()
     {
         try
