@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # This script is used to start the server for the WaveKey application.
+# It starts both the backend (.NET) and frontend (Node.js) servers.
+# Feel free to modify the script as needed for your environment.
 
-# Get the directory where the script is located
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 echo "Attempting to start backend server from: $SCRIPT_DIR/backend"
@@ -17,7 +18,6 @@ echo "Backend server PID: $C_SHARP_PID"
 echo "Frontend server PID: $FRONTEND_PID"
 echo "Waiting for servers to complete... Press Ctrl+C to stop."
 
-# Wait for the background processes to finish
 wait $C_SHARP_PID $FRONTEND_PID
 
 echo "Servers have shut down."

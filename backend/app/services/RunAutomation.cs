@@ -197,7 +197,7 @@ class runAuto
                             else
                             {
                                 var skippedMessage =
-                                    $"[Task {currentTaskId}] [Error] Product {currentProductName} was skipped or failed processing before save.";
+                                    $"[Task {currentTaskId}] [Error?] Product {currentProductName} was skipped or failed processing before save.";
                                 Console.WriteLine(skippedMessage);
                                 await _signalRLogger($"[Automation] {skippedMessage}");
                                 Interlocked.Increment(ref processedCount);
@@ -389,7 +389,7 @@ class runAuto
                                 $"[SaveTask (from Task {originalTaskId})] [Error] Page for {productName} did not close after save attempt.";
                             Console.WriteLine(notClosedMsg);
                             await _signalRLogger(
-                                $"[USER] [Error] SAVE_WARN: Product '{productName}' (Task {originalTaskId}) page did not close as expected after save attempt."
+                                $"[USER] [Fail] SAVE_WARN: Product '{productName}' (Task {originalTaskId}) page did not close as expected after save attempt."
                             );
                             if (!detailPage.IsClosed)
                                 await detailPage.CloseAsync();
@@ -401,7 +401,7 @@ class runAuto
                             $"[SaveTask (from Task {originalTaskId})] [Error] Detail page for {productName} was null or already closed before save attempt.";
                         Console.WriteLine(noPageMsg);
                         await _signalRLogger(
-                            $"[USER] [Error] SAVE_FAIL: Product '{productName}' (Task {originalTaskId}) - Page not available for saving."
+                            $"[USER] [Fail] SAVE_FAIL: Product '{productName}' (Task {originalTaskId}) - Page not available for saving."
                         );
                     }
                 }
@@ -411,7 +411,7 @@ class runAuto
                         $"[SaveTask (from Task {originalTaskId})] [Error] Operation cancelled while attempting to save {productName}.";
                     Console.WriteLine(cancelMessage);
                     await _signalRLogger(
-                        $"[USER] [Error] SAVE_CANCELLED: Product '{productName}' (Task {originalTaskId}) - Save cancelled."
+                        $"[USER] [Fail] SAVE_CANCELLED: Product '{productName}' (Task {originalTaskId}) - Save cancelled."
                     );
                     if (detailPage != null && !detailPage.IsClosed)
                     {
@@ -424,7 +424,7 @@ class runAuto
                         $"[SaveTask (from Task {originalTaskId})] [Error] Error saving product {productName}: {ex.Message}";
                     Console.WriteLine(exMessage);
                     await _signalRLogger(
-                        $"[USER] [Error] SAVE_FAIL: Product '{productName}' (Task {originalTaskId}) - Error during save: {ex.Message.Split('\n')[0]}"
+                        $"[USER] [Fail] SAVE_FAIL: Product '{productName}' (Task {originalTaskId}) - Error during save: {ex.Message.Split('\n')[0]}"
                     );
                     if (detailPage != null && !detailPage.IsClosed)
                     {

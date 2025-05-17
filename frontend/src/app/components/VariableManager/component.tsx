@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import VariableClass from '../VariableManager/VariableClass/component';
+import React, { useMemo, useState } from "react";
+import VariableClass from "../VariableManager/VariableClass/component";
 import {
     addVariableClassArray,
     clearAllVariableClassArray,
@@ -7,19 +7,25 @@ import {
     addVariablePackage,
     clearAllVariablePackage,
     deleteVariablePackage,
-} from '@/app/store/productManagerSlice';
-import { tableSheetData, tableCellData, ProductManager, IGlobalVariablePackage, variablePackageArray } from '../../../../types/productManager';
-import ParameterizationTab from '../VariableManager/ParameterTab/component';
-import { RootState } from '@/app/store/store';
-import { useSelector, useDispatch } from 'react-redux';
-import Table from '../Table/component';
-import styles from './component.module.css';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { PackagerTab } from './PackagerTab/component';
-import { DisplayPackageClass } from './PackageClass/component';
-import { convertToTableFormat } from '@/app/utility/packageDataTransformer';
-import SystemLogging from '../SystemLogging/component';
+} from "@/app/store/productManagerSlice";
+import {
+    tableSheetData,
+    tableCellData,
+    ProductManager,
+    IGlobalVariablePackage,
+    variablePackageArray,
+} from "../../../../types/productManager";
+import ParameterizationTab from "../VariableManager/ParameterTab/component";
+import { RootState } from "@/app/store/store";
+import { useSelector, useDispatch } from "react-redux";
+import Table from "../Table/component";
+import styles from "./component.module.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { PackagerTab } from "./PackagerTab/component";
+import { DisplayPackageClass } from "./PackageClass/component";
+import { convertToTableFormat } from "@/app/utility/packageDataTransformer";
+import SystemLogging from "../SystemLogging/component";
 
 interface VariableDataState {
     tableSheet: tableSheetData[];
@@ -28,29 +34,37 @@ interface VariableDataState {
 type VariableRowDataState = Record<string, tableCellData>;
 
 interface PendingPackageData {
-    variableData: Record<string, {
+    variableData: Record<
+        string,
+        {
+            dataId: number;
+            value: {
+                filename: string[];
+                url: string[];
+            };
+        } | null
+    >;
+}
+
+type VariableDataProp = Record<
+    string,
+    {
         dataId: number;
         value: {
             filename: string[];
             url: string[];
         };
-    } | null>
-}
-
-type VariableDataProp = Record<string, {
-    dataId: number;
-    value: {
-        filename: string[];
-        url: string[];
-    };
-} | null>;
+    } | null
+>;
 
 interface VariableManagerProps {
     productManager: ProductManager;
     variableData: VariableDataState;
     setVariableData: React.Dispatch<React.SetStateAction<VariableDataState>>;
     variableRowData: VariableRowDataState;
-    setVariableRowData: React.Dispatch<React.SetStateAction<VariableRowDataState>>;
+    setVariableRowData: React.Dispatch<
+        React.SetStateAction<VariableRowDataState>
+    >;
     setApprovedTableCellClear?: React.Dispatch<React.SetStateAction<boolean>>;
     setApprovedTableSheetClear?: React.Dispatch<React.SetStateAction<boolean>>;
     killAutomation: (server: string) => Promise<void>;
@@ -75,27 +89,41 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     selectedServerForAutomation,
 }) => {
     const [parameterizationOpen, setParameterizationOpen] = useState(false);
-    const [parameterizationData, setParameterizationData] = useState<object | null>(null);
-    const [pendingPackageData, setPendingPackageData] = useState<PendingPackageData | null>(null);
+    const [parameterizationData, setParameterizationData] = useState<
+        object | null
+    >(null);
+    const [pendingPackageData, setPendingPackageData] =
+        useState<PendingPackageData | null>(null);
     const [packagerOpen, setPackagerOpen] = useState(false);
     const [originAssignment, setOriginAssignment] = useState("");
     const [sendToSheetModal, setSendToSheetModal] = useState(false);
-    const [selectedClassKey, setSelectedClassKey] = useState<string>('');
-    const [variableClassIdentifier, setVariableClassIdentifier] = useState<number | null | undefined>(null);
+    const [selectedClassKey, setSelectedClassKey] = useState<string>("");
+    const [variableClassIdentifier, setVariableClassIdentifier] = useState<
+        number | null | undefined
+    >(null);
     const [rowsPopulated, setRowsPopulated] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [hideButton, setHideButton] = useState(false);
     const [concatModal, setConcatModal] = useState(false);
-    const [concatOption, setConcatOption] = useState<string>('');
+    const [concatOption, setConcatOption] = useState<string>("");
     const [hideVariableClass, setHideVariableClass] = useState(false);
     const [hidePackageClass, setHidePackageClass] = useState(false);
     const [editingItemId, setEditingItemId] = useState<number | null>(null);
-    const [editPrefillData, setEditPrefillData] = useState<{ name: string, params: any[] } | null>(null);
-    const [packageIdentifier, setPackageIdentifier] = useState<number | null | undefined>(null);
-    let [addOrSend, setAddOrSend] = useState<string>('send');
+    const [editPrefillData, setEditPrefillData] = useState<{
+        name: string;
+        params: any[];
+    } | null>(null);
+    const [packageIdentifier, setPackageIdentifier] = useState<
+        number | null | undefined
+    >(null);
+    let [addOrSend, setAddOrSend] = useState<string>("send");
 
-    const globalVariableClass = useSelector((state: RootState) => state.variables.variableClassArray);
-    const globalPackageClass = useSelector((state: RootState) => state.variables.variableIconPackage);
+    const globalVariableClass = useSelector(
+        (state: RootState) => state.variables.variableClassArray
+    );
+    const globalPackageClass = useSelector(
+        (state: RootState) => state.variables.variableIconPackage
+    );
 
     const dispatch = useDispatch();
 
@@ -104,7 +132,6 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     }, [variableRowData]);
 
     const handleOpenParameterizationTab = (variableClasses: object) => {
-
         setParameterizationData(variableClasses);
         setParameterizationOpen(true);
         setEditingItemId(null);
@@ -112,14 +139,17 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const handlePackagedData = (dataFromVariableClass: PendingPackageData) => {
-
-        if (!dataFromVariableClass || !dataFromVariableClass.variableData || Object.values(dataFromVariableClass.variableData).length === 0) {
+        if (
+            !dataFromVariableClass ||
+            !dataFromVariableClass.variableData ||
+            Object.values(dataFromVariableClass.variableData).length === 0
+        ) {
             toast.error("No files selected to package.");
             return;
         }
         setPendingPackageData(dataFromVariableClass);
         setPackagerOpen(true);
-    }
+    };
 
     const handleSubmitTableData = (tableSheetData: tableSheetData[]) => {
         setVariableData((prevState) => ({
@@ -146,50 +176,65 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const itemForModal = useMemo(() => {
-        if (variableClassIdentifier === null || variableClassIdentifier === undefined) {
+        if (
+            variableClassIdentifier === null ||
+            variableClassIdentifier === undefined
+        ) {
             return null;
         }
-        const sourceArray = Array.isArray(globalVariableClass) ? globalVariableClass : [];
-        return sourceArray.find(item => item?.dataId === variableClassIdentifier);
+        const sourceArray = Array.isArray(globalVariableClass)
+            ? globalVariableClass
+            : [];
+        return sourceArray.find((item) => item?.dataId === variableClassIdentifier);
     }, [variableClassIdentifier, globalVariableClass]);
 
     const packageItemForModal = useMemo(() => {
         if (packageIdentifier === null || packageIdentifier === undefined) {
             return null;
         }
-        const sourceArray = Array.isArray(globalPackageClass) ? globalPackageClass : [];
-        return sourceArray.find(item => item?.dataId === packageIdentifier);
+        const sourceArray = Array.isArray(globalPackageClass)
+            ? globalPackageClass
+            : [];
+        return sourceArray.find((item) => item?.dataId === packageIdentifier);
     }, [packageIdentifier, globalPackageClass]);
 
     const handleSendToSheet = (
-        variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
+        variableDataRecord: Record<
+            string,
+            { dataId: number; value: string } | null
+        >,
         selectedKey: string,
         id: number | null | undefined
     ) => {
-
         if (!selectedKey) {
-            toast.error('Please select a class key');
+            toast.error("Please select a class key");
             return;
         }
 
         if (id === null) {
-            toast.error('Invalid item ID');
+            toast.error("Invalid item ID");
             return;
         }
 
-        const dataToAdd: (string | undefined)[] = Object.values(variableDataRecord).map(item => item?.value);
+        const dataToAdd: (string | undefined)[] = Object.values(
+            variableDataRecord
+        ).map((item) => item?.value);
 
-        const selectedKeyObject = variableData.tableSheet.find(item => item.value === selectedKey);
+        const selectedKeyObject = variableData.tableSheet.find(
+            (item) => item.value === selectedKey
+        );
         if (!selectedKeyObject) {
-            toast.error(`Selected class key "${selectedKey}" not found in table headers.`);
+            toast.error(
+                `Selected class key "${selectedKey}" not found in table headers.`
+            );
             return;
         }
 
-        setVariableRowData(prevData => {
+        setVariableRowData((prevData) => {
             const updatedData = { ...prevData };
 
             let nextRowIndex = 0;
-            Object.keys(updatedData).forEach(key => {
+            Object.keys(updatedData).forEach((key) => {
                 const match = key.match(/^(.+)_row_(\d+)$/);
                 if (match) {
                     const baseKey = match[1];
@@ -199,7 +244,6 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     }
                 }
             });
-
 
             if (dataToAdd.length > 0) {
                 dataToAdd.forEach((itemValue, index) => {
@@ -212,10 +256,11 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                         isPackage: false,
                         isDisabled: false,
                     };
-
                 });
             } else {
-                console.warn("No data values found in variableDataRecord to add to the sheet.");
+                console.warn(
+                    "No data values found in variableDataRecord to add to the sheet."
+                );
             }
 
             return updatedData;
@@ -225,22 +270,25 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const handleSendComposite = (
-        variableDataRecord: Record<string, { dataId: number; value: string } | null>,
+        variableDataRecord: Record<
+            string,
+            { dataId: number; value: string } | null
+        >,
         selectedKey: string,
         id: number | null | undefined
     ) => {
-
-
         if (!selectedKey) {
-            toast.error('Please select a class key (column) for the composite.');
+            toast.error("Please select a class key (column) for the composite.");
             return;
         }
         if (id === null || id === undefined) {
-            toast.error('Invalid source item ID for composite. Cannot identify Variable Class.');
+            toast.error(
+                "Invalid source item ID for composite. Cannot identify Variable Class."
+            );
             return;
         }
 
-        const currentItem = globalVariableClass.find(item => item?.dataId === id);
+        const currentItem = globalVariableClass.find((item) => item?.dataId === id);
         if (!currentItem) {
             toast.error("Could not find the Variable Class definition.");
             console.error("handleSendComposite: currentItem not found for ID:", id);
@@ -248,89 +296,95 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         }
         const mksString = currentItem.name;
 
-
         const compRegex = /^\$COMP<([^>]+)>$/;
         const allDirectCompositeValues: string[][] = [];
 
         for (const param of Object.values(variableDataRecord)) {
-            if (param && typeof param.value === 'string') {
+            if (param && typeof param.value === "string") {
                 const valueStr = param.value;
                 const regexMatch = compRegex.exec(valueStr);
 
                 if (regexMatch) {
-
                     const valuesStringInsideBrackets = regexMatch[1];
                     const directValues = valuesStringInsideBrackets
-                        .split('-')
-                        .map(val => val.trim())
-                        .filter(val => val.length > 0);
+                        .split("-")
+                        .map((val) => val.trim())
+                        .filter((val) => val.length > 0);
 
                     if (directValues.length > 0) {
                         allDirectCompositeValues.push(directValues);
-
                     } else {
-                        console.warn(`handleSendComposite: Found a $COMP<> directive in parameter value "${valueStr}" that yielded no values after splitting by '-'. Content: "${valuesStringInsideBrackets}". Skipping.`);
+                        console.warn(
+                            `handleSendComposite: Found a $COMP<> directive in parameter value "${valueStr}" that yielded no values after splitting by '-'. Content: "${valuesStringInsideBrackets}". Skipping.`
+                        );
                     }
                 }
             }
         }
 
         if (allDirectCompositeValues.length > 0) {
-
             let compositesSuccessfullyAdded = 0;
 
-            allDirectCompositeValues.forEach((currentCompositeValues, compBlockIndex) => {
-
-
-
-                setVariableRowData(prevData => {
-                    const updatedData = { ...prevData };
-                    let nextRowIndex = 0;
-                    Object.keys(updatedData).forEach(keyInTable => {
-                        const rowMatch = keyInTable.match(/^(.+)_row_(\d+)$/);
-                        if (rowMatch) {
-                            const baseKey = rowMatch[1];
-                            const rowNum = parseInt(rowMatch[2], 10);
-                            if (baseKey === selectedKey && !isNaN(rowNum)) {
-                                nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+            allDirectCompositeValues.forEach(
+                (currentCompositeValues, compBlockIndex) => {
+                    setVariableRowData((prevData) => {
+                        const updatedData = { ...prevData };
+                        let nextRowIndex = 0;
+                        Object.keys(updatedData).forEach((keyInTable) => {
+                            const rowMatch = keyInTable.match(/^(.+)_row_(\d+)$/);
+                            if (rowMatch) {
+                                const baseKey = rowMatch[1];
+                                const rowNum = parseInt(rowMatch[2], 10);
+                                if (baseKey === selectedKey && !isNaN(rowNum)) {
+                                    nextRowIndex = Math.max(nextRowIndex, rowNum + 1);
+                                }
                             }
-                        }
+                        });
+
+                        const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
+                        updatedData[newRowKey] = {
+                            classKey: selectedKey,
+                            index: nextRowIndex,
+                            value: currentCompositeValues,
+                            isComposite: true,
+                            isPackage: false,
+                            isDisabled: false,
+                        };
+
+                        return updatedData;
                     });
-
-                    const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
-                    updatedData[newRowKey] = {
-                        classKey: selectedKey,
-                        index: nextRowIndex,
-                        value: currentCompositeValues,
-                        isComposite: true,
-                        isPackage: false,
-                        isDisabled: false,
-                    };
-
-                    return updatedData;
-                });
-                compositesSuccessfullyAdded++;
-            });
+                    compositesSuccessfullyAdded++;
+                }
+            );
 
             if (compositesSuccessfullyAdded > 0) {
-                toast.success(`${compositesSuccessfullyAdded} composite item(s) added to column "${selectedKey}" based on $COMP directives in parameter values.`);
+                toast.success(
+                    `${compositesSuccessfullyAdded} composite item(s) added to column "${selectedKey}" based on $COMP directives in parameter values.`
+                );
             } else {
-
-
-                toast.info("No composite data could be generated from the $COMP directives found in parameter values.");
+                toast.info(
+                    "No composite data could be generated from the $COMP directives found in parameter values."
+                );
             }
         } else {
-            const fallbackCompositeValues: string[] = Object.values(variableDataRecord)
-                .map(item => item?.value)
-                .filter((value): value is string => typeof value === 'string' && value.trim() !== '');
+            const fallbackCompositeValues: string[] = Object.values(
+                variableDataRecord
+            )
+                .map((item) => item?.value)
+                .filter(
+                    (value): value is string =>
+                        typeof value === "string" && value.trim() !== ""
+                );
 
             if (fallbackCompositeValues.length === 0) {
-                toast.warn('No valid string data found in the Variable Class parameters (variableDataRecord) to form a composite.');
+                toast.warn(
+                    "No valid string data found in the Variable Class parameters (variableDataRecord) to form a composite."
+                );
             } else {
-                setVariableRowData(prevData => {
+                setVariableRowData((prevData) => {
                     const updatedData = { ...prevData };
                     let nextRowIndex = 0;
-                    Object.keys(updatedData).forEach(keyInTable => {
+                    Object.keys(updatedData).forEach((keyInTable) => {
                         const rowMatch = keyInTable.match(/^(.+)_row_(\d+)$/);
                         if (rowMatch) {
                             const baseKey = rowMatch[1];
@@ -353,7 +407,9 @@ const VariableManager: React.FC<VariableManagerProps> = ({
 
                     return updatedData;
                 });
-                toast.success(`Composite data (from all string parameters) added to column "${selectedKey}".`);
+                toast.success(
+                    `Composite data (from all string parameters) added to column "${selectedKey}".`
+                );
             }
         }
 
@@ -365,42 +421,58 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         selectedKey: string,
         key: number | null | undefined
     ) => {
-        const sourcePackageObject: variablePackageArray | null | undefined = packageItemForModal;
-
-
+        const sourcePackageObject: variablePackageArray | null | undefined =
+            packageItemForModal;
 
         if (!selectedKey) {
-            toast.error('Please select a class key (column) for the package.');
+            toast.error("Please select a class key (column) for the package.");
             return;
         }
         if (key === null || key === undefined) {
-            toast.error('Invalid source package ID provided.');
-            console.error("handleSendPackage: Received invalid package ID (null or undefined).");
+            toast.error("Invalid source package ID provided.");
+            console.error(
+                "handleSendPackage: Received invalid package ID (null or undefined)."
+            );
             return;
         }
 
         if (!sourcePackageObject || sourcePackageObject.dataId !== key) {
-            toast.error("Internal error: Could not find the package data object to send.");
-            console.error(`handleSendPackage: Mismatch or missing packageItemForModal. Expected ID: ${key}, Found:`, sourcePackageObject);
+            toast.error(
+                "Internal error: Could not find the package data object to send."
+            );
+            console.error(
+                `handleSendPackage: Mismatch or missing packageItemForModal. Expected ID: ${key}, Found:`,
+                sourcePackageObject
+            );
             return;
         }
 
-        const packageToSend: IGlobalVariablePackage | null = convertToTableFormat(sourcePackageObject);
+        const packageToSend: IGlobalVariablePackage | null =
+            convertToTableFormat(sourcePackageObject);
 
         if (!packageToSend) {
-            toast.error("Internal error: Failed to prepare package data for the table.");
-            console.error(`handleSendPackage: convertToTableFormat returned null for source package ID ${key}`);
+            toast.error(
+                "Internal error: Failed to prepare package data for the table."
+            );
+            console.error(
+                `handleSendPackage: convertToTableFormat returned null for source package ID ${key}`
+            );
             return;
         }
-        if (!sourcePackageObject.variableData || Object.keys(sourcePackageObject.variableData).length === 0) {
-            console.warn(`handleSendPackage: Source Package ID ${key} had no variableData content. Sending converted structure anyway.`);
+        if (
+            !sourcePackageObject.variableData ||
+            Object.keys(sourcePackageObject.variableData).length === 0
+        ) {
+            console.warn(
+                `handleSendPackage: Source Package ID ${key} had no variableData content. Sending converted structure anyway.`
+            );
         }
 
-        setVariableRowData(prevData => {
+        setVariableRowData((prevData) => {
             const updatedData = { ...prevData };
 
             let nextRowIndex = 0;
-            Object.keys(updatedData).forEach(dataKey => {
+            Object.keys(updatedData).forEach((dataKey) => {
                 const match = dataKey.match(/^(.+)_row_(\d+)$/);
                 if (match) {
                     const baseKey = match[1];
@@ -410,7 +482,6 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     }
                 }
             });
-
 
             const newRowKey = `${selectedKey}_row_${nextRowIndex}`;
 
@@ -423,50 +494,54 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                 isDisabled: false,
             };
 
-
-
             return updatedData;
         });
 
         setSendToSheetModal(false);
         setPackageIdentifier(null);
-
     };
 
     const handleConcatOption = (
         e: React.MouseEvent<HTMLButtonElement>,
-        object: Record<string, { dataId: number; value: string; } | null>,
+        object: Record<string, { dataId: number; value: string } | null>,
         selectedClassKey: string,
-        variableClassIdentifier: number | null | undefined,
+        variableClassIdentifier: number | null | undefined
     ) => {
         e.preventDefault();
         if (!concatOption) {
             alert("Please choose a run option.");
             return;
         }
-        handleConcatenateToSheet(object, selectedClassKey, variableClassIdentifier, concatOption);
-    }
+        handleConcatenateToSheet(
+            object,
+            selectedClassKey,
+            variableClassIdentifier,
+            concatOption
+        );
+    };
 
     const handleConcatenateToSheet = (
-        variableDataRecord: Record<string, { dataId: number; value: string; } | null>,
+        variableDataRecord: Record<
+            string,
+            { dataId: number; value: string } | null
+        >,
         selectedKey: string,
         id: number | null | undefined,
         option: string
     ) => {
-
         setConcatModal(false);
         setSendToSheetModal(false);
-    }
+    };
 
     const modalOptionsVariableClass = (
         key: number | null | undefined,
-        object: any,
+        object: any
     ) => {
         let name = "";
 
         if (Array.isArray(object)) {
             const firstValue = object[0];
-            if (firstValue && typeof firstValue === 'string') {
+            if (firstValue && typeof firstValue === "string") {
                 const match = firstValue.match(/^([^\s]+)/);
                 name = match ? match[1] : "";
             }
@@ -474,9 +549,14 @@ const VariableManager: React.FC<VariableManagerProps> = ({
 
         let valuesToDisplay: any[] = [];
 
-        if (object && typeof object === 'object') {
-            const variableRecord = object as Record<string, { dataId: number, value: string } | null>;
-            valuesToDisplay = Object.values(variableRecord).map(item => item?.value);
+        if (object && typeof object === "object") {
+            const variableRecord = object as Record<
+                string,
+                { dataId: number; value: string } | null
+            >;
+            valuesToDisplay = Object.values(variableRecord).map(
+                (item) => item?.value
+            );
         }
 
         return (
@@ -486,15 +566,13 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     <div className={styles.modalPayload}>
                         <div className={styles.payloadContainer}>
                             <h5>Payload</h5>
-                            <DisplayVariableClass
-                                object={valuesToDisplay}
-                            />
+                            <DisplayVariableClass object={valuesToDisplay} />
                         </div>
                     </div>
                     <button
                         className={styles.closeButton}
                         onClick={() => {
-                            setSendToSheetModal(false)
+                            setSendToSheetModal(false);
                             setPackageIdentifier(null);
                         }}
                     >
@@ -515,24 +593,32 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                         </select>
                         <div className={styles.modalButtons}>
                             <button
-                                type='button'
+                                type="button"
                                 className={styles.submitButton}
                                 disabled={!selectedClassKey}
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    handleSendToSheet(object, selectedClassKey, variableClassIdentifier);
+                                    handleSendToSheet(
+                                        object,
+                                        selectedClassKey,
+                                        variableClassIdentifier
+                                    );
                                     setSendToSheetModal(false);
                                 }}
                             >
                                 Send
                             </button>
                             <button
-                                type='button'
+                                type="button"
                                 className={styles.submitButton}
                                 disabled={!selectedClassKey}
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    handleSendComposite(object, selectedClassKey, variableClassIdentifier);
+                                    handleSendComposite(
+                                        object,
+                                        selectedClassKey,
+                                        variableClassIdentifier
+                                    );
                                 }}
                             >
                                 Send As Composite
@@ -540,14 +626,18 @@ const VariableManager: React.FC<VariableManagerProps> = ({
 
                             <>
                                 <button
-                                    type='button'
+                                    type="button"
                                     className={styles.submitButton}
                                     disabled={!selectedClassKey}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         handleDeleteVariableClass(key);
                                         setVariableClassIdentifier(-1);
-                                        handleSendToSheet(object, selectedClassKey, variableClassIdentifier);
+                                        handleSendToSheet(
+                                            object,
+                                            selectedClassKey,
+                                            variableClassIdentifier
+                                        );
 
                                         setSendToSheetModal(false);
                                     }}
@@ -555,7 +645,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                     Send & Delete
                                 </button>
                                 <button
-                                    type='button'
+                                    type="button"
                                     className={styles.submitButton}
                                     disabled={!selectedClassKey}
                                     onClick={(e) => {
@@ -582,15 +672,24 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                         onChange={(e) => setConcatOption(e.target.value)}
                                         className={styles.concatSelect}
                                     >
-                                        <option value="" disabled>-- Select a Concatenate Option --</option>
+                                        <option value="" disabled>
+                                            -- Select a Concatenate Option --
+                                        </option>
                                         <option value="front">Send to Front</option>
                                         <option value="back">Send to Back</option>
                                     </select>
                                     <button
-                                        type='button'
+                                        type="button"
                                         className={styles.submitButton}
                                         disabled={!concatOption}
-                                        onClick={(e) => handleConcatOption(e, object, selectedClassKey, variableClassIdentifier)}
+                                        onClick={(e) =>
+                                            handleConcatOption(
+                                                e,
+                                                object,
+                                                selectedClassKey,
+                                                variableClassIdentifier
+                                            )
+                                        }
                                     >
                                         Concatenate
                                     </button>
@@ -605,20 +704,21 @@ const VariableManager: React.FC<VariableManagerProps> = ({
 
     const modalOptionsVariablePackage = (
         key: number | null | undefined,
-        object: VariableDataProp,
+        object: VariableDataProp
     ) => {
         let name = packageItemForModal?.name || "";
         let valuesToDisplay: string[] = [];
 
-        if (object && typeof object === 'object') {
-            const firstEntryKey = Object.keys(object).find(k => object[k] !== null);
+        if (object && typeof object === "object") {
+            const firstEntryKey = Object.keys(object).find((k) => object[k] !== null);
             const firstEntry = firstEntryKey ? object[firstEntryKey] : null;
 
             if (firstEntry?.value?.filename) {
-                valuesToDisplay = firstEntry.value.filename.filter((fname): fname is string => fname !== undefined);
+                valuesToDisplay = firstEntry.value.filename.filter(
+                    (fname): fname is string => fname !== undefined
+                );
             }
         }
-
 
         return (
             <div className={styles.modal}>
@@ -627,15 +727,13 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     <div className={styles.modalPayload}>
                         <div className={styles.payloadContainer}>
                             <h5>Payload (Filenames)</h5>
-                            <DisplayVariableClass
-                                object={valuesToDisplay}
-                            />
+                            <DisplayVariableClass object={valuesToDisplay} />
                         </div>
                     </div>
                     <button
                         className={styles.closeButton}
                         onClick={() => {
-                            setSendToSheetModal(false)
+                            setSendToSheetModal(false);
                             setPackageIdentifier(null);
                         }}
                     >
@@ -656,7 +754,7 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                         </select>
                         <div className={styles.modalButtons}>
                             <button
-                                type='button'
+                                type="button"
                                 className={styles.submitButton}
                                 disabled={!selectedClassKey}
                                 onClick={(e) => {
@@ -698,8 +796,9 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     const handleClearAllPackages = () => {
-        if (window.confirm("Are you sure you want to delete all variable packages?")) {
-
+        if (
+            window.confirm("Are you sure you want to delete all variable packages?")
+        ) {
             dispatch(clearAllVariablePackage());
             setPackageIdentifier(null);
         } else {
@@ -708,15 +807,15 @@ const VariableManager: React.FC<VariableManagerProps> = ({
     };
 
     /* const handleEditVariableClass = ( itemToEdit: VariableClassPayload | null | undefined ) => {
-        if (!itemToEdit) {
-            toast.error("No item to edit");
-            return;
-        }
-        setParameterizationData({ name: itemToEdit.name });
-        setEditPrefillData({ name: itemToEdit.name, params: [] });
-        setEditingItemId(itemToEdit.dataId);
-        setParameterizationOpen(true);
-    } */
+            if (!itemToEdit) {
+                toast.error("No item to edit");
+                return;
+            }
+            setParameterizationData({ name: itemToEdit.name });
+            setEditPrefillData({ name: itemToEdit.name, params: [] });
+            setEditingItemId(itemToEdit.dataId);
+            setParameterizationOpen(true);
+        } */
 
     const displayVariableClass = (object: Record<string, any>) => {
         const itemsPerPage = 5;
@@ -729,86 +828,124 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             (currentPage + 1) * itemsPerPage
         );
 
-        const filteredEntries = currentEntries.map(([key, value], index) => {
-            let displayValue: React.ReactNode;
-            const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
+        const filteredEntries = currentEntries
+            .map(([key, value], index) => {
+                let displayValue: React.ReactNode;
+                const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
 
-            if (key === 'variableData' && typeof value === 'object' && value !== null) {
-                const innerValues = Object.values(value);
-                if (innerValues.length > 0 && innerValues.every(item => typeof item === 'object' && item !== null && 'value' in item)) {
-                    const joinedValues = innerValues.map(item => (item as { value: string }).value).join(", ");
-                    if (joinedValues.length > 100) {
-                        return (
-                            <div style={{ maxHeight: '100px', overflowY: 'auto', padding: '4px', whiteSpace: 'normal', wordBreak: 'break-word', marginRight: '35px' }}>
-                                {joinedValues}
-                            </div>
+                if (
+                    key === "variableData" &&
+                    typeof value === "object" &&
+                    value !== null
+                ) {
+                    const innerValues = Object.values(value);
+                    if (
+                        innerValues.length > 0 &&
+                        innerValues.every(
+                            (item) =>
+                                typeof item === "object" && item !== null && "value" in item
                         )
+                    ) {
+                        const joinedValues = innerValues
+                            .map((item) => (item as { value: string }).value)
+                            .join(", ");
+                        if (joinedValues.length > 100) {
+                            return (
+                                <div
+                                    style={{
+                                        maxHeight: "100px",
+                                        overflowY: "auto",
+                                        padding: "4px",
+                                        whiteSpace: "normal",
+                                        wordBreak: "break-word",
+                                        marginRight: "35px",
+                                    }}
+                                >
+                                    {joinedValues}
+                                </div>
+                            );
+                        } else {
+                            displayValue = joinedValues;
+                        }
                     } else {
-                        displayValue = joinedValues;
+                        displayValue = (
+                            <pre
+                                style={{
+                                    maxHeight: "100px",
+                                    overflowY: "auto",
+                                    border: "1px solid #eee",
+                                    padding: "4px",
+                                    margin: 0,
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                }}
+                            >
+                                {JSON.stringify(value, null, 2)}
+                            </pre>
+                        );
                     }
-                } else {
+                } else if (key === "dataLength" && typeof value === "number") {
+                    displayValue = value.toString();
+                } else if (key === "dataId" && typeof value === "number") {
+                    displayValue = value.toString();
+                } else if (
+                    key === "name" &&
+                    (value === "" || value === null || value === undefined)
+                ) {
+                    displayValue = "No Name";
+                } else if (typeof value === "object" && value !== null) {
                     displayValue = (
-                        <pre style={{
-                            maxHeight: '100px',
-                            overflowY: 'auto',
-                            border: '1px solid #eee',
-                            padding: '4px',
-                            margin: 0,
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word'
-                        }}>
+                        <pre
+                            style={{
+                                maxHeight: "100px",
+                                overflowY: "auto",
+                                border: "1px solid #eee",
+                                padding: "4px",
+                                margin: 0,
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                            }}
+                        >
                             {JSON.stringify(value, null, 2)}
                         </pre>
                     );
+                } else {
+                    displayValue =
+                        value !== null && value !== undefined ? value.toString() : "";
                 }
-            } else if (key === 'dataLength' && typeof value === 'number') {
-                displayValue = value.toString();
-            } else if (key === 'dataId' && typeof value === 'number') {
-                displayValue = value.toString();
-            } else if (key === 'name' && (value === "" || value === null || value === undefined)) {
-                displayValue = "No Name";
-            } else if (typeof value === 'object' && value !== null) {
-                displayValue = (
-                    <pre style={{
-                        maxHeight: '100px',
-                        overflowY: 'auto',
-                        border: '1px solid #eee',
-                        padding: '4px',
-                        margin: 0,
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-word'
-                    }}>
-                        {JSON.stringify(value, null, 2)}
-                    </pre>
+
+                if (displayValue === "" && key !== "name") {
+                    return null;
+                }
+
+                return (
+                    <div
+                        key={`${currentPage}-${key}-${index}`}
+                        className={styles.variableClassItem}
+                    >
+                        <span className={styles.variableValue}>
+                            <b>{capitalizedKey}</b>
+                            <br />
+                            <span style={{ fontSize: "10pt" }}>{displayValue}</span>
+                        </span>
+                    </div>
                 );
-            } else {
-                displayValue = value !== null && value !== undefined ? value.toString() : "";
-            }
-
-            if (displayValue === "" && key !== 'name') {
-                return null;
-            }
-
-            return (
-                <div key={`${currentPage}-${key}-${index}`} className={styles.variableClassItem}>
-                    <span className={styles.variableValue}>
-                        <b>{capitalizedKey}</b>
-                        <br />
-                        <span style={{ fontSize: "10pt" }}>{displayValue}</span>
-                    </span>
-                </div>
-            );
-        }).filter(Boolean);
+            })
+            .filter(Boolean);
 
         return (
             <div className={styles.variableClassContainer}>
                 <div className={styles.variableItems}>
-                    {filteredEntries.length > 0 ? filteredEntries : <span className={styles.noData}>No Data</span>}
+                    {filteredEntries.length > 0 ? (
+                        filteredEntries
+                    ) : (
+                        <span className={styles.noData}>No Data</span>
+                    )}
                 </div>
                 {displayableEntries.length > itemsPerPage && (
                     <div className={styles.paginationControls}>
                         <button
-                            onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                            onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
                             disabled={currentPage === 0}
                             className={styles.pageButton}
                         >
@@ -820,7 +957,9 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                         </span>
 
                         <button
-                            onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                            onClick={() =>
+                                setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))
+                            }
                             disabled={currentPage === totalPages - 1}
                             className={styles.pageButton}
                         >
@@ -837,11 +976,11 @@ const VariableManager: React.FC<VariableManagerProps> = ({
         if (hideButton) {
             setHideButton(false);
         }
-    }
+    };
 
     const handleHidePackageClass = () => {
         setHidePackageClass(!hidePackageClass);
-    }
+    };
 
     const toggleVariableClass = () => {
         setHideVariableClass(true);
@@ -884,72 +1023,89 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                     title={`hide`}
                                 >
                                     <h2>VariableClass | </h2>
-                                    <span>{globalVariableClass.length} total rows | {hideButton ? "Show" : "Hide"}</span>
+                                    <span>
+                                        {globalVariableClass.length} total rows |{" "}
+                                        {hideButton ? "Show" : "Hide"}
+                                    </span>
                                 </button>
                             </div>
                             {!hideButton && (
                                 <>
-                                    {globalVariableClass.map((currentVariableClassData) => {
-                                        const variableClassDataId = currentVariableClassData?.dataId;
-                                        const variableClassData = currentVariableClassData?.variableData || {};
+                                    <div
+                                        className={`${globalVariableClass.length > 3
+                                                ? styles.packageListGrid
+                                                : ""
+                                            }`}
+                                    >
+                                        {globalVariableClass.map((currentVariableClassData) => {
+                                            const variableClassDataId =
+                                                currentVariableClassData?.dataId;
+                                            const variableClassData =
+                                                currentVariableClassData?.variableData || {};
 
-
-                                        if (sendToSheetModal && variableClassIdentifier === variableClassDataId) {
-
-                                        }
-                                        return (
-                                            <div key={variableClassDataId} className={styles.variableClassRow + `_row_${variableClassDataId}`}>
+                                            if (
+                                                sendToSheetModal &&
+                                                variableClassIdentifier === variableClassDataId
+                                            ) {
+                                            }
+                                            return (
                                                 <div
-                                                    className={styles.variableClassContent}
-                                                    onClick={() => {
-                                                        toggleVariableClass();
-                                                    }}
+                                                    key={variableClassDataId}
+                                                    className={
+                                                        styles.variableClassRow +
+                                                        `_row_${variableClassDataId}`
+                                                    }
                                                 >
-                                                    {displayVariableClass(currentVariableClassData || [])}
-                                                    <div className={styles.buttonContainer}>
-                                                        <button
-                                                            className={styles.actionButton}
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                setVariableClassIdentifier(variableClassDataId);
-                                                                setSendToSheetModal(true);
-                                                                setAddOrSend('send');
-                                                            }}
-                                                            title={`Send to Sheet`}
-                                                        >
-                                                            Send To Sheet
-                                                        </button>
-                                                        {/* Decided that adding the edit button is probably not worth the trouble 
-                                                            because I could just work on saving params and mks in database. Maybe
-                                                            I'll reconsider this again in the future. */}
-                                                        {/* <button
-                                                            className={styles.deleteButton}
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                handleEditVariableClass(currentVariableClassData);
-                                                            }}
-                                                            title={`Edit Class`}
-                                                        >
-                                                            Edit Class
-                                                        </button> */}
-                                                        <button
-                                                            className={styles.deleteButton}
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                handleDeleteVariableClass(variableClassDataId);
-                                                                if (variableClassIdentifier === variableClassDataId) {
-                                                                    setVariableClassIdentifier(null);
-                                                                }
-                                                            }}
-                                                            title={`Delete`}
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                    <div
+                                                        className={styles.variableClassContent}
+                                                        onClick={() => {
+                                                            toggleVariableClass();
+                                                        }}
+                                                    >
+                                                        {displayVariableClass(
+                                                            currentVariableClassData || {}
+                                                        )}
+                                                        <div className={styles.buttonContainer}>
+                                                            <button
+                                                                className={styles.actionButton}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setVariableClassIdentifier(
+                                                                        variableClassDataId
+                                                                    );
+                                                                    setSendToSheetModal(true);
+                                                                    setAddOrSend("send");
+                                                                }}
+                                                                title={`Send to Sheet`}
+                                                            >
+                                                                Send To Sheet
+                                                            </button>
+                                                            <button
+                                                                className={styles.deleteButton}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    handleDeleteVariableClass(
+                                                                        variableClassDataId
+                                                                    );
+                                                                    if (
+                                                                        variableClassIdentifier ===
+                                                                        variableClassDataId
+                                                                    ) {
+                                                                        setVariableClassIdentifier(null);
+                                                                    }
+                                                                }}
+                                                                title={`Delete`}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        )
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                     <div className={styles.actionButtons}>
                                         <button
                                             className={styles.deleteAllButton}
@@ -958,7 +1114,8 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                                                 handleClearAllVariableClass();
                                                 setVariableClassIdentifier(0);
                                             }}
-                                        >Delete All
+                                        >
+                                            Delete All
                                         </button>
                                     </div>
                                 </>
@@ -968,49 +1125,74 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                     {globalPackageClass.length > 0 && (
                         <div className={styles.variableClassList}>
                             <div className={styles.hideButtonContainer}>
-                                <button className={styles.hideButton} onClick={handleHidePackageClass} title={`Toggle Package List`}>
+                                <button
+                                    className={styles.hideButton}
+                                    onClick={handleHidePackageClass}
+                                    title={`Toggle Package List`}
+                                >
                                     <h2>Variable Packages | </h2>
-                                    <span>{globalPackageClass.length} total | {hidePackageClass ? "Show" : "Hide"}</span>
+                                    <span>
+                                        {globalPackageClass.length} total |{" "}
+                                        {hidePackageClass ? "Show" : "Hide"}
+                                    </span>
                                 </button>
                             </div>
                             {!hidePackageClass && (
                                 <>
-                                    {globalPackageClass.map((currentPackageData) => {
-                                        const packageDataId = currentPackageData?.dataId;
-                                        return (
-                                            <div key={`pkg-${packageDataId}`} className={styles.variableClassRow}>
-                                                <div className={styles.variableClassContent}>
-                                                    <DisplayPackageClass packageItem={currentPackageData} />
-                                                    <div className={styles.buttonContainer}>
-                                                        <button
-                                                            className={styles.actionButton}
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                setPackageIdentifier(packageDataId);
-                                                                setVariableClassIdentifier(null);
-                                                                setSendToSheetModal(true);
-                                                            }}
-                                                            title={`Send Package to Sheet`}
-                                                        >
-                                                            Send To Sheet
-                                                        </button>
-                                                        <button
-                                                            className={styles.deleteButton}
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                handleDeletePackage(packageDataId);
-                                                            }}
-                                                            title={`Delete Package`}
-                                                        >
-                                                            Delete
-                                                        </button>
+                                    <div
+                                        className={`${globalPackageClass.length > 3
+                                                ? styles.packageListGrid
+                                                : ""
+                                            }`}
+                                    >
+                                        {globalPackageClass.map((currentPackageData) => {
+                                            const packageDataId = currentPackageData?.dataId;
+                                            return (
+                                                <div
+                                                    key={`pkg-${packageDataId}`}
+                                                    className={styles.variableClassRow}
+                                                >
+                                                    <div className={styles.variableClassContent}>
+                                                        <DisplayPackageClass
+                                                            packageItem={currentPackageData}
+                                                        />
+                                                        <div className={styles.buttonContainer}>
+                                                            <button
+                                                                className={styles.actionButton}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    setPackageIdentifier(packageDataId);
+                                                                    setVariableClassIdentifier(null);
+                                                                    setSendToSheetModal(true);
+                                                                }}
+                                                                title={`Send Package to Sheet`}
+                                                            >
+                                                                Send To Sheet
+                                                            </button>
+                                                            <button
+                                                                className={styles.deleteButton}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    handleDeletePackage(packageDataId);
+                                                                }}
+                                                                title={`Delete Package`}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
+                                    </div>
                                     <div className={styles.actionButtons}>
-                                        <button className={styles.deleteAllButton} onClick={(e) => { e.preventDefault(); handleClearAllPackages(); }}>
+                                        <button
+                                            className={styles.deleteAllButton}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleClearAllPackages();
+                                            }}
+                                        >
                                             Delete All Packages
                                         </button>
                                     </div>
@@ -1032,8 +1214,14 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                             }
                         }}
                     >
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                            {modalOptionsVariableClass(itemForModal.dataId, itemForModal.variableData)}
+                        <div
+                            className={styles.modalContent}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {modalOptionsVariableClass(
+                                itemForModal.dataId,
+                                itemForModal.variableData
+                            )}
                         </div>
                     </div>
                 )}
@@ -1048,8 +1236,14 @@ const VariableManager: React.FC<VariableManagerProps> = ({
                             }
                         }}
                     >
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                            {modalOptionsVariablePackage(packageItemForModal.dataId, packageItemForModal.variableData)}
+                        <div
+                            className={styles.modalContent}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {modalOptionsVariablePackage(
+                                packageItemForModal.dataId,
+                                packageItemForModal.variableData
+                            )}
                         </div>
                     </div>
                 )}
@@ -1076,74 +1270,73 @@ const VariableManager: React.FC<VariableManagerProps> = ({
             </div>
             <ToastContainer />
         </>
-    )
-}
+    );
+};
 
 const DisplayVariableClass: React.FC<{
-    object: Record<string, any>
-}> =
-    ({ object }) => {
-        const [currentPage, setCurrentPage] = useState(0);
-        const itemsPerPage = 10;
+    object: Record<string, any>;
+}> = ({ object }) => {
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 10;
 
-        const entries = Object.entries(object);
-        const totalPages = Math.ceil(entries.length / itemsPerPage);
+    const entries = Object.entries(object);
+    const totalPages = Math.ceil(entries.length / itemsPerPage);
 
-        const currentEntries = entries.slice(
-            currentPage * itemsPerPage,
-            (currentPage + 1) * itemsPerPage
-        );
+    const currentEntries = entries.slice(
+        currentPage * itemsPerPage,
+        (currentPage + 1) * itemsPerPage
+    );
 
-        const filteredEntries = currentEntries.map(([key, value], index) => {
-            let displayValue: string;
+    const filteredEntries = currentEntries.map(([key, value], index) => {
+        let displayValue: string;
 
-            if (Array.isArray(value)) {
-                displayValue = value.join(", ");
-            } else if (typeof value === "object" && value !== null) {
-                displayValue = JSON.stringify(value);
-            } else if (key === "name" && value === "") {
-                displayValue = "No Name";
-            } else {
-                displayValue = value.toString();
-            }
-
-            return (
-                <div key={`${currentPage}-${index}`} className={styles.variableClassItem}>
-                    <span className={styles.variableValue}>
-                        <span style={{ fontSize: "10pt" }}>{displayValue}</span>
-                    </span>
-                </div>
-            );
-        });
+        if (Array.isArray(value)) {
+            displayValue = value.join(", ");
+        } else if (typeof value === "object" && value !== null) {
+            displayValue = JSON.stringify(value);
+        } else if (key === "name" && value === "") {
+            displayValue = "No Name";
+        } else {
+            displayValue = value.toString();
+        }
 
         return (
-            <div className={styles.variableClassContainer}>
-                <div className={styles.variableItems}>
-                    {filteredEntries}
-                </div>
-                {entries.length > itemsPerPage && (
-                    <div className={styles.paginationControls}>
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                            disabled={currentPage === 0}
-                            className={styles.pageButton}
-                        >
-                            &lt; Prev
-                        </button>
-                        <span className={styles.pageIndicator}>
-                            Page {currentPage + 1} of {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                            disabled={currentPage === totalPages - 1}
-                            className={styles.pageButton}
-                        >
-                            Next &gt;
-                        </button>
-                    </div>
-                )}
+            <div key={`${currentPage}-${index}`} className={styles.variableClassItem}>
+                <span className={styles.variableValue}>
+                    <span style={{ fontSize: "10pt" }}>{displayValue}</span>
+                </span>
             </div>
         );
-    };
+    });
+
+    return (
+        <div className={styles.variableClassContainer}>
+            <div className={styles.variableItems}>{filteredEntries}</div>
+            {entries.length > itemsPerPage && (
+                <div className={styles.paginationControls}>
+                    <button
+                        onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+                        disabled={currentPage === 0}
+                        className={styles.pageButton}
+                    >
+                        &lt; Prev
+                    </button>
+                    <span className={styles.pageIndicator}>
+                        Page {currentPage + 1} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() =>
+                            setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))
+                        }
+                        disabled={currentPage === totalPages - 1}
+                        className={styles.pageButton}
+                    >
+                        Next &gt;
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};
 
 export default VariableManager;

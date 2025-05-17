@@ -91,34 +91,124 @@ const SystemLogging: React.FC = () => {
             status = "AUTOMATION_SUMMARY";
         }
 
-        const concurrentTasksRegex =
-            /\[Automation\] Total products to process: \d+\. Max concurrent processing tasks: (\d+)/i;
-        const concurrentMatch = message.match(concurrentTasksRegex);
-        if (concurrentMatch && concurrentMatch[1]) {
-            threads = parseInt(concurrentMatch[1], 10);
+        if (!status && message.startsWith("[USER] [Fail] SAVE_")) {
+            const failDetails = message.substring("[USER] [Fail] SAVE_".length);
+            const failType = failDetails.split(":")[0]?.trim().toUpperCase();
+
+            const pageCloseWarningRegex =
+                /page did not close as expected after save attempt/i;
+
+            if (failType === "WARN" && pageCloseWarningRegex.test(failDetails)) {
+                const atTaskMatch = failDetails.match(
+                    /At Task (\d+) with product '([^']*)'/i
+                );
+                const productTaskMatch = failDetails.match(
+                    /Product '([^']*)' \(Task (\d+)\)/i
+                );
+                const genericProductMatch = failDetails.match(/Product '([^']*)'/i);
+
+                if (atTaskMatch && atTaskMatch[1] && atTaskMatch[2]) {
+                    saveTaskId = atTaskMatch[1];
+                    productName = atTaskMatch[2].trim();
+                } else if (
+                    productTaskMatch &&
+                    productTaskMatch[1] &&
+                    productTaskMatch[2]
+                ) {
+                    productName = productTaskMatch[1].trim();
+                    saveTaskId = productTaskMatch[2];
+                } else if (genericProductMatch && genericProductMatch[1]) {
+                    productName = genericProductMatch[1].trim();
+                }
+            } else if (
+                failType === "FAIL" ||
+                failType === "WARN" ||
+                failType === "CANCELLED"
+            ) {
+                status = failType;
+
+                const atTaskMatch = failDetails.match(
+                    /At Task (\d+) with product '([^']*)'/i
+                );
+                const productTaskMatch = failDetails.match(
+                    /Product '([^']*)' \(Task (\d+)\)/i
+                );
+                const genericProductMatch = failDetails.match(/Product '([^']*)'/i);
+
+                if (atTaskMatch && atTaskMatch[1] && atTaskMatch[2]) {
+                    saveTaskId = atTaskMatch[1];
+                    productName = atTaskMatch[2].trim();
+                } else if (
+                    productTaskMatch &&
+                    productTaskMatch[1] &&
+                    productTaskMatch[2]
+                ) {
+                    productName = productTaskMatch[1].trim();
+                    saveTaskId = productTaskMatch[2];
+                } else if (genericProductMatch && genericProductMatch[1]) {
+                    productName = genericProductMatch[1].trim();
+                }
+            }
+        }
+
+        const failLogRegex = /\[Fail\]/i;
+        if (!status && failLogRegex.test(message)) {
+            status = "FAIL";
+        }
+
+        if (!status && message.startsWith("[USER] SAVE_")) {
+            const saveDetails = message.substring("[USER] SAVE_".length);
+            const saveStatusType = saveDetails.split(":")[0]?.trim().toUpperCase();
+
+            if (saveStatusType === "SUCCESS" || saveStatusType === "ATTEMPT") {
+                status = saveStatusType;
+
+                if (saveStatusType === "SUCCESS") {
+                    const successMatch = saveDetails.match(
+                        /Product '([^']*)'(?: \(Task (\d+)\))?/i
+                    );
+                    if (successMatch && successMatch[1]) {
+                        productName = successMatch[1].trim();
+                        if (successMatch[2]) {
+                            saveTaskId = successMatch[2];
+                        }
+                    }
+                } else if (saveStatusType === "ATTEMPT") {
+                    const attemptMatch = saveDetails.match(
+                        /Product '([^']*)' \(Task (\d+)\)/i
+                    );
+                    if (attemptMatch && attemptMatch[1] && attemptMatch[2]) {
+                        productName = attemptMatch[1].trim();
+                        saveTaskId = attemptMatch[2];
+                    }
+                }
+            }
         }
 
         const specificSkippedErrorRegex =
             /\[Automation\] \[Task (\d+)\] \[Error\] Product ([^ ]+) was skipped or failed processing before save/i;
         const specificSkippedMatch = message.match(specificSkippedErrorRegex);
-
-        if (specificSkippedMatch) {
+        if (!status && specificSkippedMatch) {
             status = "SKIPPED_ITEM";
             generalTaskId = specificSkippedMatch[1];
             generalProductName = specificSkippedMatch[2];
-        } else {
-            const errorLogRegex = /\[Error\]/i;
-            if (errorLogRegex.test(message)) {
-                status = "ERROR_LOG";
-            }
         }
 
-        if (status !== "SKIPPED_ITEM") {
-            const skippedLogPhraseRegex = /Skipped Task \d+ for product '([^']*)'/i;
-            const oldSkippedMatch = message.match(skippedLogPhraseRegex);
-            if (oldSkippedMatch) {
-                status = "SKIPPED";
-            }
+        const errorLogRegex = /\[Error\]/i;
+        if (!status && errorLogRegex.test(message)) {
+            status = "ERROR_LOG";
+        }
+
+        const skippedLogPhraseRegex = /Skipped Task \d+ for product '([^']*)'/i;
+        if (!status && skippedLogPhraseRegex.test(message)) {
+            status = "SKIPPED";
+        }
+
+        const concurrentTasksRegex =
+            /\[Automation\] Total products to process: \d+\. Max concurrent processing tasks: (\d+)/i;
+        const concurrentMatch = message.match(concurrentTasksRegex);
+        if (concurrentMatch && concurrentMatch[1]) {
+            threads = parseInt(concurrentMatch[1], 10);
         }
 
         if (!generalTaskId) {
@@ -131,53 +221,24 @@ const SystemLogging: React.FC = () => {
 
         if (generalTaskId && !generalProductName) {
             const productForTaskRegex = new RegExp(
-                `(?:Task\\s*${generalTaskId}[^']*'([^']*)'|Task\\s*${generalTaskId}.*for:\\s*([^\\n\\r]+))`,
+                `(?:Task\\s*${generalTaskId}[^']*'([^']+)'.*|Product\\s*'([^']+)'\\s*for Task\\s*${generalTaskId}|Task\\s*${generalTaskId}.*for:\\s*([^\\n\\r]+))`,
                 "i"
             );
             const productMatch = message.match(productForTaskRegex);
             if (productMatch) {
-                generalProductName = productMatch[1] || productMatch[2]?.trim();
+                generalProductName = (
+                    productMatch[1] ||
+                    productMatch[2] ||
+                    productMatch[3]
+                )?.trim();
             }
         }
 
-        if (message.startsWith("[USER] SAVE_") && status !== "AUTOMATION_SUMMARY") {
-            const saveStatus = message
-                .substring("[USER] SAVE_".length)
-                .split(":")[0]
-                ?.trim()
-                .toUpperCase();
-
-            if (status !== "SKIPPED_ITEM" && status !== "ERROR_LOG") {
-                status = saveStatus;
-            }
-
-            if (saveStatus === "FAIL") {
-                const failMatch = message.match(
-                    /At Task (\d+) with product '([^']*)'/i
-                );
-                if (failMatch && failMatch[1] && failMatch[2]) {
-                    saveTaskId = failMatch[1];
-                    productName = failMatch[2];
-                    if (!generalTaskId) generalTaskId = saveTaskId;
-                    if (!generalProductName) generalProductName = productName;
-                } else {
-                    const genericProductMatch = message.match(/Product '([^']*)'/i);
-                    if (genericProductMatch && genericProductMatch[1]) {
-                        productName = genericProductMatch[1];
-                        if (!generalProductName) generalProductName = productName;
-                    }
-                }
-            } else if (saveStatus === "SUCCESS") {
-                const successMatch = message.match(/Product '([^']*)'/i);
-                if (successMatch && successMatch[1]) {
-                    productName = successMatch[1];
-                    if (!generalProductName) generalProductName = productName;
-                }
-            }
-        }
-
-        if (!generalProductName && productName) {
+        if (productName && !generalProductName) {
             generalProductName = productName;
+        }
+        if (saveTaskId && !generalTaskId) {
+            generalTaskId = saveTaskId;
         }
 
         return {
@@ -271,16 +332,11 @@ const SystemLogging: React.FC = () => {
                 const numericGeneralTaskId = parseInt(generalTaskId, 10);
                 if (!isNaN(numericGeneralTaskId)) {
                     dispatch(setCurrentTask(numericGeneralTaskId));
+                    dispatch(setBatchTasks([numericGeneralTaskId]));
 
                     if (status === "SUCCESS") {
                         dispatch(addSavedTask(numericGeneralTaskId));
                     }
-
-                    if (status === "FAIL") {
-                        dispatch(addFailedTask(numericGeneralTaskId));
-                    }
-
-                    dispatch(setBatchTasks([numericGeneralTaskId]));
                 }
             }
 
@@ -346,35 +402,44 @@ const SystemLogging: React.FC = () => {
                     }
                     return prevSkipped;
                 });
-            } else if (status === "SUCCESS" && productName) {
-                setCompletedTasks((prevCompleted) => {
-                    if (!prevCompleted.includes(productName)) {
-                        return [...prevCompleted, productName];
+            } else if (status === "SUCCESS") {
+                const nameForCompleted = productName || generalProductName;
+                if (nameForCompleted) {
+                    setCompletedTasks((prevCompleted) => {
+                        if (!prevCompleted.includes(nameForCompleted)) {
+                            return [...prevCompleted, nameForCompleted];
+                        }
+                        return prevCompleted;
+                    });
+                }
+            } else if (status === "FAIL") {
+                const taskForFailedItem = taskId || generalTaskId || "N/A";
+                const productForFailedItem = productName || generalProductName;
+
+                if (productForFailedItem) {
+                    setFailedItems((prevFailed) => {
+                        if (
+                            !prevFailed.some(
+                                (item) =>
+                                    item.task === taskForFailedItem &&
+                                    item.productName === productForFailedItem
+                            )
+                        ) {
+                            return [
+                                ...prevFailed,
+                                { task: taskForFailedItem, productName: productForFailedItem },
+                            ];
+                        }
+                        return prevFailed;
+                    });
+                }
+
+                if (generalTaskId) {
+                    const numericGeneralTaskId = parseInt(generalTaskId, 10);
+                    if (!isNaN(numericGeneralTaskId)) {
+                        dispatch(addFailedTask(numericGeneralTaskId));
                     }
-                    return prevCompleted;
-                });
-            } else if (status === "FAIL" && productName && taskId) {
-                setFailedItems((prevFailed) => {
-                    if (
-                        !prevFailed.some(
-                            (item) => item.task === taskId && item.productName === productName
-                        )
-                    ) {
-                        return [...prevFailed, { task: taskId, productName }];
-                    }
-                    return prevFailed;
-                });
-            } else if (status === "FAIL" && productName && !taskId) {
-                setFailedItems((prevFailed) => {
-                    if (
-                        !prevFailed.some(
-                            (item) => item.productName === productName && item.task === "N/A"
-                        )
-                    ) {
-                        return [...prevFailed, { task: "N/A", productName }];
-                    }
-                    return prevFailed;
-                });
+                }
             } else if (status === "ERROR_LOG") {
                 const taskForError = generalTaskId || "N/A";
                 const productForError = generalProductName || "Unknown Product";

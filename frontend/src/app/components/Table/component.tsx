@@ -1542,6 +1542,28 @@ const Table: React.FC<TableProps> = ({
                                                                                                 <button
                                                                                                     onClick={(e) => {
                                                                                                         e.stopPropagation();
+                                                                                                        const currentCellKey = `${keyObj.value}_row_${rowIndex}`;
+                                                                                                        setVariableClassData((prevData) => {
+                                                                                                            const updatedData = { ...prevData };
+                                                                                                            if (updatedData[currentCellKey]) {
+                                                                                                                updatedData[currentCellKey] = {
+                                                                                                                    ...updatedData[currentCellKey],
+                                                                                                                    isDisabled: !updatedData[currentCellKey].isDisabled,
+                                                                                                                };
+                                                                                                            } else {
+                                                                                                                console.warn(`Cell data for ${currentCellKey} not found for disabling/enabling.`);
+                                                                                                            }
+                                                                                                            return updatedData;
+                                                                                                        });
+                                                                                                    }}
+                                                                                                    className={styles.cellAction}
+                                                                                                    title="Disable or Enable cell data"
+                                                                                                >
+                                                                                                    {cellData?.isDisabled ? "Enable" : "Disable"}
+                                                                                                </button>
+                                                                                                <button
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
                                                                                                         handleDeleteCell(
                                                                                                             keyObj.value,
                                                                                                             rowIndex

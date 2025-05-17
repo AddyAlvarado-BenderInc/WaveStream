@@ -3,7 +3,7 @@ using Npgsql;
 
 public class DatabaseService
 {
-    private readonly string _connectionString =
+    private readonly string PostgreSQLConnectionString =
         Environment.GetEnvironmentVariable("DATABASE_URI") ?? string.Empty;
 
     public DatabaseService()
@@ -12,7 +12,7 @@ public class DatabaseService
 
         try
         {
-            using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(PostgreSQLConnectionString);
             connection.Open();
             Console.WriteLine("Connected to PostgreSQL!");
 
@@ -30,7 +30,7 @@ public class DatabaseService
     {
         try
         {
-            using var connection = new NpgsqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(PostgreSQLConnectionString);
             connection.Open();
             Console.WriteLine("Connected to PostgreSQL!");
         }

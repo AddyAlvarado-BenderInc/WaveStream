@@ -1,0 +1,16 @@
+{
+    "folder-color.pathColors": [
+        {
+            "folderPath": "waveKey/frontend/models/",
+            "color": "foldercolorizer.color_990033"
+        },
+        {
+            "folderPath": "waveKey/frontend/lib/",
+            "color": "foldercolorizer.color_990033"
+        },
+        {
+            "folderPath": "waveKey/frontend/pages/api/",
+            "color": "foldercolorizer.color_990033"
+        }
+    ]
+}

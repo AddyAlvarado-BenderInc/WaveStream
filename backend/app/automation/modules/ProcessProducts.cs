@@ -284,7 +284,7 @@ namespace backend.automation.modules
                     if (retries >= maxRetries)
                     {
                         await signalRLogger(
-                            $"[USER] SAVE_FAIL: [Task {taskId}] [Error] Product '{productName}' page failed to open after {maxRetries} attempts. Last error: {ex.Message.Split('\n')[0]}."
+                            $"[USER] SAVE_FAIL: [Task {taskId}] [Fail] Product '{productName}' page failed to open after {maxRetries} attempts. Last error: {ex.Message.Split('\n')[0]}."
                         );
                         throw new Exception(
                             $"[Task {taskId}] [Error] Failed to open new page via click on product '{productName}' after {maxRetries} attempts. Last error: {ex.Message}",
@@ -666,7 +666,7 @@ namespace backend.automation.modules
                     $"[Task {taskId}] [Error] Error processing product {productName} before save: {ex.Message}"
                 );
                 await signalRLogger(
-                    $"[USER] SAVE_FAIL: [Task {taskId}] [Error] Product '{productName}' - Error during save: {ex.Message.Split('\n')[0]}"
+                    $"[USER] SAVE_FAIL: [Task {taskId}] [Fail] Product '{productName}' - Error during save: {ex.Message.Split('\n')[0]}"
                 );
                 if (newPage != null && !newPage.IsClosed)
                 {

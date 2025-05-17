@@ -121,5 +121,3 @@ WaveStream is packed with features to streamline data management and automation 
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute, please fork the repository and submit a pull request. For major changes, please open an issue first to discuss what you would like to change.
-
-*(You can add more specific contribution guidelines here if you wish)*

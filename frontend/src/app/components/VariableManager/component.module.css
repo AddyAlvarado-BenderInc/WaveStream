@@ -37,10 +37,14 @@
   max-height: 400px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--gray-alpha-200) var(--button-secondary-hover);
+  scrollbar-color: var(--gray-alpha-200) transparent;
 }
 
-.variableClassContainer button, .sendToSheetButton, .deleteAllButton, .deleteButton, .actionButton {
+.variableClassContainer button,
+.sendToSheetButton,
+.deleteAllButton,
+.deleteButton,
+.actionButton {
   cursor: pointer;
   color: var(--button-primary-hover);
   border: 1px solid var(--button-primary-hover);
@@ -53,20 +57,26 @@
   white-space: nowrap;
 }
 
-.variableClassContainer button:hover, .sendToSheetButton:hover, .deleteAllButton:hover, .deleteButton:hover, .actionButton:hover {
+.variableClassContainer button:hover,
+.sendToSheetButton:hover,
+.deleteAllButton:hover,
+.deleteButton:hover,
+.actionButton:hover {
   background-color: var(--button-primary-hover);
   color: var(--button-secondary-hover);
 }
 
+.deleteAllButton {
+  margin-top: 15px;
+}
+
 .variableClassContent {
-  /* height: 100%;
-  max-height: 500px;
-  overflow-y: auto; */
+  height: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  background-color: var(--button-secondary-hover);
+  background-color: transparent;
   border: 1px solid var(--button-primary-hover);
   border-radius: 5px;
   padding: 10px;
@@ -186,7 +196,7 @@
   background-color: inherit;
 }
 
-.payloadContent{
+.payloadContent {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -245,6 +255,16 @@
 
 .hideButton:hover {
   color: var(--button-primary-hover);
+}
+
+.packageListGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 15px;
+}
+
+.packageListGrid .variableClassRow {
+  align-self: start;
 }
 
 .concatModal {
