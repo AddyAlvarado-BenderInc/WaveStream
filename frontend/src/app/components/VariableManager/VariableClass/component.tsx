@@ -409,7 +409,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
                         }
                         return prevSelected;
                     } else {
-                        toast.info(`Selection cleared. Cannot mix Icon and PDF files. Selecting only ${fileInfo.filename}.`, { autoClose: 3500 });
                         return [fileInfo];
                     }
                 } else {
@@ -529,7 +528,6 @@ const VariableClass: React.FC<variableClassProps> = ({ onSave, productManager, o
         setSelectedFiles([]);
         setLocalIntegerError('');
         setIntVar([]);
-        toast.info("Inputs cleared");
     };
 
     const configureVariables = (e?: React.FormEvent) => {
