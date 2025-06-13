@@ -14,7 +14,7 @@ interface ProductIconManagerProps {
     onUpload: (files: File[]) => void;
 }
 
-const MAX_IMAGES = 30;
+const MAX_IMAGES = 100;
 
 const ProductIconManager: React.FC<ProductIconManagerProps> = ({
     icon, label, onUpload, onDelete

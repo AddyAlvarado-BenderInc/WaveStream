@@ -574,24 +574,34 @@ namespace backend.automation.modules
                 await signalRLogger(
                     $"[ProcessProducts Task {taskId}] After FillProductInfo for: {productName}"
                 );
-                await uploadProductIcon.UploadIconsAsync(
-                    taskId,
-                    productName,
-                    icon,
-                    newPage,
-                    signalRLogger
-                );
 
-                cancellationToken.ThrowIfCancellationRequested();
-                await productDetailFill.FillLongDescription(
-                    taskId,
-                    newPage,
-                    longDescription,
-                    productName,
-                    signalRLogger
-                );
+                if (productType != "Non Printed Products")
+                {
+                    await uploadProductIcon.UploadIconsAsync(
+                        taskId,
+                        productName,
+                        icon,
+                        newPage,
+                        signalRLogger
+                    );
 
-                cancellationToken.ThrowIfCancellationRequested();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await productDetailFill.FillLongDescription(
+                        taskId,
+                        newPage,
+                        longDescription,
+                        productName,
+                        signalRLogger
+                    );
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+                else
+                {
+                    await signalRLogger(
+                        $"[ProcessProducts Task {taskId}] Skipping Icon Upload, Long Description for Non Printed Product: {productName}"
+                    );
+                }
 
                 await productPricingAndBuyerConfiguration.ConfigurePricingAndBuyerSettingsAsync(
                     taskId,
@@ -623,23 +633,32 @@ namespace backend.automation.modules
                 );
 
                 cancellationToken.ThrowIfCancellationRequested();
-                await uploadProductPDF.UploadPDFAsync(
-                    taskId,
-                    newPage,
-                    productName,
-                    productType,
-                    pdf,
-                    signalRLogger
-                );
+                if (productType != "Non Printed Product")
+                {
+                    await uploadProductPDF.UploadPDFAsync(
+                        taskId,
+                        newPage,
+                        productName,
+                        productType,
+                        pdf,
+                        signalRLogger
+                    );
 
-                cancellationToken.ThrowIfCancellationRequested();
-                await ticketTemplateContainer.TicketTemplateSelectorAsync(
-                    taskId,
-                    newPage,
-                    ticketTemplate,
-                    productType,
-                    signalRLogger
-                );
+                    cancellationToken.ThrowIfCancellationRequested();
+                    await ticketTemplateContainer.TicketTemplateSelectorAsync(
+                        taskId,
+                        newPage,
+                        ticketTemplate,
+                        productType,
+                        signalRLogger
+                    );
+                }
+                else
+                {
+                    await signalRLogger(
+                        $"[ProcessProducts Task {taskId}] Skipping PDF Upload and Ticket Template for Non Printed Product: {productName}"
+                    );
+                }
 
                 cancellationToken.ThrowIfCancellationRequested();
                 Console.WriteLine($"[Task {taskId}] Product {productName} processing completed.");

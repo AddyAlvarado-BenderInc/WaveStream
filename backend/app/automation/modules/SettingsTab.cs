@@ -94,7 +94,7 @@ namespace backend.automation.modules
             string showQtyPriceSelector = @"input[value=""rdbShowPricing""]"
         )
         {
-            if (productType == "Product Matrix" || productType == "Non Printed Products")
+            if (productType == "Product Matrix")
             {
                 await signalRLogger(
                     $"[Task {taskId}] Product Type is '{productType}', skipping Settings Tab."
@@ -308,6 +308,12 @@ namespace backend.automation.modules
                 {
                     await signalRLogger(
                         $"[Task {taskId}] Print weight measurement selector does not exist on Ad Hoc, skipping related weight input logic."
+                    );
+                }
+                else if (productType == "Non Printed Products")
+                {
+                    await signalRLogger(
+                        $"[Task {taskId}] Print weight measurement selector does not exist on Non Printed Products, skipping related weight input logic."
                     );
                 }
                 else
