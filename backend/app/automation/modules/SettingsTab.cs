@@ -86,7 +86,7 @@ namespace backend.automation.modules
             string anyQuantitiesButton =
                 "#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__AnyQuantities",
             string advancedQuantitiesButton =
-                "#ctl00_ctl00_C_M_ctl00_W\\$ctl01_OrderQuantitiesCtrl__Advanced",
+                "#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Advanced",
             string inputElement =
                 @"input[name=""ctl00$ctl00$C$M$ctl00$W$ctl01$OrderQuantitiesCtrl$_Expression""]",
             string maxQtySelector =
@@ -105,46 +105,164 @@ namespace backend.automation.modules
             if (!string.IsNullOrEmpty(orderQuantities))
             {
                 await signalRLogger($"[Task {taskId}] Order Quantities: {orderQuantities}");
+
+                // Debug selector visibility
+                var anyQuantitiesLocator = page.Locator(anyQuantitiesButton);
+                var advancedQuantitiesLocator = page.Locator(advancedQuantitiesButton);
+
+                bool anyQuantitiesVisible = await anyQuantitiesLocator.IsVisibleAsync();
+                bool advancedQuantitiesVisible = await advancedQuantitiesLocator.IsVisibleAsync();
+
+                await signalRLogger(
+                    $"[Task {taskId}] DEBUG - Any Quantities button visible: {anyQuantitiesVisible}, selector: '{anyQuantitiesButton}'"
+                );
+                await signalRLogger(
+                    $"[Task {taskId}] DEBUG - Advanced Quantities button visible: {advancedQuantitiesVisible}, selector: '{advancedQuantitiesButton}'"
+                );
+
                 switch (orderQuantities)
                 {
                     case "AnyQuantity":
-                        await page.Locator(anyQuantitiesButton).ClickAsync();
-                        await signalRLogger(
-                            $"[Task {taskId}] Clicked Any Quantity for selected quantity: {orderQuantities}"
-                        );
-                        break;
-                    case "SpecificQuantity":
-                        await page.Locator(advancedQuantitiesButton).ClickAsync();
-                        await signalRLogger(
-                            $"[Task {taskId}] Clicked Advanced Quantities for selected quantity: {orderQuantities}"
-                        );
-                        var advancedRangesInputElement = page.Locator(inputElement);
-                        if (await advancedRangesInputElement.IsVisibleAsync())
+                        if (anyQuantitiesVisible)
                         {
+                            await anyQuantitiesLocator.ClickAsync();
                             await signalRLogger(
-                                $"[Task {taskId}] Found input element for Advanced Ranges"
-                            );
-                            await advancedRangesInputElement.FillAsync(advancedRanges ?? "");
-                            await page.Locator(
-                                    "#ctl00_ctl00_C_M_ctl00_W\\$ctl01_OrderQuantitiesCtrl_btnDone"
-                                )
-                                .ClickAsync();
-                            await signalRLogger(
-                                $"[Task {taskId}] Filled Advanced Ranges with: {advancedRanges}"
+                                $"[Task {taskId}] Clicked Any Quantity for selected quantity: {orderQuantities}"
                             );
                         }
                         else
                         {
                             await signalRLogger(
-                                $"[Task {taskId}] [Error] Input Element for Advanced Ranges not found"
+                                $"[Task {taskId}] [Error] Any Quantities button not visible with selector: '{anyQuantitiesButton}'"
+                            );
+                        }
+                        break;
+                    case "SpecificQuantity":
+                        if (advancedQuantitiesVisible)
+                        {
+                            await advancedQuantitiesLocator.ClickAsync();
+                            await signalRLogger(
+                                $"[Task {taskId}] Clicked Advanced Quantities for selected quantity: {orderQuantities}"
+                            );
+
+                            await Task.Delay(1000);
+                            var inputSelectors = new[]
+                            {
+                                inputElement,
+                                "#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl__Expression",
+                                "input[id*='OrderQuantitiesCtrl__Expression']",
+                                "input[name*='OrderQuantitiesCtrl$_Expression']",
+                            };
+
+                            ILocator? advancedRangesInputElement = null;
+                            string workingSelector = "";
+
+                            foreach (var selector in inputSelectors)
+                            {
+                                var testLocator = page.Locator(selector);
+                                // Add a small delay before checking each selector
+                                await Task.Delay(500);
+
+                                if (await testLocator.IsVisibleAsync())
+                                {
+                                    advancedRangesInputElement = testLocator;
+                                    workingSelector = selector;
+                                    break;
+                                }
+                                await signalRLogger(
+                                    $"[Task {taskId}] DEBUG - Selector '{selector}' not visible, trying next"
+                                );
+                            }
+
+                            // If still not found, try waiting for the element to appear with a longer timeout
+                            if (advancedRangesInputElement == null)
+                            {
+                                await signalRLogger(
+                                    $"[Task {taskId}] Input element not found immediately, waiting up to 5 seconds..."
+                                );
+
+                                try
+                                {
+                                    // Wait for any of the selectors to become visible
+                                    var firstSelector = inputSelectors[0];
+                                    await page.WaitForSelectorAsync(
+                                        firstSelector,
+                                        new PageWaitForSelectorOptions { Timeout = 5000 }
+                                    );
+                                    advancedRangesInputElement = page.Locator(firstSelector);
+                                    workingSelector = firstSelector;
+                                    await signalRLogger(
+                                        $"[Task {taskId}] Found input element after wait with selector: '{workingSelector}'"
+                                    );
+                                }
+                                catch (TimeoutException)
+                                {
+                                    await signalRLogger(
+                                        $"[Task {taskId}] [Error] Timeout waiting for input element to appear"
+                                    );
+                                }
+                            }
+
+                            if (advancedRangesInputElement != null)
+                            {
+                                await signalRLogger(
+                                    $"[Task {taskId}] Found input element for Advanced Ranges with selector: '{workingSelector}'"
+                                );
+                                await advancedRangesInputElement.FillAsync(advancedRanges ?? "10");
+
+                                var doneButtonLocator = page.Locator(
+                                    "#ctl00_ctl00_C_M_ctl00_W_ctl01_OrderQuantitiesCtrl_btnDone"
+                                );
+                                bool doneButtonVisible = await doneButtonLocator.IsVisibleAsync();
+                                await signalRLogger(
+                                    $"[Task {taskId}] DEBUG - Done button visible: {doneButtonVisible}"
+                                );
+
+                                if (doneButtonVisible)
+                                {
+                                    await doneButtonLocator.ClickAsync();
+                                    await signalRLogger(
+                                        $"[Task {taskId}] Filled Advanced Ranges with: {advancedRanges}"
+                                    );
+                                }
+                                else
+                                {
+                                    await signalRLogger(
+                                        $"[Task {taskId}] [Error] Done button not visible after filling advanced ranges"
+                                    );
+                                }
+                            }
+                            else
+                            {
+                                await signalRLogger(
+                                    $"[Task {taskId}] [Error] Input Element for Advanced Ranges not found with any of the attempted selectors"
+                                );
+                            }
+                        }
+                        else
+                        {
+                            await signalRLogger(
+                                $"[Task {taskId}] [Error] Advanced Quantities button not visible with selector: '{advancedQuantitiesButton}'"
                             );
                         }
                         break;
                     default:
                         await signalRLogger(
-                            $"[Task {taskId}] Order Quantities: '{orderQuantities}' - Default case, Clicked Advanced Button. Assuming skip or specific action."
+                            $"[Task {taskId}] Order Quantities: '{orderQuantities}' - Unknown value. Valid values are 'AnyQuantity' or 'SpecificQuantity'"
                         );
-                        await page.Locator(advancedQuantitiesButton).ClickAsync();
+                        if (advancedQuantitiesVisible)
+                        {
+                            await advancedQuantitiesLocator.ClickAsync();
+                            await signalRLogger(
+                                $"[Task {taskId}] Defaulted to clicking Advanced Quantities button"
+                            );
+                        }
+                        else
+                        {
+                            await signalRLogger(
+                                $"[Task {taskId}] [Error] Cannot default to Advanced Quantities - button not visible"
+                            );
+                        }
                         break;
                 }
             }

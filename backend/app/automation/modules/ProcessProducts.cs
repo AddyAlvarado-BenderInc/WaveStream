@@ -431,10 +431,7 @@ namespace backend.automation.modules
                 product.LongDescription,
                 "LongDescription"
             );
-            string advancedRanges = ConvertDynamicToString(
-                product.AdvancedRanges,
-                "AdvancedRanges"
-            );
+            string advancedRanges = ConvertDynamicToString(product.AdvancedRange, "AdvancedRange");
             string orderQuantities = ConvertDynamicToString(product.OrderQuantity, "OrderQuantity");
             string shippingWidths = ConvertDynamicToString(product.ShippingWidth, "ShippingWidth");
             string shippingHeights = ConvertDynamicToString(

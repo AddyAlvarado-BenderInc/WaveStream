@@ -224,11 +224,47 @@ const Table: React.FC<TableProps> = ({
                             .split("\n")
                             .filter((row) => row.trim());
                         if (rows.length > 0) {
-                            const classKeyObjects = rows[0].split(",").map((key, idx) => ({
+                            // Simple CSV parser that handles quoted fields with commas
+                            const parseCSVRow = (row: string): string[] => {
+                                const result: string[] = [];
+                                let current = '';
+                                let inQuotes = false;
+                                let i = 0;
+                                
+                                while (i < row.length) {
+                                    const char = row[i];
+                                    
+                                    if (char === '"' && (i === 0 || row[i-1] === ',')) {
+                                        // Start of quoted field
+                                        inQuotes = true;
+                                    } else if (char === '"' && inQuotes && (i === row.length - 1 || row[i+1] === ',')) {
+                                        // End of quoted field
+                                        inQuotes = false;
+                                    } else if (char === ',' && !inQuotes) {
+                                        // Field separator outside quotes
+                                        result.push(current.trim());
+                                        current = '';
+                                    } else {
+                                        // Regular character
+                                        if (!(char === '"' && (i === 0 || row[i-1] === ',' || i === row.length - 1 || row[i+1] === ','))) {
+                                            current += char;
+                                        }
+                                    }
+                                    i++;
+                                }
+                                
+                                // Add the last field
+                                result.push(current.trim());
+                                return result;
+                            };
+                            
+                            const parsedFields = parseCSVRow(rows[0]);
+                            const classKeyObjects = parsedFields.map((key, idx) => ({
                                 index: idx,
-                                value: key.trim(),
+                                value: key.trim().replace(/^["']|["']$/g, ''), // Remove any remaining quotes
                                 isOrigin: false,
                             }));
+                            
                             setAddedClassKeys(classKeyObjects);
                             submitTableData(classKeyObjects);
                             setLocalClassKeyInput("");
