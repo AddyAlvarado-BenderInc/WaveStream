@@ -1,32 +1,47 @@
 .page {
-  --gray-rgb: 0, 0, 0;
-  --gray-alpha-200: rgba(var(--gray-rgb), 0.08);
-  --gray-alpha-100: rgba(var(--gray-rgb), 0.05);
+  --gray-rgb: 255, 255, 255;
+  --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
+  --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
 
   --button-primary-hover: #fff;
   --button-secondary-hover: #000;
-
   --button-critical: #ff2a00;
 
-  display: grid;
-  align-items: center;
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
   min-height: 100svh;
-  padding: 80px;
-  gap: 64px;
+  padding: 1.5rem;
+  gap: 2rem;
   font-family: var(--font-geist-sans);
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .darkTheme {
-  background-color: black;
+  background-color: #0a0a0a;
   color: white;
+}
+
+.lightTheme {
+  background-color: #ffffff;
+  color: #0a0a0a;
 }
 
 .page header {
   width: 100%;
-  align-items: baseline;
+  align-items: center;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--gray-alpha-200);
+}
+
+.page header h1 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 700;
+  margin: 0;
 }
 
 .page header h4 {
@@ -42,7 +57,8 @@
 
 .page header .leftHeader {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  gap: 1rem;
 }
 
 .page header .poweredContent {
@@ -51,13 +67,10 @@
   margin-left: -10px;
 }
 
-.page {
-  --gray-rgb: 255, 255, 255;
-  --gray-alpha-200: rgba(var(--gray-rgb), 0.145);
-  --gray-alpha-100: rgba(var(--gray-rgb), 0.06);
-
-  --button-primary-hover: #fff;
-  --button-secondary-hover: #000;
+.page > p {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  color: var(--gray-alpha-200);
+  margin: 0;
 }
 
 
@@ -174,38 +187,54 @@ a.secondary {
 }
 
 .managerList {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  column-gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  padding: 1rem 0;
 }
 
 .form {
   display: flex;
-  gap: 5px;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: stretch;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.input,
+.select {
+  flex: 1 1 200px;
+  min-width: 200px;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--gray-alpha-200);
+  transition: all 0.2s ease;
 }
 
 .input {
-  border-radius: 4px;
-  padding: 8px 16px;
-  background-color: #333333;
-  color: var(--button-primary-hover);
-  border: 1px solid var(--gray-alpha-200);
+  background-color: var(--gray-alpha-100);
+  color: var(--foreground);
 }
 
-.input::after {
-  content: "*";
-  color: var(--button-critical);
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--button-primary-hover);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.input::placeholder {
+  color: var(--gray-alpha-200);
 }
 
 .select {
-  border-radius: 4px;
-  padding: 8px 16px;
-  border: 1px solid var(--gray-alpha-200);
-  color: var(--button-primary-hover);
   background: var(--gray-alpha-100);
+  color: var(--foreground);
   cursor: pointer;
-  color: invert;
 }
 
 .select::after {
@@ -214,43 +243,143 @@ a.secondary {
 }
 
 .select option {
-  color: var(--button-secondary-hover);
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 .button {
+  flex: 0 0 auto;
   background: var(--foreground);
   color: var(--background);
   border: 1px solid var(--button-primary-hover);
-  border-radius: 4px;
-  padding: 8px 16px;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .button:hover {
   background: var(--button-secondary-hover);
   color: var(--button-primary-hover);
   border: 1px solid var(--button-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button:active {
+  transform: translateY(0);
 }
 
 .themeSelect {
   background: var(--button-primary-hover);
   color: var(--button-secondary-hover);
-  border: 1px solid invert;
-  border-radius: 4px;
-  padding: 8px 16px;
+  border: 1px solid var(--gray-alpha-200);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
 }
 
 .button[name="logout-button"] {
-  background-color: var(--button-secondary-hover);
+  background-color: transparent;
   color: var(--button-primary-hover);
   border: 1px solid var(--button-primary-hover);
 }
 
 .button[name="logout-button"]:hover {
-  background-color: var(--button-primary-hover);
-  color: var(--button-secondary-hover);
-  border: 1px solid var(--button-secondary-hover);
+  background-color: var(--button-critical);
+  color: var(--button-primary-hover);
+  border: 1px solid var(--button-critical);
+}
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+
+  .page header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .page header h1 {
+    font-size: 1.75rem;
+  }
+
+  .form {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .input,
+  .select {
+    min-width: 100%;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .managerList {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .page {
+    padding: 2rem;
+  }
+
+  .managerList {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (min-width: 1025px) {
+  .page {
+    padding: 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .managerList {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+/* Animation for manager list items */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.managerList > * {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Main content wrapper */
+.page main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.totalCount {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+  color: var(--gray-alpha-200);
+  margin: 0;
 }

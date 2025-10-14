@@ -13,6 +13,8 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
     "types": ["node", "playwright"],
     "plugins": [
       {
@@ -20,7 +22,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "pages/api/automation/adHoc.js", "pages/api/automation/staticDocument.js", "pages/api/automation/productMatrix.js"],

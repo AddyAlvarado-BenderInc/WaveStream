@@ -122,49 +122,61 @@ export default function Home() {
 
   return (
     <div className={`${styles.page} ${theme === "Light" ? styles.lightTheme : styles.darkTheme}`}>
-      <header>
+      <header className={styles.header}>
         <div className={styles.leftHeader}>
           <h1>WaveStream</h1>
         </div>
-        <button name="logout-button" className={styles.button}
-          onClick={handleLogout}>
+        <button 
+          name="logout-button" 
+          className={styles.button}
+          onClick={handleLogout}
+          aria-label="Logout"
+        >
           Logout
         </button>
       </header>
-      <p>Total Streams: {productManagers.length}</p>
-      <form className={styles.form} onSubmit={handleAddProductManager}>
-        <input
-          className={styles.input}
-          type="text"
-          value={newManagerName}
-          onChange={(e) => setNewManagerName(e.target.value)}
-          placeholder="Enter Stream Name"
-          required
-        />
-        <select
-          className={styles.select}
-          value={newManagerType}
-          onChange={(e) => setNewManagerType(e.target.value)}
-          required
-        >
-          <option value="">Select a Type</option>
-          <option value="Manager">Manager</option>
-        </select>
-        <button className={styles.button} type="submit">
-          Add Stream
-        </button>
-      </form>
-      <div className={styles.managerList}>
-        {productManagers.map((manager) => (
-          <ProductTemplate
-            key={manager._id}
-            manager={manager as Required<ProductManager>}
-            onClick={handleManagerClick}
-            onDelete={handleDeleteProductManager}
-            onEditName={handleEditName}
+      
+      <main>
+        <p className={styles.totalCount}>Total Streams: {productManagers.length}</p>
+        
+        <form className={styles.form} onSubmit={handleAddProductManager}>
+          <input
+            className={styles.input}
+            type="text"
+            value={newManagerName}
+            onChange={(e) => setNewManagerName(e.target.value)}
+            placeholder="Enter Stream Name"
+            aria-label="Stream name"
+            required
           />
-        ))}
-      </div>
+          <select
+            className={styles.select}
+            value={newManagerType}
+            onChange={(e) => setNewManagerType(e.target.value)}
+            aria-label="Stream type"
+            required
+          >
+            <option value="">Select a Type</option>
+            <option value="Manager">Manager</option>
+          </select>
+          <button className={styles.button} type="submit">
+            Add Stream
+          </button>
+        </form>
+        
+        <div className={styles.managerList} role="list">
+          {productManagers.map((manager) => (
+            <ProductTemplate
+              key={manager._id}
+              manager={manager as Required<ProductManager>}
+              onClick={handleManagerClick}
+              onDelete={handleDeleteProductManager}
+              onEditName={handleEditName}
+            />
+          ))}
+        </div>
+      </main>
+      
       {/* <select className={styles.themeSelect} value={theme} onChange={handleThemeChange}>
         <option value="Dark">Dark</option>
         <option value="Light">Light</option>

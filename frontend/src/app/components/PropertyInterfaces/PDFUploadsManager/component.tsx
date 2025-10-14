@@ -14,7 +14,7 @@ interface ProductPDFManagerProps {
     onUpload: (files: File[]) => void;
 }
 
-const MAX_PDFS = 5;
+const MAX_PDFS = 25;
 
 const ProductPDFManager: React.FC<ProductPDFManagerProps> = ({
     pdf, label, onUpload, onDelete

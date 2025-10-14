@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import VariableClass from "../VariableManager/VariableClass/component";
+import VariableClass from "./VariableClass/component";
 import {
     addVariableClassArray,
     clearAllVariableClassArray,
@@ -15,7 +15,7 @@ import {
     IGlobalVariablePackage,
     variablePackageArray,
 } from "../../../../types/productManager";
-import ParameterizationTab from "../VariableManager/ParameterTab/component";
+import ParameterizationTab from "./ParameterTab/component";
 import { RootState } from "@/app/store/store";
 import { useSelector, useDispatch } from "react-redux";
 import Table from "../Table/component";
