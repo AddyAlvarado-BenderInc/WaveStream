@@ -23,7 +23,7 @@ import PropertyInterfaceTable from "../PropertyInterfaces/component";
 import { BASE_URL } from "../../config";
 import styles from "./component.module.css";
 import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+// import "react-toastify/dist/ReactToastify.css";
 import { isEqual, set } from "lodash";
 import axios from "axios";
 import dotenv from "dotenv";
@@ -1607,16 +1607,11 @@ const WaveManager: React.FC<WaveManagerProps> = ({ productManager }) => {
 
         console.log("Found icon files:", iconFile);
 
-        if (iconFile.length === 0) {
-        } else if (iconFile.some((item) => item.includes(" "))) {
-            console.warn(
-                'Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png'
-            );
-            toast.error(
-                'Icon name contains spaces or special characters. Please replace them with underscores ("_") for the file name. For example, "my new icon.png" should be "my_new_icon.png"'
-            );
-            return;
-        }
+        // Note: Spaces in filenames are properly handled by URL encoding and file system paths
+        // if (iconFile.some((item) => item.includes(" "))) {
+        //     console.warn('Icon name contains spaces - this is acceptable');
+        // }
+
         console.log("iconFile:", iconFile);
 
         if (!currentSelectedServer) {

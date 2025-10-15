@@ -68,6 +68,28 @@ const SystemLogging: React.FC = () => {
 
     const [searchTerm, setSearchTerm] = useState<string>("");
 
+    const exportErrorsAsJson = () => {
+        if (errorItems.length === 0) {
+            alert("No errors to export.");
+            return;
+        }
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const filename = `detected-errors-${timestamp}.json`;
+        
+        const dataStr = JSON.stringify(errorItems, null, 2);
+        const dataBlob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(dataBlob);
+        
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
     const getLogDetails = (
         message: string
     ): {
@@ -791,6 +813,15 @@ const SystemLogging: React.FC = () => {
                                     {errorItems.length}
                                 </span>
                             </h3>
+                            {errorItems.length > 0 && (
+                                <button
+                                    onClick={exportErrorsAsJson}
+                                    className={styles.exportButton}
+                                    title="Export errors as JSON"
+                                >
+                                    📥 Export JSON
+                                </button>
+                            )}
                         </div>
                         {errorItems.length === 0 ? (
                             <p className={styles.noErrorItems}>No specific errors flagged.</p>

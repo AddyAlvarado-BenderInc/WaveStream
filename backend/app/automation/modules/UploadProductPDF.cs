@@ -12,6 +12,15 @@ namespace backend.automation.modules
     {
         private const string DefaultFileDeleteButtonSelector =
             "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl02$FilesAddedToJob1$FileRepeater$ctl01$UF$DEL\"]";
+
+        private static readonly string[] UploadPDFInputSelectors = new[]
+        {
+            "#ctl00_ctl00_C_M_ctl00_W_ctl02_Fileupload1_htmlInputFileUpload",
+            "input[name*='Fileupload1'][type='file']",
+            "input[id*='Fileupload1'][type='file']",
+            "input[type='file'][onchange*='HideShowConversionCheckbox']",
+        };
+
         private const string DefaultUploadPDFInputSelector =
             "#ctl00_ctl00_C_M_ctl00_W_ctl02_Fileupload1_htmlInputFileUpload";
         private const string DefaultUploadPDFButtonSelector =
@@ -339,17 +348,54 @@ namespace backend.automation.modules
                         $"[Task {taskId}] Uploading PDF: {Path.GetFileName(filePathToUpload)} for {productName}"
                     );
 
-                    var uploadInputLocator = page.Locator(DefaultUploadPDFInputSelector);
-                    await uploadInputLocator.WaitForAsync(
-                        new LocatorWaitForOptions
+                    ILocator? uploadInputLocator = null;
+                    string? successfulSelector = null;
+
+                    foreach (var selector in UploadPDFInputSelectors)
+                    {
+                        try
                         {
-                            State = WaitForSelectorState.Visible,
-                            Timeout = 10000,
+                            var locator = page.Locator(selector);
+
+                            await locator.WaitForAsync(
+                                new LocatorWaitForOptions
+                                {
+                                    State = WaitForSelectorState.Attached,
+                                    Timeout = 3000,
+                                }
+                            );
+                            uploadInputLocator = locator;
+                            successfulSelector = selector;
+                            await signalRLogger(
+                                $"[Task {taskId}] Found PDF upload input using selector: {selector}"
+                            );
+                            Console.WriteLine(
+                                $"[Task {taskId}] Found PDF upload input using selector: {selector}"
+                            );
+                            break;
                         }
-                    );
+                        catch (TimeoutException)
+                        {
+                            await signalRLogger(
+                                $"[Task {taskId}] Selector '{selector}' not found, trying next..."
+                            );
+                            Console.WriteLine(
+                                $"[Task {taskId}] Selector '{selector}' not found, trying next..."
+                            );
+                            continue;
+                        }
+                    }
+
+                    if (uploadInputLocator == null)
+                    {
+                        throw new Exception(
+                            $"Could not find PDF upload input with any of the configured selectors. Tried: {string.Join(", ", UploadPDFInputSelectors)}"
+                        );
+                    }
+
                     await uploadInputLocator.SetInputFilesAsync(filePathToUpload);
                     await signalRLogger(
-                        $"[Task {taskId}] File selected for upload: {Path.GetFileName(filePathToUpload)}"
+                        $"[Task {taskId}] File selected for upload: {Path.GetFileName(filePathToUpload)} using selector: {successfulSelector}"
                     );
                     Console.WriteLine(
                         $"[Task {taskId}] File selected for upload: {Path.GetFileName(filePathToUpload)}"

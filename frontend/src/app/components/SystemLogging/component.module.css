@@ -338,6 +338,14 @@
   border-top: 1px solid #444;
 }
 
+.errorItemsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .errorItemsHeader h3 {
   margin-top: 0;
   margin-bottom: 5px;
@@ -350,6 +358,32 @@
 
 .errorItemsHeader h3.hasErrors .errorCount {
   font-weight: bold;
+}
+
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background-color: transparent;
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.exportButton:hover {
+  background-color: #fff;
+  color: #000;
+  transform: translateY(-1px);
+}
+
+.exportButton:active {
+  transform: translateY(0);
 }
 
 .noErrorItems {

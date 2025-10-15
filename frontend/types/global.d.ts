@@ -7,4 +7,16 @@ declare global {
     };
 }
 
+// Allow CSS imports
+declare module '*.css' {
+    const content: { [className: string]: string };
+    export default content;
+}
+
+// Allow side-effect CSS imports (like react-toastify)
+declare module '*.css' {
+    const css: string;
+    export = css;
+}
+
 export {};

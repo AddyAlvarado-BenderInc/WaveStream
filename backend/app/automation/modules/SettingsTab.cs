@@ -18,6 +18,30 @@ namespace backend.automation.modules
         private const string MaxDimensionSelectorConst =
             "input[name=\"ctl00$ctl00$C$M$ctl00$W$ctl01$ShipmentDimensionCtrl$txtLotSize\"]";
 
+        private static readonly string[] PrintWeightCheckboxSelectors = new[]
+        {
+            "#ctl00_ctl00_C_M_ctl00_W_ctl01_OptionalPrintWeightCheckbox",
+            "input[name='ctl00$ctl00$C$M$ctl00$W$ctl01$OptionalPrintWeightCheckbox']",
+            "input[id*='OptionalPrintWeightCheckbox'][type='checkbox']",
+            "input[type='checkbox'][onclick*='EnableWeightControl']",
+        };
+
+        private static readonly string[] PrintWeightInputSelectors = new[]
+        {
+            "input[name='ctl00$ctl00$C$M$ctl00$W$ctl01$OptionalPrintWeightSelector_Active$_Weight']",
+            "input[id*='OptionalPrintWeightSelector'][id*='_Weight']:not([disabled])",
+            "input[name*='OptionalPrintWeightSelector'][name*='_Weight']:not([disabled])",
+            "input[type='text'][id*='Weight']:not([disabled])",
+        };
+
+        private static readonly string[] PrintWeightMeasurementSelectors = new[]
+        {
+            "#ctl00_ctl00_C_M_ctl00_W_ctl01_OptionalPrintWeightSelector_Active__Unit",
+            "select[name='ctl00$ctl00$C$M$ctl00$W$ctl01$OptionalPrintWeightSelector_Active$_Unit']",
+            "select[id*='OptionalPrintWeightSelector'][id*='_Unit']:not([disabled])",
+            "select[name*='OptionalPrintWeightSelector'][name*='_Unit']:not([disabled])",
+        };
+
         private const string PrintWeightCheckboxConst =
             "#ctl00_ctl00_C_M_ctl00_W\\$ctl01_OptionalPrintWeightCheckbox";
         private const string PrintWeightInputConst =
@@ -33,6 +57,56 @@ namespace backend.automation.modules
             "#ctl00_ctl00_C_M_ctl00_W\\$ctl01_ShipmentDimensionCtrl__lblBoxZ";
         private const string LotSizeLabelConst =
             "#ctl00_ctl00_C_M_ctl00_W\\$ctl01_ShipmentDimensionCtrl_lblLotSize";
+
+        private async Task<ILocator?> TryFindElementWithFallbackAsync(
+            int taskId,
+            IPage page,
+            string[] selectors,
+            string elementName,
+            Func<string, Task> signalRLogger,
+            int timeoutPerSelector = 3000
+        )
+        {
+            foreach (var selector in selectors)
+            {
+                try
+                {
+                    var locator = page.Locator(selector);
+                    await locator.WaitForAsync(
+                        new LocatorWaitForOptions
+                        {
+                            State = WaitForSelectorState.Attached,
+                            Timeout = timeoutPerSelector,
+                        }
+                    );
+                    await signalRLogger(
+                        $"[Task {taskId}] Found {elementName} using selector: {selector}"
+                    );
+                    Console.WriteLine(
+                        $"[Task {taskId}] Found {elementName} using selector: {selector}"
+                    );
+                    return locator;
+                }
+                catch (TimeoutException)
+                {
+                    await signalRLogger(
+                        $"[Task {taskId}] Selector '{selector}' not found for {elementName}, trying next..."
+                    );
+                    Console.WriteLine(
+                        $"[Task {taskId}] Selector '{selector}' not found for {elementName}, trying next..."
+                    );
+                    continue;
+                }
+            }
+
+            await signalRLogger(
+                $"[Task {taskId}] [Error] Could not find {elementName} with any selector. Tried: {string.Join(", ", selectors)}"
+            );
+            Console.WriteLine(
+                $"[Task {taskId}] [Error] Could not find {elementName} with any selector. Tried: {string.Join(", ", selectors)}"
+            );
+            return null;
+        }
 
         private async Task ClearInputAndTypeAsync(
             int taskId,
@@ -106,7 +180,6 @@ namespace backend.automation.modules
             {
                 await signalRLogger($"[Task {taskId}] Order Quantities: {orderQuantities}");
 
-                // Debug selector visibility
                 var anyQuantitiesLocator = page.Locator(anyQuantitiesButton);
                 var advancedQuantitiesLocator = page.Locator(advancedQuantitiesButton);
 
@@ -160,7 +233,7 @@ namespace backend.automation.modules
                             foreach (var selector in inputSelectors)
                             {
                                 var testLocator = page.Locator(selector);
-                                // Add a small delay before checking each selector
+
                                 await Task.Delay(500);
 
                                 if (await testLocator.IsVisibleAsync())
@@ -174,7 +247,6 @@ namespace backend.automation.modules
                                 );
                             }
 
-                            // If still not found, try waiting for the element to appear with a longer timeout
                             if (advancedRangesInputElement == null)
                             {
                                 await signalRLogger(
@@ -183,7 +255,6 @@ namespace backend.automation.modules
 
                                 try
                                 {
-                                    // Wait for any of the selectors to become visible
                                     var firstSelector = inputSelectors[0];
                                     await page.WaitForSelectorAsync(
                                         firstSelector,
@@ -400,25 +471,42 @@ namespace backend.automation.modules
                 || !string.IsNullOrEmpty(shippingMaxs)
             )
             {
-                var printWeightMeasurementLocator = page.Locator(PrintWeightMeasurementConst);
-                if (await printWeightMeasurementLocator.IsVisibleAsync() && productType != "Ad Hoc")
+                var printWeightMeasurementLocator = await TryFindElementWithFallbackAsync(
+                    taskId,
+                    page,
+                    PrintWeightMeasurementSelectors,
+                    "Print Weight Measurement Unit",
+                    signalRLogger
+                );
+
+                if (printWeightMeasurementLocator != null && productType != "Ad Hoc")
                 {
                     await signalRLogger($"[Task {taskId}] Print weight measurement selector found");
-                    var currentMeasurementValue =
-                        await printWeightMeasurementLocator.InputValueAsync();
-                    if (currentMeasurementValue == "0")
+
+                    try
                     {
-                        await signalRLogger(
-                            $"[Task {taskId}] Print weight measurement is oz, changing to lb."
-                        );
-                        await printWeightMeasurementLocator.SelectOptionAsync(
-                            new SelectOptionValue { Value = "1" }
-                        );
+                        var currentMeasurementValue =
+                            await printWeightMeasurementLocator.InputValueAsync();
+                        if (currentMeasurementValue == "0")
+                        {
+                            await signalRLogger(
+                                $"[Task {taskId}] Print weight measurement is oz, changing to lb."
+                            );
+                            await printWeightMeasurementLocator.SelectOptionAsync(
+                                new SelectOptionValue { Value = "1" }
+                            );
+                        }
+                        else
+                        {
+                            await signalRLogger(
+                                $"[Task {taskId}] Print weight measurement already set to lb (or not '0'). Current value: {currentMeasurementValue}"
+                            );
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
                         await signalRLogger(
-                            $"[Task {taskId}] Print weight measurement already set to lb (or not '0'). Current value: {currentMeasurementValue}"
+                            $"[Task {taskId}] [Error] Failed to interact with print weight measurement: {ex.Message}"
                         );
                     }
                 }
@@ -437,20 +525,31 @@ namespace backend.automation.modules
                 else
                 {
                     await signalRLogger(
-                        $"[Task {taskId}] [Error] Print weight measurement selector ('{PrintWeightMeasurementConst}') not found, critical for weight input. Potential error."
+                        $"[Task {taskId}] [Error] Print weight measurement selector not found with any fallback, critical for weight input. Potential error."
                     );
                 }
 
                 if (!string.IsNullOrEmpty(weightInput) && productType != "Ad Hoc")
                 {
                     await signalRLogger($"[Task {taskId}] Weight input provided: {weightInput}");
-                    var printWeightCheckboxLocator = page.Locator(PrintWeightCheckboxConst);
-                    var printWeightInputLocator = page.Locator(PrintWeightInputConst);
 
-                    if (
-                        await printWeightCheckboxLocator.IsVisibleAsync()
-                        && await printWeightInputLocator.IsVisibleAsync()
-                    )
+                    var printWeightCheckboxLocator = await TryFindElementWithFallbackAsync(
+                        taskId,
+                        page,
+                        PrintWeightCheckboxSelectors,
+                        "Print Weight Checkbox",
+                        signalRLogger
+                    );
+
+                    var printWeightInputLocator = await TryFindElementWithFallbackAsync(
+                        taskId,
+                        page,
+                        PrintWeightInputSelectors,
+                        "Print Weight Input",
+                        signalRLogger
+                    );
+
+                    if (printWeightCheckboxLocator != null && printWeightInputLocator != null)
                     {
                         bool isCheckboxChecked = await printWeightCheckboxLocator.IsCheckedAsync();
                         string currentInputValue = (
@@ -472,13 +571,9 @@ namespace backend.automation.modules
                                 || currentInputValue != effectiveWeightInput
                             )
                             {
-                                await ClearInputAndTypeAsync(
-                                    taskId,
-                                    page,
-                                    PrintWeightInputConst,
-                                    effectiveWeightInput,
-                                    signalRLogger,
-                                    "Print Weight"
+                                await printWeightInputLocator.FillAsync(effectiveWeightInput);
+                                await signalRLogger(
+                                    $"[Task {taskId}] Filled Print Weight with: {effectiveWeightInput}"
                                 );
                             }
                         }
@@ -493,13 +588,9 @@ namespace backend.automation.modules
                             await signalRLogger(
                                 $"[Task {taskId}] Print weight checkbox checked, but input value '{currentInputValue}' differs from desired '{effectiveWeightInput}'. Updating weight."
                             );
-                            await ClearInputAndTypeAsync(
-                                taskId,
-                                page,
-                                PrintWeightInputConst,
-                                effectiveWeightInput,
-                                signalRLogger,
-                                "Print Weight"
+                            await printWeightInputLocator.FillAsync(effectiveWeightInput);
+                            await signalRLogger(
+                                $"[Task {taskId}] Updated Print Weight to: {effectiveWeightInput}"
                             );
                         }
                         else if (!isCheckboxChecked && currentInputValue != "0")
@@ -509,13 +600,9 @@ namespace backend.automation.modules
                             );
                             await printWeightCheckboxLocator.ClickAsync();
 
-                            await ClearInputAndTypeAsync(
-                                taskId,
-                                page,
-                                PrintWeightInputConst,
-                                effectiveWeightInput,
-                                signalRLogger,
-                                "Print Weight"
+                            await printWeightInputLocator.FillAsync(effectiveWeightInput);
+                            await signalRLogger(
+                                $"[Task {taskId}] Filled Print Weight with: {effectiveWeightInput}"
                             );
                         }
                         else
@@ -525,13 +612,10 @@ namespace backend.automation.modules
                             );
                             if (!isCheckboxChecked)
                                 await printWeightCheckboxLocator.ClickAsync();
-                            await ClearInputAndTypeAsync(
-                                taskId,
-                                page,
-                                PrintWeightInputConst,
-                                effectiveWeightInput,
-                                signalRLogger,
-                                "Print Weight"
+
+                            await printWeightInputLocator.FillAsync(effectiveWeightInput);
+                            await signalRLogger(
+                                $"[Task {taskId}] Filled Print Weight with: {effectiveWeightInput}"
                             );
                         }
                     }
